@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sandgraal's Game List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: radial-gradient(circle at 40% 10%, #292d38 50%, #16171b 100%);
+      color: #e8e8e8;
+      margin: 2rem;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #FFD700;
+      font-family: 'Press Start 2P', cursive, sans-serif;
+      font-size: 2rem;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 16px #FFD70088;
+      margin-bottom: 0.5em;
+    }
+    .top-actions {
+      display: flex;
+      gap: 1em;
+      align-items: center;
+      margin-bottom: 1em;
+      flex-wrap: wrap;
+    }
+    .filters {
+      margin-bottom: 1em;
+      display: flex;
+      gap: 0.6em;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filters select, #search {
+      padding: 0.5em 1.1em;
+      border-radius: 10px;
+      border: 1.5px solid #414759;
+      background: #212534;
+      color: #ffd700;
+      margin-right: 0.1em;
+      font-size: 1em;
+      outline: none;
+      box-shadow: 0 0 4px #00ffd5cc, 0 2px 8px #0004;
+      transition: border 0.15s, box-shadow 0.2s;
+    }
+    .filters select:focus, #search:focus {
+      border-color: #00ffd5;
+      box-shadow: 0 0 8px #00ffd577, 0 4px 16px #0008;
+    }
+    #stats {
+      margin: 1.2em 0 1em 0;
+      color: #76f0ea;
+      font-size: 1.09em;
+      font-family: 'Press Start 2P', cursive, sans-serif;
+      text-shadow: 0 2px 10px #03f8f4cc;
+      letter-spacing: 1px;
+    }
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: #22252e;
+      border-radius: 18px;
+      box-shadow: 0 8px 40px #1ee6ff2a, 0 2px 10px #0008;
+      overflow: hidden;
+      margin-bottom: 2em;
+    }
+    th, td {
+      padding: 0.7rem 0.7rem;
+      text-align: left;
+      border-bottom: 1.5px solid #242e3a;
+    }
+    th {
+      background: linear-gradient(90deg, #282c38 60%, #111 100%);
+      color: #ffd700;
+      cursor: pointer;
+      user-select: none;
+      font-family: 'Press Start 2P', cursive, sans-serif;
+      font-size: 1em;
+      text-shadow: 0 1px 4px #FFD70044, 0 0px 20px #111a;
+      border-bottom: 2.5px solid #ffd70066;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+    th.sorted-asc::after { content: " ▲"; font-size: 0.88em; }
+    th.sorted-desc::after { content: " ▼"; font-size: 0.88em; }
+    tr {
+      transition: box-shadow 0.18s, background 0.16s;
+    }
+    tr:nth-child(even) {
+      background: #21232b;
+    }
+    tr:hover {
+      background: #27363c !important;
+      box-shadow: 0 0 8px 1px #ffd70055;
+      z-index: 2;
+    }
+    .owned-row {
+      background: #234021 !important;
+      box-shadow: 0 0 8px #47f713cc, 0 0 28px #a1ff6266;
+      font-weight: bold;
+    }
+    .center {
+      text-align: center;
+    }
+    img {
+      max-width: 64px;
+      max-height: 50px;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px #050c;
+      border: 1.5px solid #ffd70055;
+      background: #181a1d;
+      margin: 0 2px;
+      transition: box-shadow 0.2s;
+    }
+    img:hover {
+      box-shadow: 0 0 32px #ffd700bb, 0 1px 4px #111a;
+    }
+    a {
+      color: #ffb93d;
+      font-weight: bold;
+      text-shadow: 0 2px 10px #FFD70055;
+      transition: color 0.18s;
+    }
+    a:hover {
+      color: #11ffc6;
+      text-decoration: underline;
+    }
+    .checkbox-own {
+      accent-color: #ffd700;
+      width: 1.2em; height: 1.2em;
+      box-shadow: 0 0 8px #ffd70099;
+      border-radius: 5px;
+      border: 2px solid #ffd700cc;
+      background: #23282d;
+      cursor: pointer;
+      margin: 2px 0;
+      transition: box-shadow 0.2s;
+    }
+    .checkbox-own:checked {
+      box-shadow: 0 0 18px #67ff5ecc;
+      background: #aaff66;
+    }
+    .top-actions button {
+      background: linear-gradient(90deg,#232841 60%,#282c38 100%);
+      color: #ffd700;
+      font-family: 'Press Start 2P', cursive, sans-serif;
+      font-size: 1em;
+      border: 2px solid #ffd70044;
+      border-radius: 9px;
+      padding: 0.6em 1.2em;
+      margin-right: 0.5em;
+      cursor: pointer;
+      box-shadow: 0 2px 16px #ffd70044, 0 0.5px 2px #2229;
+      text-shadow: 0 2px 6px #ffd70066;
+      transition: background 0.18s, box-shadow 0.22s, color 0.16s;
+    }
+    .top-actions button:hover {
+      background: #FFD700;
+      color: #212534;
+      border-color: #ffd700;
+      box-shadow: 0 4px 24px #ffd70099;
+    }
+    #shareSection {
+      margin: 0.5em 0 0.6em 0;
+      padding: 1em 1.5em;
+      background: #1d2b39;
+      border-radius: 10px;
+      box-shadow: 0 0 12px #00ffd511;
+      color: #fff;
+      display: none;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      position: relative;
+    }
+    #shareSection .sectionTitle {
+      color: #ffd700;
+      font-family: 'Press Start 2P', monospace, cursive;
+      font-size: 1em;
+      margin-bottom: 0.3em;
+      text-shadow: 0 1px 5px #ffd70044;
+    }
+    #shareSection .tip {
+      color: #aaa;
+      font-size: 0.96em;
+      margin-bottom: 0.5em;
+    }
+    #shareCode, #importCode {
+      font-family: 'Press Start 2P', monospace, cursive;
+      letter-spacing: 1px;
+    }
+    #importResult {
+      margin-left: 1em;
+      font-weight: bold;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #76f0ea;
+    }
+    #closeShare {
+      position: absolute;
+      right: 12px;
+      top: 10px;
+      background: transparent;
+      border: none;
+      color: #ffd700;
+      font-size: 1.2em;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace, cursive;
+      opacity: 0.8;
+      transition: color 0.18s;
+    }
+    #closeShare:hover {
+      color: #fff700;
+      opacity: 1;
+    }
+    /* ---- Modal Styling ---- */
+    #modalBg {
+      position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(20,30,44,0.82);
+      z-index: 1200;
+      display: none;
+      transition: background 0.18s;
+    }
+    #gameModal {
+      position: fixed; left: 50%; top: 54%; transform: translate(-50%,-50%);
+      background: #181c26;
+      color: #ffeec2;
+      border-radius: 20px;
+      box-shadow: 0 16px 64px #000a, 0 2px 12px #ffd70044;
+      max-width: 94vw; min-width: 300px; width: 420px;
+      z-index: 1300;
+      padding: 2.1em 2em 1.7em 2em;
+      display: none;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      border: 2.5px solid #ffd70066;
+      text-align: left;
+      animation: modalpop 0.23s cubic-bezier(.5,1.6,.8,1);
+    }
+    @keyframes modalpop {
+      0% { transform: translate(-50%,-60%) scale(0.85);}
+      100% { transform: translate(-50%,-50%) scale(1);}
+    }
+    #gameModal .modal-close {
+      position: absolute; top: 12px; right: 18px;
+      color: #ffd700; font-size: 1.7em;
+      cursor: pointer; font-family: 'Press Start 2P', monospace, cursive;
+      opacity: 0.84; border: none; background: none;
+    }
+    #gameModal .modal-close:hover {
+      color: #fff700; opacity: 1;
+    }
+    #gameModal img {
+      max-width: 100px; max-height: 82px;
+      float: right; margin-left: 1.2em; margin-bottom: 1em; border-radius: 8px;
+      box-shadow: 0 2px 8px #ffd70022, 0 1px 8px #000a;
+      background: #23252a;
+      border: 1.5px solid #ffd70044;
+    }
+    #gameModal .modal-title {
+      font-family: 'Press Start 2P', monospace, cursive;
+      color: #ffd700;
+      font-size: 1.15em;
+      margin-bottom: 0.65em;
+      text-shadow: 0 1px 8px #ffd70066;
+      letter-spacing: 1.2px;
+    }
+    #gameModal dl {
+      margin: 0.5em 0 0 0; font-size: 1em;
+    }
+    #gameModal dt {
+      font-weight: bold;
+      color: #ffd700;
+      margin-top: 0.4em;
+      font-size: 0.92em;
+    }
+    #gameModal dd {
+      margin: 0 0 0.3em 0.7em;
+      color: #ffeec2;
+      font-size: 1em;
+    }
+    #gameModal .external-links {
+      margin-top: 1.2em;
+      display: flex;
+      gap: 0.6em;
+    }
+    #gameModal .external-links a {
+      color: #76f0ea;
+      background: #232534;
+      border-radius: 6px;
+      padding: 0.24em 0.85em;
+      text-decoration: none;
+      font-family: 'Press Start 2P', monospace, cursive;
+      font-size: 0.93em;
+      transition: background 0.18s, color 0.16s;
+      border: 1.2px solid #ffd70055;
+    }
+    #gameModal .external-links a:hover {
+      background: #ffd700;
+      color: #1d2b39;
+      border-color: #ffd700;
+    }
+    @media (max-width: 800px) {
+      html, body { font-size: 13px;}
+      .filters { flex-direction: column; align-items: stretch; }
+      th, td { padding: 0.45rem 0.3rem;}
+      img { max-width: 36px; }
+      #shareSection { padding: 0.6em 0.3em;}
+      #shareCode, #importCode { font-size: 0.8em; width: 97vw;}
+    }
+    @media (max-width: 700px) {
+      #gameModal { width: 94vw; min-width: 0; padding: 1.1em 0.5em;}
+      #gameModal img { max-width: 74px; max-height: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Sandgraal's Game List</h1>
+  <div class="top-actions">
+    <button id="exportBtn" title="Download CSV of Owned Games">Export Owned Games</button>
+    <button id="shareBtn" title="Create shareable code for your collection">Get Shareable Link</button>
+    <button id="showImport" title="Import a share code from someone else">Import Collection Code</button>
+  </div>
+  <div class="filters">
+    <select id="platformFilter"><option value="">All Platforms</option></select>
+    <select id="genreFilter"><option value="">All Genres</option></select>
+    <input id="search" placeholder="Type to filter...">
+  </div>
+  <div id="stats">Loading stats...</div>
+  <div id="shareSection">
+    <button id="closeShare" title="Close">&times;</button>
+    <div class="sectionTitle">Share/Import a Collection</div>
+    <div class="tip">Export or share your owned games by code. Friends can view your list without accounts or servers.</div>
+    <div style="margin-bottom:0.8em;">
+      <label for="shareCode">Your Share Code:</label>
+      <input id="shareCode" readonly>
+      <button id="copyShare">Copy</button>
+    </div>
+    <div class="tip" style="margin-bottom:0.6em;">
+      <small>Share this code with anyone, or keep it as a backup. (No private data is included.)</small>
+    </div>
+    <hr style="border:0;border-top:1.5px solid #222;">
+    <div style="margin:0.7em 0 0.2em 0;">
+      <label for="importCode">Paste a Collection Code:</label>
+      <input id="importCode" placeholder="Paste code here...">
+      <button id="importBtn">View</button>
+    </div>
+    <span id="importResult"></span>
+  </div>
+  <div id="result">Loading...</div>
+  <table id="romTable" style="display:none">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+  <!-- Game Details Modal -->
+  <div id="modalBg" style="display:none;"></div>
+  <div id="gameModal" style="display:none;"></div>
+  <script>
+    function csvToArray(text) {
+      const lines = text.trim().split('\n');
+      const headers = lines[0].split(',').map(h => h.replace(/(^"|"$)/g,'').trim());
+      return lines.slice(1).map(line => {
+        let values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        return headers.reduce((o, h, i) => (o[h]=values[i]?values[i].replace(/(^"|"$)/g,'').trim():'' ,o), {});
+      });
+    }
+
+    let rawData = [], sortCol = null, sortAsc = true, owned = {};
+    let filterPlatform = '', filterGenre = '', searchValue = '';
+    let importedCollection = null;
+
+    function loadOwned() {
+      try { owned = JSON.parse(localStorage.getItem('roms_owned') || '{}'); } catch { owned = {}; }
+    }
+    function saveOwned() {
+      localStorage.setItem('roms_owned', JSON.stringify(owned));
+    }
+
+    fetch('games.csv')
+      .then(r => r.ok ? r.text() : Promise.reject('CSV not found!'))
+      .then(txt => {
+        rawData = csvToArray(txt);
+        if (!rawData.length) throw "CSV is empty!";
+        loadOwned();
+        setupFilters(rawData);
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+
+        document.getElementById('platformFilter').addEventListener('change', e => {
+          filterPlatform = e.target.value;
+          renderTable(applyFilters(rawData));
+          updateStats(applyFilters(rawData));
+        });
+        document.getElementById('genreFilter').addEventListener('change', e => {
+          filterGenre = e.target.value;
+          renderTable(applyFilters(rawData));
+          updateStats(applyFilters(rawData));
+        });
+        document.getElementById('search').addEventListener('input', e => {
+          searchValue = e.target.value.trim().toLowerCase();
+          renderTable(applyFilters(rawData));
+          updateStats(applyFilters(rawData));
+        });
+
+        document.getElementById('exportBtn').onclick = exportOwnedGames;
+        document.getElementById('shareBtn').onclick = showShareSection;
+        document.getElementById('showImport').onclick = showImportSection;
+        document.getElementById('copyShare').onclick = function() {
+          let code = document.getElementById('shareCode').value;
+          navigator.clipboard.writeText(code);
+          this.textContent = "Copied!";
+          setTimeout(()=>{this.textContent="Copy"},1200);
+        };
+        document.getElementById('importBtn').onclick = importCollection;
+        document.getElementById('closeShare').onclick = closeShareSection;
+        document.getElementById('importCode').addEventListener('keydown', function(e){
+          if(e.key==='Enter') importCollection();
+        });
+      })
+      .catch(err => {
+        document.getElementById('result').textContent = 'Error: ' + err;
+      });
+
+    function setupFilters(data) {
+      const platforms = [...new Set(data.map(row => row["Platform"]).filter(Boolean))].sort();
+      const platSel = document.getElementById('platformFilter');
+      platSel.innerHTML = `<option value="">All Platforms</option>` + platforms.map(p => `<option>${p}</option>`).join('');
+      let allGenres = [];
+      data.forEach(row => {
+        if(row["Genre"]) row["Genre"].split(',').map(g => g.trim()).forEach(g => allGenres.push(g));
+      });
+      const genres = [...new Set(allGenres)].sort();
+      const genreSel = document.getElementById('genreFilter');
+      genreSel.innerHTML = `<option value="">All Genres</option>` + genres.map(g => `<option>${g}</option>`).join('');
+    }
+
+    function applyFilters(data) {
+      let filterOwned = importedCollection;
+      return data.filter(row => {
+        if (filterPlatform && row["Platform"] !== filterPlatform) return false;
+        if (filterGenre) {
+          if (!(row["Genre"] && row["Genre"].split(',').map(g=>g.trim()).includes(filterGenre))) return false;
+        }
+        if (searchValue) {
+          if (!Object.values(row).some(v => v && v.toLowerCase().includes(searchValue))) return false;
+        }
+        if (filterOwned && !filterOwned[row["Game Name"] + "___" + row["Platform"]]) return false;
+        return true;
+      });
+    }
+
+    function renderTable(data) {
+      const headers = Object.keys(data[0]);
+      const thead = document.querySelector('#romTable thead');
+      const tbody = document.querySelector('#romTable tbody');
+      thead.innerHTML = "<tr><th>Owned?</th>" +
+        headers.map(h => `<th>${h}</th>`).join('') + "</tr>";
+      tbody.innerHTML = data.map((row, idx) => {
+        const key = row["Game Name"] + "___" + row["Platform"];
+        let checked = importedCollection
+          ? (importedCollection[key] ? "checked disabled" : "disabled")
+          : (owned[key] ? "checked" : "");
+        // Add a clickable class to the row
+        return `<tr data-row="${idx}" class="${(owned[key]||importedCollection&&importedCollection[key]) ? 'owned-row' : ''} game-row">` +
+          `<td class="center"><input type="checkbox" class="checkbox-own" data-key="${key}" ${checked}></td>` +
+          headers.map(h =>
+            h === "Cover" && row[h] ? `<td><img src="${row[h]}"></td>` :
+            h === "Details" && row[h] ? `<td><a href="${row[h]}" target="_blank">Info</a></td>` :
+            `<td>${row[h]||''}</td>`
+          ).join('') +
+        "</tr>";
+      }).join('');
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('romTable').style.display = '';
+      if (!importedCollection) {
+        tbody.querySelectorAll('.checkbox-own').forEach(cb => {
+          cb.onchange = function() {
+            const k = this.getAttribute('data-key');
+            if(this.checked) owned[k] = true;
+            else delete owned[k];
+            saveOwned();
+            renderTable(applyFilters(rawData));
+            updateStats(applyFilters(rawData));
+          }
+        });
+      }
+      // Make rows clickable (but not checkboxes or links)
+      tbody.querySelectorAll('tr.game-row').forEach(tr => {
+        tr.onclick = function(e) {
+          if (e.target.tagName === "INPUT" || e.target.tagName === "A" || e.target.classList.contains('checkbox-own')) return;
+          const rowIdx = parseInt(tr.getAttribute("data-row"), 10);
+          showGameModal(data[rowIdx]);
+        };
+      });
+    }
+
+    function updateStats(data) {
+      const total = data.length;
+      let ratings = data.map(row => parseFloat(row["Rating"])).filter(n => !isNaN(n));
+      let avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2) : '-';
+      let platforms = new Set(data.map(row => row["Platform"]));
+      let useOwned = importedCollection || owned;
+      const ownedCount = data.filter(row => useOwned[row["Game Name"] + "___" + row["Platform"]]).length;
+      document.getElementById('stats').textContent =
+        `Games: ${total} | Owned: ${ownedCount} | Average Rating: ${avg} | Platforms: ${platforms.size}`;
+    }
+
+    // ---- Export/Import/Share Features ----
+
+    function exportOwnedGames() {
+      const rows = rawData.filter(row => owned[row["Game Name"] + "___" + row["Platform"]]);
+      if (!rows.length) { alert("No owned games to export!"); return; }
+      let out = Object.keys(rawData[0]).join(',') + '\n' +
+        rows.map(row => Object.values(row).map(cell =>
+          `"${(cell||'').replace(/"/g, '""')}"`).join(',')
+        ).join('\n');
+      let blob = new Blob([out], {type:'text/csv'});
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url; a.download = 'sandgraal-collection.csv';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+    }
+
+    function showShareSection() {
+      // Create share code
+      let codes = [];
+      Object.keys(owned).forEach(k => { if (owned[k]) codes.push(k); });
+      let code = btoa(unescape(encodeURIComponent(codes.join('|'))));
+      document.getElementById('shareSection').style.display = '';
+      document.getElementById('shareCode').value = code;
+      document.getElementById('importCode').value = '';
+      document.getElementById('importResult').textContent = '';
+    }
+
+    function showImportSection() {
+      document.getElementById('shareSection').style.display = '';
+      document.getElementById('shareCode').value = '';
+      document.getElementById('importCode').value = '';
+      document.getElementById('importResult').textContent = '';
+    }
+
+    function importCollection() {
+      let code = document.getElementById('importCode').value.trim();
+      if (!code) {
+        document.getElementById('importResult').textContent = "Paste a code first.";
+        return;
+      }
+      let coll = {};
+      try {
+        let decoded = decodeURIComponent(escape(atob(code)));
+        decoded.split('|').forEach(k => coll[k]=true);
+        importedCollection = coll;
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+        document.getElementById('importResult').textContent = "Imported! Viewing shared collection.";
+      } catch(e) {
+        document.getElementById('importResult').textContent = "Invalid code.";
+      }
+    }
+
+    function closeShareSection() {
+      importedCollection = null;
+      document.getElementById('shareSection').style.display = 'none';
+      renderTable(applyFilters(rawData));
+      updateStats(applyFilters(rawData));
+    }
+
+    // ---- Modal Feature ----
+    function showGameModal(game) {
+      const modal = document.getElementById('gameModal');
+      const modalBg = document.getElementById('modalBg');
+      // Build modal HTML
+      let html = `<button class="modal-close" title="Close">&times;</button>`;
+      html += `<div class="modal-title">${game["Game Name"] || "(No Name)"}</div>`;
+      if (game["Cover"]) html += `<img src="${game["Cover"]}" alt="cover">`;
+      html += `<dl>`;
+      for (let k in game) {
+        if (k === "Game Name" || k === "Cover") continue;
+        if (!game[k]) continue;
+        html += `<dt>${k}:</dt><dd>${game[k]}</dd>`;
+      }
+      html += `</dl>`;
+      // Optional: External links (e.g., Google, YouTube)
+      const query = encodeURIComponent((game["Game Name"]||"") + " " + (game["Platform"]||""));
+      html += `<div class="external-links">`;
+      html += `<a href="https://www.google.com/search?q=${query}" target="_blank">Google</a>`;
+      html += `<a href="https://www.youtube.com/results?search_query=${query} gameplay" target="_blank">YouTube</a>`;
+      html += `<a href="https://gamefaqs.gamespot.com/search?game=${encodeURIComponent(game["Game Name"]||"")}" target="_blank">GameFAQs</a>`;
+      html += `</div>`;
+
+      modal.innerHTML = html;
+      modalBg.style.display = modal.style.display = '';
+      setTimeout(()=>{modalBg.style.display = "block"; modal.style.display = "block";},1);
+
+      // Close logic
+      modal.querySelector('.modal-close').onclick = closeModal;
+      modalBg.onclick = closeModal;
+      function closeModal() {
+        modal.style.display = modalBg.style.display = "none";
+        modal.innerHTML = "";
+      }
+    }
+  </script>
+</body>
+</html>

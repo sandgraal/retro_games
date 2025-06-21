@@ -1,0 +1,28 @@
+/* TEAM */
+Developer: Chris Sandgraal
+GitHub: https://github.com/sandgraal
+Project: Sandgraal’s Retro Game List
+
+/* ABOUT */
+Lifelong retro gamer, and builder of tools for peoples.
+Believes in local-first, privacy-respecting software and actually finishing the backlog.
+Fan of hand-crafted hot sauce, open source, and finding the perfect “deep cut” game for every mood.
+
+/* SITE */
+Built with: HTML5, CSS3, vanilla JavaScript (no frameworks)
+Philosophy: Simple, fast.
+Features: Game search/filter, local collection tracking, share codes, and direct gameplay resources.
+Design: Old-school pixel flavor with a modern, mobile-friendly UI.
+
+/* THANKS */
+Thanks to:
+- Everyone building the open web and keeping retro gaming accessible
+- All the CSV/table JS demo coders out there
+- The classic game devs who made all this possible (and the ROM dumpers who kept it alive)
+
+/* WHY */
+Built to keep my ROM collection organized, accessible, and private—without resorting to SaaS or cloud logins.
+If it’s useful for you, fork it, improve it, or just play more games.
+
+/* CONTACT */
+GitHub: https://github.com/sandgraal/retro_games/issues

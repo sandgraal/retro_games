@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ROMs List</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: radial-gradient(circle at 40% 10%, #292d38 50%, #16171b 100%);
+      color: #e8e8e8;
+      margin: 2rem;
+      min-height: 100vh;
+    }
+    h1 {
+      color: #FFD700;
+      font-family: 'Press Start 2P', cursive, sans-serif;
+      font-size: 2rem;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 16px #FFD70088;
+      margin-bottom: 0.5em;
+    }
+    .filters {
+      margin-bottom: 1em;
+      display: flex;
+      gap: 0.6em;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filters select, #search {
+      padding: 0.5em 1.1em;
+      border-radius: 10px;
+      border: 1.5px solid #414759;
+      background: #212534;
+      color: #ffd700;
+      margin-right: 0.1em;
+      font-size: 1em;
+      outline: none;
+      box-shadow: 0 0 4px #00ffd5cc, 0 2px 8px #0004;
+      transition: border 0.15s, box-shadow 0.2s;
+    }
+    .filters select:focus, #search:focus {
+      border-color: #00ffd5;
+      box-shadow: 0 0 8px #00ffd577, 0 4px 16px #0008;
+    }
+    #stats {
+      margin: 1.2em 0 1em 0;
+      color: #76f0ea;
+      font-size: 1.09em;
+      font-family: 'Press Start 2P', cursive, sans-serif;
+      text-shadow: 0 2px 10px #03f8f4cc;
+      letter-spacing: 1px;
+    }
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      background: #22252e;
+      border-radius: 18px;
+      box-shadow: 0 8px 40px #1ee6ff2a, 0 2px 10px #0008;
+      overflow: hidden;
+      margin-bottom: 2em;
+    }
+    th, td {
+      padding: 0.7rem 0.7rem;
+      text-align: left;
+      border-bottom: 1.5px solid #242e3a;
+    }
+    th {
+      background: linear-gradient(90deg, #282c38 60%, #111 100%);
+      color: #ffd700;
+      cursor: pointer;
+      user-select: none;
+      font-family: 'Press Start 2P', cursive, sans-serif;
+      font-size: 1em;
+      text-shadow: 0 1px 4px #FFD70044, 0 0px 20px #111a;
+      border-bottom: 2.5px solid #ffd70066;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+    th.sorted-asc::after { content: " ▲"; font-size: 0.88em; }
+    th.sorted-desc::after { content: " ▼"; font-size: 0.88em; }
+    tr {
+      transition: box-shadow 0.18s, background 0.16s;
+    }
+    tr:nth-child(even) {
+      background: #21232b;
+    }
+    tr:hover {
+      background: #27363c !important;
+      box-shadow: 0 0 8px 1px #ffd70055;
+      z-index: 2;
+    }
+    .owned-row {
+      background: #234021 !important;
+      box-shadow: 0 0 8px #47f713cc, 0 0 28px #a1ff6266;
+      font-weight: bold;
+    }
+    .center {
+      text-align: center;
+    }
+    img {
+      max-width: 64px;
+      max-height: 50px;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px #050c;
+      border: 1.5px solid #ffd70055;
+      background: #181a1d;
+      margin: 0 2px;
+      transition: box-shadow 0.2s;
+    }
+    img:hover {
+      box-shadow: 0 0 32px #ffd700bb, 0 1px 4px #111a;
+    }
+    a {
+      color: #ffb93d;
+      font-weight: bold;
+      text-shadow: 0 2px 10px #FFD70055;
+      transition: color 0.18s;
+    }
+    a:hover {
+      color: #11ffc6;
+      text-decoration: underline;
+    }
+    /* Fancy checkboxes */
+    .checkbox-own {
+      accent-color: #ffd700;
+      width: 1.2em; height: 1.2em;
+      box-shadow: 0 0 8px #ffd70099;
+      border-radius: 5px;
+      border: 2px solid #ffd700cc;
+      background: #23282d;
+      cursor: pointer;
+      margin: 2px 0;
+      transition: box-shadow 0.2s;
+    }
+    .checkbox-own:checked {
+      box-shadow: 0 0 18px #67ff5ecc;
+      background: #aaff66;
+    }
+    @media (max-width: 800px) {
+      html, body { font-size: 13px;}
+      .filters { flex-direction: column; align-items: stretch; }
+      th, td { padding: 0.45rem 0.3rem;}
+      img { max-width: 36px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>My Game List</h1>
+  <div class="filters">
+    <select id="platformFilter"><option value="">All Platforms</option></select>
+    <select id="genreFilter"><option value="">All Genres</option></select>
+    <input id="search" placeholder="Type to filter...">
+  </div>
+  <div id="stats">Loading stats...</div>
+  <div id="result">Loading...</div>
+  <table id="romTable" style="display:none">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+  <script>
+    function csvToArray(text) {
+      const lines = text.trim().split('\n');
+      const headers = lines[0].split(',').map(h => h.replace(/(^"|"$)/g,'').trim());
+      return lines.slice(1).map(line => {
+        let values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        return headers.reduce((o, h, i) => (o[h]=values[i]?values[i].replace(/(^"|"$)/g,'').trim():'' ,o), {});
+      });
+    }
+
+    let rawData = [], sortCol = null, sortAsc = true, owned = {};
+    let filterPlatform = '', filterGenre = '', searchValue = '';
+
+    function loadOwned() {
+      try { owned = JSON.parse(localStorage.getItem('roms_owned') || '{}'); } catch { owned = {}; }
+    }
+    function saveOwned() {
+      localStorage.setItem('roms_owned', JSON.stringify(owned));
+    }
+
+    fetch('games.csv')
+      .then(r => r.ok ? r.text() : Promise.reject('CSV not found!'))
+      .then(txt => {
+        rawData = csvToArray(txt);
+        if (!rawData.length) throw "CSV is empty!";
+        loadOwned();
+        setupFilters(rawData);
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+        document.getElementById('platformFilter').addEventListener('change', e => {
+          filterPlatform = e.target.value;
+          renderTable(applyFilters(rawData), sortCol, sortAsc);
+          updateStats(applyFilters(rawData));
+        });
+        document.getElementById('genreFilter').addEventListener('change', e => {
+          filterGenre = e.target.value;
+          renderTable(applyFilters(rawData), sortCol, sortAsc);
+          updateStats(applyFilters(rawData));
+        });
+        document.getElementById('search').addEventListener('input', e => {
+          searchValue = e.target.value.trim().toLowerCase();
+          renderTable(applyFilters(rawData), sortCol, sortAsc);
+          updateStats(applyFilters(rawData));
+        });
+      })
+      .catch(err => {
+        document.getElementById('result').textContent = 'Error: ' + err;
+      });
+
+    function setupFilters(data) {
+      const platforms = [...new Set(data.map(row => row["Platform"]).filter(Boolean))].sort();
+      const platSel = document.getElementById('platformFilter');
+      platSel.innerHTML = `<option value="">All Platforms</option>` + platforms.map(p => `<option>${p}</option>`).join('');
+      let allGenres = [];
+      data.forEach(row => {
+        if(row["Genre"]) row["Genre"].split(',').map(g => g.trim()).forEach(g => allGenres.push(g));
+      });
+      const genres = [...new Set(allGenres)].sort();
+      const genreSel = document.getElementById('genreFilter');
+      genreSel.innerHTML = `<option value="">All Genres</option>` + genres.map(g => `<option>${g}</option>`).join('');
+    }
+
+    function applyFilters(data) {
+      return data.filter(row => {
+        if (filterPlatform && row["Platform"] !== filterPlatform) return false;
+        if (filterGenre) {
+          if (!(row["Genre"] && row["Genre"].split(',').map(g=>g.trim()).includes(filterGenre))) return false;
+        }
+        if (searchValue) {
+          if (!Object.values(row).some(v => v && v.toLowerCase().includes(searchValue))) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderTable(data, sortColName = null, sortAscDir = true) {
+      const headers = Object.keys(data[0]);
+      const thead = document.querySelector('#romTable thead');
+      const tbody = document.querySelector('#romTable tbody');
+      thead.innerHTML = "<tr><th>Owned?</th>" +
+        headers.map(h => {
+          let cls = '';
+          if (h === sortColName) cls = sortAscDir ? 'sorted-asc' : 'sorted-desc';
+          return `<th class="${cls}" data-col="${h}">${h}</th>`;
+        }).join('') + "</tr>";
+      tbody.innerHTML = data.map(row => {
+        const key = row["Game Name"] + "___" + row["Platform"];
+        return "<tr" + (owned[key] ? ' class="owned-row"' : '') + ">" +
+          `<td class="center"><input type="checkbox" class="checkbox-own" data-key="${key}" ${owned[key] ? "checked" : ""}></td>` +
+          headers.map(h =>
+            h === "Cover" && row[h] ? `<td><img src="${row[h]}"></td>` :
+            h === "Details" && row[h] ? `<td><a href="${row[h]}" target="_blank">Info</a></td>` :
+            `<td>${row[h]||''}</td>`
+          ).join('') +
+        "</tr>";
+      }).join('');
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('romTable').style.display = '';
+      thead.querySelectorAll('th[data-col]').forEach(th => {
+        th.onclick = () => {
+          const col = th.getAttribute('data-col');
+          let sorted = [...data];
+          sorted.sort((a, b) => {
+            const v1 = a[col] || '', v2 = b[col] || '';
+            const n1 = parseFloat(v1), n2 = parseFloat(v2);
+            if (!isNaN(n1) && !isNaN(n2)) {
+              return sortAscDir ? n1 - n2 : n2 - n1;
+            }
+            return sortAscDir
+              ? v1.localeCompare(v2, undefined, {numeric:true})
+              : v2.localeCompare(v1, undefined, {numeric:true});
+          });
+          renderTable(sorted, col, !sortAscDir);
+          updateStats(sorted);
+          sortCol = col;
+          sortAsc = !sortAscDir;
+        };
+      });
+      tbody.querySelectorAll('.checkbox-own').forEach(cb => {
+        cb.onchange = function() {
+          const k = this.getAttribute('data-key');
+          if(this.checked) owned[k] = true;
+          else delete owned[k];
+          saveOwned();
+          renderTable(applyFilters(rawData), sortCol, sortAsc);
+          updateStats(applyFilters(rawData));
+        }
+      });
+    }
+
+    function updateStats(data) {
+      const total = data.length;
+      let ratings = data.map(row => parseFloat(row["Rating"])).filter(n => !isNaN(n));
+      let avg = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2) : '-';
+      let platforms = new Set(data.map(row => row["Platform"]));
+      const ownedCount = data.filter(row => owned[row["Game Name"] + "___" + row["Platform"]]).length;
+      document.getElementById('stats').textContent =
+        `Games: ${total} | Owned: ${ownedCount} | Average Rating: ${avg} | Platforms: ${platforms.size}`;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: radial-gradient(circle at 40% 10%, #292d38 50%, #16171b 100%);
+  color: #e8e8e8;
+  margin: 2rem;
+  min-height: 100vh;
+}
+h1 {
+  color: #FFD700;
+  font-family: 'Press Start 2P', cursive, sans-serif;
+  font-size: 2rem;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 16px #FFD70088;
+  margin-bottom: 0.5em;
+}
+.top-actions, .filters {
+  display: flex;
+  gap: 1em;
+  align-items: center;
+  margin-bottom: 1em;
+  flex-wrap: wrap;
+}
+.filters input, .filters select {
+  padding: 0.5em 1.1em;
+  border-radius: 10px;
+  border: 1.5px solid #414759;
+  background: #212534;
+  color: #ffd700;
+  font-size: 1em;
+  outline: none;
+}
+#stats {
+  margin: 1.2em 0 1em 0;
+  color: #76f0ea;
+  font-size: 1.09em;
+  font-family: 'Press Start 2P', cursive, sans-serif;
+  text-shadow: 0 2px 10px #03f8f4cc;
+  letter-spacing: 1px;
+}
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  background: #22252e;
+  border-radius: 18px;
+  box-shadow: 0 8px 40px #1ee6ff2a, 0 2px 10px #0008;
+  overflow: hidden;
+  margin-bottom: 2em;
+}
+th, td {
+  padding: 0.7rem 0.7rem;
+  text-align: left;
+  border-bottom: 1.5px solid #242e3a;
+}
+th {
+  background: linear-gradient(90deg, #282c38 60%, #111 100%);
+  color: #ffd700;
+  font-family: 'Press Start 2P', cursive, sans-serif;
+  font-size: 1em;
+}
+tr:nth-child(even) { background: #21232b; }
+tr:hover { background: #27363c !important; }
+.owned-row { background: #234021 !important; font-weight: bold; }
+.center { text-align: center; }
+img { max-width: 64px; max-height: 50px; border-radius: 8px; }
+.checkbox-own { accent-color: #ffd700; width: 1.2em; height: 1.2em; border-radius: 5px; }
+#shareSection {
+  margin: 0.5em 0 0.6em 0;
+  padding: 1em 1.5em;
+  background: #1d2b39;
+  border-radius: 10px;
+  color: #fff;
+  display: none;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  position: relative;
+}
+#modalBg {
+  position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+  background: rgba(20,30,44,0.82);
+  z-index: 1200;
+  display: none;
+}
+#gameModal {
+  position: fixed; left: 50%; top: 54%; transform: translate(-50%,-50%);
+  background: #181c26;
+  color: #ffeec2;
+  border-radius: 20px;
+  box-shadow: 0 16px 64px #000a, 0 2px 12px #ffd70044;
+  max-width: 94vw; min-width: 300px; width: 420px;
+  z-index: 1300;
+  padding: 2.1em 2em 1.7em 2em;
+  display: none;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  border: 2.5px solid #ffd70066;
+  text-align: left;
+}
+#gameModal .modal-close {
+  position: absolute; top: 12px; right: 18px;
+  color: #ffd700; font-size: 1.7em;
+  cursor: pointer; font-family: 'Press Start 2P', monospace, cursive;
+  opacity: 0.84; border: none; background: none;
+}
+#gameModal .modal-close:hover {
+  color: #fff700; opacity: 1;
+}
+#gameModal img {
+  max-width: 100px; max-height: 82px;
+  float: right; margin-left: 1.2em; margin-bottom: 1em; border-radius: 8px;
+}
+#gameModal .modal-title {
+  font-family: 'Press Start 2P', monospace, cursive;
+  color: #ffd700;
+  font-size: 1.15em;
+  margin-bottom: 0.65em;
+  letter-spacing: 1.2px;
+}
+#gameModal dl { margin: 0.5em 0 0 0; font-size: 1em; }
+#gameModal dt { font-weight: bold; color: #ffd700; margin-top: 0.4em; font-size: 0.92em; }
+#gameModal dd { margin: 0 0 0.3em 0.7em; color: #ffeec2; font-size: 1em; }
+#gameModal .external-links { margin-top: 1.2em; display: flex; gap: 0.6em; }
+#gameModal .external-links a {
+  color: #76f0ea; background: #232534; border-radius: 6px; padding: 0.24em 0.85em;
+  text-decoration: none; font-family: 'Press Start 2P', monospace, cursive;
+  font-size: 0.93em; border: 1.2px solid #ffd70055;
+}
+#gameModal .external-links a:hover {
+  background: #ffd700; color: #1d2b39; border-color: #ffd700;
+}
+@media (max-width: 700px) {
+  #gameModal { width: 94vw; min-width: 0; padding: 1.1em 0.5em;}
+  #gameModal img { max-width: 74px; max-height: 56px; }
+}
