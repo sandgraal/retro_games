@@ -1,46 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Sandgraal's Game List</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/png" href="/favicon.png">
-</head>
-<body>
-  <h1>Sandgraal's Game List</h1>
-  <div class="top-actions">
-    <button id="exportBtn">Export Owned Games</button>
-    <button id="shareBtn">Get Shareable Link</button>
-    <button id="showImport">Import Collection Code</button>
-  </div>
-  <div class="filters">
-    <select id="platformFilter"><option value="">All Platforms</option></select>
-    <select id="genreFilter"><option value="">All Genres</option></select>
-    <input id="search" placeholder="Type to filter...">
-  </div>
-  <div id="stats">Loading stats...</div>
-  <div id="shareSection" style="display:none;">
-    <button id="closeShare" title="Close">&times;</button>
-    <div><label for="shareCode">Share Code:</label>
-      <input id="shareCode" readonly>
-      <button id="copyShare">Copy</button>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sandgraal's Game List</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  </head>
+  <body>
+    <h1>Sandgraal's Game List</h1>
+    <div class="top-actions">
+      <button id="exportBtn">Export Owned Games</button>
+      <button id="shareBtn">Get Shareable Link</button>
+      <button id="showImport">Import Collection Code</button>
     </div>
-    <div>
-      <label for="importCode">Import Code:</label>
-      <input id="importCode" placeholder="Paste code here...">
-      <button id="importBtn">View</button>
-      <span id="importResult"></span>
+    <div class="filters">
+      <select id="platformFilter">
+        <option value="">All Platforms</option>
+      </select>
+      <select id="genreFilter">
+        <option value="">All Genres</option>
+      </select>
+      <input id="search" placeholder="Type to filter..." />
     </div>
-  </div>
-  <div id="result">Loading...</div>
-  <table id="romTable" style="display:none">
-    <thead></thead>
-    <tbody></tbody>
-  </table>
-  <div id="modalBg"></div>
-  <div id="gameModal"></div>
-  <script src="app.js"></script>
-</body>
+    <div id="stats">Loading stats...</div>
+    <div id="shareSection" style="display: none">
+      <button id="closeShare" title="Close">&times;</button>
+      <div>
+        <label for="shareCode">Share Code:</label>
+        <input id="shareCode" readonly />
+        <button id="copyShare">Copy</button>
+      </div>
+      <div>
+        <label for="importCode">Import Code:</label>
+        <input id="importCode" placeholder="Paste code here..." />
+        <button id="importBtn">View</button>
+        <span id="importResult"></span>
+      </div>
+    </div>
+    <div id="result">Loading...</div>
+    <table id="romTable" style="display: none">
+      <thead></thead>
+      <tbody></tbody>
+    </table>
+    <div id="modalBg"></div>
+    <div id="gameModal"></div>
+    <script src="app.js"></script>
+  </body>
 </html>
