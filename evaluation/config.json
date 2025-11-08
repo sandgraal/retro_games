@@ -1,0 +1,91 @@
+{
+  "framework": {
+    "name": "Retro Game List Evaluation Framework",
+    "version": "1.0.0",
+    "created": "2025-11-08",
+    "description": "Automated evaluation framework for Retro Game List application"
+  },
+  "evaluation_metrics": [
+    {
+      "id": "search_filter_accuracy",
+      "name": "Search & Filter Accuracy",
+      "description": "Verifies search queries, platform filters, and genre filters return correct results",
+      "type": "code-based",
+      "target_score": 0.85,
+      "pass_threshold": 0.7,
+      "categories": ["search", "filter"]
+    },
+    {
+      "id": "data_integrity",
+      "name": "Data Integrity",
+      "description": "Validates owned games persist to localStorage and collection import/export works correctly",
+      "type": "code-based",
+      "target_score": 0.85,
+      "pass_threshold": 0.7,
+      "categories": ["collection", "export", "sharecode"]
+    },
+    {
+      "id": "ui_ux_functionality",
+      "name": "UI/UX Functionality",
+      "description": "Ensures core interactions like modals, sorting, CSV export, share codes work as expected",
+      "type": "code-based",
+      "target_score": 0.85,
+      "pass_threshold": 0.7,
+      "categories": ["ui_interaction", "export", "sharecode", "edge_case"]
+    }
+  ],
+  "test_dataset": {
+    "queries_file": "queries.json",
+    "responses_file": "responses.json",
+    "jsonl_file": "evaluation_data.jsonl",
+    "total_tests": 25,
+    "breakdown": {
+      "search": 3,
+      "filter": 8,
+      "collection": 4,
+      "export": 1,
+      "sharecode": 3,
+      "ui_interaction": 3,
+      "edge_case": 3
+    }
+  },
+  "evaluation_outputs": {
+    "results_file": "evaluation_results.json",
+    "summary_file": "evaluation_summary.json",
+    "description": "Detailed row-level results and aggregate metrics"
+  },
+  "execution_config": {
+    "generate_responses": "node run-tests.js",
+    "convert_to_jsonl": "node convert-to-jsonl.js",
+    "run_evaluation": "python run_evaluation.py",
+    "parallel_execution": false,
+    "timeout_seconds": 300
+  },
+  "evaluation_targets": {
+    "overall_pass_rate": 95.0,
+    "overall_average_score": 0.85,
+    "search_filter_min": 0.85,
+    "data_integrity_min": 0.85,
+    "ui_ux_min": 0.85
+  },
+  "baseline_results": {
+    "timestamp": "2025-11-08T22:16:00Z",
+    "total_evaluations": 25,
+    "overall_average_score": 0.37,
+    "overall_pass_rate": 0.36,
+    "metrics": {
+      "search_filter_accuracy": {
+        "average_score": 0.44,
+        "pass_rate": 0.44
+      },
+      "data_integrity": {
+        "average_score": 0.3,
+        "pass_rate": 0.28
+      },
+      "ui_ux_functionality": {
+        "average_score": 0.38,
+        "pass_rate": 0.36
+      }
+    }
+  }
+}

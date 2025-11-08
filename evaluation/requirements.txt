@@ -1,0 +1,12 @@
+# Python requirements for Retro Game List evaluation framework
+
+# Azure AI Evaluation SDK (optional for advanced features)
+# azure-ai-evaluation>=0.1.0
+
+# For prompt-based evaluators (optional)
+# promptflow>=1.0.0
+# promptflow-tools>=1.0.0
+
+# Testing and development
+pytest>=7.0.0
+pytest-cov>=4.0.0

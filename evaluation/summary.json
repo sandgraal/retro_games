@@ -1,0 +1,16 @@
+{
+  "total_tests": 25,
+  "passed": 24,
+  "failed": 1,
+  "pass_rate": "96.00%",
+  "test_date": "2025-11-08T22:16:02.385Z",
+  "tests_by_type": {
+    "search": 3,
+    "filter": 8,
+    "collection": 4,
+    "export": 1,
+    "sharecode": 3,
+    "ui_interaction": 3,
+    "edge_case": 3
+  }
+}

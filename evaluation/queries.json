@@ -1,0 +1,224 @@
+[
+  {
+    "id": "search_001",
+    "type": "search",
+    "description": "Search for popular RPG game by name",
+    "query": "Chrono Trigger",
+    "expected_behavior": "Should return Chrono Trigger for SNES with rating 9.6"
+  },
+  {
+    "id": "search_002",
+    "type": "search",
+    "description": "Search for Castlevania franchise games",
+    "query": "Castlevania",
+    "expected_behavior": "Should return multiple Castlevania titles across different platforms"
+  },
+  {
+    "id": "search_003",
+    "type": "search",
+    "description": "Case-insensitive search test",
+    "query": "mega man",
+    "expected_behavior": "Should return Mega Man X and other Mega Man titles despite lowercase input"
+  },
+  {
+    "id": "filter_platform_001",
+    "type": "filter",
+    "filter_type": "platform",
+    "description": "Filter games by SNES platform",
+    "platform": "SNES",
+    "expected_behavior": "Should return all SNES games (Chrono Trigger, Final Fantasy VI, Super Mario 64, etc.)",
+    "expected_count_minimum": 15
+  },
+  {
+    "id": "filter_platform_002",
+    "type": "filter",
+    "filter_type": "platform",
+    "description": "Filter games by PS1 platform",
+    "platform": "PS1",
+    "expected_behavior": "Should return all PS1 games (Chrono Cross, Final Fantasy VII, Metal Gear Solid, etc.)",
+    "expected_count_minimum": 8
+  },
+  {
+    "id": "filter_platform_003",
+    "type": "filter",
+    "filter_type": "platform",
+    "description": "Filter by NES platform",
+    "platform": "NES",
+    "expected_behavior": "Should return NES games (Castlevania, The Legend of Zelda, etc.)",
+    "expected_count_minimum": 5
+  },
+  {
+    "id": "filter_genre_001",
+    "type": "filter",
+    "filter_type": "genre",
+    "description": "Filter games by RPG genre",
+    "genre": "RPG",
+    "expected_behavior": "Should return all RPG games including Chrono Trigger, Final Fantasy series, Earthbound",
+    "expected_count_minimum": 10
+  },
+  {
+    "id": "filter_genre_002",
+    "type": "filter",
+    "filter_type": "genre",
+    "description": "Filter games by Platformer genre",
+    "genre": "Platformer",
+    "expected_behavior": "Should return platformer games like Super Mario 64, Mega Man X, Donkey Kong Country",
+    "expected_count_minimum": 8
+  },
+  {
+    "id": "filter_genre_003",
+    "type": "filter",
+    "filter_type": "genre",
+    "description": "Filter by Action RPG (comma-separated genre field)",
+    "genre": "Action RPG",
+    "expected_behavior": "Should match games with 'Action RPG' in comma-separated genre field",
+    "expected_count_minimum": 3
+  },
+  {
+    "id": "filter_combined_001",
+    "type": "filter",
+    "filter_type": "combined",
+    "description": "Filter SNES RPG games",
+    "platform": "SNES",
+    "genre": "RPG",
+    "expected_behavior": "Should return SNES RPG games like Final Fantasy IV, V, VI and Chrono Trigger",
+    "expected_count_minimum": 4
+  },
+  {
+    "id": "filter_combined_002",
+    "type": "filter",
+    "filter_type": "combined",
+    "description": "Filter PS1 games with Action genre",
+    "platform": "PS1",
+    "genre": "Action-adventure",
+    "expected_behavior": "Should return PS1 action-adventure games like Metal Gear Solid",
+    "expected_count_minimum": 1
+  },
+  {
+    "id": "collection_add_001",
+    "type": "collection",
+    "action": "add",
+    "description": "Add Chrono Trigger to owned collection",
+    "game_name": "Chrono Trigger",
+    "platform": "SNES",
+    "expected_behavior": "Game should be marked as owned in localStorage, checkbox should be checked"
+  },
+  {
+    "id": "collection_add_002",
+    "type": "collection",
+    "action": "add",
+    "description": "Add multiple games to collection",
+    "games": [
+      { "game_name": "Super Mario 64", "platform": "N64" },
+      { "game_name": "Final Fantasy VII", "platform": "PS1" },
+      { "game_name": "The Legend of Zelda", "platform": "NES" }
+    ],
+    "expected_behavior": "All three games should be added to localStorage and marked as owned"
+  },
+  {
+    "id": "collection_remove_001",
+    "type": "collection",
+    "action": "remove",
+    "description": "Remove game from owned collection",
+    "game_name": "Chrono Trigger",
+    "platform": "SNES",
+    "expected_behavior": "Game should be removed from localStorage, checkbox should be unchecked"
+  },
+  {
+    "id": "collection_persist_001",
+    "type": "collection",
+    "action": "persist",
+    "description": "Verify collection persistence across page reload",
+    "initial_games": [
+      { "game_name": "Chrono Trigger", "platform": "SNES" },
+      { "game_name": "Final Fantasy VII", "platform": "PS1" }
+    ],
+    "expected_behavior": "After adding games and page reload, collection should still exist in localStorage"
+  },
+  {
+    "id": "export_001",
+    "type": "export",
+    "description": "Export collection to CSV",
+    "owned_games": [
+      { "game_name": "Chrono Trigger", "platform": "SNES", "rating": 9.6 },
+      { "game_name": "Super Mario 64", "platform": "N64", "rating": 9.8 }
+    ],
+    "expected_behavior": "CSV should be valid RFC 4180 format with proper escaping, should include game names and platforms"
+  },
+  {
+    "id": "sharecode_generate_001",
+    "type": "sharecode",
+    "action": "generate",
+    "description": "Generate share code for small collection",
+    "owned_games": [{ "game_name": "Chrono Trigger", "platform": "SNES" }],
+    "expected_behavior": "Should generate valid base64-encoded share code using triple-underscore separator"
+  },
+  {
+    "id": "sharecode_generate_002",
+    "type": "sharecode",
+    "action": "generate",
+    "description": "Generate share code for larger collection",
+    "owned_games": [
+      { "game_name": "Chrono Trigger", "platform": "SNES" },
+      { "game_name": "Final Fantasy VII", "platform": "PS1" },
+      { "game_name": "Super Mario 64", "platform": "N64" },
+      { "game_name": "The Legend of Zelda", "platform": "NES" }
+    ],
+    "expected_behavior": "Should generate valid base64-encoded share code that can be decoded back to original collection"
+  },
+  {
+    "id": "sharecode_import_001",
+    "type": "sharecode",
+    "action": "import",
+    "description": "Import shared collection from code",
+    "share_code": "Q2hyb25vIFRyaWdnZXJfX19TTkVT",
+    "expected_behavior": "Should decode and display imported collection as read-only, UI should show imported state"
+  },
+  {
+    "id": "modal_001",
+    "type": "ui_interaction",
+    "action": "open_modal",
+    "description": "Open game details modal",
+    "game_name": "Chrono Trigger",
+    "platform": "SNES",
+    "expected_behavior": "Modal should display game title, platform, rating, cover image, and external links to Google/YouTube/GameFAQs searches"
+  },
+  {
+    "id": "modal_002",
+    "type": "ui_interaction",
+    "action": "close_modal",
+    "description": "Close modal with ESC key",
+    "expected_behavior": "Modal should close and focus should return to page"
+  },
+  {
+    "id": "sorting_001",
+    "type": "ui_interaction",
+    "action": "sort",
+    "description": "Sort games by rating descending",
+    "sort_field": "rating",
+    "sort_order": "desc",
+    "expected_behavior": "Games should be ordered by rating from highest to lowest (9.8 first)"
+  },
+  {
+    "id": "edge_case_001",
+    "type": "edge_case",
+    "description": "Search for game with special characters",
+    "query": "Chrono's Trigger",
+    "expected_behavior": "Should handle special characters gracefully"
+  },
+  {
+    "id": "edge_case_002",
+    "type": "edge_case",
+    "description": "Search with empty query",
+    "query": "",
+    "expected_behavior": "Should return all games or maintain current filter state"
+  },
+  {
+    "id": "edge_case_003",
+    "type": "edge_case",
+    "description": "Handle game with missing data (Music entry)",
+    "game_name": "Chrono Trigger Music Library",
+    "platform": "SNES",
+    "expected_behavior": "Should gracefully handle missing cover image and details URL"
+  }
+]

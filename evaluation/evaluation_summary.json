@@ -1,0 +1,70 @@
+{
+  "total_evaluations": 25,
+  "timestamp": "2025-11-08T16:20:13.103108",
+  "metrics": {
+    "search_filter_accuracy": {
+      "average_score": 0.44,
+      "min_score": 0,
+      "max_score": 1.0,
+      "total_tests": 25,
+      "passed": 11,
+      "failed": 14,
+      "pass_rate": "44.0%"
+    },
+    "data_integrity": {
+      "average_score": 0.3,
+      "min_score": 0,
+      "max_score": 1.0,
+      "total_tests": 25,
+      "passed": 7,
+      "failed": 18,
+      "pass_rate": "28.0%"
+    },
+    "ui_ux_functionality": {
+      "average_score": 0.38,
+      "min_score": 0,
+      "max_score": 1.0,
+      "total_tests": 25,
+      "passed": 9,
+      "failed": 16,
+      "pass_rate": "36.0%"
+    }
+  },
+  "overall": {
+    "average_score": 0.373,
+    "min_score": 0,
+    "max_score": 1.0,
+    "total_metric_evaluations": 75,
+    "overall_pass_rate": "36.0%"
+  },
+  "by_query_type": {
+    "search": {
+      "count": 3,
+      "avg_score": 0.333
+    },
+    "filter": {
+      "count": 8,
+      "avg_score": 0.333
+    },
+    "collection": {
+      "count": 4,
+      "avg_score": 0.292
+    },
+    "export": {
+      "count": 1,
+      "avg_score": 0.667
+    },
+    "sharecode": {
+      "count": 3,
+      "avg_score": 0.667
+    },
+    "ui_interaction": {
+      "count": 3,
+      "avg_score": 0.333
+    },
+    "edge_case": {
+      "count": 3,
+      "avg_score": 0.278
+    }
+  }
+}
