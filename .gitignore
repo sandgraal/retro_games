@@ -1,0 +1,16 @@
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Local configuration overrides
+config.js
+config.local.js
+
+# Logs and temp files
+npm-debug.log*
+yarn-error.log*
+
+# Editor settings
+.vscode/*
+!.vscode/README.md
+

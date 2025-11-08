@@ -15,12 +15,28 @@ const COL_RATING = "rating";
 const STORAGE_KEY = "roms_owned";
 
 // === Supabase Config ===
-const SUPABASE_URL = ""https://https://vssbtwhvdwabbbnrgmde.supabase.co"; // <-- REPLACE!
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzc2J0d2h2ZHdhYmJibnJnbWRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1NTIxNTgsImV4cCI6MjA2NjEyODE1OH0.f2iRQECEQ_p94mPbzcKsRDA692NWy6CiVjNMU6MjTaM";           // <-- REPLACE!
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
+const SUPABASE_URL = SUPABASE_CONFIG.url || "";
+const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey || "";
+
+const supabase =
+  SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+if (!supabase) {
+  console.warn(
+    "Supabase credentials missing. Provide window.__SUPABASE_CONFIG__ in config.js."
+  );
+}
 
 // === Fetch all games from Supabase ===
 async function fetchGames() {
+  if (!supabase) {
+    throw new Error(
+      "Supabase configuration missing. Copy config.example.js to config.js and add your credentials."
+    );
+  }
   let { data, error } = await supabase
     .from("games")
     .select("*")
@@ -360,7 +376,7 @@ function showGameModal(game) {
 fetchGames()
   .then((data) => {
     rawData = data;
-    if (!rawData.length) throw "No games in database!";
+    if (!rawData.length) throw new Error("No games in database!");
     loadOwned();
     setupFilters(rawData);
     renderTable(applyFilters(rawData));
@@ -400,5 +416,6 @@ fetchGames()
     });
   })
   .catch((err) => {
-    showError("Supabase error: " + err);
+    const message = err && err.message ? err.message : err;
+    showError("Supabase error: " + message);
   });
