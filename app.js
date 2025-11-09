@@ -13,6 +13,7 @@ const COL_GENRE = "genre";
 const COL_COVER = "cover";
 const COL_RATING = "rating";
 const STORAGE_KEY = "roms_owned";
+const SAMPLE_DATA_URL = "./data/sample-games.json";
 
 // === Supabase Config ===
 const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
@@ -43,6 +44,33 @@ async function fetchGames() {
     .order("game_name", { ascending: true });
   if (error) throw error;
   return data;
+}
+
+async function fetchSampleGames() {
+  const response = await fetch(SAMPLE_DATA_URL, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Sample data missing or inaccessible.");
+  }
+  return response.json();
+}
+
+async function loadGameData() {
+  const useFallback = async (reason) => {
+    console.warn("Using local sample data due to Supabase issue:", reason);
+    const sample = await fetchSampleGames();
+    return { data: sample, source: "sample" };
+  };
+
+  if (!supabase) {
+    return useFallback("Supabase not configured.");
+  }
+
+  try {
+    const data = await fetchGames();
+    return { data, source: "supabase" };
+  } catch (err) {
+    return useFallback(err);
+  }
 }
 
 let rawData = [],
@@ -165,7 +193,7 @@ function renderTable(data) {
       );
     })
     .join("");
-  document.getElementById("result").style.display = "none";
+  hideStatus();
   document.getElementById("romTable").style.display = "";
   // Checkbox logic (no importedCollection means editing is enabled)
   if (!importedCollection) {
@@ -299,13 +327,27 @@ function closeShareSection() {
 }
 
 /**
+ * Display status messaging under the filters.
+ */
+function showStatus(msg, variant = "info") {
+  const el = document.getElementById("result");
+  if (!el) return;
+  el.style.display = "";
+  el.style.color = variant === "error" ? "#ff7070" : "#7fffd4";
+  el.textContent = msg;
+}
+
+function hideStatus() {
+  const el = document.getElementById("result");
+  if (!el) return;
+  el.style.display = "none";
+}
+
+/**
  * Show error in a styled message area (not a blocking alert).
  */
 function showError(msg) {
-  const el = document.getElementById("result");
-  el.style.display = "";
-  el.style.color = "#ff7070";
-  el.textContent = msg;
+  showStatus(msg, "error");
 }
 
 /**
@@ -374,14 +416,22 @@ const canBootstrap =
   typeof document.getElementById === "function";
 
 if (!disableBootstrapFlag && canBootstrap) {
-  fetchGames()
-    .then((data) => {
+  loadGameData()
+    .then(({ data, source }) => {
       rawData = data;
-      if (!rawData.length) throw new Error("No games in database!");
+      if (!rawData.length) throw new Error("No games available to display!");
       loadOwned();
       setupFilters(rawData);
       renderTable(applyFilters(rawData));
       updateStats(applyFilters(rawData));
+      if (source === "sample") {
+        showStatus(
+          "Supabase is unavailable. Showing a curated sample dataset for now.",
+          "info"
+        );
+      } else {
+        hideStatus();
+      }
 
       document.getElementById("platformFilter").addEventListener("change", (e) => {
         filterPlatform = e.target.value;
@@ -418,7 +468,7 @@ if (!disableBootstrapFlag && canBootstrap) {
     })
     .catch((err) => {
       const message = err && err.message ? err.message : err;
-      showError("Supabase error: " + message);
+      showError("Unable to load games: " + message);
     });
 }
 

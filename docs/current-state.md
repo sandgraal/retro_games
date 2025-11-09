@@ -13,6 +13,7 @@ _Last updated: June 2024_
 
 1. `config.js` (ignored by git) exposes `window.__SUPABASE_CONFIG__` with the Supabase URL and anon key.
 2. `app.js` instantiates a Supabase client and fetches all rows from the `games` table, ordered alphabetically.
+   - If Supabase credentials are missing or unreachable, the frontend transparently loads `data/sample-games.json` so the UI stays functional.
 3. The dataset populates filter dropdowns and an interactive table. Per-row ownership is stored in `localStorage` under the key `roms_owned`.
 4. Users can export owned titles to CSV or create a share code (base64-encoded list of `game___platform` identifiers). Importing a share code renders a read-only view of another collection.
 5. Clicking a row opens a modal with metadata and quick links to Google, YouTube gameplay, and GameFAQs searches.
