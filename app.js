@@ -90,6 +90,41 @@ const VIRTUALIZE_MIN_ITEMS = 80;
 const VIRTUAL_DEFAULT_CARD_HEIGHT = 360;
 const VIRTUAL_OVERSCAN_ROWS = 2;
 const VIRTUAL_SCROLL_THROTTLE_MS = 80;
+const FALLBACK_COVER_CACHE_KEY = "rom_cover_cache_v1";
+const FALLBACK_COVER_CACHE_LIMIT = 400;
+const FALLBACK_COVER_RETRY_MS = 1000 * 60 * 60 * 24 * 7;
+const FALLBACK_COVER_ATTEMPT_LIMIT = 25;
+const PLATFORM_NAME_ALIASES = {
+  SNES: ["Super Nintendo Entertainment System"],
+  NES: ["Nintendo Entertainment System"],
+  N64: ["Nintendo 64"],
+  "NINTENDO 64": ["Nintendo 64"],
+  "NINTENDO SWITCH": ["Nintendo Switch"],
+  GAMECUBE: ["Nintendo GameCube", "GameCube"],
+  GENESIS: ["Sega Genesis", "Mega Drive"],
+  "MEGA DRIVE": ["Sega Genesis", "Mega Drive"],
+  SATURN: ["Sega Saturn"],
+  DREAMCAST: ["Sega Dreamcast", "Dreamcast"],
+  PLAYSTATION: ["PlayStation", "PS1"],
+  "PLAYSTATION 2": ["PlayStation 2", "PS2"],
+  "PLAYSTATION 3": ["PlayStation 3", "PS3"],
+  "PLAYSTATION 4": ["PlayStation 4", "PS4"],
+  "PLAYSTATION 5": ["PlayStation 5", "PS5"],
+  "XBOX 360": ["Xbox 360"],
+  "XBOX ONE": ["Xbox One"],
+  "XBOX SERIES X": ["Xbox Series X", "Xbox Series S", "Xbox Series X/S"],
+  "XBOX SERIES S": ["Xbox Series S", "Xbox Series X", "Xbox Series X/S"],
+  "GAME BOY": ["Game Boy"],
+  "GAME BOY ADVANCE": ["Game Boy Advance"],
+  "GAME BOY COLOR": ["Game Boy Color"],
+  "NINTENDO DS": ["Nintendo DS"],
+  "NINTENDO 3DS": ["Nintendo 3DS"],
+  "MS-DOS": ["MS-DOS"],
+  PC: ["Windows", "PC game", "PC"],
+  ARCADE: ["Arcade game", "Arcade"],
+  "ATARI 2600": ["Atari 2600"],
+};
+const fallbackCoverCache = loadFallbackCoverCache();
 
 const reduceMotionQuery =
   typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -1415,9 +1450,11 @@ async function fetchNextSupabaseChunk(reason = "stream:auto") {
     try {
       const page = await fetchGamesPage(from, to, streamState.filterPayload);
       const rows = Array.isArray(page.data) ? page.data : [];
+      let coverHydrationPromise = Promise.resolve(false);
       if (rows.length) {
         rawData = rawData.concat(rows);
         cacheStatusRows(rows);
+        coverHydrationPromise = hydrateFallbackCovers(rows);
       }
       if (page.tableName) {
         streamState.tableName = page.tableName;
@@ -1438,6 +1475,19 @@ async function fetchNextSupabaseChunk(reason = "stream:auto") {
         refreshFilteredView(reason.startsWith("stream:") ? reason : `stream:${reason}`);
         updateTrendingCarousel(rawData);
         updateStructuredData(rawData);
+        coverHydrationPromise
+          .then((mutated) => {
+            if (mutated) {
+              updateTrendingCarousel(rawData);
+              updateStructuredData(rawData);
+              refreshFilteredView("stream:covers");
+            }
+          })
+          .catch((error) => {
+            if (typeof console !== "undefined" && typeof console.debug === "function") {
+              console.debug("Stream cover hydration skipped", error);
+            }
+          });
       }
     } catch (err) {
       streamState.error = err;
@@ -2854,6 +2904,277 @@ function normalizeImageUrl(value, origin) {
 }
 
 /**
+ * Attempt to backfill missing cover art using external sources.
+ * @param {GameRow[]} rows
+ * @returns {Promise<boolean>}
+ */
+async function hydrateFallbackCovers(rows) {
+  if (!Array.isArray(rows) || !rows.length) return false;
+  const now = Date.now();
+  let mutated = false;
+  /** @type {{ row: GameRow; key: string }[]} */
+  const missing = [];
+  rows.forEach((row) => {
+    if (!row) return;
+    const key = buildRowKey(row);
+    if (!key) return;
+    const cached = fallbackCoverCache.get(key);
+    if (cached && cached.url) {
+      if (!row[COL_COVER]) {
+        row[COL_COVER] = cached.url;
+        mutated = true;
+      }
+      return;
+    }
+    if (row[COL_COVER]) return;
+    if (cached && !shouldRetryFallbackCover(cached, now)) {
+      return;
+    }
+    if (missing.length < FALLBACK_COVER_ATTEMPT_LIMIT) {
+      missing.push({ row, key });
+    }
+  });
+  if (!missing.length) {
+    if (mutated) persistFallbackCoverCache();
+    return mutated;
+  }
+  if (typeof fetch !== "function") {
+    if (mutated) persistFallbackCoverCache();
+    return mutated;
+  }
+  let hadUpdates = mutated;
+  for (const item of missing) {
+    try {
+      const coverUrl = await fetchFallbackCoverFromWikipedia(item.row);
+      if (coverUrl) {
+        item.row[COL_COVER] = coverUrl;
+        fallbackCoverCache.set(item.key, { url: coverUrl, timestamp: Date.now() });
+        hadUpdates = true;
+      } else {
+        fallbackCoverCache.set(item.key, { url: "", failedAt: Date.now() });
+      }
+    } catch (error) {
+      fallbackCoverCache.set(item.key, { url: "", failedAt: Date.now() });
+      if (typeof console !== "undefined" && typeof console.debug === "function") {
+        console.debug("Cover fallback failed", item.key, error);
+      }
+    }
+  }
+  if (hadUpdates || missing.length) {
+    persistFallbackCoverCache();
+  }
+  return hadUpdates;
+}
+
+/**
+ * Look up fallback cover art from Wikipedia's REST API.
+ * @param {GameRow} row
+ * @returns {Promise<string|undefined>}
+ */
+async function fetchFallbackCoverFromWikipedia(row) {
+  const title = (row && row[COL_GAME] ? row[COL_GAME] : "").toString().trim();
+  if (!title) return undefined;
+  const platform = (row && row[COL_PLATFORM] ? row[COL_PLATFORM] : "").toString().trim();
+  const queries = buildFallbackCoverQueries(title, platform);
+  if (!queries.length) return undefined;
+  for (const query of queries) {
+    const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+    try {
+      const response = await fetch(endpoint, {
+        headers: {
+          Accept: "application/json",
+        },
+      });
+      if (response.status === 404) {
+        continue;
+      }
+      if (response.status === 429 || response.status === 403) {
+        break;
+      }
+      if (!response.ok) {
+        continue;
+      }
+      const payload = await response.json();
+      if (payload.type === "disambiguation") {
+        continue;
+      }
+      const image = extractWikipediaImageUrl(payload);
+      if (image) {
+        return image;
+      }
+    } catch (error) {
+      if (typeof console !== "undefined" && typeof console.debug === "function") {
+        console.debug("Wikipedia cover fetch error", query, error);
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Build candidate article titles for Wikipedia lookup.
+ * @param {string} title
+ * @param {string} platform
+ * @returns {string[]}
+ */
+function buildFallbackCoverQueries(title, platform) {
+  const cleanedTitle = title.replace(/\s+/g, " ").trim();
+  if (!cleanedTitle) return [];
+  const queries = new Set();
+  const normalizedPlatform = platform.replace(/\s+/g, " ").trim();
+  if (normalizedPlatform) {
+    resolvePlatformSearchTerms(normalizedPlatform).forEach((term) => {
+      queries.add(`${cleanedTitle} (${term})`);
+    });
+  }
+  queries.add(cleanedTitle);
+  if (!/video game/i.test(cleanedTitle)) {
+    queries.add(`${cleanedTitle} (video game)`);
+  }
+  return Array.from(queries);
+}
+
+/**
+ * Derive platform search aliases for Wikipedia queries.
+ * @param {string} platform
+ * @returns {string[]}
+ */
+function resolvePlatformSearchTerms(platform) {
+  const terms = new Set();
+  if (platform) {
+    terms.add(platform);
+    const normalized = platform.toUpperCase();
+    const aliases = PLATFORM_NAME_ALIASES[normalized];
+    if (Array.isArray(aliases)) {
+      aliases.forEach((alias) => {
+        if (alias) terms.add(alias);
+      });
+    }
+  }
+  return Array.from(terms).filter(Boolean);
+}
+
+/**
+ * Extract an image URL from a Wikipedia summary response.
+ * @param {any} payload
+ * @returns {string|undefined}
+ */
+function extractWikipediaImageUrl(payload) {
+  if (!payload || typeof payload !== "object") return undefined;
+  const original =
+    payload.originalimage && typeof payload.originalimage.source === "string"
+      ? payload.originalimage.source
+      : null;
+  if (original && /^https?:\/\//i.test(original)) {
+    return original;
+  }
+  const thumb =
+    payload.thumbnail && typeof payload.thumbnail.source === "string"
+      ? payload.thumbnail.source
+      : null;
+  if (thumb && /^https?:\/\//i.test(thumb)) {
+    return thumb;
+  }
+  return undefined;
+}
+
+/**
+ * Determine whether a cached fallback entry should be retried.
+ * @param {{ url?: string; failedAt?: number }} entry
+ * @param {number} now
+ */
+function shouldRetryFallbackCover(entry, now) {
+  if (!entry) return true;
+  if (entry.url) return false;
+  if (!entry.failedAt) return true;
+  return now - entry.failedAt >= FALLBACK_COVER_RETRY_MS;
+}
+
+/**
+ * Load persisted fallback covers from storage.
+ * @returns {Map<string, {url?: string; timestamp?: number; failedAt?: number}>}
+ */
+function loadFallbackCoverCache() {
+  const storage = getCoverCacheStorage();
+  if (!storage) return new Map();
+  try {
+    const raw = storage.getItem(FALLBACK_COVER_CACHE_KEY);
+    if (!raw) return new Map();
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return new Map();
+    const map = new Map();
+    Object.keys(parsed).forEach((key) => {
+      const value = parsed[key];
+      if (value && typeof value === "object") {
+        map.set(key, value);
+      }
+    });
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+/**
+ * Persist fallback covers back to storage (with pruning).
+ */
+function persistFallbackCoverCache() {
+  const storage = getCoverCacheStorage();
+  if (!storage) return;
+  try {
+    const sorted = Array.from(fallbackCoverCache.entries()).sort((a, b) => {
+      return getFallbackCacheTimestamp(b[1]) - getFallbackCacheTimestamp(a[1]);
+    });
+    if (sorted.length > FALLBACK_COVER_CACHE_LIMIT) {
+      sorted.length = FALLBACK_COVER_CACHE_LIMIT;
+    }
+    fallbackCoverCache.clear();
+    const plain = {};
+    sorted.forEach(([key, value]) => {
+      fallbackCoverCache.set(key, value);
+      plain[key] = value;
+    });
+    storage.setItem(FALLBACK_COVER_CACHE_KEY, JSON.stringify(plain));
+  } catch {
+    /* ignore storage failures */
+  }
+}
+
+/**
+ * Resolve a usable timestamp for cache pruning.
+ * @param {{ timestamp?: number; failedAt?: number }} entry
+ * @returns {number}
+ */
+function getFallbackCacheTimestamp(entry) {
+  if (!entry || typeof entry !== "object") return 0;
+  if (typeof entry.timestamp === "number") return entry.timestamp;
+  if (typeof entry.failedAt === "number") return entry.failedAt;
+  return 0;
+}
+
+/**
+ * Locate a localStorage-like implementation.
+ * @returns {Storage|null}
+ */
+function getCoverCacheStorage() {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      return window.localStorage;
+    }
+  } catch {
+    /* noop */
+  }
+  try {
+    if (typeof globalThis !== "undefined" && globalThis.localStorage) {
+      return globalThis.localStorage;
+    }
+  } catch {
+    /* noop */
+  }
+  return null;
+}
+
+/**
  * Generate a stable slug for schema identifiers.
  * @param {string} name
  * @param {string} platform
@@ -3195,6 +3516,7 @@ if (!disableBootstrapFlag && canBootstrap) {
     .then(({ data, source, reason }) => {
       rawData = data;
       cacheStatusRows(rawData);
+      const coverHydrationPromise = hydrateFallbackCovers(rawData);
       if (!rawData.length) throw new Error("No games available to display!");
       loadStatuses();
       loadNotes();
@@ -3208,6 +3530,19 @@ if (!disableBootstrapFlag && canBootstrap) {
       refreshFilteredView("initial-load");
       updateTrendingCarousel(rawData);
       updateStructuredData(rawData);
+      coverHydrationPromise
+        .then((mutated) => {
+          if (mutated) {
+            updateTrendingCarousel(rawData);
+            updateStructuredData(rawData);
+            refreshFilteredView("covers:fallback");
+          }
+        })
+        .catch((error) => {
+          if (typeof console !== "undefined" && typeof console.debug === "function") {
+            console.debug("Cover hydration skipped", error);
+          }
+        });
       if (source === "sample") {
         const fallReason =
           typeof reason === "string"
