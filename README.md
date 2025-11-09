@@ -42,6 +42,8 @@ See `docs/setup.md` for more detailed guidance.
 
 Supabase schema + migration workflow lives in `docs/data-pipeline.md`.
 
+For artwork guidance, see [`docs/image-sourcing.md`](docs/image-sourcing.md) for vetted cover-image sources, seeding tips, and hosting best practices. The UI now falls back to Wikipedia box art when a record lacks a `cover` URL, but seeding explicit links keeps Supabase exports and offline mode deterministic.
+
 ## Development
 
 - `npm run lint` / `npm run lint:fix` – Run ESLint (with Prettier compat) across the main app file and build scripts.
