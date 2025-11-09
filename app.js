@@ -139,7 +139,7 @@ async function fetchGames() {
       if (error) {
         const missingColumn =
           typeof error.message === "string" &&
-          error.message.toLowerCase().includes(`column "${COL_GAME}"`.toLowerCase());
+          error.message.toLowerCase().includes('column "game_name"');
         if (missingColumn) {
           ({ data, error } = await supabase.from(tableName).select("*"));
         }
