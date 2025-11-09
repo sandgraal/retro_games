@@ -120,6 +120,57 @@ h1 {
   text-align: center;
 }
 
+#dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1em;
+  margin-bottom: 1.5em;
+}
+
+.dashboard-card {
+  background: rgba(18, 26, 40, 0.9);
+  border-radius: 16px;
+  padding: 1em 1.2em;
+  box-shadow: 0 8px 30px #000a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+  font-size: 0.95em;
+  color: var(--color-accent);
+  font-family: var(--font-title);
+  letter-spacing: 1px;
+}
+
+#dashboard-statuses ul,
+#dashboard-statuses li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#dashboard-statuses li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3em 0;
+  color: #dbe6ff;
+}
+
+#dashboard-statuses strong {
+  font-size: 1.1em;
+}
+
+#dash-genres {
+  margin: 0;
+  padding-left: 1.1em;
+  color: #dbe6ff;
+}
+
+#dash-genres li strong {
+  float: right;
+}
+
 .status-cell {
   min-width: 130px;
 }
@@ -598,6 +649,9 @@ footer .egg {
   .filters {
     flex-direction: column;
     align-items: stretch;
+  }
+  #dashboard {
+    grid-template-columns: 1fr;
   }
   .filter-field,
   .search-field {

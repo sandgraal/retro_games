@@ -588,6 +588,45 @@ function updateStats(data) {
   ].join(" | ");
   document.getElementById("stats").textContent =
     `Games: ${total} | ${statusSummary} | Average Rating: ${avg} | Platforms: ${platforms.size}`;
+
+  updateDashboard(statusCounts, data);
+}
+
+function updateDashboard(statusCounts, data) {
+  const ownedEl = document.getElementById("dash-owned");
+  const wishlistEl = document.getElementById("dash-wishlist");
+  const backlogEl = document.getElementById("dash-backlog");
+  const tradeEl = document.getElementById("dash-trade");
+  if (ownedEl)
+    ownedEl.textContent = (statusCounts[STATUS_OWNED] || 0).toLocaleString();
+  if (wishlistEl)
+    wishlistEl.textContent = (statusCounts[STATUS_WISHLIST] || 0).toLocaleString();
+  if (backlogEl)
+    backlogEl.textContent = (statusCounts[STATUS_BACKLOG] || 0).toLocaleString();
+  if (tradeEl)
+    tradeEl.textContent = (statusCounts[STATUS_TRADE] || 0).toLocaleString();
+
+  const topGenresEl = document.getElementById("dash-genres");
+  if (!topGenresEl) return;
+  const genreCounts = {};
+  data.forEach((row) => {
+    const genres = row[COL_GENRE]
+      ? row[COL_GENRE].split(",").map((g) => g.trim()).filter(Boolean)
+      : [];
+    genres.forEach((genre) => {
+      genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+    });
+  });
+  const topGenres = Object.entries(genreCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  if (!topGenres.length) {
+    topGenresEl.innerHTML = "<li>No genres yet</li>";
+  } else {
+    topGenresEl.innerHTML = topGenres
+      .map(([genre, count]) => `<li>${genre}<strong>${count}</strong></li>`)
+      .join("");
+  }
 }
 
 /**
@@ -1041,6 +1080,7 @@ const testApi = {
   renderTable,
   setupFilters,
   updateStats,
+  updateDashboard,
   showError,
   toggleSort,
   __setState(overrides = {}) {

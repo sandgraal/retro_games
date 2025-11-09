@@ -85,6 +85,23 @@
       <button id="clearFilters" class="filter-field clear-button">Clear Filters</button>
     </div>
     <div id="stats">Loading stats...</div>
+    <section id="dashboard" aria-label="Collection dashboard">
+      <div class="dashboard-card" id="dashboard-statuses">
+        <h2>Status Mix</h2>
+        <ul>
+          <li><span>Owned</span><strong id="dash-owned">0</strong></li>
+          <li><span>Wishlist</span><strong id="dash-wishlist">0</strong></li>
+          <li><span>Backlog</span><strong id="dash-backlog">0</strong></li>
+          <li><span>Trade</span><strong id="dash-trade">0</strong></li>
+        </ul>
+      </div>
+      <div class="dashboard-card" id="dashboard-top-genres">
+        <h2>Top Genres</h2>
+        <ol id="dash-genres">
+          <li>Loading...</li>
+        </ol>
+      </div>
+    </section>
     <div id="shareSection" style="display: none">
       <button id="closeShare" title="Close">&times;</button>
       <div>

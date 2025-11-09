@@ -31,6 +31,15 @@ function resetDom() {
       <tbody></tbody>
     </table>
     <div id="stats"></div>
+    <div id="dashboard">
+      <div id="dashboard-statuses">
+        <span id="dash-owned"></span>
+        <span id="dash-wishlist"></span>
+        <span id="dash-backlog"></span>
+        <span id="dash-trade"></span>
+      </div>
+      <ol id="dash-genres"></ol>
+    </div>
   `;
 }
 
@@ -157,7 +166,23 @@ describe("renderTable", () => {
     expect(noteDots.length).toBe(1);
   });
 });
-describe("persistence helpers", () => {
+describe("dashboard", () => {
+  it("updates top genres and status cards", () => {
+    document.getElementById("dash-owned").textContent = "0";
+    document.getElementById("dash-genres").innerHTML = "";
+    app.updateDashboard(
+      {
+        owned: 2,
+        wishlist: 1,
+        backlog: 0,
+        trade: 0,
+      },
+      SAMPLE_DATA
+    );
+    expect(document.getElementById("dash-owned").textContent).toBe("2");
+    expect(document.getElementById("dash-genres").children.length).toBeGreaterThan(0);
+  });
+
   it("exports backup payload with statuses, notes, filters", () => {
     app.__setState({
       statuses: { "Chrono Trigger___SNES": "wishlist" },
