@@ -12,3 +12,9 @@ WIP: A fast, private, and no-nonsense tracker for classic and retro games. A p[l
 
 This is not another bloated ROM launcher or subscription service.
 It’s a clean, modern tool for serious collectors, archivists, and retro fans who want control over their library.
+
+## Setup
+
+1. Copy `.env.example` to `.env` and provide your Supabase project URL and anon key.
+2. Follow the existing configuration flow to expose those credentials to the frontend (currently via a manually created `config.js`).
+3. Serve the site locally with any static server, e.g. `python -m http.server 8080`.
