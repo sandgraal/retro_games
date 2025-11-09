@@ -64,6 +64,13 @@ const SAMPLE_DATA_URL = "./data/sample-games.json";
 const BACKUP_FILENAME = "sandgraal-collection.json";
 const FILTER_STORAGE_KEY = "rom_filters";
 
+const reduceMotionQuery =
+  typeof window !== "undefined" && typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)")
+    : null;
+const registeredCarouselWindows = new Set();
+let carouselControlsBound = false;
+
 // === Supabase Config ===
 const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
 const SUPABASE_URL = SUPABASE_CONFIG.url || "";
@@ -344,6 +351,92 @@ function escapeHtml(str) {
         return ch;
     }
   });
+}
+
+function prefersReducedMotion() {
+  return !!(reduceMotionQuery && reduceMotionQuery.matches);
+}
+
+function formatPercent(value, count = 0) {
+  if (!count || !Number.isFinite(value) || value <= 0) return "0%";
+  if (value < 1) return "<1%";
+  if (value < 10) {
+    return `${value.toFixed(1).replace(/\.0$/, "")}%`;
+  }
+  return `${Math.round(value)}%`;
+}
+
+function updateCarouselButtons(windowEl) {
+  if (!windowEl || !windowEl.parentElement) return;
+  const parent = windowEl.parentElement;
+  const targetId = windowEl.id;
+  if (!targetId) return;
+  const prevBtn = parent.querySelector(
+    `[data-carousel-target="${targetId}"][data-direction="prev"]`
+  );
+  const nextBtn = parent.querySelector(
+    `[data-carousel-target="${targetId}"][data-direction="next"]`
+  );
+  const maxScroll = Math.max(0, windowEl.scrollWidth - windowEl.clientWidth);
+  if (prevBtn) prevBtn.disabled = windowEl.scrollLeft <= 1;
+  if (nextBtn) nextBtn.disabled = windowEl.scrollLeft >= maxScroll - 1;
+}
+
+function registerCarouselWindow(windowEl) {
+  if (!windowEl || windowEl.dataset.carouselRegistered) return;
+  windowEl.dataset.carouselRegistered = "true";
+  registeredCarouselWindows.add(windowEl);
+  windowEl.addEventListener(
+    "scroll",
+    () => updateCarouselButtons(windowEl),
+    { passive: true }
+  );
+  if (typeof ResizeObserver === "function") {
+    const observer = new ResizeObserver(() => updateCarouselButtons(windowEl));
+    observer.observe(windowEl);
+    windowEl.__carouselObserver = observer;
+  }
+  updateCarouselButtons(windowEl);
+}
+
+function initCarouselControls() {
+  if (carouselControlsBound || typeof document === "undefined") return;
+  const controls = document.querySelectorAll("[data-carousel-target]");
+  controls.forEach((button) => {
+    button.addEventListener("click", () => {
+      const targetId = button.getAttribute("data-carousel-target");
+      if (!targetId) return;
+      const windowEl = document.getElementById(targetId);
+      if (!windowEl) return;
+      const direction = button.getAttribute("data-direction") === "next" ? 1 : -1;
+      const stepAttr = Number(button.getAttribute("data-scroll-step"));
+      const baseStep = Math.round(windowEl.clientWidth * 0.85) || 220;
+      const step = Number.isFinite(stepAttr) && stepAttr > 0 ? stepAttr : baseStep;
+      windowEl.scrollBy({
+        left: step * direction,
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+      });
+      const update = () => updateCarouselButtons(windowEl);
+      if (typeof window !== "undefined") {
+        window.requestAnimationFrame(update);
+        window.setTimeout(update, prefersReducedMotion() ? 0 : 320);
+      } else {
+        update();
+      }
+    });
+  });
+  carouselControlsBound = true;
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("resize", () => {
+    registeredCarouselWindows.forEach((el) => updateCarouselButtons(el));
+  });
+  if (reduceMotionQuery && typeof reduceMotionQuery.addEventListener === "function") {
+    reduceMotionQuery.addEventListener("change", () => {
+      registeredCarouselWindows.forEach((el) => updateCarouselButtons(el));
+    });
+  }
 }
 
 /**
@@ -693,38 +786,84 @@ function updateStats(data) {
 }
 
 function updateDashboard(statusCounts, data) {
-  const ownedEl = document.getElementById("dash-owned");
-  const wishlistEl = document.getElementById("dash-wishlist");
-  const backlogEl = document.getElementById("dash-backlog");
-  const tradeEl = document.getElementById("dash-trade");
-  if (ownedEl) ownedEl.textContent = (statusCounts[STATUS_OWNED] || 0).toLocaleString();
-  if (wishlistEl)
-    wishlistEl.textContent = (statusCounts[STATUS_WISHLIST] || 0).toLocaleString();
-  if (backlogEl)
-    backlogEl.textContent = (statusCounts[STATUS_BACKLOG] || 0).toLocaleString();
-  if (tradeEl) tradeEl.textContent = (statusCounts[STATUS_TRADE] || 0).toLocaleString();
+  initCarouselControls();
+  const statusConfig = [
+    { key: STATUS_OWNED, prefix: "dash-owned", label: "Owned" },
+    { key: STATUS_WISHLIST, prefix: "dash-wishlist", label: "Wishlist" },
+    { key: STATUS_BACKLOG, prefix: "dash-backlog", label: "Backlog" },
+    { key: STATUS_TRADE, prefix: "dash-trade", label: "Trade" },
+  ];
+  const totalStatuses = statusConfig.reduce(
+    (sum, entry) => sum + (statusCounts[entry.key] || 0),
+    0
+  );
+  statusConfig.forEach((entry) => {
+    const count = statusCounts[entry.key] || 0;
+    const percentValue = totalStatuses ? (count / totalStatuses) * 100 : 0;
+    const percentText = formatPercent(percentValue, count);
+    const countEl = document.getElementById(`${entry.prefix}-count`);
+    const percentEl = document.getElementById(`${entry.prefix}-percent`);
+    const barFill = document.getElementById(`${entry.prefix}-bar`);
+    const bar = barFill ? barFill.parentElement : null;
+    if (countEl) countEl.textContent = count.toLocaleString();
+    if (percentEl) percentEl.textContent = percentText;
+    if (bar) {
+      const ariaValue = count > 0 && percentValue < 1 ? 1 : Math.round(percentValue);
+      bar.setAttribute("aria-valuenow", ariaValue.toString());
+    }
+    if (barFill) {
+      const widthValue =
+        count > 0 && percentValue < 1 ? "1%" : `${Math.min(percentValue, 100)}%`;
+      if (!prefersReducedMotion()) {
+        barFill.classList.remove("is-animating");
+        void barFill.offsetWidth;
+        barFill.style.setProperty("--fill-width", widthValue);
+        barFill.classList.add("is-animating");
+      } else {
+        barFill.classList.remove("is-animating");
+        barFill.style.setProperty("--fill-width", widthValue);
+      }
+    }
+  });
 
   const topGenresEl = document.getElementById("dash-genres");
-  if (!topGenresEl) return;
-  const genreCounts = {};
-  data.forEach((row) => {
-    const genres = row[COL_GENRE]
-      ? row[COL_GENRE].split(",")
-          .map((g) => g.trim())
-          .filter(Boolean)
-      : [];
-    genres.forEach((genre) => {
-      genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+  if (topGenresEl) {
+    const genreCounts = {};
+    data.forEach((row) => {
+      const genres = row[COL_GENRE]
+        ? row[COL_GENRE]
+            .split(",")
+            .map((g) => g.trim())
+            .filter(Boolean)
+        : [];
+      genres.forEach((genre) => {
+        genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+      });
     });
-  });
-  const topGenres = Object.entries(genreCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-  topGenresEl.innerHTML = topGenres.length
-    ? topGenres
-        .map(([genre, count]) => `<li>${genre}<strong>${count}</strong></li>`)
-        .join("")
-    : "<li>No genres yet</li>";
+    const topGenres = Object.entries(genreCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+    const totalGenreCount = Object.values(genreCounts).reduce((sum, val) => sum + val, 0);
+    if (topGenres.length) {
+      topGenresEl.innerHTML = topGenres
+        .map(([genre, count]) => {
+          const percentValue = totalGenreCount ? (count / totalGenreCount) * 100 : 0;
+          const percentText = formatPercent(percentValue, count);
+          return `<span class="genre-chip" role="listitem" tabindex="0"><span class="genre-name">${escapeHtml(
+            genre
+          )}</span><span class="genre-metric"><strong>${count}</strong><span class="genre-percent">${percentText}</span></span></span>`;
+        })
+        .join("");
+    } else {
+      topGenresEl.innerHTML =
+        '<span class="genre-empty" role="listitem">No genres yet</span>';
+    }
+    const genreWindow = document.getElementById("dash-genres-window");
+    if (genreWindow) {
+      registerCarouselWindow(genreWindow);
+      updateCarouselButtons(genreWindow);
+    }
+  }
 
   const timelineEl = document.getElementById("dash-timeline");
   if (!timelineEl) return;
@@ -747,6 +886,104 @@ function updateDashboard(statusCounts, data) {
       })
       .join("");
   }
+}
+
+function updateTrendingCarousel(data) {
+  initCarouselControls();
+  const listEl = document.getElementById("trendingList");
+  const windowEl = document.getElementById("trendingWindow");
+  if (!listEl || !windowEl) return;
+
+  if (!Array.isArray(data) || !data.length) {
+    listEl.innerHTML =
+      '<span class="trending-empty" role="listitem">Trending picks will appear once games are added.</span>';
+    registerCarouselWindow(windowEl);
+    updateCarouselButtons(windowEl);
+    return;
+  }
+
+  const ratingEntries = data
+    .map((row, index) => {
+      const rating = parseFloat(row[COL_RATING]);
+      return {
+        row,
+        rating: Number.isFinite(rating) ? rating : null,
+        index,
+      };
+    })
+    .filter((item) => item.rating !== null)
+    .sort((a, b) => {
+      if (b.rating !== a.rating) return b.rating - a.rating;
+      const nameA = (a.row[COL_GAME] || "").toString().toLowerCase();
+      const nameB = (b.row[COL_GAME] || "").toString().toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+
+  const recentEntries = data
+    .map((row, index) => {
+      const year = getReleaseYear(row);
+      return { row, year: typeof year === "number" ? year : null, index };
+    })
+    .sort((a, b) => {
+      const yearA = a.year === null ? -Infinity : a.year;
+      const yearB = b.year === null ? -Infinity : b.year;
+      if (yearA !== yearB) return yearB - yearA;
+      return b.index - a.index;
+    });
+
+  const picks = [];
+  const seen = new Set();
+  const pushPick = (row) => {
+    if (!row) return;
+    const key = `${row[COL_GAME] || ""}___${row[COL_PLATFORM] || ""}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    picks.push(row);
+  };
+
+  ratingEntries.slice(0, 5).forEach((entry) => pushPick(entry.row));
+  recentEntries.slice(0, 5).forEach((entry) => pushPick(entry.row));
+
+  if (picks.length < 8) {
+    data.forEach((row) => {
+      if (picks.length < 8) pushPick(row);
+    });
+  }
+
+  if (!picks.length) {
+    listEl.innerHTML =
+      '<span class="trending-empty" role="listitem">Trending picks will appear once games are added.</span>';
+    registerCarouselWindow(windowEl);
+    updateCarouselButtons(windowEl);
+    return;
+  }
+
+  listEl.innerHTML = picks
+    .map((row) => {
+      const name = escapeHtml(row[COL_GAME] || "Untitled");
+      const platform = escapeHtml(row[COL_PLATFORM] || "Unknown platform");
+      const yearValue = getReleaseYear(row);
+      const yearText = yearValue ? yearValue.toString() : "TBD";
+      const ratingValue = parseFloat(row[COL_RATING]);
+      const ratingText = Number.isFinite(ratingValue)
+        ? ratingValue.toFixed(1).replace(/\.0$/, "")
+        : "NR";
+      const genres = row[COL_GENRE]
+        ? row[COL_GENRE]
+            .split(",")
+            .map((g) => g.trim())
+            .filter(Boolean)
+        : [];
+      const primaryGenre = genres.length ? escapeHtml(genres[0]) : "";
+      const ratingLabel = ratingText === "NR" ? "Not rated" : `Rating ${ratingText}`;
+      return `<article class="trending-card" role="listitem" tabindex="0"><div class="trending-rating" aria-label="${ratingLabel}"><span aria-hidden="true">★</span><span>${ratingText}</span></div><h3>${name}</h3><div class="trending-meta"><span>${platform}</span><span>${escapeHtml(
+        yearText
+      )}</span>${primaryGenre ? `<span>${primaryGenre}</span>` : ""}</div></article>`;
+    })
+    .join("");
+
+  registerCarouselWindow(windowEl);
+  updateCarouselButtons(windowEl);
 }
 
 /**
@@ -1094,6 +1331,7 @@ if (!disableBootstrapFlag && canBootstrap) {
       setupFilters(rawData);
       renderTable(applyFilters(rawData));
       updateStats(applyFilters(rawData));
+      updateTrendingCarousel(rawData);
       if (source === "sample") {
         showStatus(
           "Supabase is unavailable. Showing a curated sample dataset for now.",
@@ -1203,6 +1441,7 @@ const testApi = {
   setupFilters,
   updateStats,
   updateDashboard,
+  updateTrendingCarousel,
   showError,
   toggleSort,
   __setState(overrides = {}) {
