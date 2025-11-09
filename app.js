@@ -983,6 +983,196 @@ function updateTrendingCarousel(data) {
 }
 
 /**
+ * Generate and inject JSON-LD structured data spotlighting top-rated games.
+ * @param {GameRow[]} data
+ */
+function updateStructuredData(data) {
+  if (
+    !Array.isArray(data) ||
+    !data.length ||
+    typeof document === "undefined" ||
+    typeof JSON === "undefined"
+  ) {
+    return;
+  }
+
+  const origin =
+    typeof window !== "undefined" && window.location && window.location.origin
+      ? window.location.origin.replace(/\/$/, "")
+      : "";
+  const featured = getStructuredDataCandidates(data, 6);
+  if (!featured.length) return;
+
+  const listItems = featured.map((entry, index) => {
+    const videoGame = mapRowToVideoGameSchema(entry, origin);
+    return {
+      "@type": "ListItem",
+      position: index + 1,
+      url: videoGame.url,
+      item: videoGame,
+    };
+  });
+
+  const payload = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Sandgraal's Game List – Collector Spotlight",
+    description:
+      "Curated retro highlights with platform, genre, and community rating data.",
+    itemListElement: listItems,
+  };
+
+  let script = document.getElementById("site-structured-data");
+  if (!script) {
+    script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "site-structured-data";
+    document.head.appendChild(script);
+  }
+  script.textContent = JSON.stringify(payload, null, 2);
+}
+
+/**
+ * Select the top-rated unique games to describe in structured data.
+ * @param {GameRow[]} rows
+ * @param {number} limit
+ */
+function getStructuredDataCandidates(rows, limit = 6) {
+  const unique = [];
+  const seen = new Set();
+  rows
+    .map((row) => {
+      const rating = parseFloat(row[COL_RATING]);
+      const normalizedRating = Number.isFinite(rating) ? rating : null;
+      const year = getReleaseYear(row);
+      const identifier = `${(row[COL_GAME] || "").toString().trim().toLowerCase()}|${(
+        row[COL_PLATFORM] || ""
+      )
+        .toString()
+        .trim()
+        .toLowerCase()}`;
+      return {
+        row,
+        rating: normalizedRating,
+        year: typeof year === "number" ? year : null,
+        identifier,
+      };
+    })
+    .filter((entry) => entry.rating !== null && entry.identifier.trim().length)
+    .sort((a, b) => {
+      if (b.rating !== a.rating) return b.rating - a.rating;
+      if (a.year !== b.year) {
+        const safeA = a.year === null ? -Infinity : a.year;
+        const safeB = b.year === null ? -Infinity : b.year;
+        return safeB - safeA;
+      }
+      const nameA = (a.row[COL_GAME] || "").toString().toLowerCase();
+      const nameB = (b.row[COL_GAME] || "").toString().toLowerCase();
+      return nameA.localeCompare(nameB);
+    })
+    .forEach((entry) => {
+      if (!seen.has(entry.identifier) && unique.length < limit) {
+        unique.push(entry);
+        seen.add(entry.identifier);
+      }
+    });
+  return unique;
+}
+
+/**
+ * Convert a raw row into a schema.org VideoGame representation.
+ * @param {{row: GameRow, rating: number|null}} entry
+ * @param {string} origin
+ */
+function mapRowToVideoGameSchema(entry, origin) {
+  const { row, rating } = entry;
+  const name = (row[COL_GAME] || "").toString();
+  const platform = (row[COL_PLATFORM] || "").toString();
+  const slug = slugifyStructuredDataId(name, platform);
+  const url =
+    origin && slug ? `${origin}/#game-${slug}` : slug ? `#game-${slug}` : origin || "";
+  const genreList = row[COL_GENRE]
+    ? row[COL_GENRE]
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    : undefined;
+  const releaseYear = getReleaseYear(row);
+  const imageUrl = normalizeImageUrl(row[COL_COVER], origin);
+  /** @type {Record<string, any>} */
+  const videoGame = {
+    "@type": "VideoGame",
+    name: name || "Untitled Retro Game",
+    url: url || origin || "",
+    gamePlatform: platform || undefined,
+    genre: genreList && genreList.length ? genreList : undefined,
+    description: `${name} on ${platform} tracked in Sandgraal's retro collection.`,
+  };
+  if (releaseYear) {
+    videoGame.datePublished = `${releaseYear}-01-01`;
+  }
+  if (imageUrl) {
+    videoGame.image = imageUrl;
+  }
+  if (typeof rating === "number") {
+    videoGame.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: rating,
+      bestRating: "10",
+      worstRating: "0",
+      ratingCount: 1,
+    };
+    videoGame.review = {
+      "@type": "Review",
+      name: `${name} community rating`,
+      author: {
+        "@type": "Organization",
+        name: "Sandgraal's Game List",
+      },
+      datePublished: new Date().toISOString().split("T")[0],
+      reviewBody: `${name} on ${platform} earns a ${rating}/10 score from collectors.`,
+      reviewRating: {
+        "@type": "Rating",
+        ratingValue: rating,
+        bestRating: "10",
+        worstRating: "0",
+      },
+    };
+  }
+  return videoGame;
+}
+
+/**
+ * Normalize a cover path into an absolute URL when possible.
+ * @param {string|undefined} value
+ * @param {string} origin
+ * @returns {string|undefined}
+ */
+function normalizeImageUrl(value, origin) {
+  if (!value) return undefined;
+  const stringValue = value.toString();
+  if (/^https?:\/\//i.test(stringValue)) return stringValue;
+  if (stringValue.startsWith("//")) {
+    const protocol =
+      typeof window !== "undefined" && window.location ? window.location.protocol : "https:";
+    return `${protocol}${stringValue}`;
+  }
+  if (!origin) return undefined;
+  if (stringValue.startsWith("/")) return `${origin}${stringValue}`;
+  return `${origin}/${stringValue}`;
+}
+
+/**
+ * Generate a stable slug for schema identifiers.
+ * @param {string} name
+ * @param {string} platform
+ */
+function slugifyStructuredDataId(name, platform) {
+  const combined = `${name || ""}-${platform || ""}`.toLowerCase();
+  return combined.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+/**
  * Export user's owned games as a CSV.
  */
 function exportOwnedGames() {
@@ -1328,6 +1518,7 @@ if (!disableBootstrapFlag && canBootstrap) {
       renderTable(applyFilters(rawData));
       updateStats(applyFilters(rawData));
       updateTrendingCarousel(rawData);
+      updateStructuredData(rawData);
       if (source === "sample") {
         showStatus(
           "Supabase is unavailable. Showing a curated sample dataset for now.",
