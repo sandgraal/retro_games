@@ -240,7 +240,7 @@ async function loadGameData() {
       source: "sample",
       reason: typeof reason === "string" ? reason : reason?.message,
     });
-    return { data: sample, source: "sample" };
+    return { data: sample, source: "sample", reason };
   };
 
   if (FORCE_SAMPLE || !supabase) {
@@ -250,7 +250,16 @@ async function loadGameData() {
   try {
     const start = getNow();
     const data = await fetchGames();
-    recordPerfMetric("data-load", getNow() - start, { source: "supabase" });
+    const duration = getNow() - start;
+    if (!Array.isArray(data) || data.length === 0) {
+      recordPerfMetric("data-load", duration, {
+        source: "supabase",
+        rows: Array.isArray(data) ? data.length : undefined,
+        fallback: "empty-dataset",
+      });
+      return useFallback("Supabase returned zero rows.");
+    }
+    recordPerfMetric("data-load", duration, { source: "supabase", rows: data.length });
     return { data, source: "supabase" };
   } catch (err) {
     return useFallback(err);
@@ -1802,7 +1811,7 @@ const canBootstrap =
 if (!disableBootstrapFlag && canBootstrap) {
   initThemeToggle();
   loadGameData()
-    .then(({ data, source }) => {
+    .then(({ data, source, reason }) => {
       rawData = data;
       if (!rawData.length) throw new Error("No games available to display!");
       loadStatuses();
@@ -1817,10 +1826,17 @@ if (!disableBootstrapFlag && canBootstrap) {
       updateTrendingCarousel(rawData);
       updateStructuredData(rawData);
       if (source === "sample") {
-        showStatus(
-          "Supabase is unavailable. Showing a curated sample dataset for now.",
-          "info"
-        );
+        const fallReason =
+          typeof reason === "string"
+            ? reason
+            : reason && reason.message
+              ? reason.message
+              : "Supabase is unavailable.";
+        const statusMessage =
+          fallReason === "Supabase returned zero rows."
+            ? "Supabase responded without data. Showing a curated sample dataset until the project is seeded."
+            : "Supabase is unavailable. Showing a curated sample dataset for now.";
+        showStatus(statusMessage, "info");
       } else {
         hideStatus();
       }
