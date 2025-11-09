@@ -18,7 +18,7 @@ _Last updated: June 2024_
 3. The dataset populates filter dropdowns and an interactive table. Per-row status (owned, wishlist, backlog, trade) is stored in `localStorage` under the key `roms_owned` and drives both the stats widget and sharing/export flows.
 4. Users can export owned titles to CSV, backup their entire collection (statuses, notes, filters) as JSON, or create a share code (base64-encoded JSON). Importing a share code or backup restores a read-only or editable view, respectively.
 5. Clicking a row opens a modal with metadata and quick links to Google, YouTube gameplay, and GameFAQs searches.
-6. When Supabase is available, dashboard status metrics hydrate only the rows tied to your Owned/Wishlist/Backlog/Trade entries, keeping counts accurate without fetching the entire dataset.
+6. When Supabase is available, dashboard stats/aggregates hydrate on-demand: status metrics fetch only the rows tied to your Owned/Wishlist/Backlog/Trade entries, and the top-genre / release-timeline widgets pull server-side aggregates so the charts reflect the full dataset without downloading it all.
 
 ## UI & Styling
 
