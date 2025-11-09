@@ -68,6 +68,7 @@
   --text-tip: #a6b4d4;
 
   --status-owned-bg: #22c98d;
+  --status-owned-bg-blended: #1e956f;
   --status-owned-border: #38f9b1;
   --status-owned-text: #0b2a1f;
   --status-wishlist-bg: #ffc857;
@@ -161,6 +162,7 @@
   --text-tip: #5e6c84;
 
   --status-owned-bg: #2ca677;
+  --status-owned-bg-blended: #68be9e;
   --status-owned-border: #41c590;
   --status-owned-text: #0b2a1f;
   --status-wishlist-bg: #f1c078;
@@ -242,6 +244,7 @@
     --text-tip: #5e6c84;
 
     --status-owned-bg: #2ca677;
+    --status-owned-bg-blended: #68be9e;
     --status-owned-border: #41c590;
     --status-owned-text: #0b2a1f;
     --status-wishlist-bg: #f1c078;
@@ -742,7 +745,7 @@ tr:hover {
   z-index: 2;
 }
 .owned-row {
-  background: color-mix(in srgb, var(--status-owned-bg) 70%, var(--surface-base) 30%) !important;
+  background: var(--status-owned-bg-blended) !important;
   color: var(--text-inverse);
   box-shadow:
     0 0 8px var(--glow-success-strong),
