@@ -412,8 +412,6 @@ const streamState = {
   filterPayload: null,
   filterSignature: null,
 };
-let remoteFilterSignature = null;
-let remoteRefreshPromise = null;
 const statusRowCache = new Map();
 let pendingStatusHydration = null;
 let latestFilteredData = [];
@@ -2157,7 +2155,7 @@ function refreshFilteredView(reason = "unknown") {
       signature !== streamState.filterSignature &&
       !reason.startsWith("stream:")
     ) {
-      requestRemoteFilterRefresh(payload, signature, reason);
+      requestRemoteFilterRefresh(payload, signature);
       return [];
     }
     if (!streamState.filterSignature) {
@@ -2202,9 +2200,8 @@ function finalizeFilteredRender(reason = "unknown") {
   return filtered;
 }
 
-function requestRemoteFilterRefresh(payload, signature, triggerReason) {
+function requestRemoteFilterRefresh(payload, signature) {
   if (!shouldUseServerFiltering()) return;
-  remoteFilterSignature = signature;
   streamState.filterPayload = { ...payload };
   streamState.filterSignature = signature;
   streamState.nextFrom = 0;
@@ -2219,7 +2216,7 @@ function requestRemoteFilterRefresh(payload, signature, triggerReason) {
   streamState.loading = true;
   updateBrowseSummaryLoading(true);
   const activeSignature = signature;
-  remoteRefreshPromise = fetchGamesPage(0, streamState.pageSize - 1, payload)
+  fetchGamesPage(0, streamState.pageSize - 1, payload)
     .then((page) => {
       if (streamState.filterSignature !== activeSignature) return;
       const rows = Array.isArray(page.data) ? page.data : [];
@@ -2237,7 +2234,6 @@ function requestRemoteFilterRefresh(payload, signature, triggerReason) {
         streamState.loading = false;
         updateBrowseSummaryLoading(false);
       }
-      remoteRefreshPromise = null;
     });
 }
 
