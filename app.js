@@ -63,6 +63,7 @@ const STATUS_LABELS = STATUS_OPTIONS.reduce((acc, option) => {
 const SAMPLE_DATA_URL = "./data/sample-games.json";
 const BACKUP_FILENAME = "sandgraal-collection.json";
 const FILTER_STORAGE_KEY = "rom_filters";
+const DEFAULT_SUPABASE_TABLES = ["games", "games_view", "games_new"];
 
 const reduceMotionQuery =
   typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -83,7 +84,7 @@ const SUPABASE_TABLE_CANDIDATES = (() => {
   if (typeof SUPABASE_CONFIG.tableName === "string") {
     configuredTables.push(SUPABASE_CONFIG.tableName);
   }
-  const defaults = ["games", "games_view", "games_new"];
+  const defaults = DEFAULT_SUPABASE_TABLES;
   const deduped = new Set(
     [...configuredTables, ...defaults]
       .map((value) => (typeof value === "string" ? value.trim() : ""))
