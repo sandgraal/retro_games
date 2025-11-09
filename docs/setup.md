@@ -52,6 +52,10 @@ python -m http.server 8080
 
 Open `http://localhost:8080` and the app will load credentials from the generated `config.js`.
 
+### Instant demo mode
+
+If Supabase credentials are missing or the fetch fails, the app automatically falls back to `data/sample-games.json`. This guarantees that first-time contributors still see a populated UI while backend access is being configured.
+
 ## Troubleshooting
 
 - **Missing .env** – The generator will exit with instructions if `.env` is not found. Copy `.env.example` and try again.

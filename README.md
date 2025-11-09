@@ -20,6 +20,8 @@ It’s a clean, modern tool for serious collectors, archivists, and retro fans w
 3. Serve the site locally with any static server, e.g. `python -m http.server 8080`.
 4. Anytime you rotate credentials, update `.env` and rerun `npm run build:config`.
 
+No Supabase project yet? The UI now auto-loads the curated `data/sample-games.json` dataset so everything renders immediately. Add real credentials later to swap in live data.
+
 See `docs/setup.md` for more detailed guidance.
 
 ## Development
