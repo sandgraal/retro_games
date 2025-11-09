@@ -310,6 +310,7 @@ async function loadGameData() {
     streamState.active = false;
     streamState.hasMore = false;
     streamState.loading = false;
+    resetAggregateState(null);
     streamState.filterPayload = null;
     streamState.filterSignature = null;
     streamState.tableName = null;
@@ -365,6 +366,10 @@ function initStreamStateFromPage(page, rowsFetched, filterPayload = null) {
     const payload = buildRemoteFilterPayload();
     streamState.filterPayload = { ...payload };
     streamState.filterSignature = buildRemoteFilterSignature(streamState.filterPayload);
+  }
+  const currentSignature = streamState.filterSignature || null;
+  if (currentSignature && aggregateState.signature !== currentSignature) {
+    resetAggregateState(currentSignature);
   }
   streamState.nextFrom = rowsFetched;
   streamState.totalCount =
@@ -450,6 +455,21 @@ const streamState = {
 const statusRowCache = new Map();
 let pendingStatusHydration = null;
 let latestFilteredData = [];
+const aggregateState = {
+  signature: null,
+  genres: null,
+  timeline: null,
+  loading: false,
+  promise: null,
+};
+
+function resetAggregateState(signature = null) {
+  aggregateState.signature = signature;
+  aggregateState.genres = null;
+  aggregateState.timeline = null;
+  aggregateState.loading = false;
+  aggregateState.promise = null;
+}
 
 /**
  * Parse a year string/number into an integer or null when invalid.
@@ -881,25 +901,26 @@ function parseRating(value) {
   return Number.isFinite(rating) ? rating : null;
 }
 
-function applySupabaseFilters(query, filters = {}) {
+function applySupabaseFilters(query, filters = {}, columnPrefix = "") {
   if (!filters) return query;
+  const column = (name) => (columnPrefix ? `${columnPrefix}.${name}` : name);
   if (filters.search) {
-    query = query.ilike(COL_GAME, `%${filters.search}%`);
+    query = query.ilike(column(COL_GAME), `%${filters.search}%`);
   }
   if (filters.platform) {
-    query = query.eq(COL_PLATFORM, filters.platform);
+    query = query.eq(column(COL_PLATFORM), filters.platform);
   }
   if (filters.genre) {
-    query = query.ilike(COL_GENRE, `%${filters.genre}%`);
+    query = query.ilike(column(COL_GENRE), `%${filters.genre}%`);
   }
   if (filters.ratingMin !== null && filters.ratingMin !== undefined) {
-    query = query.gte(COL_RATING, filters.ratingMin);
+    query = query.gte(column(COL_RATING), filters.ratingMin);
   }
   if (filters.yearStart !== null && filters.yearStart !== undefined) {
-    query = query.gte(COL_RELEASE_YEAR, filters.yearStart);
+    query = query.gte(column(COL_RELEASE_YEAR), filters.yearStart);
   }
   if (filters.yearEnd !== null && filters.yearEnd !== undefined) {
-    query = query.lte(COL_RELEASE_YEAR, filters.yearEnd);
+    query = query.lte(column(COL_RELEASE_YEAR), filters.yearEnd);
   }
   return query;
 }
@@ -1665,6 +1686,206 @@ async function fetchStatusRows(keys) {
   });
 }
 
+function scheduleAggregateHydration() {
+  if (!shouldUseServerFiltering() || !supabase) return;
+  const signature =
+    streamState.filterSignature ||
+    buildRemoteFilterSignature(streamState.filterPayload || buildRemoteFilterPayload());
+  if (!signature) return;
+  if (
+    aggregateState.signature === signature &&
+    aggregateState.genres &&
+    aggregateState.timeline
+  ) {
+    return;
+  }
+  if (aggregateState.promise && aggregateState.signature === signature) return;
+  aggregateState.signature = signature;
+  aggregateState.loading = true;
+  const payload = streamState.filterPayload || buildRemoteFilterPayload();
+  aggregateState.promise = fetchAggregateBundle(payload)
+    .then((result) => {
+      if (aggregateState.signature !== signature) return;
+      aggregateState.genres = result.genres;
+      aggregateState.timeline = result.timeline;
+      aggregateState.loading = false;
+      renderAggregateWidgets();
+    })
+    .catch((err) => {
+      console.warn("Unable to fetch aggregate data from Supabase:", err);
+      aggregateState.loading = false;
+    })
+    .finally(() => {
+      aggregateState.promise = null;
+    });
+}
+
+async function fetchAggregateBundle(payload) {
+  const [genres, timeline] = await Promise.all([
+    fetchGenreAggregates(payload).catch(() => null),
+    fetchTimelineAggregates(payload).catch(() => null),
+  ]);
+  return {
+    genres: genres || [],
+    timeline: timeline || [],
+  };
+}
+
+async function fetchGenreAggregates(payload) {
+  if (!supabase) return [];
+  const tableName = streamState.tableName || SUPABASE_TABLE_CANDIDATES[0];
+  let query = supabase
+    .from(tableName)
+    .select(`${COL_GENRE}, count:${COL_GENRE}`, { head: false });
+  query = applySupabaseFilters(query, payload);
+  query = query
+    .not(COL_GENRE, "is", null)
+    .group(COL_GENRE)
+    .order("count", { ascending: false })
+    .limit(100);
+  const { data, error } = await query;
+  if (error) throw error;
+  const aggregates = {};
+  (Array.isArray(data) ? data : []).forEach((row) => {
+    const rawValue = row[COL_GENRE];
+    const count = Number(row.count) || 0;
+    if (!rawValue || !count) return;
+    rawValue
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .forEach((genre) => {
+        aggregates[genre] = (aggregates[genre] || 0) + count;
+      });
+  });
+  return Object.entries(aggregates)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+async function fetchTimelineAggregates(payload) {
+  if (!supabase) return [];
+  const tableName = streamState.tableName || SUPABASE_TABLE_CANDIDATES[0];
+  let query = supabase
+    .from(tableName)
+    .select(`${COL_RELEASE_YEAR}, count:${COL_RELEASE_YEAR}`, { head: false });
+  query = applySupabaseFilters(query, payload);
+  query = query
+    .not(COL_RELEASE_YEAR, "is", null)
+    .group(COL_RELEASE_YEAR)
+    .order(COL_RELEASE_YEAR, { ascending: true })
+    .limit(200);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (Array.isArray(data) ? data : [])
+    .map((row) => ({
+      year: Number(row[COL_RELEASE_YEAR]),
+      count: Number(row.count) || 0,
+    }))
+    .filter((entry) => Number.isFinite(entry.year) && entry.count > 0);
+}
+
+function renderAggregateWidgets() {
+  if (!latestFilteredData.length) return;
+  const { counts } = computeStatusCounts();
+  updateDashboard(counts, latestFilteredData);
+}
+
+function renderGenreWidget(localRows) {
+  const topGenresEl = document.getElementById("dash-genres");
+  if (!topGenresEl) return;
+  const topGenres = getGenreAggregateData(localRows).slice(0, 8);
+  const totalGenreCount = topGenres.reduce((sum, entry) => sum + entry.count, 0);
+  if (topGenres.length) {
+    topGenresEl.innerHTML = topGenres
+      .map(({ name, count }) => {
+        const percentValue = totalGenreCount ? (count / totalGenreCount) * 100 : 0;
+        const percentText = formatPercent(percentValue, count);
+        return `<span class="genre-chip" role="listitem" tabindex="0"><span class="genre-name">${escapeHtml(
+          name
+        )}</span><span class="genre-metric"><strong>${count}</strong><span class="genre-percent">${percentText}</span></span></span>`;
+      })
+      .join("");
+  } else {
+    topGenresEl.innerHTML =
+      '<span class="genre-empty" role="listitem">No genres yet</span>';
+  }
+  const genreWindow = document.getElementById("dash-genres-window");
+  if (genreWindow) {
+    registerCarouselWindow(genreWindow);
+    updateCarouselButtons(genreWindow);
+  }
+}
+
+function renderTimelineWidget(localRows) {
+  const timelineEl = document.getElementById("dash-timeline");
+  if (!timelineEl) return;
+  const timelineData = getTimelineAggregateData(localRows).slice(-6);
+  if (!timelineData.length) {
+    timelineEl.textContent = "No release data";
+  } else {
+    const max = Math.max(...timelineData.map((entry) => entry.count));
+    timelineEl.innerHTML = timelineData
+      .map(({ year, count }) => {
+        const percent = max ? Math.max((count / max) * 100, 5) : 5;
+        return `<div class="timeline-bar"><span>${year}</span><div class="bar-track"><span class="bar-fill" style="width:${percent}%"></span></div><strong>${count}</strong></div>`;
+      })
+      .join("");
+  }
+}
+
+function getGenreAggregateData(localRows) {
+  if (
+    shouldUseServerFiltering() &&
+    aggregateState.genres &&
+    aggregateState.signature === streamState.filterSignature &&
+    aggregateState.genres.length
+  ) {
+    return aggregateState.genres;
+  }
+  return computeLocalGenreAggregates(localRows);
+}
+
+function computeLocalGenreAggregates(localRows) {
+  const counts = {};
+  (localRows || []).forEach((row) => {
+    const values = row[COL_GENRE]
+      ? row[COL_GENRE].split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [];
+    values.forEach((genre) => {
+      counts[genre] = (counts[genre] || 0) + 1;
+    });
+  });
+  return Object.entries(counts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function getTimelineAggregateData(localRows) {
+  if (
+    shouldUseServerFiltering() &&
+    aggregateState.timeline &&
+    aggregateState.signature === streamState.filterSignature &&
+    aggregateState.timeline.length
+  ) {
+    return aggregateState.timeline;
+  }
+  return computeLocalTimelineSeries(localRows);
+}
+
+function computeLocalTimelineSeries(localRows) {
+  const counts = {};
+  (localRows || []).forEach((row) => {
+    const year = getReleaseYear(row);
+    if (year) counts[year] = (counts[year] || 0) + 1;
+  });
+  return Object.entries(counts)
+    .map(([year, count]) => ({ year: Number(year), count }))
+    .sort((a, b) => a.year - b.year);
+}
+
 function scheduleStatusHydration() {
   if (!shouldUseServerFiltering() || !supabase) return;
   const statusSource = importedCollection || gameStatuses;
@@ -2053,6 +2274,7 @@ function updateStats(data) {
   document.getElementById("stats").textContent = statsMessageParts.join(" | ");
 
   updateDashboard(statusCounts, data);
+  scheduleAggregateHydration();
   if (missing) scheduleStatusHydration();
 }
 
@@ -2130,65 +2352,8 @@ function updateDashboard(statusCounts, data) {
     }
   });
 
-  const topGenresEl = document.getElementById("dash-genres");
-  if (topGenresEl) {
-    const genreCounts = {};
-    data.forEach((row) => {
-      const genres = row[COL_GENRE]
-        ? row[COL_GENRE].split(",")
-            .map((g) => g.trim())
-            .filter(Boolean)
-        : [];
-      genres.forEach((genre) => {
-        genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-      });
-    });
-    const topGenres = Object.entries(genreCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
-    const totalGenreCount = Object.values(genreCounts).reduce((sum, val) => sum + val, 0);
-    if (topGenres.length) {
-      topGenresEl.innerHTML = topGenres
-        .map(([genre, count]) => {
-          const percentValue = totalGenreCount ? (count / totalGenreCount) * 100 : 0;
-          const percentText = formatPercent(percentValue, count);
-          return `<span class="genre-chip" role="listitem" tabindex="0"><span class="genre-name">${escapeHtml(
-            genre
-          )}</span><span class="genre-metric"><strong>${count}</strong><span class="genre-percent">${percentText}</span></span></span>`;
-        })
-        .join("");
-    } else {
-      topGenresEl.innerHTML =
-        '<span class="genre-empty" role="listitem">No genres yet</span>';
-    }
-    const genreWindow = document.getElementById("dash-genres-window");
-    if (genreWindow) {
-      registerCarouselWindow(genreWindow);
-      updateCarouselButtons(genreWindow);
-    }
-  }
-
-  const timelineEl = document.getElementById("dash-timeline");
-  if (!timelineEl) return;
-  const yearCounts = {};
-  data.forEach((row) => {
-    const year = getReleaseYear(row);
-    if (year) yearCounts[year] = (yearCounts[year] || 0) + 1;
-  });
-  const sortedYears = Object.entries(yearCounts)
-    .sort((a, b) => Number(a[0]) - Number(b[0]))
-    .slice(-6);
-  if (!sortedYears.length) {
-    timelineEl.textContent = "No release data";
-  } else {
-    const max = Math.max(...sortedYears.map(([, count]) => count));
-    timelineEl.innerHTML = sortedYears
-      .map(([year, count]) => {
-        const percent = max ? Math.max((count / max) * 100, 5) : 5;
-        return `<div class="timeline-bar"><span>${year}</span><div class="bar-track"><span class="bar-fill" style="width:${percent}%"></span></div><strong>${count}</strong></div>`;
-      })
-      .join("");
-  }
+  renderGenreWidget(data);
+  renderTimelineWidget(data);
 }
 
 /**
@@ -2254,6 +2419,7 @@ function requestRemoteFilterRefresh(payload, signature) {
   if (!shouldUseServerFiltering()) return;
   streamState.filterPayload = { ...payload };
   streamState.filterSignature = signature;
+  resetAggregateState(signature);
   streamState.nextFrom = 0;
   streamState.totalCount = null;
   streamState.hasMore = true;
