@@ -109,6 +109,61 @@ h1 {
   text-align: center;
 }
 
+.status-cell {
+  min-width: 130px;
+}
+
+.status-cell select {
+  width: 100%;
+  padding: 0.35em 0.55em;
+  border-radius: 8px;
+  border: 1px solid #485064;
+  background: #1b2130;
+  color: var(--color-accent);
+  font-size: 0.95em;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.22em 0.85em;
+  border-radius: 999px;
+  font-size: 0.78em;
+  text-transform: capitalize;
+  border: 1px solid #3d4457;
+  background: #232a3c;
+  color: #f3f5ff;
+}
+
+.status-pill.status-owned,
+.status-owned .status-pill {
+  background: #22c98d;
+  color: #07241b;
+  border-color: #38f9b1;
+}
+
+.status-pill.status-wishlist,
+.status-wishlist .status-pill {
+  background: #ffc857;
+  color: #3d2200;
+  border-color: #ffd88a;
+}
+
+.status-pill.status-backlog,
+.status-backlog .status-pill {
+  background: #7180ac;
+  color: #0e1733;
+  border-color: #8ea3cf;
+}
+
+.status-pill.status-trade,
+.status-trade .status-pill {
+  background: #ff6b6b;
+  color: #280000;
+  border-color: #ff9b9b;
+}
+
 table {
   border-collapse: separate;
   border-spacing: 0;

@@ -14,6 +14,23 @@ const COL_COVER = "cover";
 const COL_RATING = "rating";
 const COL_RELEASE_YEAR = "release_year";
 const STORAGE_KEY = "roms_owned";
+const STATUS_NONE = "none";
+const STATUS_OWNED = "owned";
+const STATUS_WISHLIST = "wishlist";
+const STATUS_BACKLOG = "backlog";
+const STATUS_TRADE = "trade";
+
+const STATUS_OPTIONS = [
+  { value: STATUS_NONE, label: "None" },
+  { value: STATUS_OWNED, label: "Owned" },
+  { value: STATUS_WISHLIST, label: "Wishlist" },
+  { value: STATUS_BACKLOG, label: "Backlog" },
+  { value: STATUS_TRADE, label: "Trade" },
+];
+const STATUS_LABELS = STATUS_OPTIONS.reduce((acc, option) => {
+  acc[option.value] = option.label;
+  return acc;
+}, {});
 const SAMPLE_DATA_URL = "./data/sample-games.json";
 
 // === Supabase Config ===
@@ -92,11 +109,12 @@ async function loadGameData() {
 }
 
 let rawData = [],
-  owned = {},
+  gameStatuses = {},
   importedCollection = null;
 let filterPlatform = "",
   filterGenre = "",
   searchValue = "",
+  filterStatus = "",
   filterRatingMin = "",
   filterYearStart = "",
   filterYearEnd = "",
@@ -114,18 +132,43 @@ function getReleaseYear(row) {
   return parseYear(fallbackValue);
 }
 
-/**
- * LocalStorage: Load & Save owned game state
- */
-function loadOwned() {
-  try {
-    owned = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  } catch {
-    owned = {};
+function getStatusForKey(key, sourceMap) {
+  const map = sourceMap || gameStatuses;
+  return map[key] || STATUS_NONE;
+}
+
+function setStatusForKey(key, status) {
+  if (!status || status === STATUS_NONE) {
+    delete gameStatuses[key];
+  } else {
+    gameStatuses[key] = status;
   }
 }
-function saveOwned() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(owned));
+
+/**
+ * LocalStorage: Load & Save status state
+ */
+function loadStatuses() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    if (raw && typeof raw === "object") {
+      gameStatuses = {};
+      Object.entries(raw).forEach(([key, value]) => {
+        if (typeof value === "string") {
+          gameStatuses[key] = value;
+        } else if (value === true) {
+          gameStatuses[key] = STATUS_OWNED;
+        }
+      });
+    } else {
+      gameStatuses = {};
+    }
+  } catch {
+    gameStatuses = {};
+  }
+}
+function saveStatuses() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(gameStatuses));
 }
 
 /**
@@ -157,7 +200,7 @@ function setupFilters(data) {
  * Apply search/filter logic to current data set.
  */
 function applyFilters(data) {
-  let filterOwned = importedCollection;
+  let statusSource = importedCollection || gameStatuses;
   return data.filter((row) => {
     if (filterPlatform && row[COL_PLATFORM] !== filterPlatform) return false;
     if (filterGenre) {
@@ -190,8 +233,10 @@ function applyFilters(data) {
     if (startYear !== null && (releaseYear === null || releaseYear < startYear))
       return false;
     if (endYear !== null && (releaseYear === null || releaseYear > endYear)) return false;
-    if (filterOwned && !filterOwned[row[COL_GAME] + "___" + row[COL_PLATFORM]])
-      return false;
+    const key = row[COL_GAME] + "___" + row[COL_PLATFORM];
+    if (importedCollection && !importedCollection[key]) return false;
+    const rowStatus = getStatusForKey(key, statusSource);
+    if (filterStatus && rowStatus !== filterStatus) return false;
     return true;
   });
 }
@@ -218,7 +263,7 @@ function renderTable(data) {
   const thead = document.querySelector("#romTable thead");
   const tbody = document.querySelector("#romTable tbody");
   thead.innerHTML =
-    "<tr><th>Owned?</th>" +
+    "<tr><th>Status</th>" +
     headers
       .map((h) => {
         const isActive = h === sortColumn;
@@ -233,18 +278,22 @@ function renderTable(data) {
   tbody.innerHTML = data
     .map((row, idx) => {
       const key = row[COL_GAME] + "___" + row[COL_PLATFORM];
-      let checked = importedCollection
-        ? importedCollection[key]
-          ? "checked disabled"
-          : "disabled"
-        : owned[key]
-          ? "checked"
-          : "";
+      const statusValue = getStatusForKey(key, importedCollection || gameStatuses);
+      const statusLabel = STATUS_LABELS[statusValue] || STATUS_LABELS[STATUS_NONE];
+      const pillClass =
+        statusValue && statusValue !== STATUS_NONE
+          ? `status-pill status-${statusValue}`
+          : "status-pill";
+      const statusCell = importedCollection
+        ? `<td class="status-cell"><span class="${pillClass}">${statusLabel}</span></td>`
+        : `<td class="status-cell">${renderStatusSelect(key, statusValue)}</td>`;
+      const rowClass =
+        statusValue && statusValue !== STATUS_NONE
+          ? `game-row status-${statusValue}`
+          : "game-row";
       return (
-        `<tr data-row="${idx}" class="${
-          owned[key] || (importedCollection && importedCollection[key]) ? "owned-row" : ""
-        } game-row">` +
-        `<td class="center"><input type="checkbox" class="checkbox-own" data-key="${key}" ${checked}></td>` +
+        `<tr data-row="${idx}" class="${rowClass}">` +
+        statusCell +
         headers
           .map((h) =>
             h === COL_COVER && row[h]
@@ -260,14 +309,13 @@ function renderTable(data) {
     .join("");
   hideStatus();
   document.getElementById("romTable").style.display = "";
-  // Checkbox logic (no importedCollection means editing is enabled)
+  // Status controls (disabled while viewing imported share)
   if (!importedCollection) {
-    tbody.querySelectorAll(".checkbox-own").forEach((cb) => {
-      cb.onchange = function () {
+    tbody.querySelectorAll(".status-select").forEach((select) => {
+      select.onchange = function () {
         const k = this.getAttribute("data-key");
-        if (this.checked) owned[k] = true;
-        else delete owned[k];
-        saveOwned();
+        setStatusForKey(k, this.value);
+        saveStatuses();
         renderTable(applyFilters(rawData));
         updateStats(applyFilters(rawData));
       };
@@ -279,7 +327,7 @@ function renderTable(data) {
       if (
         e.target.tagName === "INPUT" ||
         e.target.tagName === "A" ||
-        e.target.classList.contains("checkbox-own")
+        e.target.classList.contains("status-select")
       )
         return;
       const rowIdx = parseInt(tr.getAttribute("data-row"), 10);
@@ -297,6 +345,17 @@ function renderTable(data) {
   });
 }
 
+function renderStatusSelect(key, current) {
+  return `<select class="status-select" data-key="${key}">
+    ${STATUS_OPTIONS.map(
+      (option) =>
+        `<option value="${option.value}" ${current === option.value ? "selected" : ""}>${
+          option.label
+        }</option>`
+    ).join("")}
+  </select>`;
+}
+
 /**
  * Update game count and average rating stats in the stats area.
  */
@@ -307,19 +366,35 @@ function updateStats(data) {
     ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
     : "-";
   let platforms = new Set(data.map((row) => row[COL_PLATFORM]));
-  let useOwned = importedCollection || owned;
-  const ownedCount = data.filter(
-    (row) => useOwned[row[COL_GAME] + "___" + row[COL_PLATFORM]]
-  ).length;
+  const statusSource = importedCollection || gameStatuses;
+  const statusCounts = {
+    [STATUS_OWNED]: 0,
+    [STATUS_WISHLIST]: 0,
+    [STATUS_BACKLOG]: 0,
+    [STATUS_TRADE]: 0,
+  };
+  data.forEach((row) => {
+    const key = row[COL_GAME] + "___" + row[COL_PLATFORM];
+    const status = getStatusForKey(key, statusSource);
+    if (statusCounts[status] !== undefined) statusCounts[status] += 1;
+  });
+  const statusSummary = [
+    `Owned: ${statusCounts[STATUS_OWNED]}`,
+    `Wishlist: ${statusCounts[STATUS_WISHLIST]}`,
+    `Backlog: ${statusCounts[STATUS_BACKLOG]}`,
+    `Trade: ${statusCounts[STATUS_TRADE]}`,
+  ].join(" | ");
   document.getElementById("stats").textContent =
-    `Games: ${total} | Owned: ${ownedCount} | Average Rating: ${avg} | Platforms: ${platforms.size}`;
+    `Games: ${total} | ${statusSummary} | Average Rating: ${avg} | Platforms: ${platforms.size}`;
 }
 
 /**
  * Export user's owned games as a CSV.
  */
 function exportOwnedGames() {
-  const rows = rawData.filter((row) => owned[row[COL_GAME] + "___" + row[COL_PLATFORM]]);
+  const rows = rawData.filter(
+    (row) => getStatusForKey(row[COL_GAME] + "___" + row[COL_PLATFORM]) === STATUS_OWNED
+  );
   if (!rows.length) {
     showError("No owned games to export!");
     return;
@@ -350,8 +425,10 @@ function exportOwnedGames() {
  */
 function showShareSection() {
   let codes = [];
-  Object.keys(owned).forEach((k) => {
-    if (owned[k]) codes.push(k);
+  Object.entries(gameStatuses).forEach(([key, status]) => {
+    if (status && status !== STATUS_NONE) {
+      codes.push(`${key}::${status}`);
+    }
   });
   let code = btoa(unescape(encodeURIComponent(codes.join("|"))));
   document.getElementById("shareSection").style.display = "";
@@ -367,7 +444,7 @@ function showImportSection() {
 }
 
 /**
- * Import a shared code (owned games) and display the imported collection.
+ * Import a shared code (status assignments) and display the imported collection.
  */
 function importCollection() {
   let code = document.getElementById("importCode").value.trim();
@@ -378,7 +455,13 @@ function importCollection() {
   let coll = {};
   try {
     let decoded = decodeURIComponent(escape(atob(code)));
-    decoded.split("|").forEach((k) => (coll[k] = true));
+    decoded.split("|").forEach((entry) => {
+      if (!entry) return;
+      const [key, status] = entry.split("::");
+      if (!key) return;
+      const normalized = status && STATUS_LABELS[status] ? status : STATUS_OWNED;
+      coll[key] = normalized;
+    });
     importedCollection = coll;
     renderTable(applyFilters(rawData));
     updateStats(applyFilters(rawData));
@@ -505,7 +588,7 @@ if (!disableBootstrapFlag && canBootstrap) {
     .then(({ data, source }) => {
       rawData = data;
       if (!rawData.length) throw new Error("No games available to display!");
-      loadOwned();
+      loadStatuses();
       setupFilters(rawData);
       renderTable(applyFilters(rawData));
       updateStats(applyFilters(rawData));
@@ -530,6 +613,11 @@ if (!disableBootstrapFlag && canBootstrap) {
       });
       document.getElementById("search").addEventListener("input", (e) => {
         searchValue = e.target.value.trim().toLowerCase();
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+      });
+      document.getElementById("statusFilter").addEventListener("change", (e) => {
+        filterStatus = e.target.value;
         renderTable(applyFilters(rawData));
         updateStats(applyFilters(rawData));
       });
@@ -580,8 +668,15 @@ const testApi = {
   showError,
   toggleSort,
   __setState(overrides = {}) {
+    if (Object.prototype.hasOwnProperty.call(overrides, "statuses")) {
+      gameStatuses = overrides.statuses;
+    }
     if (Object.prototype.hasOwnProperty.call(overrides, "owned")) {
-      owned = overrides.owned;
+      const incoming = overrides.owned || {};
+      gameStatuses = {};
+      Object.keys(incoming).forEach((key) => {
+        if (incoming[key]) gameStatuses[key] = STATUS_OWNED;
+      });
     }
     if (Object.prototype.hasOwnProperty.call(overrides, "importedCollection")) {
       importedCollection = overrides.importedCollection;
@@ -594,6 +689,9 @@ const testApi = {
     }
     if (Object.prototype.hasOwnProperty.call(overrides, "searchValue")) {
       searchValue = overrides.searchValue;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "filterStatus")) {
+      filterStatus = overrides.filterStatus;
     }
     if (Object.prototype.hasOwnProperty.call(overrides, "filterRatingMin")) {
       filterRatingMin = overrides.filterRatingMin;
@@ -616,11 +714,12 @@ const testApi = {
   },
   __getState() {
     return {
-      owned,
+      statuses: gameStatuses,
       importedCollection,
       filterPlatform,
       filterGenre,
       searchValue,
+      filterStatus,
       filterRatingMin,
       filterYearStart,
       filterYearEnd,

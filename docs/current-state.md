@@ -14,7 +14,7 @@ _Last updated: June 2024_
 1. `config.js` (ignored by git) exposes `window.__SUPABASE_CONFIG__` with the Supabase URL and anon key.
 2. `app.js` instantiates a Supabase client and fetches all rows from the `games` table, ordered alphabetically.
    - If Supabase credentials are missing or unreachable, the frontend transparently loads `data/sample-games.json` so the UI stays functional.
-3. The dataset populates filter dropdowns and an interactive table. Per-row ownership is stored in `localStorage` under the key `roms_owned`.
+3. The dataset populates filter dropdowns and an interactive table. Per-row status (owned, wishlist, backlog, trade) is stored in `localStorage` under the key `roms_owned` and drives both the stats widget and sharing/export flows.
 4. Users can export owned titles to CSV or create a share code (base64-encoded list of `game___platform` identifiers). Importing a share code renders a read-only view of another collection.
 5. Clicking a row opens a modal with metadata and quick links to Google, YouTube gameplay, and GameFAQs searches.
 
@@ -22,7 +22,7 @@ _Last updated: June 2024_
 
 - Retro-inspired theme built around the "Press Start 2P" Google Font, neon gradients, and glowing accents (`style.css`).
 - Responsive adjustments for screens below 800px and 700px adjust layout and modal sizes.
-- Filter toolbar now exposes platform, genre, search, minimum rating, and release-year range inputs for precise slicing.
+- Filter toolbar now exposes platform, genre, search, status, minimum rating, and release-year range inputs for precise slicing.
 - Accessibility helpers include focus trapping in the modal and keyboard shortcuts (Escape closes modal, Enter triggers import field).
 - Table headers are now interactive, enabling ascending/descending sorting per column with keyboard support.
 

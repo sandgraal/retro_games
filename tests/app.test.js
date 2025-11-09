@@ -36,11 +36,12 @@ function resetDom() {
 beforeEach(() => {
   resetDom();
   app.__setState({
-    owned: {},
+    statuses: {},
     importedCollection: null,
     filterPlatform: "",
     filterGenre: "",
     searchValue: "",
+    filterStatus: "",
     filterRatingMin: "",
     filterYearStart: "",
     filterYearEnd: "",
@@ -63,7 +64,7 @@ describe("applyFilters", () => {
 
   it("filters when viewing an imported collection", () => {
     app.__setState({
-      importedCollection: { "Chrono Trigger___SNES": true },
+      importedCollection: { "Chrono Trigger___SNES": "owned" },
     });
     const filtered = app.applyFilters(SAMPLE_DATA);
     expect(filtered).toHaveLength(1);
@@ -90,7 +91,7 @@ describe("applyFilters", () => {
 describe("renderTable", () => {
   it("renders rows and marks owned entries", () => {
     app.__setState({
-      owned: { "Chrono Trigger___SNES": true },
+      statuses: { "Chrono Trigger___SNES": "owned" },
     });
     app.renderTable(SAMPLE_DATA);
     const rows = document.querySelectorAll("#romTable tbody tr");
@@ -99,9 +100,11 @@ describe("renderTable", () => {
       row.textContent.includes("Chrono Trigger")
     );
     expect(chronoRow).toBeTruthy();
-    expect(chronoRow.classList.contains("owned-row")).toBe(true);
-    const chronoCheckbox = chronoRow.querySelector(".checkbox-own");
-    expect(chronoCheckbox.checked).toBe(true);
+    expect(chronoRow.classList.contains("status-owned")).toBe(true);
+    const chronoSelect = chronoRow.querySelector(".status-select");
+    expect(chronoSelect.value).toBe("owned");
+    const statusSelect = chronoRow.querySelector(".status-select");
+    expect(statusSelect.value).toBe("owned");
     expect(document.getElementById("romTable").style.display).toBe("");
     expect(document.getElementById("result").style.display).toBe("none");
   });
@@ -122,5 +125,18 @@ describe("renderTable", () => {
       .querySelector("#romTable tbody tr td:nth-child(2)")
       .textContent.trim();
     expect(updatedRowTitle).toBe("Chrono Trigger");
+  });
+
+  it("respects status filter selection", () => {
+    app.__setState({
+      statuses: {
+        "Chrono Trigger___SNES": "owned",
+        "Castlevania Symphony Of The Night___PS1": "wishlist",
+      },
+      filterStatus: "wishlist",
+    });
+    const filtered = app.applyFilters(SAMPLE_DATA);
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].game_name).toBe("Castlevania Symphony Of The Night");
   });
 });
