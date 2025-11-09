@@ -42,6 +42,46 @@
           </div>
         </div>
       </header>
+      <section
+        id="trendingPicks"
+        class="trending-section"
+        aria-label="Trending picks from your library"
+      >
+        <div class="trending-header">
+          <h2>Trending Picks</h2>
+          <p class="trending-subtitle">
+            Highest-rated gems and fresh additions worth another look.
+          </p>
+        </div>
+        <div class="trending-carousel">
+          <button
+            type="button"
+            class="carousel-control prev"
+            data-carousel-target="trendingWindow"
+            data-direction="prev"
+            aria-label="Scroll to previous trending picks"
+          >
+            <span aria-hidden="true">&#10094;</span>
+          </button>
+          <div
+            id="trendingWindow"
+            class="trending-window"
+            data-carousel-window
+            tabindex="0"
+          >
+            <div id="trendingList" class="trending-list" role="list"></div>
+          </div>
+          <button
+            type="button"
+            class="carousel-control next"
+            data-carousel-target="trendingWindow"
+            data-direction="next"
+            aria-label="Scroll to next trending picks"
+          >
+            <span aria-hidden="true">&#10095;</span>
+          </button>
+        </div>
+      </section>
       <section class="filters-panel" aria-label="Collection filters">
         <div class="filters primary-filters">
           <label class="filter-field">
@@ -110,26 +150,123 @@
       </section>
       <div id="stats">Loading stats...</div>
       <section id="dashboard" aria-label="Collection dashboard">
-      <div class="dashboard-card" id="dashboard-statuses">
-        <h2>Status Mix</h2>
-        <ul>
-          <li><span>Owned</span><strong id="dash-owned">0</strong></li>
-          <li><span>Wishlist</span><strong id="dash-wishlist">0</strong></li>
-          <li><span>Backlog</span><strong id="dash-backlog">0</strong></li>
-          <li><span>Trade</span><strong id="dash-trade">0</strong></li>
-        </ul>
-      </div>
-      <div class="dashboard-card" id="dashboard-top-genres">
-        <h2>Top Genres</h2>
-        <ol id="dash-genres">
-          <li>Loading...</li>
-        </ol>
-      </div>
-      <div class="dashboard-card" id="dashboard-release">
-        <h2>Release Timeline</h2>
-        <div id="dash-timeline" class="timeline-bars">Loading...</div>
-      </div>
-    </section>
+        <div class="dashboard-card" id="dashboard-statuses">
+          <h2>Status Mix</h2>
+          <div class="status-progress" role="list">
+            <div class="status-row" role="listitem">
+              <div class="status-label">
+                <span class="status-name">Owned</span>
+                <span class="status-metric">
+                  <strong id="dash-owned-count">0</strong>
+                  <span id="dash-owned-percent" class="status-percent">0%</span>
+                </span>
+              </div>
+              <div
+                class="status-bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+                aria-label="Owned games in collection"
+              >
+                <span id="dash-owned-bar" class="status-bar-fill"></span>
+              </div>
+            </div>
+            <div class="status-row" role="listitem">
+              <div class="status-label">
+                <span class="status-name">Wishlist</span>
+                <span class="status-metric">
+                  <strong id="dash-wishlist-count">0</strong>
+                  <span id="dash-wishlist-percent" class="status-percent">0%</span>
+                </span>
+              </div>
+              <div
+                class="status-bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+                aria-label="Wishlist games in collection"
+              >
+                <span id="dash-wishlist-bar" class="status-bar-fill"></span>
+              </div>
+            </div>
+            <div class="status-row" role="listitem">
+              <div class="status-label">
+                <span class="status-name">Backlog</span>
+                <span class="status-metric">
+                  <strong id="dash-backlog-count">0</strong>
+                  <span id="dash-backlog-percent" class="status-percent">0%</span>
+                </span>
+              </div>
+              <div
+                class="status-bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+                aria-label="Backlog games in collection"
+              >
+                <span id="dash-backlog-bar" class="status-bar-fill"></span>
+              </div>
+            </div>
+            <div class="status-row" role="listitem">
+              <div class="status-label">
+                <span class="status-name">Trade</span>
+                <span class="status-metric">
+                  <strong id="dash-trade-count">0</strong>
+                  <span id="dash-trade-percent" class="status-percent">0%</span>
+                </span>
+              </div>
+              <div
+                class="status-bar"
+                role="progressbar"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+                aria-label="Trade-ready games in collection"
+              >
+                <span id="dash-trade-bar" class="status-bar-fill"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dashboard-card" id="dashboard-top-genres">
+          <h2>Top Genres</h2>
+          <div class="genre-carousel">
+            <button
+              type="button"
+              class="carousel-control prev"
+              data-carousel-target="dash-genres-window"
+              data-direction="prev"
+              aria-label="Scroll to previous top genres"
+            >
+              <span aria-hidden="true">&#10094;</span>
+            </button>
+            <div
+              id="dash-genres-window"
+              class="genre-window"
+              data-carousel-window
+              tabindex="0"
+            >
+              <div id="dash-genres" class="genre-track" role="list"></div>
+            </div>
+            <button
+              type="button"
+              class="carousel-control next"
+              data-carousel-target="dash-genres-window"
+              data-direction="next"
+              aria-label="Scroll to next top genres"
+            >
+              <span aria-hidden="true">&#10095;</span>
+            </button>
+          </div>
+        </div>
+        <div class="dashboard-card" id="dashboard-release">
+          <h2>Release Timeline</h2>
+          <div id="dash-timeline" class="timeline-bars">Loading...</div>
+        </div>
+      </section>
       <div id="shareSection" style="display: none">
         <button id="closeShare" title="Close">&times;</button>
       <div>
