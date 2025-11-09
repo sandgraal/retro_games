@@ -42,6 +42,12 @@ Supabase schema + migration workflow lives in `docs/data-pipeline.md`.
 - `npm test` / `npm run test:watch` – Execute the Vitest suite (jsdom) that covers filter logic and table rendering.
 - `npm run test:e2e` – Playwright smoke test that spins up a static server, forces the sample dataset, and verifies the modal workflow (run `npx playwright install --with-deps` once after cloning).
 
+## Performance Instrumentation
+
+- Rendering and data-load steps emit lightweight metrics. Inspect them via `window.__SANDGRAAL_PERF__.buffer` in DevTools.
+- Enable verbose console logs by running `window.__SANDGRAAL_DEBUG_METRICS__ = true` in DevTools _before_ refreshing (or set it on `globalThis` in tests).
+- Metrics currently captured: Supabase vs. sample data load times and every table re-render (search/filter, sort, share import, etc.) with row counts and sort state.
+
 ## SEO & Discoverability
 
 - The UI now emits JSON-LD `VideoGame` + `Review` structured data for the highest-rated titles as soon as the dataset loads, improving search result richness without manual exports.

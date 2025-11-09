@@ -78,6 +78,55 @@ const reduceMotionQuery =
     : null;
 const registeredCarouselWindows = new Set();
 let carouselControlsBound = false;
+const PERF_BUFFER_LIMIT = 50;
+const perfMetrics = [];
+const perfState = {
+  debug:
+    (typeof window !== "undefined" && !!window.__SANDGRAAL_DEBUG_METRICS__) ||
+    (typeof globalThis !== "undefined" && !!globalThis.__SANDGRAAL_DEBUG_METRICS__),
+};
+
+function getNow() {
+  if (typeof performance !== "undefined" && typeof performance.now === "function") {
+    return performance.now();
+  }
+  return Date.now();
+}
+
+function recordPerfMetric(name, duration, extra = {}) {
+  const safeDuration = Number.isFinite(duration) ? Number(duration.toFixed(2)) : duration;
+  const entry = {
+    name,
+    duration: safeDuration,
+    timestamp: Date.now(),
+    ...extra,
+  };
+  perfMetrics.push(entry);
+  if (perfMetrics.length > PERF_BUFFER_LIMIT) perfMetrics.shift();
+  if (perfState.debug && typeof console !== "undefined") {
+    console.info("[perf]", name, `${safeDuration}ms`, extra);
+  }
+}
+
+function exposePerfInterface() {
+  if (typeof window === "undefined") return;
+  window.__SANDGRAAL_PERF__ = {
+    get buffer() {
+      return [...perfMetrics];
+    },
+    enableDebug() {
+      perfState.debug = true;
+    },
+    disableDebug() {
+      perfState.debug = false;
+    },
+    clear() {
+      perfMetrics.length = 0;
+    },
+  };
+}
+
+exposePerfInterface();
 
 // === Supabase Config ===
 const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
@@ -185,7 +234,12 @@ async function fetchSampleGames() {
 async function loadGameData() {
   const useFallback = async (reason) => {
     console.warn("Using local sample data due to Supabase issue:", reason);
+    const start = getNow();
     const sample = await fetchSampleGames();
+    recordPerfMetric("data-load", getNow() - start, {
+      source: "sample",
+      reason: typeof reason === "string" ? reason : reason?.message,
+    });
     return { data: sample, source: "sample" };
   };
 
@@ -194,7 +248,9 @@ async function loadGameData() {
   }
 
   try {
+    const start = getNow();
     const data = await fetchGames();
+    recordPerfMetric("data-load", getNow() - start, { source: "supabase" });
     return { data, source: "supabase" };
   } catch (err) {
     return useFallback(err);
@@ -767,8 +823,7 @@ function renderTable(data) {
         const k = this.getAttribute("data-key");
         setStatusForKey(k, this.value);
         saveStatuses();
-        renderTable(applyFilters(rawData));
-        updateStats(applyFilters(rawData));
+        refreshFilteredView("status-select");
       };
     });
   }
@@ -941,6 +996,23 @@ function updateDashboard(statusCounts, data) {
       })
       .join("");
   }
+}
+
+/**
+ * Re-render filtered data and capture render duration metrics.
+ * @param {string} reason
+ * @returns {GameRow[]}
+ */
+function refreshFilteredView(reason = "unknown") {
+  const start = getNow();
+  const filtered = applyFilters(rawData);
+  renderTable(filtered);
+  updateStats(filtered);
+  recordPerfMetric(`render:${reason}`, getNow() - start, {
+    rows: filtered.length,
+    sort: `${sortColumn}:${sortDirection}`,
+  });
+  return filtered;
 }
 
 function updateTrendingCarousel(data) {
@@ -1207,8 +1279,7 @@ function applyTypeaheadSuggestion(value) {
   input.value = value;
   searchValue = value.trim().toLowerCase();
   clearTypeaheadSuggestions();
-  renderTable(applyFilters(rawData));
-  updateStats(applyFilters(rawData));
+  refreshFilteredView("typeahead-select");
   input.focus();
 }
 
@@ -1499,8 +1570,7 @@ function importCollection() {
     });
     importedCollection = coll;
     importedNotes = noteMap;
-    renderTable(applyFilters(rawData));
-    updateStats(applyFilters(rawData));
+    refreshFilteredView("share-import");
     document.getElementById("importResult").textContent =
       "Imported! Viewing shared collection.";
   } catch (e) {
@@ -1516,8 +1586,7 @@ function closeShareSection() {
   importedCollection = null;
   importedNotes = null;
   document.getElementById("shareSection").style.display = "none";
-  renderTable(applyFilters(rawData));
-  updateStats(applyFilters(rawData));
+  refreshFilteredView("share-close");
 }
 
 function exportCollectionBackup() {
@@ -1575,8 +1644,7 @@ function restoreCollectionBackup(file) {
         savePersistedFilters();
       }
       applyFiltersToInputs();
-      renderTable(applyFilters(rawData));
-      updateStats(applyFilters(rawData));
+      refreshFilteredView("restore-backup");
       showStatus("Backup restored successfully.", "info");
     } catch (err) {
       console.error("Restore failed:", err);
@@ -1699,7 +1767,7 @@ function showGameModal(game) {
         setNoteForKey(key, noteField.value);
         saveNotes();
         closeModal();
-        renderTable(applyFilters(rawData));
+        refreshFilteredView("note-save");
       };
     }
   }
@@ -1718,8 +1786,7 @@ function toggleSort(column) {
     sortColumn = column;
     sortDirection = "asc";
   }
-  renderTable(applyFilters(rawData));
-  updateStats(applyFilters(rawData));
+  refreshFilteredView(`sort:${column}`);
 }
 
 // === On load: Fetch games from Supabase, bootstrap UI, set up listeners ===
@@ -1746,8 +1813,7 @@ if (!disableBootstrapFlag && canBootstrap) {
       filterYearStart = persistedFilters.filterYearStart || "";
       filterYearEnd = persistedFilters.filterYearEnd || "";
       setupFilters(rawData);
-      renderTable(applyFilters(rawData));
-      updateStats(applyFilters(rawData));
+      refreshFilteredView("initial-load");
       updateTrendingCarousel(rawData);
       updateStructuredData(rawData);
       if (source === "sample") {
@@ -1761,47 +1827,40 @@ if (!disableBootstrapFlag && canBootstrap) {
 
       document.getElementById("platformFilter").addEventListener("change", (e) => {
         filterPlatform = e.target.value;
-        renderTable(applyFilters(rawData));
-        updateStats(applyFilters(rawData));
+        refreshFilteredView("filter:platform");
       });
       document.getElementById("genreFilter").addEventListener("change", (e) => {
         filterGenre = e.target.value;
-        renderTable(applyFilters(rawData));
-        updateStats(applyFilters(rawData));
+        refreshFilteredView("filter:genre");
       });
       const searchInput = document.getElementById("search");
       if (searchInput) {
         searchInput.addEventListener("input", (e) => {
           const value = e.target.value;
           searchValue = value.trim().toLowerCase();
-          renderTable(applyFilters(rawData));
-          updateStats(applyFilters(rawData));
+          refreshFilteredView("filter:search");
           queueTypeaheadSuggestions(value);
         });
       }
       document.getElementById("statusFilter").addEventListener("change", (e) => {
         filterStatus = e.target.value;
         savePersistedFilters();
-        renderTable(applyFilters(rawData));
-        updateStats(applyFilters(rawData));
+        refreshFilteredView("filter:status");
       });
       document.getElementById("ratingFilter").addEventListener("input", (e) => {
         filterRatingMin = e.target.value.trim();
         savePersistedFilters();
-        renderTable(applyFilters(rawData));
-        updateStats(applyFilters(rawData));
+        refreshFilteredView("filter:rating");
       });
       document.getElementById("yearStartFilter").addEventListener("input", (e) => {
         filterYearStart = e.target.value.trim();
         savePersistedFilters();
-        renderTable(applyFilters(rawData));
-        updateStats(applyFilters(rawData));
+        refreshFilteredView("filter:year-start");
       });
       document.getElementById("yearEndFilter").addEventListener("input", (e) => {
         filterYearEnd = e.target.value.trim();
         savePersistedFilters();
-        renderTable(applyFilters(rawData));
-        updateStats(applyFilters(rawData));
+        refreshFilteredView("filter:year-end");
       });
       document.getElementById("clearFilters").addEventListener("click", () => {
         filterPlatform = "";
@@ -1821,8 +1880,7 @@ if (!disableBootstrapFlag && canBootstrap) {
         document.getElementById("yearStartFilter").value = "";
         document.getElementById("yearEndFilter").value = "";
         clearTypeaheadSuggestions();
-        renderTable(applyFilters(rawData));
-        updateStats(applyFilters(rawData));
+        refreshFilteredView("filter:clear");
       });
 
       applyFiltersToInputs();
