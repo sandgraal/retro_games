@@ -31,16 +31,60 @@ function resetDom() {
       <tbody></tbody>
     </table>
     <div id="stats"></div>
-    <div id="dashboard">
+    <section id="dashboard">
       <div id="dashboard-statuses">
-        <span id="dash-owned"></span>
-        <span id="dash-wishlist"></span>
-        <span id="dash-backlog"></span>
-        <span id="dash-trade"></span>
+        <div class="status-row">
+          <div class="status-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-label="Owned games in collection"
+          ><span id="dash-owned-bar"></span></div>
+          <span id="dash-owned-count"></span>
+          <span id="dash-owned-percent"></span>
+        </div>
+        <div class="status-row">
+          <div class="status-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-label="Wishlist games"
+          ><span id="dash-wishlist-bar"></span></div>
+          <span id="dash-wishlist-count"></span>
+          <span id="dash-wishlist-percent"></span>
+        </div>
+        <div class="status-row">
+          <div class="status-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-label="Backlog games"
+          ><span id="dash-backlog-bar"></span></div>
+          <span id="dash-backlog-count"></span>
+          <span id="dash-backlog-percent"></span>
+        </div>
+        <div class="status-row">
+          <div class="status-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-label="Trade games"
+          ><span id="dash-trade-bar"></span></div>
+          <span id="dash-trade-count"></span>
+          <span id="dash-trade-percent"></span>
+        </div>
       </div>
-      <ol id="dash-genres"></ol>
+      <div class="genre-carousel">
+        <div id="dash-genres-window" data-carousel-window>
+          <div id="dash-genres" role="list"></div>
+        </div>
+      </div>
       <div id="dash-timeline"></div>
-    </div>
+    </section>
   `;
 }
 
@@ -169,7 +213,10 @@ describe("renderTable", () => {
 });
 describe("dashboard", () => {
   it("updates top genres and status cards", () => {
-    document.getElementById("dash-owned").textContent = "0";
+    const ownedCountEl = document.getElementById("dash-owned-count");
+    const ownedPercentEl = document.getElementById("dash-owned-percent");
+    ownedCountEl.textContent = "0";
+    ownedPercentEl.textContent = "0%";
     document.getElementById("dash-genres").innerHTML = "";
     app.updateDashboard(
       {
@@ -180,7 +227,8 @@ describe("dashboard", () => {
       },
       SAMPLE_DATA
     );
-    expect(document.getElementById("dash-owned").textContent).toBe("2");
+    expect(ownedCountEl.textContent).toBe("2");
+    expect(ownedPercentEl.textContent.endsWith("%")).toBe(true);
     expect(document.getElementById("dash-genres").children.length).toBeGreaterThan(0);
   });
 
