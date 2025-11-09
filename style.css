@@ -92,16 +92,8 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: clamp(0.6rem, 1.5vw, 1rem);
-}
-
-.toolbar-group-primary {
   align-items: stretch;
 }
-
-.toolbar-group-secondary {
-  align-items: stretch;
-}
-
 .filters {
   display: grid;
   gap: clamp(0.75rem, 2vw, 1.4rem);
