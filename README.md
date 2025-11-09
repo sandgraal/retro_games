@@ -22,6 +22,8 @@ It’s a clean, modern tool for serious collectors, archivists, and retro fans w
    (single table) or `SUPABASE_TABLES` (comma-separated priority list) if your dataset lives in a custom view such as
    `games_new`.
 2. Install dependencies once with `npm install`, then run `npm run build:config` to generate `config.js` from your `.env`.
+   Commit the generated `config.js` so GitHub Pages (or any static host) can read the public anon key; rerun and commit the file
+   whenever you rotate credentials.
 3. Serve the site locally with any static server, e.g. `python -m http.server 8080`.
 4. Anytime you rotate credentials, update `.env` and rerun `npm run build:config`.
 
