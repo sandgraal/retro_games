@@ -93,7 +93,9 @@ async function main() {
   try {
     const routes = await buildRoutes();
     if (!routes.length) {
-      throw new Error("No HTML routes found. Add an index.html or configure ADDITIONAL_ROUTES.");
+      throw new Error(
+        "No HTML routes found. Add an index.html or configure ADDITIONAL_ROUTES."
+      );
     }
     const xml = buildXml(routes);
     await fs.writeFile(OUTPUT_PATH, xml, "utf8");

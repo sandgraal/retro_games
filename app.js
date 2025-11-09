@@ -51,12 +51,7 @@ const THEME_DARK = "dark";
 const TYPEAHEAD_MIN_CHARS = 2;
 const TYPEAHEAD_DEBOUNCE_MS = 180;
 const TYPEAHEAD_LIMIT = 8;
-const TYPEAHEAD_SELECT_COLUMNS = [
-  COL_GAME,
-  COL_PLATFORM,
-  COL_GENRE,
-  COL_RELEASE_YEAR,
-]
+const TYPEAHEAD_SELECT_COLUMNS = [COL_GAME, COL_PLATFORM, COL_GENRE, COL_RELEASE_YEAR]
   .map((column) => column.trim())
   .filter(Boolean)
   .join(",");
