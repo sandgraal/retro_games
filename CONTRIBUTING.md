@@ -18,10 +18,15 @@ Thanks for keeping Sandgraal's Retro Games list sharp. This document captures th
 
 ## 3. Coding standards
 
-- **Formatting & linting**: Run `npm run format` + `npm run lint` before pushing. ESLint + Prettier enforce consistent style.
-- **Types & docs**: Prefer JSDoc for new helpers (see `app.js`) and sync typedefs when changing schema.
-- **State changes**: Keep localStorage keys backwards compatible; when adding new data shape, provide migration/fallback code and tests.
-- **Security**: Never hardcode Supabase keys. Secrets must live in `.env` and enter via `config.js` build step. CI performs `gitleaks` scans.
+| Area | Expectations |
+| --- | --- |
+| **Formatting & Linting** | Run `npm run format` and `npm run lint` before every push. Never commit `eslint-disable` comments without explaining why. |
+| **JavaScript** | Prefer pure helpers, keep side effects isolated, and document new functions with JSDoc so Vitest + TypeScript tooling can infer types. Use existing constants (`COL_*`, status enums) instead of retyping literals. |
+| **CSS** | Reuse CSS custom properties (`--color-*`, `--surface-*`) and component classes; avoid inline styles. Add concise comments only for complex layout tricks. |
+| **Accessibility** | All interactive elements need keyboard focus styles and `aria-*` labels when semantics aren’t obvious (e.g., carousels, typeahead). Verify using Playwright tests or manual Tab-through. |
+| **State & Persistence** | Keep `localStorage` keys backwards compatible. When you change stored shapes, write a migration helper and add a unit test covering both old + new payloads. |
+| **Security & Secrets** | Never hardcode Supabase keys or share codes in tests. Secrets live in `.env` and flow through `npm run build:config`. CI already runs `gitleaks`; keep it green. |
+| **Performance** | Favor lazy rendering paths (virtualized lists, debounced handlers). When adding network calls, debounce/throttle and log via `console.debug` rather than spamming `console.log`. |
 
 ## 4. Test workflow
 
@@ -42,5 +47,14 @@ Thanks for keeping Sandgraal's Retro Games list sharp. This document captures th
 - Small PRs (<500 LOC) move fastest; split large changes into phases when possible.
 - Highlight any data migrations or Supabase schema changes in the PR body.
 - Include reproduction or verification steps so reviewers can validate fixes quickly.
+- Call out any assumptions about Supabase availability (sample vs. live data) so reviewers can replicate.
+
+## 7. Reviewer checklist
+
+- [ ] Confirm lint/tests/Playwright status is reported in the PR.
+- [ ] Verify accessibility affordances (focus ring, aria labels) for any new UI elements.
+- [ ] Validate performance-sensitive paths (search, filters, modals) still feel instant with sample data.
+- [ ] Ensure documentation and roadmap checkboxes were updated where applicable.
+- [ ] Double-check Supabase schema or config changes against `docs/data-pipeline.md`.
 
 Happy hacking!
