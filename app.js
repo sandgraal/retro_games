@@ -45,6 +45,9 @@ const STATUS_OWNED = "owned";
 const STATUS_WISHLIST = "wishlist";
 const STATUS_BACKLOG = "backlog";
 const STATUS_TRADE = "trade";
+const THEME_STORAGE_KEY = "rom_theme";
+const THEME_LIGHT = "light";
+const THEME_DARK = "dark";
 
 const STATUS_OPTIONS = [
   { value: STATUS_NONE, label: "None" },
@@ -177,6 +180,106 @@ function getReleaseYear(row) {
   const fallbackValue =
     row[COL_RELEASE_YEAR] ?? row.release_year ?? row.releaseYear ?? row["Release Year"];
   return parseYear(fallbackValue);
+}
+
+function isValidTheme(theme) {
+  return theme === THEME_LIGHT || theme === THEME_DARK;
+}
+
+function getStoredThemeChoice() {
+  if (typeof window === "undefined" || !window.localStorage) return null;
+  try {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return isValidTheme(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+function getPreferredTheme() {
+  if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+    try {
+      return window.matchMedia("(prefers-color-scheme: light)").matches
+        ? THEME_LIGHT
+        : THEME_DARK;
+    } catch {
+      /* noop */
+    }
+  }
+  return THEME_DARK;
+}
+
+function applyThemeChoice(theme) {
+  if (typeof document === "undefined" || !document.documentElement) return;
+  if (isValidTheme(theme)) {
+    document.documentElement.dataset.theme = theme;
+  } else {
+    delete document.documentElement.dataset.theme;
+  }
+}
+
+function persistThemeChoice(theme) {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    /* noop */
+  }
+}
+
+function updateThemeToggleButton(activeTheme) {
+  if (typeof document === "undefined") return;
+  const button = document.getElementById("themeToggle");
+  if (!button) return;
+  const theme = isValidTheme(activeTheme) ? activeTheme : getPreferredTheme();
+  const nextTheme = theme === THEME_LIGHT ? THEME_DARK : THEME_LIGHT;
+  const labelTarget = nextTheme === THEME_LIGHT ? "Light" : "Dark";
+  button.textContent = `Switch to ${labelTarget} Theme`;
+  button.setAttribute("aria-pressed", theme === THEME_LIGHT ? "true" : "false");
+  button.setAttribute("aria-label", `Switch to ${labelTarget.toLowerCase()} theme`);
+  button.setAttribute("title", button.textContent);
+  button.dataset.nextTheme = nextTheme;
+}
+
+function initThemeToggle() {
+  const initialStoredTheme = getStoredThemeChoice();
+  const initialTheme = initialStoredTheme || getPreferredTheme();
+  applyThemeChoice(initialTheme);
+  updateThemeToggleButton(initialTheme);
+
+  if (typeof document === "undefined") return;
+  const button = document.getElementById("themeToggle");
+  if (button) {
+    button.addEventListener("click", () => {
+      const current = document.documentElement.dataset.theme || getPreferredTheme();
+      const nextTheme = current === THEME_LIGHT ? THEME_DARK : THEME_LIGHT;
+      applyThemeChoice(nextTheme);
+      persistThemeChoice(nextTheme);
+      updateThemeToggleButton(nextTheme);
+    });
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function"
+  ) {
+    try {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: light)");
+      const syncThemeWithSystem = (event) => {
+        if (getStoredThemeChoice()) return;
+        const themeFromSystem = event.matches ? THEME_LIGHT : THEME_DARK;
+        applyThemeChoice(themeFromSystem);
+        updateThemeToggleButton(themeFromSystem);
+      };
+      if (typeof mediaQuery.addEventListener === "function") {
+        mediaQuery.addEventListener("change", syncThemeWithSystem);
+      } else if (typeof mediaQuery.addListener === "function") {
+        mediaQuery.addListener(syncThemeWithSystem);
+      }
+    } catch {
+      /* noop */
+    }
+  }
 }
 
 /**
@@ -839,7 +942,7 @@ function showStatus(msg, variant = "info") {
   const el = document.getElementById("result");
   if (!el) return;
   el.style.display = "";
-  el.style.color = variant === "error" ? "#ff7070" : "#7fffd4";
+  el.dataset.variant = variant === "error" ? "error" : "info";
   el.textContent = msg;
 }
 
@@ -847,6 +950,7 @@ function hideStatus() {
   const el = document.getElementById("result");
   if (!el) return;
   el.style.display = "none";
+  delete el.dataset.variant;
 }
 
 /**
@@ -978,6 +1082,7 @@ const canBootstrap =
   typeof document.getElementById === "function";
 
 if (!disableBootstrapFlag && canBootstrap) {
+  initThemeToggle();
   loadGameData()
     .then(({ data, source }) => {
       rawData = data;
