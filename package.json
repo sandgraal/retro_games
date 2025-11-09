@@ -1,0 +1,28 @@
+{
+  "name": "retro_games",
+  "version": "1.0.0",
+  "description": "WIP: A fast, private, and no-nonsense tracker for classic and retro games. A place for retro gamers to get their fix.",
+  "main": "app.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "build:config": "node scripts/generate-config.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sandgraal/retro_games.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/sandgraal/retro_games/issues"
+  },
+  "homepage": "https://github.com/sandgraal/retro_games#readme",
+  "devDependencies": {
+    "dotenv": "^17.2.3"
+  }
+}
