@@ -127,22 +127,43 @@ let filterPlatform = "",
   sortColumn = COL_GAME,
   sortDirection = "asc";
 
+/**
+ * Parse a year string/number into an integer or null when invalid.
+ * @param {string|number} value
+ * @returns {number|null}
+ */
 function parseYear(value) {
   const year = parseInt(value, 10);
   return Number.isNaN(year) ? null : year;
 }
 
+/**
+ * Extracts release year from a data row using common field names.
+ * @param {Record<string, any>} row
+ * @returns {number|null}
+ */
 function getReleaseYear(row) {
   const fallbackValue =
     row[COL_RELEASE_YEAR] ?? row.release_year ?? row.releaseYear ?? row["Release Year"];
   return parseYear(fallbackValue);
 }
 
+/**
+ * Resolve status for a given key, defaulting to STATUS_NONE.
+ * @param {string} key
+ * @param {Record<string, string>} [sourceMap]
+ * @returns {string}
+ */
 function getStatusForKey(key, sourceMap) {
   const map = sourceMap || gameStatuses;
   return map[key] || STATUS_NONE;
 }
 
+/**
+ * Persist a status for the provided key.
+ * @param {string} key
+ * @param {string} status
+ */
 function setStatusForKey(key, status) {
   if (!status || status === STATUS_NONE) {
     delete gameStatuses[key];
@@ -151,11 +172,22 @@ function setStatusForKey(key, status) {
   }
 }
 
+/**
+ * Read a saved note for the given key.
+ * @param {string} key
+ * @param {Record<string, string>} [sourceMap]
+ * @returns {string}
+ */
 function getNoteForKey(key, sourceMap) {
   const map = sourceMap || gameNotes;
   return map[key] || "";
 }
 
+/**
+ * Save a note (or remove when empty) for the given key.
+ * @param {string} key
+ * @param {string} note
+ */
 function setNoteForKey(key, note) {
   if (!note || !note.trim()) {
     delete gameNotes[key];
