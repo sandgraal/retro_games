@@ -1,6 +1,6 @@
 # Current State Overview
 
-_Last updated: June 2024_
+_Last updated: March 2025_
 
 ## Architecture
 

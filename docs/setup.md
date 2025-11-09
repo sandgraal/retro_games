@@ -27,6 +27,10 @@ SUPABASE_ANON_KEY=anon-key
 # Optional overrides when your dataset lives in a different table or view:
 # SUPABASE_TABLE=games_new
 # SUPABASE_TABLES=games_view,games_new
+# Optional streaming/aggregate overrides
+# SUPABASE_STREAM_PAGE_SIZE=400
+# SUPABASE_RPC_GENRES=rpc_genre_counts
+# SUPABASE_RPC_TIMELINE=rpc_timeline_counts
 ```
 
 ## 3. Generate `config.js`
