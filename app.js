@@ -636,11 +636,7 @@ function closeShareSection() {
 }
 
 function exportCollectionBackup() {
-  const payload = {
-    statuses: gameStatuses,
-    notes: gameNotes,
-    filters: persistedFilters,
-  };
+  const payload = getBackupPayload();
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
     type: "application/json",
   });
@@ -653,6 +649,14 @@ function exportCollectionBackup() {
   document.body.removeChild(link);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
   showStatus("Backup downloaded.", "info");
+}
+
+function getBackupPayload() {
+  return {
+    statuses: gameStatuses,
+    notes: gameNotes,
+    filters: persistedFilters,
+  };
 }
 
 function restoreCollectionBackup(file) {
@@ -996,6 +1000,9 @@ const testApi = {
     if (Object.prototype.hasOwnProperty.call(overrides, "filterYearEnd")) {
       filterYearEnd = overrides.filterYearEnd;
     }
+    if (Object.prototype.hasOwnProperty.call(overrides, "filters")) {
+      persistedFilters = overrides.filters;
+    }
     if (Object.prototype.hasOwnProperty.call(overrides, "sortColumn")) {
       sortColumn = overrides.sortColumn;
     }
@@ -1006,6 +1013,7 @@ const testApi = {
       rawData = overrides.rawData;
     }
   },
+  __getBackupPayload: getBackupPayload,
   __getState() {
     return {
       statuses: gameStatuses,

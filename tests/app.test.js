@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import app from "../app.js";
+const getBackupPayload = app.__getBackupPayload || (() => ({}));
 
 const SAMPLE_DATA = [
   {
@@ -146,5 +147,32 @@ describe("renderTable", () => {
     app.renderTable(SAMPLE_DATA);
     const noteDots = document.querySelectorAll(".note-dot");
     expect(noteDots.length).toBe(1);
+  });
+  it("shows note indicator when a note exists", () => {
+    app.__setState({
+      notes: { "Chrono Trigger___SNES": "Keep boxed copy" },
+    });
+    app.renderTable(SAMPLE_DATA);
+    const noteDots = document.querySelectorAll(".note-dot");
+    expect(noteDots.length).toBe(1);
+  });
+});
+describe("persistence helpers", () => {
+  it("exports backup payload with statuses, notes, filters", () => {
+    app.__setState({
+      statuses: { "Chrono Trigger___SNES": "wishlist" },
+      notes: { "Chrono Trigger___SNES": "Find CIB" },
+      filters: {
+        filterStatus: "wishlist",
+        filterRatingMin: "9",
+        filterYearStart: "1990",
+        filterYearEnd: "2000",
+      },
+    });
+    const payload = getBackupPayload();
+    expect(payload.statuses["Chrono Trigger___SNES"]).toBe("wishlist");
+    expect(payload.notes["Chrono Trigger___SNES"]).toBe("Find CIB");
+    expect(payload.filters.filterStatus).toBe("wishlist");
+    expect(payload.filters.filterYearStart).toBe("1990");
   });
 });
