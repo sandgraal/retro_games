@@ -136,9 +136,7 @@ function renderTable(data) {
   const thead = document.querySelector("#romTable thead");
   const tbody = document.querySelector("#romTable tbody");
   thead.innerHTML =
-    "<tr><th>Owned?</th>" +
-    headers.map((h) => `<th>${h}</th>`).join("") +
-    "</tr>";
+    "<tr><th>Owned?</th>" + headers.map((h) => `<th>${h}</th>`).join("") + "</tr>";
   tbody.innerHTML = data
     .map((row, idx) => {
       const key = row[COL_GAME] + "___" + row[COL_PLATFORM];
@@ -147,13 +145,11 @@ function renderTable(data) {
           ? "checked disabled"
           : "disabled"
         : owned[key]
-        ? "checked"
-        : "";
+          ? "checked"
+          : "";
       return (
         `<tr data-row="${idx}" class="${
-          owned[key] || (importedCollection && importedCollection[key])
-            ? "owned-row"
-            : ""
+          owned[key] || (importedCollection && importedCollection[key]) ? "owned-row" : ""
         } game-row">` +
         `<td class="center"><input type="checkbox" class="checkbox-own" data-key="${key}" ${checked}></td>` +
         headers
@@ -161,8 +157,8 @@ function renderTable(data) {
             h === COL_COVER && row[h]
               ? `<td><img src="${row[h]}" alt="cover"></td>`
               : h === "Details" && row[h]
-              ? `<td><a href="${row[h]}" target="_blank" rel="noopener noreferrer">Info</a></td>`
-              : `<td>${row[h] || ""}</td>`
+                ? `<td><a href="${row[h]}" target="_blank" rel="noopener noreferrer">Info</a></td>`
+                : `<td>${row[h] || ""}</td>`
           )
           .join("") +
         "</tr>"
@@ -204,9 +200,7 @@ function renderTable(data) {
  */
 function updateStats(data) {
   const total = data.length;
-  let ratings = data
-    .map((row) => parseFloat(row[COL_RATING]))
-    .filter((n) => !isNaN(n));
+  let ratings = data.map((row) => parseFloat(row[COL_RATING])).filter((n) => !isNaN(n));
   let avg = ratings.length
     ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
     : "-";
@@ -215,18 +209,15 @@ function updateStats(data) {
   const ownedCount = data.filter(
     (row) => useOwned[row[COL_GAME] + "___" + row[COL_PLATFORM]]
   ).length;
-  document.getElementById(
-    "stats"
-  ).textContent = `Games: ${total} | Owned: ${ownedCount} | Average Rating: ${avg} | Platforms: ${platforms.size}`;
+  document.getElementById("stats").textContent =
+    `Games: ${total} | Owned: ${ownedCount} | Average Rating: ${avg} | Platforms: ${platforms.size}`;
 }
 
 /**
  * Export user's owned games as a CSV.
  */
 function exportOwnedGames() {
-  const rows = rawData.filter(
-    (row) => owned[row[COL_GAME] + "___" + row[COL_PLATFORM]]
-  );
+  const rows = rawData.filter((row) => owned[row[COL_GAME] + "___" + row[COL_PLATFORM]]);
   if (!rows.length) {
     showError("No owned games to export!");
     return;
@@ -292,6 +283,7 @@ function importCollection() {
     document.getElementById("importResult").textContent =
       "Imported! Viewing shared collection.";
   } catch (e) {
+    console.error("Failed to import collection code:", e);
     showError("Invalid code.");
   }
 }

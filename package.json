@@ -8,6 +8,10 @@
   },
   "scripts": {
     "build:config": "node scripts/generate-config.js",
+    "lint": "eslint app.js scripts",
+    "lint:fix": "eslint app.js scripts --fix",
+    "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
+    "format:check": "prettier --check \"**/*.{js,json,md,css,html}\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,6 +27,11 @@
   },
   "homepage": "https://github.com/sandgraal/retro_games#readme",
   "devDependencies": {
-    "dotenv": "^17.2.3"
+    "@eslint/js": "^9.39.1",
+    "dotenv": "^17.2.3",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2"
   }
 }

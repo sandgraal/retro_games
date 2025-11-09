@@ -21,3 +21,8 @@ It’s a clean, modern tool for serious collectors, archivists, and retro fans w
 4. Anytime you rotate credentials, update `.env` and rerun `npm run build:config`.
 
 See `docs/setup.md` for more detailed guidance.
+
+## Development
+
+- `npm run lint` / `npm run lint:fix` – Run ESLint (with Prettier compat) across the main app file and build scripts.
+- `npm run format:check` / `npm run format` – Validate or rewrite formatting for JS/JSON/Markdown/CSS/HTML files.
