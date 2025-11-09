@@ -297,6 +297,28 @@
           <div id="dash-timeline" class="timeline-bars">Loading...</div>
         </div>
       </section>
+      <section class="browse-toolbar" aria-label="Browse controls and pagination">
+        <div class="browse-summary" id="browseSummary" aria-live="polite">
+          Preparing collection view...
+        </div>
+        <div class="browse-controls">
+          <label class="browse-control">
+            <span>Browse Mode</span>
+            <select id="browseModeSelect">
+              <option value="stream">Infinite scroll</option>
+              <option value="paged">Paginated</option>
+            </select>
+          </label>
+          <label class="browse-control">
+            <span>Batch Size</span>
+            <select id="pageSizeSelect">
+              <option value="30">30</option>
+              <option value="60">60</option>
+              <option value="120">120</option>
+            </select>
+          </label>
+        </div>
+      </section>
       <div id="shareSection" style="display: none">
         <button id="closeShare" title="Close">&times;</button>
         <div>
@@ -313,6 +335,13 @@
       </div>
       <div id="result">Loading...</div>
       <div id="gameGrid" class="game-grid" aria-live="polite"></div>
+      <nav
+        id="paginationControls"
+        class="pagination"
+        aria-label="Game list pagination"
+      ></nav>
+      <button id="loadMoreBtn" class="load-more" type="button">Load more games</button>
+      <div id="gridSentinel" class="grid-sentinel" aria-hidden="true"></div>
       <div id="modalBg"></div>
       <div id="gameModal"></div>
     </div>

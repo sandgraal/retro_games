@@ -23,10 +23,38 @@ const SAMPLE_DATA = [
   },
 ];
 
+function buildSampleGames(count) {
+  return Array.from({ length: count }, (_, index) => ({
+    game_name: `Game ${index + 1}`,
+    platform: index % 2 === 0 ? "SNES" : "PS1",
+    genre: "Action",
+    rating: "9.0",
+    release_year: (1990 + index).toString(),
+    cover: "",
+    Details: "",
+  }));
+}
+
 function resetDom() {
   document.body.innerHTML = `
     <div id="result"></div>
+    <section class="browse-toolbar">
+      <div id="browseSummary"></div>
+      <div class="browse-controls">
+        <select id="browseModeSelect">
+          <option value="stream">Infinite scroll</option>
+          <option value="paged">Paginated</option>
+        </select>
+        <select id="pageSizeSelect">
+          <option value="30">30</option>
+          <option value="60">60</option>
+        </select>
+      </div>
+    </section>
     <div id="gameGrid" class="game-grid"></div>
+    <nav id="paginationControls" class="pagination"></nav>
+    <button id="loadMoreBtn" style="display:none;"></button>
+    <div id="gridSentinel"></div>
     <select id="sortControl">
       <option value="name-asc">Name (A → Z)</option>
       <option value="name-desc">Name (Z → A)</option>
@@ -106,6 +134,51 @@ beforeEach(() => {
     filterYearStart: "",
     filterYearEnd: "",
     rawData: SAMPLE_DATA,
+  });
+});
+
+describe("browse pagination controls", () => {
+  it("limits visible cards to the current page size", () => {
+    const dataset = buildSampleGames(4);
+    app.__setState({
+      rawData: dataset,
+      browseMode: "paged",
+      paginationState: {
+        pageSize: 2,
+        currentPage: 1,
+        renderedCount: 2,
+        totalItems: 0,
+        totalPages: 1,
+      },
+    });
+    app.refreshFilteredView("test:paged");
+    const cards = document.querySelectorAll(".game-card");
+    expect(cards).toHaveLength(2);
+    expect(document.getElementById("browseSummary").textContent).toContain(
+      "Showing 1–2 of 4"
+    );
+  });
+
+  it("shows load-more controls for infinite mode batches", () => {
+    const dataset = buildSampleGames(5);
+    app.__setState({
+      rawData: dataset,
+      browseMode: "stream",
+      paginationState: {
+        pageSize: 2,
+        renderedCount: 2,
+        currentPage: 1,
+        totalItems: 0,
+        totalPages: 1,
+      },
+    });
+    app.refreshFilteredView("test:infinite");
+    const loadMore = document.getElementById("loadMoreBtn");
+    expect(loadMore.style.display).toBe("");
+    expect(loadMore.textContent).toContain("Load 2 more");
+    expect(document.getElementById("browseSummary").textContent).toContain(
+      "Showing 1–2 of 5"
+    );
   });
 });
 

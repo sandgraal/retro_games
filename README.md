@@ -9,6 +9,7 @@ WIP: A fast, private, and no-nonsense tracker for classic and retro games. A pla
 - Attach personal notes to every game—synced with share codes for easy collaboration
 - One-click JSON backups to move statuses/notes/filters across devices
 - Share your collection with anyone via code—no registration required
+- Choose between infinite scroll batches or paginated pages (with adjustable batch sizes and shareable `?page=` links) so both humans and crawlers can browse huge lists
 - See box art, details, and direct links to gameplay videos or GameFAQs
 - Fully mobile and desktop compatible
 - Supabase-powered typeahead search with a local fallback so you can jump to titles instantly
@@ -53,6 +54,7 @@ Supabase schema + migration workflow lives in `docs/data-pipeline.md`.
 - The UI now emits JSON-LD `VideoGame` + `Review` structured data for the highest-rated titles as soon as the dataset loads, improving search result richness without manual exports.
 - Generate an XML sitemap anytime you deploy by running `SITE_BASE_URL="https://yourdomain.example" npm run sitemap`. The script scans every HTML entry point (currently just `index.html`) and writes `sitemap.xml` at the repo root with fresh timestamps.
 - Submit the generated sitemap to Google Search Console/Bing Webmaster Tools after each production deploy so crawlers pick up collection changes quickly.
+- Use the new browse controls (or manually append `?view=paged&page=2&pageSize=60`) to expose crawlable, deterministic routes when you need static snapshots for SEO audits or content campaigns.
 
 ## Continuous Integration
 
