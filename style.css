@@ -1071,7 +1071,6 @@ h1 {
 .table-scroll table {
   min-width: 720px;
   border-radius: inherit;
-  background: transparent;
 }
 
 table {
