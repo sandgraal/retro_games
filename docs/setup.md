@@ -55,6 +55,7 @@ Open `http://localhost:8080` and the app will load credentials from the generate
 ### Instant demo mode
 
 If Supabase credentials are missing or the fetch fails, the app automatically falls back to `data/sample-games.json`. This guarantees that first-time contributors still see a populated UI while backend access is being configured.
+Append `?sample=1` to the URL (or set `window.__SANDGRAAL_FORCE_SAMPLE__ = true` before loading) to force the sample dataset even when real credentials are present—useful for demos and automated testing.
 
 ## Troubleshooting
 
@@ -67,3 +68,4 @@ If Supabase credentials are missing or the fetch fails, the app automatically fa
 - `npm run lint` / `npm run lint:fix` keep the JavaScript consistent with ESLint + Prettier rules.
 - `npm run format:check` / `npm run format` verify or apply Prettier formatting across JS/JSON/Markdown/CSS/HTML files.
 - `npm test` / `npm run test:watch` run the Vitest suite (jsdom) for core filter/render behavior.
+- `npm run test:e2e` launches Playwright against a static server (ensure you run `npx playwright install --with-deps` once).

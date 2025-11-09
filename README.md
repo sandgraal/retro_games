@@ -29,6 +29,7 @@ See `docs/setup.md` for more detailed guidance.
 - `npm run lint` / `npm run lint:fix` – Run ESLint (with Prettier compat) across the main app file and build scripts.
 - `npm run format:check` / `npm run format` – Validate or rewrite formatting for JS/JSON/Markdown/CSS/HTML files.
 - `npm test` / `npm run test:watch` – Execute the Vitest suite (jsdom) that covers filter logic and table rendering.
+- `npm run test:e2e` – Playwright smoke test that spins up a static server, forces the sample dataset, and verifies the modal workflow (run `npx playwright install --with-deps` once after cloning).
 
 ## Continuous Integration
 
@@ -37,5 +38,6 @@ All pull requests run through `.github/workflows/ci.yml`, which:
 - Installs dependencies with `npm ci` on Node 20.
 - Runs `npm run lint`, `npm run format:check`, and `npm test`.
 - Executes a `gitleaks` scan to block accidental secret commits.
+- (optional future step) Add `npm run test:e2e` to the workflow when headless browsers are available in CI runners.
 
 Keep these commands green locally before pushing to avoid CI failures.

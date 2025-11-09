@@ -19,13 +19,30 @@ const SAMPLE_DATA_URL = "./data/sample-games.json";
 const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
 const SUPABASE_URL = SUPABASE_CONFIG.url || "";
 const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey || "";
+let forceSampleFlag = false;
+if (typeof window !== "undefined") {
+  forceSampleFlag = !!window.__SANDGRAAL_FORCE_SAMPLE__;
+  try {
+    if (window.location && window.location.search) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("sample") === "1") forceSampleFlag = true;
+    }
+  } catch {
+    /* noop */
+  }
+} else if (typeof globalThis !== "undefined") {
+  forceSampleFlag = !!globalThis.__SANDGRAAL_FORCE_SAMPLE__;
+}
+const FORCE_SAMPLE = forceSampleFlag;
 
 const supabase =
   SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
-if (!supabase) {
+if (FORCE_SAMPLE) {
+  console.info("Sample dataset forced via __SANDGRAAL_FORCE_SAMPLE__.");
+} else if (!supabase) {
   console.warn(
     "Supabase credentials missing. Provide window.__SUPABASE_CONFIG__ in config.js."
   );
@@ -61,7 +78,7 @@ async function loadGameData() {
     return { data: sample, source: "sample" };
   };
 
-  if (!supabase) {
+  if (FORCE_SAMPLE || !supabase) {
     return useFallback("Supabase not configured.");
   }
 
