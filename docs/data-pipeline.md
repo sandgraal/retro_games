@@ -15,11 +15,12 @@ This project now tracks its Supabase schema in `supabase/migrations/`. The initi
 2. Authenticate and link your project (`supabase login`, `supabase link --project-ref <ref>`).
 3. Apply migrations: `supabase db push` (dev) or `supabase db reset` (local Docker).
 4. Populate lookup tables and games via the seeding SQL generator: `npm run seed:generate` to produce `supabase/seed.sql`, then run `supabase db remote commit --file supabase/seed.sql` or `psql` against your instance.
+5. Schedule backups via `.github/workflows/db-backup.yml` (requires `SUPABASE_DB_URL` secret); artifacts retain the latest dump.
 
 ## Next steps
 
 - [x] Author CSV → SQL seeding utility that loads `games.csv` into `platforms`, `games`, `game_genres`, and `game_media` (`scripts/generate-seed-sql.js`).
-- Schedule automated backups (Supabase scheduled function or GitHub Action).
-- Document recovery playbook once backup automation is in place.
+- [x] Schedule automated backups (GitHub Action `.github/workflows/db-backup.yml`).
+- [x] Document recovery playbook once backup automation is in place (`docs/recovery-playbook.md`).
 
 Keep this document updated whenever schema/migration workflows change.

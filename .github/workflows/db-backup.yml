@@ -1,0 +1,30 @@
+name: Supabase Backup
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Dump database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "SUPABASE_DB_URL secret missing" >&2
+            exit 1
+          fi
+          mkdir -p backups
+          pg_dump --no-owner --clean "$SUPABASE_DB_URL" > backups/supabase-dump.sql
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup
+          path: backups/supabase-dump.sql
+          retention-days: 7

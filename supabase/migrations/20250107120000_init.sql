@@ -62,4 +62,25 @@ create table if not exists public.user_game_notes (
   updated_at timestamptz not null default now()
 );
 
+-- Row Level Security policies
+alter table public.platforms enable row level security;
+create policy "public read platforms" on public.platforms for select using (true);
+
+alter table public.genres enable row level security;
+create policy "public read genres" on public.genres for select using (true);
+
+alter table public.games enable row level security;
+create policy "public read games" on public.games for select using (true);
+
+alter table public.game_genres enable row level security;
+create policy "public read game_genres" on public.game_genres for select using (true);
+
+alter table public.game_media enable row level security;
+create policy "public read game_media" on public.game_media for select using (true);
+
+alter table public.user_game_notes enable row level security;
+create policy "users read their notes" on public.user_game_notes for select using (auth.uid() = user_id);
+create policy "users write their notes" on public.user_game_notes for insert with check (auth.uid() = user_id);
+create policy "users update their notes" on public.user_game_notes for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 commit;
