@@ -62,3 +62,4 @@ Open `http://localhost:8080` and the app will load credentials from the generate
 
 - `npm run lint` / `npm run lint:fix` keep the JavaScript consistent with ESLint + Prettier rules.
 - `npm run format:check` / `npm run format` verify or apply Prettier formatting across JS/JSON/Markdown/CSS/HTML files.
+- `npm test` / `npm run test:watch` run the Vitest suite (jsdom) for core filter/render behavior.

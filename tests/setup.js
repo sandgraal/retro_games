@@ -1,0 +1,1 @@
+globalThis.__SANDGRAAL_DISABLE_BOOTSTRAP__ = true;

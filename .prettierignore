@@ -1,5 +1,6 @@
 node_modules/
 .venv/
+coverage/
 config.js
 evaluation/
 covers/

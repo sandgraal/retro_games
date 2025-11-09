@@ -13,6 +13,7 @@ yarn-error.log*
 
 # Node tooling
 node_modules/
+coverage/
 
 # Editor settings
 .vscode/*

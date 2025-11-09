@@ -365,49 +365,103 @@ function showGameModal(game) {
 
 // === On load: Fetch games from Supabase, bootstrap UI, set up listeners ===
 
-fetchGames()
-  .then((data) => {
-    rawData = data;
-    if (!rawData.length) throw new Error("No games in database!");
-    loadOwned();
-    setupFilters(rawData);
-    renderTable(applyFilters(rawData));
-    updateStats(applyFilters(rawData));
+const disableBootstrapFlag =
+  (typeof window !== "undefined" && window.__SANDGRAAL_DISABLE_BOOTSTRAP__) ||
+  (typeof globalThis !== "undefined" && globalThis.__SANDGRAAL_DISABLE_BOOTSTRAP__);
+const canBootstrap =
+  typeof window !== "undefined" &&
+  typeof document !== "undefined" &&
+  typeof document.getElementById === "function";
 
-    document.getElementById("platformFilter").addEventListener("change", (e) => {
-      filterPlatform = e.target.value;
+if (!disableBootstrapFlag && canBootstrap) {
+  fetchGames()
+    .then((data) => {
+      rawData = data;
+      if (!rawData.length) throw new Error("No games in database!");
+      loadOwned();
+      setupFilters(rawData);
       renderTable(applyFilters(rawData));
       updateStats(applyFilters(rawData));
-    });
-    document.getElementById("genreFilter").addEventListener("change", (e) => {
-      filterGenre = e.target.value;
-      renderTable(applyFilters(rawData));
-      updateStats(applyFilters(rawData));
-    });
-    document.getElementById("search").addEventListener("input", (e) => {
-      searchValue = e.target.value.trim().toLowerCase();
-      renderTable(applyFilters(rawData));
-      updateStats(applyFilters(rawData));
-    });
 
-    document.getElementById("exportBtn").onclick = exportOwnedGames;
-    document.getElementById("shareBtn").onclick = showShareSection;
-    document.getElementById("showImport").onclick = showImportSection;
-    document.getElementById("copyShare").onclick = function () {
-      let code = document.getElementById("shareCode").value;
-      navigator.clipboard.writeText(code);
-      this.textContent = "Copied!";
-      setTimeout(() => {
-        this.textContent = "Copy";
-      }, 1200);
+      document.getElementById("platformFilter").addEventListener("change", (e) => {
+        filterPlatform = e.target.value;
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+      });
+      document.getElementById("genreFilter").addEventListener("change", (e) => {
+        filterGenre = e.target.value;
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+      });
+      document.getElementById("search").addEventListener("input", (e) => {
+        searchValue = e.target.value.trim().toLowerCase();
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+      });
+
+      document.getElementById("exportBtn").onclick = exportOwnedGames;
+      document.getElementById("shareBtn").onclick = showShareSection;
+      document.getElementById("showImport").onclick = showImportSection;
+      document.getElementById("copyShare").onclick = function () {
+        let code = document.getElementById("shareCode").value;
+        navigator.clipboard.writeText(code);
+        this.textContent = "Copied!";
+        setTimeout(() => {
+          this.textContent = "Copy";
+        }, 1200);
+      };
+      document.getElementById("importBtn").onclick = importCollection;
+      document.getElementById("closeShare").onclick = closeShareSection;
+      document.getElementById("importCode").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") importCollection();
+      });
+    })
+    .catch((err) => {
+      const message = err && err.message ? err.message : err;
+      showError("Supabase error: " + message);
+    });
+}
+
+const testApi = {
+  applyFilters,
+  renderTable,
+  setupFilters,
+  updateStats,
+  showError,
+  __setState(overrides = {}) {
+    if (Object.prototype.hasOwnProperty.call(overrides, "owned")) {
+      owned = overrides.owned;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "importedCollection")) {
+      importedCollection = overrides.importedCollection;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "filterPlatform")) {
+      filterPlatform = overrides.filterPlatform;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "filterGenre")) {
+      filterGenre = overrides.filterGenre;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "searchValue")) {
+      searchValue = overrides.searchValue;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "rawData")) {
+      rawData = overrides.rawData;
+    }
+  },
+  __getState() {
+    return {
+      owned,
+      importedCollection,
+      filterPlatform,
+      filterGenre,
+      searchValue,
+      rawData,
     };
-    document.getElementById("importBtn").onclick = importCollection;
-    document.getElementById("closeShare").onclick = closeShareSection;
-    document.getElementById("importCode").addEventListener("keydown", function (e) {
-      if (e.key === "Enter") importCollection();
-    });
-  })
-  .catch((err) => {
-    const message = err && err.message ? err.message : err;
-    showError("Supabase error: " + message);
-  });
+  },
+};
+
+/* eslint-disable no-undef */
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = testApi;
+}
+/* eslint-enable no-undef */

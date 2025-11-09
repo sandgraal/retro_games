@@ -26,3 +26,4 @@ See `docs/setup.md` for more detailed guidance.
 
 - `npm run lint` / `npm run lint:fix` – Run ESLint (with Prettier compat) across the main app file and build scripts.
 - `npm run format:check` / `npm run format` – Validate or rewrite formatting for JS/JSON/Markdown/CSS/HTML files.
+- `npm test` / `npm run test:watch` – Execute the Vitest suite (jsdom) that covers filter logic and table rendering.
