@@ -15,6 +15,6 @@ It’s a clean, modern tool for serious collectors, archivists, and retro fans w
 
 ## Setup
 
-1. Copy `.env.example` to `.env` and provide your Supabase project URL and anon key.
-2. Follow the existing configuration flow to expose those credentials to the frontend (currently via a manually created `config.js`).
+1. Copy `config.example.js` to `config.js` and provide your Supabase project URL and anon key in the new file.
+2. Ensure `config.js` is present in the project root; the frontend will read credentials from this file.
 3. Serve the site locally with any static server, e.g. `python -m http.server 8080`.
