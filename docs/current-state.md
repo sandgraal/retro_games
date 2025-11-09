@@ -22,6 +22,7 @@ _Last updated: June 2024_
 
 - Retro-inspired theme built around the "Press Start 2P" Google Font, neon gradients, and glowing accents (`style.css`).
 - Responsive adjustments for screens below 800px and 700px adjust layout and modal sizes.
+- Filter toolbar now exposes platform, genre, search, minimum rating, and release-year range inputs for precise slicing.
 - Accessibility helpers include focus trapping in the modal and keyboard shortcuts (Escape closes modal, Enter triggers import field).
 - Table headers are now interactive, enabling ascending/descending sorting per column with keyboard support.
 

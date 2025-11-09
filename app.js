@@ -12,6 +12,7 @@ const COL_PLATFORM = "platform";
 const COL_GENRE = "genre";
 const COL_COVER = "cover";
 const COL_RATING = "rating";
+const COL_RELEASE_YEAR = "release_year";
 const STORAGE_KEY = "roms_owned";
 const SAMPLE_DATA_URL = "./data/sample-games.json";
 
@@ -96,8 +97,22 @@ let rawData = [],
 let filterPlatform = "",
   filterGenre = "",
   searchValue = "",
+  filterRatingMin = "",
+  filterYearStart = "",
+  filterYearEnd = "",
   sortColumn = COL_GAME,
   sortDirection = "asc";
+
+function parseYear(value) {
+  const year = parseInt(value, 10);
+  return Number.isNaN(year) ? null : year;
+}
+
+function getReleaseYear(row) {
+  const fallbackValue =
+    row[COL_RELEASE_YEAR] ?? row.release_year ?? row.releaseYear ?? row["Release Year"];
+  return parseYear(fallbackValue);
+}
 
 /**
  * LocalStorage: Load & Save owned game state
@@ -164,6 +179,17 @@ function applyFilters(data) {
       )
         return false;
     }
+    const ratingValue = parseFloat(row[COL_RATING]);
+    const ratingMin = parseFloat(filterRatingMin);
+    if (!Number.isNaN(ratingMin)) {
+      if (Number.isNaN(ratingValue) || ratingValue < ratingMin) return false;
+    }
+    const releaseYear = getReleaseYear(row);
+    const startYear = parseYear(filterYearStart);
+    const endYear = parseYear(filterYearEnd);
+    if (startYear !== null && (releaseYear === null || releaseYear < startYear))
+      return false;
+    if (endYear !== null && (releaseYear === null || releaseYear > endYear)) return false;
     if (filterOwned && !filterOwned[row[COL_GAME] + "___" + row[COL_PLATFORM]])
       return false;
     return true;
@@ -507,6 +533,21 @@ if (!disableBootstrapFlag && canBootstrap) {
         renderTable(applyFilters(rawData));
         updateStats(applyFilters(rawData));
       });
+      document.getElementById("ratingFilter").addEventListener("input", (e) => {
+        filterRatingMin = e.target.value.trim();
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+      });
+      document.getElementById("yearStartFilter").addEventListener("input", (e) => {
+        filterYearStart = e.target.value.trim();
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+      });
+      document.getElementById("yearEndFilter").addEventListener("input", (e) => {
+        filterYearEnd = e.target.value.trim();
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+      });
 
       document.getElementById("exportBtn").onclick = exportOwnedGames;
       document.getElementById("shareBtn").onclick = showShareSection;
@@ -554,6 +595,15 @@ const testApi = {
     if (Object.prototype.hasOwnProperty.call(overrides, "searchValue")) {
       searchValue = overrides.searchValue;
     }
+    if (Object.prototype.hasOwnProperty.call(overrides, "filterRatingMin")) {
+      filterRatingMin = overrides.filterRatingMin;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "filterYearStart")) {
+      filterYearStart = overrides.filterYearStart;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "filterYearEnd")) {
+      filterYearEnd = overrides.filterYearEnd;
+    }
     if (Object.prototype.hasOwnProperty.call(overrides, "sortColumn")) {
       sortColumn = overrides.sortColumn;
     }
@@ -571,6 +621,9 @@ const testApi = {
       filterPlatform,
       filterGenre,
       searchValue,
+      filterRatingMin,
+      filterYearStart,
+      filterYearEnd,
       sortColumn,
       sortDirection,
       rawData,

@@ -7,6 +7,7 @@ const SAMPLE_DATA = [
     platform: "SNES",
     genre: "RPG",
     rating: "9.6",
+    release_year: "1995",
     cover: "",
     Details: "",
   },
@@ -15,6 +16,7 @@ const SAMPLE_DATA = [
     platform: "PS1",
     genre: "Action RPG, Metroidvania",
     rating: "9.5",
+    release_year: "1997",
     cover: "",
     Details: "",
   },
@@ -39,6 +41,9 @@ beforeEach(() => {
     filterPlatform: "",
     filterGenre: "",
     searchValue: "",
+    filterRatingMin: "",
+    filterYearStart: "",
+    filterYearEnd: "",
     rawData: SAMPLE_DATA,
   });
 });
@@ -63,6 +68,22 @@ describe("applyFilters", () => {
     const filtered = app.applyFilters(SAMPLE_DATA);
     expect(filtered).toHaveLength(1);
     expect(filtered[0].game_name).toBe("Chrono Trigger");
+  });
+
+  it("respects rating minimum and release year range filters", () => {
+    app.__setState({ filterRatingMin: "9.6" });
+    const ratingFiltered = app.applyFilters(SAMPLE_DATA);
+    expect(ratingFiltered).toHaveLength(1);
+    expect(ratingFiltered[0].game_name).toBe("Chrono Trigger");
+
+    app.__setState({
+      filterRatingMin: "",
+      filterYearStart: "1996",
+      filterYearEnd: "1997",
+    });
+    const yearFiltered = app.applyFilters(SAMPLE_DATA);
+    expect(yearFiltered).toHaveLength(1);
+    expect(yearFiltered[0].game_name).toBe("Castlevania Symphony Of The Night");
   });
 });
 

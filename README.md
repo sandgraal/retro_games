@@ -4,7 +4,7 @@ WIP: A fast, private, and no-nonsense tracker for classic and retro games. A pla
 
 **Features:**
 
-- Instantly search, sort, and filter a growing database of console classics
+- Instantly search, sort, and filter (platform, genre, rating, release-year range) a growing database of console classics
 - Mark games as “owned” (can be stored locally in your browser for privacy)
 - Share your collection with anyone via code—no registration required
 - See box art, details, and direct links to gameplay videos or GameFAQs

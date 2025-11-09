@@ -23,13 +23,47 @@
       <button id="showImport">Import Collection Code</button>
     </div>
     <div class="filters">
-      <select id="platformFilter">
-        <option value="">All Platforms</option>
-      </select>
-      <select id="genreFilter">
-        <option value="">All Genres</option>
-      </select>
-      <input id="search" placeholder="Type to filter..." />
+      <label class="filter-field">
+        <span>Platform</span>
+        <select id="platformFilter">
+          <option value="">All Platforms</option>
+        </select>
+      </label>
+      <label class="filter-field">
+        <span>Genre</span>
+        <select id="genreFilter">
+          <option value="">All Genres</option>
+        </select>
+      </label>
+      <label class="filter-field search-field">
+        <span>Search</span>
+        <input id="search" placeholder="Type to filter..." />
+      </label>
+      <label class="filter-field">
+        <span>Min Rating</span>
+        <input
+          id="ratingFilter"
+          type="number"
+          inputmode="decimal"
+          min="0"
+          max="10"
+          step="0.1"
+          placeholder="0-10"
+        />
+      </label>
+      <label class="filter-field">
+        <span>Year From</span>
+        <input
+          id="yearStartFilter"
+          type="number"
+          inputmode="numeric"
+          placeholder="1985"
+        />
+      </label>
+      <label class="filter-field">
+        <span>Year To</span>
+        <input id="yearEndFilter" type="number" inputmode="numeric" placeholder="2005" />
+      </label>
     </div>
     <div id="stats">Loading stats...</div>
     <div id="shareSection" style="display: none">
