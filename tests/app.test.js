@@ -34,22 +34,46 @@ function resetDom() {
     <section id="dashboard">
       <div id="dashboard-statuses">
         <div class="status-row">
-          <div class="status-bar"><span id="dash-owned-bar"></span></div>
+          <div class="status-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-label="Owned games in collection"
+          ><span id="dash-owned-bar"></span></div>
           <span id="dash-owned-count"></span>
           <span id="dash-owned-percent"></span>
         </div>
         <div class="status-row">
-          <div class="status-bar"><span id="dash-wishlist-bar"></span></div>
+          <div class="status-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-label="Wishlist games"
+          ><span id="dash-wishlist-bar"></span></div>
           <span id="dash-wishlist-count"></span>
           <span id="dash-wishlist-percent"></span>
         </div>
         <div class="status-row">
-          <div class="status-bar"><span id="dash-backlog-bar"></span></div>
+          <div class="status-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-label="Backlog games"
+          ><span id="dash-backlog-bar"></span></div>
           <span id="dash-backlog-count"></span>
           <span id="dash-backlog-percent"></span>
         </div>
         <div class="status-row">
-          <div class="status-bar"><span id="dash-trade-bar"></span></div>
+          <div class="status-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+            aria-label="Trade games"
+          ><span id="dash-trade-bar"></span></div>
           <span id="dash-trade-count"></span>
           <span id="dash-trade-percent"></span>
         </div>
