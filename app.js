@@ -259,10 +259,7 @@ function initThemeToggle() {
     });
   }
 
-  if (
-    typeof window !== "undefined" &&
-    typeof window.matchMedia === "function"
-  ) {
+  if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
     try {
       const mediaQuery = window.matchMedia("(prefers-color-scheme: light)");
       const syncThemeWithSystem = (event) => {

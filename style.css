@@ -742,7 +742,11 @@ tr:hover {
   z-index: 2;
 }
 .owned-row {
-  background: color-mix(in srgb, var(--status-owned-bg) 70%, var(--surface-base) 30%) !important;
+  background: color-mix(
+    in srgb,
+    var(--status-owned-bg) 70%,
+    var(--surface-base) 30%
+  ) !important;
   color: var(--text-inverse);
   box-shadow:
     0 0 8px var(--glow-success-strong),
