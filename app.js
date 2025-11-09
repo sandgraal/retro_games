@@ -83,9 +83,6 @@ const SUPABASE_TABLE_CANDIDATES = (() => {
   if (typeof SUPABASE_CONFIG.tableName === "string") {
     configuredTables.push(SUPABASE_CONFIG.tableName);
   }
-  if (typeof SUPABASE_CONFIG.table === "string") {
-    configuredTables.push(SUPABASE_CONFIG.table);
-  }
   const defaults = ["games", "games_view", "games_new"];
   const deduped = new Set(
     [...configuredTables, ...defaults]
