@@ -78,7 +78,9 @@ let rawData = [],
   importedCollection = null;
 let filterPlatform = "",
   filterGenre = "",
-  searchValue = "";
+  searchValue = "",
+  sortColumn = COL_GAME,
+  sortDirection = "asc";
 
 /**
  * LocalStorage: Load & Save owned game state
@@ -155,6 +157,15 @@ function applyFilters(data) {
  * Render the ROM table from (filtered) data.
  */
 function renderTable(data) {
+  if (sortColumn) {
+    data = [...data].sort((a, b) => {
+      const valueA = (a[sortColumn] || "").toString().toLowerCase();
+      const valueB = (b[sortColumn] || "").toString().toLowerCase();
+      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }
   if (!data.length) {
     document.getElementById("romTable").style.display = "none";
     showError("No results match your filters.");
@@ -164,7 +175,18 @@ function renderTable(data) {
   const thead = document.querySelector("#romTable thead");
   const tbody = document.querySelector("#romTable tbody");
   thead.innerHTML =
-    "<tr><th>Owned?</th>" + headers.map((h) => `<th>${h}</th>`).join("") + "</tr>";
+    "<tr><th>Owned?</th>" +
+    headers
+      .map((h) => {
+        const isActive = h === sortColumn;
+        const directionIndicator =
+          isActive && sortDirection === "asc" ? "▲" : isActive ? "▼" : "";
+        return `<th role="button" tabindex="0" data-sort-key="${h}" aria-sort="${
+          isActive ? (sortDirection === "asc" ? "ascending" : "descending") : "none"
+        }">${h} ${directionIndicator}</th>`;
+      })
+      .join("") +
+    "</tr>";
   tbody.innerHTML = data
     .map((row, idx) => {
       const key = row[COL_GAME] + "___" + row[COL_PLATFORM];
@@ -219,6 +241,15 @@ function renderTable(data) {
         return;
       const rowIdx = parseInt(tr.getAttribute("data-row"), 10);
       showGameModal(data[rowIdx]);
+    };
+  });
+  thead.querySelectorAll("th[data-sort-key]").forEach((th) => {
+    th.onclick = () => toggleSort(th.getAttribute("data-sort-key"));
+    th.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggleSort(th.getAttribute("data-sort-key"));
+      }
     };
   });
 }
@@ -405,6 +436,17 @@ function showGameModal(game) {
   }
 }
 
+function toggleSort(column) {
+  if (sortColumn === column) {
+    sortDirection = sortDirection === "asc" ? "desc" : "asc";
+  } else {
+    sortColumn = column;
+    sortDirection = "asc";
+  }
+  renderTable(applyFilters(rawData));
+  updateStats(applyFilters(rawData));
+}
+
 // === On load: Fetch games from Supabase, bootstrap UI, set up listeners ===
 
 const disableBootstrapFlag =
@@ -478,6 +520,7 @@ const testApi = {
   setupFilters,
   updateStats,
   showError,
+  toggleSort,
   __setState(overrides = {}) {
     if (Object.prototype.hasOwnProperty.call(overrides, "owned")) {
       owned = overrides.owned;
@@ -494,6 +537,12 @@ const testApi = {
     if (Object.prototype.hasOwnProperty.call(overrides, "searchValue")) {
       searchValue = overrides.searchValue;
     }
+    if (Object.prototype.hasOwnProperty.call(overrides, "sortColumn")) {
+      sortColumn = overrides.sortColumn;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "sortDirection")) {
+      sortDirection = overrides.sortDirection;
+    }
     if (Object.prototype.hasOwnProperty.call(overrides, "rawData")) {
       rawData = overrides.rawData;
     }
@@ -505,6 +554,8 @@ const testApi = {
       filterPlatform,
       filterGenre,
       searchValue,
+      sortColumn,
+      sortDirection,
       rawData,
     };
   },

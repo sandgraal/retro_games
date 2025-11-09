@@ -23,7 +23,7 @@ _Last updated: June 2024_
 - Retro-inspired theme built around the "Press Start 2P" Google Font, neon gradients, and glowing accents (`style.css`).
 - Responsive adjustments for screens below 800px and 700px adjust layout and modal sizes.
 - Accessibility helpers include focus trapping in the modal and keyboard shortcuts (Escape closes modal, Enter triggers import field).
-- The table headers are clickable for sorting in earlier iterations (`backups/`), but current implementation renders static headers.
+- Table headers are now interactive, enabling ascending/descending sorting per column with keyboard support.
 
 ## Operational Notes
 

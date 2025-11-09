@@ -74,10 +74,32 @@ describe("renderTable", () => {
     app.renderTable(SAMPLE_DATA);
     const rows = document.querySelectorAll("#romTable tbody tr");
     expect(rows).toHaveLength(2);
-    expect(rows[0].classList.contains("owned-row")).toBe(true);
-    const firstCheckbox = rows[0].querySelector(".checkbox-own");
-    expect(firstCheckbox.checked).toBe(true);
+    const chronoRow = Array.from(rows).find((row) =>
+      row.textContent.includes("Chrono Trigger")
+    );
+    expect(chronoRow).toBeTruthy();
+    expect(chronoRow.classList.contains("owned-row")).toBe(true);
+    const chronoCheckbox = chronoRow.querySelector(".checkbox-own");
+    expect(chronoCheckbox.checked).toBe(true);
     expect(document.getElementById("romTable").style.display).toBe("");
     expect(document.getElementById("result").style.display).toBe("none");
+  });
+
+  it("sorts columns when headers clicked", () => {
+    app.__setState({
+      sortColumn: "game_name",
+      sortDirection: "asc",
+    });
+    app.renderTable(SAMPLE_DATA);
+    const firstRowTitle = document
+      .querySelector("#romTable tbody tr td:nth-child(2)")
+      .textContent.trim();
+    expect(firstRowTitle).toBe("Castlevania Symphony Of The Night");
+
+    app.toggleSort("game_name");
+    const updatedRowTitle = document
+      .querySelector("#romTable tbody tr td:nth-child(2)")
+      .textContent.trim();
+    expect(updatedRowTitle).toBe("Chrono Trigger");
   });
 });
