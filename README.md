@@ -12,6 +12,7 @@ WIP: A fast, private, and no-nonsense tracker for classic and retro games. A pla
 - Choose between infinite scroll batches or paginated pages (with adjustable batch sizes and shareable `?page=` links) so both humans and crawlers can browse huge lists
 - Virtualized grid keeps the DOM lean by only rendering what's in (or near) the viewport, so even five-digit libraries stay silky smooth
 - Supabase data streams in 400-row pages (configurable), so the UI becomes interactive instantly while new chunks hydrate the grid on-demand
+- Filters/search now execute directly against Supabase, so you only download the rows you actually need—even for massive, high-cardinality queries
 - See box art, details, and direct links to gameplay videos or GameFAQs
 - Fully mobile and desktop compatible
 - Supabase-powered typeahead search with a local fallback so you can jump to titles instantly
@@ -53,6 +54,8 @@ Supabase schema + migration workflow lives in `docs/data-pipeline.md`.
 - Metrics currently captured: Supabase vs. sample data load times and every table re-render (search/filter, sort, share import, etc.) with row counts and sort state.
 - The new virtualized grid windows cards in and out of the DOM (with spacer paddings) so the browse controls can request thousands of games without forcing the browser to mount every card at once.
 - Supabase hydration now occurs via paginated `.range()` queries (default 400 rows). The first page renders immediately, while subsequent pages stream in when you approach the end of the list (or switch pages), keeping bandwidth predictable for huge libraries.
+- Filter/search changes are executed server-side; the client only hydrates the rows returned by the Supabase query, which prevents runaway downloads for giant result sets.
+- Collection status totals now hydrate lazily from Supabase—only the rows tied to your Owned/Wishlist/Backlog/Trade entries are fetched, so dashboard stats stay accurate without pulling the full games table.
 
 ## SEO & Discoverability
 

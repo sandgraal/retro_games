@@ -195,7 +195,8 @@ if (FORCE_SAMPLE) {
 // === Fetch paged data from Supabase ===
 async function fetchGamesPage(
   rangeStart = 0,
-  rangeEnd = rangeStart + SUPABASE_STREAM_PAGE_SIZE - 1
+  rangeEnd = rangeStart + SUPABASE_STREAM_PAGE_SIZE - 1,
+  filters = null
 ) {
   if (!supabase) {
     throw new Error(
@@ -213,11 +214,18 @@ async function fetchGamesPage(
 
   for (const tableName of preferredTables) {
     try {
-      const query = supabase
-        .from(tableName)
-        .select("*", { count: "exact" })
-        .order(COL_GAME, { ascending: true })
-        .range(Math.max(0, rangeStart), Math.max(rangeStart, rangeEnd));
+      const selectedFilters = filters || streamState.filterPayload || null;
+      let query = supabase.from(tableName).select("*", { count: "exact" });
+      query = applySupabaseFilters(query, selectedFilters);
+      const sortKey =
+        (selectedFilters && selectedFilters.sortColumn) || sortColumn || COL_GAME;
+      const sortDir =
+        (selectedFilters && selectedFilters.sortDirection) || sortDirection || "asc";
+      query = query.order(sortKey, {
+        ascending: sortDir !== "desc",
+        nullsLast: true,
+      });
+      query = query.range(Math.max(0, rangeStart), Math.max(rangeStart, rangeEnd));
       const { data, error, count } = await query;
       if (error) {
         throw new Error(`[${tableName}] ${error.message || "Unknown Supabase error"}`);
@@ -263,9 +271,15 @@ async function loadGameData() {
       source: "sample",
       reason: typeof reason === "string" ? reason : reason?.message,
     });
+    streamState.enabled = false;
     streamState.active = false;
     streamState.hasMore = false;
     streamState.loading = false;
+    streamState.filterPayload = null;
+    streamState.filterSignature = null;
+    streamState.tableName = null;
+    streamState.nextFrom = 0;
+    streamState.totalCount = null;
     return { data: sample, source: "sample", reason };
   };
 
@@ -275,7 +289,8 @@ async function loadGameData() {
 
   try {
     const start = getNow();
-    const page = await fetchGamesPage(0, streamState.pageSize - 1);
+    const baseFilters = shouldUseServerFiltering() ? buildRemoteFilterPayload() : null;
+    const page = await fetchGamesPage(0, streamState.pageSize - 1, baseFilters);
     const data = Array.isArray(page.data) ? page.data : [];
     const duration = getNow() - start;
     if (!data.length) {
@@ -287,7 +302,7 @@ async function loadGameData() {
       streamState.active = false;
       return useFallback("Supabase returned zero rows.");
     }
-    initStreamStateFromPage(page, data.length);
+    initStreamStateFromPage(page, data.length, baseFilters);
     recordPerfMetric("data-load", duration, {
       source: "supabase",
       rows: data.length,
@@ -300,7 +315,7 @@ async function loadGameData() {
   }
 }
 
-function initStreamStateFromPage(page, rowsFetched) {
+function initStreamStateFromPage(page, rowsFetched, filterPayload = null) {
   if (!streamState.enabled) {
     streamState.active = false;
     return;
@@ -308,6 +323,14 @@ function initStreamStateFromPage(page, rowsFetched) {
   streamState.active = true;
   streamState.tableName =
     page.tableName || streamState.tableName || SUPABASE_TABLE_CANDIDATES[0];
+  if (filterPayload) {
+    streamState.filterPayload = { ...filterPayload };
+    streamState.filterSignature = buildRemoteFilterSignature(streamState.filterPayload);
+  } else if (!streamState.filterPayload) {
+    const payload = buildRemoteFilterPayload();
+    streamState.filterPayload = { ...payload };
+    streamState.filterSignature = buildRemoteFilterSignature(streamState.filterPayload);
+  }
   streamState.nextFrom = rowsFetched;
   streamState.totalCount =
     typeof page.count === "number" && page.count >= rowsFetched
@@ -386,7 +409,14 @@ const streamState = {
   loading: false,
   error: null,
   pendingPromise: null,
+  filterPayload: null,
+  filterSignature: null,
 };
+let remoteFilterSignature = null;
+let remoteRefreshPromise = null;
+const statusRowCache = new Map();
+let pendingStatusHydration = null;
+let latestFilteredData = [];
 
 /**
  * Parse a year string/number into an integer or null when invalid.
@@ -552,6 +582,27 @@ function setNoteForKey(key, note) {
   } else {
     gameNotes[key] = note.trim();
   }
+}
+
+/**
+ * Build the composite key (game + platform) for a given row.
+ * @param {GameRow} row
+ * @returns {string|null}
+ */
+function buildRowKey(row) {
+  if (!row) return null;
+  const game = row[COL_GAME];
+  const platform = row[COL_PLATFORM];
+  if (!game || !platform) return null;
+  return `${game}___${platform}`;
+}
+
+function cacheStatusRows(rows) {
+  if (!Array.isArray(rows)) return;
+  rows.forEach((row) => {
+    const key = buildRowKey(row);
+    if (key) statusRowCache.set(key, row);
+  });
 }
 
 function escapeHtml(str) {
@@ -771,6 +822,55 @@ function resolveStreamPageSize() {
   return 400;
 }
 
+function shouldUseServerFiltering() {
+  return streamState.enabled && !!supabase && !FORCE_SAMPLE;
+}
+
+function buildRemoteFilterPayload() {
+  return {
+    search: searchValue || "",
+    platform: filterPlatform || "",
+    genre: filterGenre || "",
+    ratingMin: parseRating(filterRatingMin),
+    yearStart: parseYear(filterYearStart),
+    yearEnd: parseYear(filterYearEnd),
+    sortColumn,
+    sortDirection,
+  };
+}
+
+function buildRemoteFilterSignature(payload) {
+  return JSON.stringify(payload || {});
+}
+
+function parseRating(value) {
+  const rating = parseFloat(value);
+  return Number.isFinite(rating) ? rating : null;
+}
+
+function applySupabaseFilters(query, filters = {}) {
+  if (!filters) return query;
+  if (filters.search) {
+    query = query.ilike(COL_GAME, `%${filters.search}%`);
+  }
+  if (filters.platform) {
+    query = query.eq(COL_PLATFORM, filters.platform);
+  }
+  if (filters.genre) {
+    query = query.ilike(COL_GENRE, `%${filters.genre}%`);
+  }
+  if (filters.ratingMin !== null && filters.ratingMin !== undefined) {
+    query = query.gte(COL_RATING, filters.ratingMin);
+  }
+  if (filters.yearStart !== null && filters.yearStart !== undefined) {
+    query = query.gte(COL_RELEASE_YEAR, filters.yearStart);
+  }
+  if (filters.yearEnd !== null && filters.yearEnd !== undefined) {
+    query = query.lte(COL_RELEASE_YEAR, filters.yearEnd);
+  }
+  return query;
+}
+
 function normalizePageSize(value) {
   if (!Number.isFinite(value)) return DEFAULT_PAGE_SIZE;
   const normalized = PAGE_SIZE_CHOICES.find((choice) => choice === value);
@@ -908,50 +1008,54 @@ function setupFilters(data) {
 }
 
 /**
+ * Test whether a row matches the current filter state.
+ * @param {GameRow} row
+ * @param {StatusMap} [statusSource]
+ * @returns {boolean}
+ */
+function doesRowMatchFilters(row, statusSource = importedCollection || gameStatuses) {
+  if (!row) return false;
+  if (filterPlatform && row[COL_PLATFORM] !== filterPlatform) return false;
+  if (filterGenre) {
+    const hasGenre =
+      row[COL_GENRE] &&
+      row[COL_GENRE].split(",")
+        .map((g) => g.trim())
+        .includes(filterGenre);
+    if (!hasGenre) return false;
+  }
+  if (searchValue) {
+    const matchesSearch = Object.values(row).some(
+      (v) => v && v.toString().toLowerCase().includes(searchValue)
+    );
+    if (!matchesSearch) return false;
+  }
+  const ratingValue = parseFloat(row[COL_RATING]);
+  const ratingMin = parseFloat(filterRatingMin);
+  if (!Number.isNaN(ratingMin)) {
+    if (Number.isNaN(ratingValue) || ratingValue < ratingMin) return false;
+  }
+  const releaseYear = getReleaseYear(row);
+  const startYear = parseYear(filterYearStart);
+  const endYear = parseYear(filterYearEnd);
+  if (startYear !== null && (releaseYear === null || releaseYear < startYear))
+    return false;
+  if (endYear !== null && (releaseYear === null || releaseYear > endYear)) return false;
+  const key = buildRowKey(row);
+  if (importedCollection && (!key || !importedCollection[key])) return false;
+  const rowStatus = key ? getStatusForKey(key, statusSource) : STATUS_NONE;
+  if (filterStatus && rowStatus !== filterStatus) return false;
+  return true;
+}
+
+/**
  * Apply search/filter logic to current data set.
  * @param {GameRow[]} data
  * @returns {GameRow[]}
  */
 function applyFilters(data) {
-  let statusSource = importedCollection || gameStatuses;
-  return data.filter((row) => {
-    if (filterPlatform && row[COL_PLATFORM] !== filterPlatform) return false;
-    if (filterGenre) {
-      if (
-        !(
-          row[COL_GENRE] &&
-          row[COL_GENRE].split(",")
-            .map((g) => g.trim())
-            .includes(filterGenre)
-        )
-      )
-        return false;
-    }
-    if (searchValue) {
-      if (
-        !Object.values(row).some(
-          (v) => v && v.toString().toLowerCase().includes(searchValue)
-        )
-      )
-        return false;
-    }
-    const ratingValue = parseFloat(row[COL_RATING]);
-    const ratingMin = parseFloat(filterRatingMin);
-    if (!Number.isNaN(ratingMin)) {
-      if (Number.isNaN(ratingValue) || ratingValue < ratingMin) return false;
-    }
-    const releaseYear = getReleaseYear(row);
-    const startYear = parseYear(filterYearStart);
-    const endYear = parseYear(filterYearEnd);
-    if (startYear !== null && (releaseYear === null || releaseYear < startYear))
-      return false;
-    if (endYear !== null && (releaseYear === null || releaseYear > endYear)) return false;
-    const key = row[COL_GAME] + "___" + row[COL_PLATFORM];
-    if (importedCollection && !importedCollection[key]) return false;
-    const rowStatus = getStatusForKey(key, statusSource);
-    if (filterStatus && rowStatus !== filterStatus) return false;
-    return true;
-  });
+  const statusSource = importedCollection || gameStatuses;
+  return data.filter((row) => doesRowMatchFilters(row, statusSource));
 }
 
 /**
@@ -1290,10 +1394,11 @@ async function fetchNextSupabaseChunk(reason = "stream:auto") {
   const to = from + streamState.pageSize - 1;
   const promise = (async () => {
     try {
-      const page = await fetchGamesPage(from, to);
+      const page = await fetchGamesPage(from, to, streamState.filterPayload);
       const rows = Array.isArray(page.data) ? page.data : [];
       if (rows.length) {
         rawData = rawData.concat(rows);
+        cacheStatusRows(rows);
       }
       if (page.tableName) {
         streamState.tableName = page.tableName;
@@ -1494,6 +1599,45 @@ function buildPaginationMarkup() {
   const nextDisabled = current >= total ? " disabled" : "";
   parts.push(`<button type="button" data-page="next"${nextDisabled}>Next</button>`);
   return parts.join("");
+}
+
+async function fetchStatusRows(keys) {
+  if (!keys.length || !supabase) return [];
+  const tableName = streamState.tableName || SUPABASE_TABLE_CANDIDATES[0];
+  const names = [...new Set(keys.map((key) => key.split("___")[0]))];
+  const { data, error } = await supabase
+    .from(tableName)
+    .select("*")
+    .in(COL_GAME, names)
+    .limit(Math.max(names.length * 4, 50));
+  if (error) throw error;
+  return (Array.isArray(data) ? data : []).filter((row) => {
+    const key = buildRowKey(row);
+    return key && keys.includes(key);
+  });
+}
+
+function scheduleStatusHydration() {
+  if (!shouldUseServerFiltering() || !supabase) return;
+  const statusSource = importedCollection || gameStatuses;
+  const missingKeys = Object.keys(statusSource).filter((key) => {
+    const status = statusSource[key];
+    if (!status || status === STATUS_NONE) return false;
+    return !statusRowCache.has(key);
+  });
+  if (!missingKeys.length) return;
+  if (pendingStatusHydration) return;
+  pendingStatusHydration = fetchStatusRows(missingKeys)
+    .then((rows) => {
+      cacheStatusRows(rows);
+    })
+    .catch((err) => {
+      console.warn("Unable to hydrate status rows from Supabase:", err);
+    })
+    .finally(() => {
+      pendingStatusHydration = null;
+      if (latestFilteredData.length) updateStats(latestFilteredData);
+    });
 }
 
 function handlePaginationClick(target) {
@@ -1830,34 +1974,71 @@ function applySortSelection(value) {
  * Update game count and average rating stats in the stats area.
  */
 function updateStats(data) {
-  const total = data.length;
-  let ratings = data.map((row) => parseFloat(row[COL_RATING])).filter((n) => !isNaN(n));
-  let avg = ratings.length
-    ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)
-    : "-";
-  let platforms = new Set(data.map((row) => row[COL_PLATFORM]));
-  const statusSource = importedCollection || gameStatuses;
-  const statusCounts = {
-    [STATUS_OWNED]: 0,
-    [STATUS_WISHLIST]: 0,
-    [STATUS_BACKLOG]: 0,
-    [STATUS_TRADE]: 0,
-  };
-  data.forEach((row) => {
-    const key = row[COL_GAME] + "___" + row[COL_PLATFORM];
-    const status = getStatusForKey(key, statusSource);
-    if (statusCounts[status] !== undefined) statusCounts[status] += 1;
-  });
+  latestFilteredData = data;
+  const totalMatches = getKnownTotalCount();
+  const loadedRatings = data
+    .map((row) => parseFloat(row[COL_RATING]))
+    .filter((n) => !Number.isNaN(n));
+  const avg =
+    loadedRatings.length && data.length
+      ? (loadedRatings.reduce((a, b) => a + b, 0) / loadedRatings.length).toFixed(2)
+      : "-";
+  const platforms = new Set(
+    data.map((row) => row[COL_PLATFORM]).filter((value) => !!value)
+  );
+  const { counts: statusCounts, missing } = computeStatusCounts();
   const statusSummary = [
     `Owned: ${statusCounts[STATUS_OWNED]}`,
     `Wishlist: ${statusCounts[STATUS_WISHLIST]}`,
     `Backlog: ${statusCounts[STATUS_BACKLOG]}`,
     `Trade: ${statusCounts[STATUS_TRADE]}`,
   ].join(" | ");
-  document.getElementById("stats").textContent =
-    `Games: ${total} | ${statusSummary} | Average Rating: ${avg} | Platforms: ${platforms.size}`;
+  const statsMessageParts = [
+    `Matches: ${totalMatches.toLocaleString()}`,
+    statusSummary,
+    `Avg Rating (loaded): ${avg}`,
+    `Platforms (loaded): ${platforms.size}`,
+  ];
+  if (missing && shouldUseServerFiltering()) {
+    statsMessageParts.push(`Syncing ${missing} status row${missing === 1 ? "" : "s"}…`);
+  }
+  document.getElementById("stats").textContent = statsMessageParts.join(" | ");
 
   updateDashboard(statusCounts, data);
+  if (missing) scheduleStatusHydration();
+}
+
+function computeStatusCounts() {
+  const statusSource = importedCollection || gameStatuses;
+  const counts = {
+    [STATUS_OWNED]: 0,
+    [STATUS_WISHLIST]: 0,
+    [STATUS_BACKLOG]: 0,
+    [STATUS_TRADE]: 0,
+  };
+  let missing = 0;
+  Object.entries(statusSource).forEach(([key, status]) => {
+    if (!status || status === STATUS_NONE) return;
+    const cachedRow = statusRowCache.get(key);
+    if (cachedRow) {
+      if (doesRowMatchFilters(cachedRow, statusSource) && counts[status] !== undefined) {
+        counts[status] += 1;
+      }
+      return;
+    }
+    const localRow =
+      latestFilteredData.find((row) => buildRowKey(row) === key) ||
+      rawData.find((row) => buildRowKey(row) === key);
+    if (localRow) {
+      cacheStatusRows([localRow]);
+      if (doesRowMatchFilters(localRow, statusSource) && counts[status] !== undefined) {
+        counts[status] += 1;
+      }
+      return;
+    }
+    missing += 1;
+  });
+  return { counts, missing };
 }
 
 function updateDashboard(statusCounts, data) {
@@ -1968,11 +2149,32 @@ function updateDashboard(statusCounts, data) {
  * @returns {GameRow[]}
  */
 function refreshFilteredView(reason = "unknown") {
+  if (shouldUseServerFiltering()) {
+    const payload = buildRemoteFilterPayload();
+    const signature = buildRemoteFilterSignature(payload);
+    if (
+      streamState.filterSignature &&
+      signature !== streamState.filterSignature &&
+      !reason.startsWith("stream:")
+    ) {
+      requestRemoteFilterRefresh(payload, signature, reason);
+      return [];
+    }
+    if (!streamState.filterSignature) {
+      streamState.filterPayload = { ...payload };
+      streamState.filterSignature = signature;
+    }
+  }
+  return finalizeFilteredRender(reason);
+}
+
+function finalizeFilteredRender(reason = "unknown") {
   const start = getNow();
   const filtered = applyFilters(rawData);
   const sorted = [...filtered].sort((a, b) =>
     compareRows(a, b, sortColumn, sortDirection)
   );
+  latestFilteredData = filtered;
   latestSortedData = sorted;
   if (shouldResetBrowse(reason)) {
     paginationState.currentPage = 1;
@@ -1992,11 +2194,51 @@ function refreshFilteredView(reason = "unknown") {
     renderInfiniteWindow(sorted);
   }
   updateStats(filtered);
+  scheduleStatusHydration();
   recordPerfMetric(`render:${reason}`, getNow() - start, {
     rows: sorted.length,
     sort: `${sortColumn}:${sortDirection}`,
   });
   return filtered;
+}
+
+function requestRemoteFilterRefresh(payload, signature, triggerReason) {
+  if (!shouldUseServerFiltering()) return;
+  remoteFilterSignature = signature;
+  streamState.filterPayload = { ...payload };
+  streamState.filterSignature = signature;
+  streamState.nextFrom = 0;
+  streamState.totalCount = null;
+  streamState.hasMore = true;
+  streamState.error = null;
+  rawData = [];
+  latestSortedData = [];
+  latestFilteredData = [];
+  statusRowCache.clear();
+  teardownVirtualization();
+  streamState.loading = true;
+  updateBrowseSummaryLoading(true);
+  const activeSignature = signature;
+  remoteRefreshPromise = fetchGamesPage(0, streamState.pageSize - 1, payload)
+    .then((page) => {
+      if (streamState.filterSignature !== activeSignature) return;
+      const rows = Array.isArray(page.data) ? page.data : [];
+      rawData = rows;
+      cacheStatusRows(rows);
+      initStreamStateFromPage(page, rows.length, payload);
+      finalizeFilteredRender("filter:remote");
+    })
+    .catch((err) => {
+      console.error("Supabase filter fetch failed:", err);
+      showError("Unable to load filtered Supabase results.");
+    })
+    .finally(() => {
+      if (streamState.filterSignature === activeSignature) {
+        streamState.loading = false;
+        updateBrowseSummaryLoading(false);
+      }
+      remoteRefreshPromise = null;
+    });
 }
 
 function updateTrendingCarousel(data) {
@@ -2790,6 +3032,7 @@ if (!disableBootstrapFlag && canBootstrap) {
   loadGameData()
     .then(({ data, source, reason }) => {
       rawData = data;
+      cacheStatusRows(rawData);
       if (!rawData.length) throw new Error("No games available to display!");
       loadStatuses();
       loadNotes();
@@ -2931,6 +3174,7 @@ const testApi = {
   refreshFilteredView,
   __setBrowseMode: setBrowseMode,
   __teardownVirtualization: teardownVirtualization,
+  __buildRemoteFilterPayload: buildRemoteFilterPayload,
   __setState(overrides = {}) {
     if (Object.prototype.hasOwnProperty.call(overrides, "statuses")) {
       gameStatuses = overrides.statuses;

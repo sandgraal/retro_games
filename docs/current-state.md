@@ -13,11 +13,12 @@ _Last updated: June 2024_
 ## Data Flow
 
 1. `config.js` (ignored by git) exposes `window.__SUPABASE_CONFIG__` with the Supabase URL and anon key.
-2. `app.js` instantiates a Supabase client and fetches all rows from the `games` table, ordered alphabetically.
+2. `app.js` instantiates a Supabase client and fetches the first paged chunk (default 400 rows) from the `games` table, ordered alphabetically; additional chunks and filter/search requests are executed server-side so only the relevant rows are hydrated.
    - If Supabase credentials are missing or unreachable, the frontend transparently loads `data/sample-games.json` so the UI stays functional.
 3. The dataset populates filter dropdowns and an interactive table. Per-row status (owned, wishlist, backlog, trade) is stored in `localStorage` under the key `roms_owned` and drives both the stats widget and sharing/export flows.
 4. Users can export owned titles to CSV, backup their entire collection (statuses, notes, filters) as JSON, or create a share code (base64-encoded JSON). Importing a share code or backup restores a read-only or editable view, respectively.
 5. Clicking a row opens a modal with metadata and quick links to Google, YouTube gameplay, and GameFAQs searches.
+6. When Supabase is available, dashboard status metrics hydrate only the rows tied to your Owned/Wishlist/Backlog/Trade entries, keeping counts accurate without fetching the entire dataset.
 
 ## UI & Styling
 
@@ -42,4 +43,4 @@ _Last updated: June 2024_
 - Data integrity relies on manual Supabase updates—no scripts to sync from `games.csv` yet.
 - Accessibility relies on manual QA; no Lighthouse/axe reports are part of the workflow.
 - Security: Supabase anon key must remain public but should still be rotated if exposed. SFTP deployment credentials were removed from version control but may still exist in developer machines.
-- Performance: Supabase pagination now streams data in 400-row chunks and only hydrates additional pages when the virtualized grid needs them, but we still fetch the full dataset client-side eventually; long-term we should explore server-side filtering/aggregation for 10k+ titles.
+- Performance: Supabase pagination now streams data in 400-row chunks and server-side filters ensure we only hydrate the rows that match the current query, but we still eventually download the full dataset when no filters are applied; long-term we should explore server-side aggregation (statuses, stats) for 10k+ titles.

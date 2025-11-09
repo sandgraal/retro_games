@@ -138,6 +138,32 @@ beforeEach(() => {
   });
 });
 
+describe("remote filter payloads", () => {
+  it("normalizes search, range, and sort inputs", () => {
+    app.__setState({
+      filterPlatform: "SNES",
+      filterGenre: "RPG",
+      searchValue: "chrono",
+      filterRatingMin: "8.5",
+      filterYearStart: "1990",
+      filterYearEnd: "1995",
+      sortColumn: "rating",
+      sortDirection: "desc",
+    });
+    const payload = app.__buildRemoteFilterPayload();
+    expect(payload).toEqual({
+      search: "chrono",
+      platform: "SNES",
+      genre: "RPG",
+      ratingMin: 8.5,
+      yearStart: 1990,
+      yearEnd: 1995,
+      sortColumn: "rating",
+      sortDirection: "desc",
+    });
+  });
+});
+
 describe("browse pagination controls", () => {
   it("limits visible cards to the current page size", () => {
     const dataset = buildSampleGames(4);
