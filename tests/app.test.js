@@ -228,8 +228,7 @@ describe("dashboard", () => {
       SAMPLE_DATA
     );
     expect(ownedCountEl.textContent).toBe("2");
-    expect(ownedPercentEl.textContent.endsWith("%"))
-      .toBe(true);
+    expect(ownedPercentEl.textContent.endsWith("%")).toBe(true);
     expect(document.getElementById("dash-genres").children.length).toBeGreaterThan(0);
   });
 
