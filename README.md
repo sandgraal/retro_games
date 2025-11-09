@@ -7,6 +7,7 @@ WIP: A fast, private, and no-nonsense tracker for classic and retro games. A pla
 - Instantly search, sort, and filter (platform, genre, status, rating, release-year range) a growing database of console classics
 - Assign Owned/Wishlist/Backlog/Trade statuses (stored locally for privacy)
 - Attach personal notes to every game—synced with share codes for easy collaboration
+- One-click JSON backups to move statuses/notes/filters across devices
 - Share your collection with anyone via code—no registration required
 - See box art, details, and direct links to gameplay videos or GameFAQs
 - Fully mobile and desktop compatible

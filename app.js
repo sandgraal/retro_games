@@ -33,6 +33,7 @@ const STATUS_LABELS = STATUS_OPTIONS.reduce((acc, option) => {
   return acc;
 }, {});
 const SAMPLE_DATA_URL = "./data/sample-games.json";
+const BACKUP_FILENAME = "sandgraal-collection.json";
 const FILTER_STORAGE_KEY = "rom_filters";
 
 // === Supabase Config ===
@@ -277,6 +278,23 @@ function savePersistedFilters() {
     filterYearEnd,
   };
   localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(snapshot));
+}
+
+function applyFiltersToInputs() {
+  const platformEl = document.getElementById("platformFilter");
+  if (platformEl) platformEl.value = filterPlatform || "";
+  const genreEl = document.getElementById("genreFilter");
+  if (genreEl) genreEl.value = filterGenre || "";
+  const searchEl = document.getElementById("search");
+  if (searchEl) searchEl.value = searchValue || "";
+  const statusEl = document.getElementById("statusFilter");
+  if (statusEl) statusEl.value = filterStatus || "";
+  const ratingEl = document.getElementById("ratingFilter");
+  if (ratingEl) ratingEl.value = filterRatingMin || "";
+  const yearStartEl = document.getElementById("yearStartFilter");
+  if (yearStartEl) yearStartEl.value = filterYearStart || "";
+  const yearEndEl = document.getElementById("yearEndFilter");
+  if (yearEndEl) yearEndEl.value = filterYearEnd || "";
 }
 
 /**
@@ -617,6 +635,60 @@ function closeShareSection() {
   updateStats(applyFilters(rawData));
 }
 
+function exportCollectionBackup() {
+  const payload = {
+    statuses: gameStatuses,
+    notes: gameNotes,
+    filters: persistedFilters,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = BACKUP_FILENAME;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showStatus("Backup downloaded.", "info");
+}
+
+function restoreCollectionBackup(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!parsed || typeof parsed !== "object") throw new Error("Invalid file");
+      if (parsed.statuses && typeof parsed.statuses === "object") {
+        gameStatuses = parsed.statuses;
+        saveStatuses();
+      }
+      if (parsed.notes && typeof parsed.notes === "object") {
+        gameNotes = parsed.notes;
+        saveNotes();
+      }
+      if (parsed.filters && typeof parsed.filters === "object") {
+        persistedFilters = parsed.filters;
+        filterStatus = persistedFilters.filterStatus || "";
+        filterRatingMin = persistedFilters.filterRatingMin || "";
+        filterYearStart = persistedFilters.filterYearStart || "";
+        filterYearEnd = persistedFilters.filterYearEnd || "";
+        savePersistedFilters();
+      }
+      applyFiltersToInputs();
+      renderTable(applyFilters(rawData));
+      updateStats(applyFilters(rawData));
+      showStatus("Backup restored successfully.", "info");
+    } catch (err) {
+      console.error("Restore failed:", err);
+      showError("Failed to restore backup.");
+    }
+  };
+  reader.readAsText(file);
+}
+
 /**
  * Display status messaging under the filters.
  */
@@ -845,6 +917,7 @@ if (!disableBootstrapFlag && canBootstrap) {
         updateStats(applyFilters(rawData));
       });
 
+      applyFiltersToInputs();
       document.getElementById("exportBtn").onclick = exportOwnedGames;
       document.getElementById("shareBtn").onclick = showShareSection;
       document.getElementById("showImport").onclick = showImportSection;
@@ -860,6 +933,16 @@ if (!disableBootstrapFlag && canBootstrap) {
       document.getElementById("closeShare").onclick = closeShareSection;
       document.getElementById("importCode").addEventListener("keydown", function (e) {
         if (e.key === "Enter") importCollection();
+      });
+      document.getElementById("backupBtn").onclick = exportCollectionBackup;
+      const restoreInput = document.getElementById("restoreInput");
+      document.getElementById("restoreBtn").onclick = () => restoreInput.click();
+      restoreInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          restoreCollectionBackup(file);
+          restoreInput.value = "";
+        }
       });
     })
     .catch((err) => {

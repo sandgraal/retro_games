@@ -15,7 +15,7 @@ _Last updated: June 2024_
 2. `app.js` instantiates a Supabase client and fetches all rows from the `games` table, ordered alphabetically.
    - If Supabase credentials are missing or unreachable, the frontend transparently loads `data/sample-games.json` so the UI stays functional.
 3. The dataset populates filter dropdowns and an interactive table. Per-row status (owned, wishlist, backlog, trade) is stored in `localStorage` under the key `roms_owned` and drives both the stats widget and sharing/export flows.
-4. Users can export owned titles to CSV or create a share code (base64-encoded JSON with statuses + optional per-game notes). Importing a share code renders a read-only view of another collection, including their annotations.
+4. Users can export owned titles to CSV, backup their entire collection (statuses, notes, filters) as JSON, or create a share code (base64-encoded JSON). Importing a share code or backup restores a read-only or editable view, respectively.
 5. Clicking a row opens a modal with metadata and quick links to Google, YouTube gameplay, and GameFAQs searches.
 
 ## UI & Styling
