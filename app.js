@@ -75,6 +75,25 @@ let carouselControlsBound = false;
 const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
 const SUPABASE_URL = SUPABASE_CONFIG.url || "";
 const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey || "";
+const SUPABASE_TABLE_CANDIDATES = (() => {
+  const configuredTables = [];
+  if (Array.isArray(SUPABASE_CONFIG.tables)) {
+    configuredTables.push(...SUPABASE_CONFIG.tables);
+  }
+  if (typeof SUPABASE_CONFIG.tableName === "string") {
+    configuredTables.push(SUPABASE_CONFIG.tableName);
+  }
+  if (typeof SUPABASE_CONFIG.table === "string") {
+    configuredTables.push(SUPABASE_CONFIG.table);
+  }
+  const defaults = ["games", "games_view", "games_new"];
+  const deduped = new Set(
+    [...configuredTables, ...defaults]
+      .map((value) => (typeof value === "string" ? value.trim() : ""))
+      .filter(Boolean)
+  );
+  return Array.from(deduped);
+})();
 let forceSampleFlag = false;
 if (typeof window !== "undefined") {
   forceSampleFlag = !!window.__SANDGRAAL_FORCE_SAMPLE__;
@@ -111,12 +130,43 @@ async function fetchGames() {
       "Supabase configuration missing. Copy config.example.js to config.js and add your credentials."
     );
   }
-  let { data, error } = await supabase
-    .from("games")
-    .select("*")
-    .order("game_name", { ascending: true });
-  if (error) throw error;
-  return data;
+
+  const errors = [];
+  for (const tableName of SUPABASE_TABLE_CANDIDATES) {
+    try {
+      let { data, error } = await supabase
+        .from(tableName)
+        .select("*")
+        .order(COL_GAME, { ascending: true });
+      if (error) {
+        const missingColumn =
+          typeof error.message === "string" &&
+          error.message.toLowerCase().includes(`column "${COL_GAME}"`.toLowerCase());
+        if (missingColumn) {
+          ({ data, error } = await supabase.from(tableName).select("*"));
+        }
+      }
+      if (error) {
+        throw new Error(`[${tableName}] ${error.message || "Unknown Supabase error"}`);
+      }
+      if (Array.isArray(data)) {
+        if (SUPABASE_TABLE_CANDIDATES[0] !== tableName) {
+          console.info(`Fetched games from fallback Supabase table: ${tableName}`);
+        }
+        return data;
+      }
+      throw new Error(`[${tableName}] Supabase returned unexpected payload.`);
+    } catch (err) {
+      errors.push(err);
+      console.warn(`Supabase query failed for table ${tableName}:`, err);
+    }
+  }
+
+  const finalError = new Error(
+    `Unable to fetch games from Supabase tables: ${SUPABASE_TABLE_CANDIDATES.join(", ")}`
+  );
+  finalError.cause = errors;
+  throw finalError;
 }
 
 async function fetchSampleGames() {
