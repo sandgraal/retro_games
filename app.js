@@ -63,6 +63,16 @@ const STATUS_LABELS = STATUS_OPTIONS.reduce((acc, option) => {
 const SAMPLE_DATA_URL = "./data/sample-games.json";
 const BACKUP_FILENAME = "sandgraal-collection.json";
 const FILTER_STORAGE_KEY = "rom_filters";
+const TYPEAHEAD_MIN_CHARS = 2;
+const TYPEAHEAD_LIMIT = 6;
+const TYPEAHEAD_DEBOUNCE_MS = 180;
+const TYPEAHEAD_SELECT_COLUMNS = [
+  COL_GAME,
+  COL_PLATFORM,
+  COL_GENRE,
+  COL_RELEASE_YEAR,
+  COL_RATING,
+].join(", ");
 
 const reduceMotionQuery =
   typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -167,6 +177,9 @@ let filterPlatform = "",
   filterYearEnd = "",
   sortColumn = COL_GAME,
   sortDirection = "asc";
+let typeaheadTimer = null;
+let activeSuggestionRequest = 0;
+let hideSuggestionsTimer = null;
 
 /**
  * Parse a year string/number into an integer or null when invalid.
@@ -983,6 +996,176 @@ function updateTrendingCarousel(data) {
 }
 
 /**
+ * Initialize interactions for the search typeahead panel.
+ */
+function initTypeahead() {
+  const input = document.getElementById("search");
+  const panel = document.getElementById("searchSuggestions");
+  if (!input || !panel) return;
+
+  panel.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+  });
+
+  panel.addEventListener("click", (event) => {
+    const target = event.target.closest("[data-suggestion]");
+    if (!target) return;
+    const encoded = target.getAttribute("data-suggestion") || "";
+    try {
+      const suggestion = decodeURIComponent(encoded);
+      applyTypeaheadSuggestion(suggestion);
+    } catch {
+      /* ignore malformed suggestion */
+    }
+  });
+
+  input.addEventListener("focus", () => {
+    if (hideSuggestionsTimer) {
+      clearTimeout(hideSuggestionsTimer);
+      hideSuggestionsTimer = null;
+    }
+    if (input.value.trim().length >= TYPEAHEAD_MIN_CHARS) {
+      queueTypeaheadSuggestions(input.value);
+    }
+  });
+
+  input.addEventListener("blur", () => {
+    hideSuggestionsTimer = setTimeout(() => {
+      clearTypeaheadSuggestions();
+    }, 120);
+  });
+}
+
+/**
+ * Debounce and schedule fetching of typeahead suggestions.
+ * @param {string} rawQuery
+ */
+function queueTypeaheadSuggestions(rawQuery) {
+  const input = document.getElementById("search");
+  const panel = document.getElementById("searchSuggestions");
+  if (!input || !panel) return;
+  if (typeaheadTimer) {
+    clearTimeout(typeaheadTimer);
+    typeaheadTimer = null;
+  }
+  if (!rawQuery || rawQuery.trim().length < TYPEAHEAD_MIN_CHARS) {
+    clearTypeaheadSuggestions();
+    return;
+  }
+  typeaheadTimer = setTimeout(() => {
+    fetchTypeaheadSuggestions(rawQuery.trim());
+  }, TYPEAHEAD_DEBOUNCE_MS);
+}
+
+/**
+ * Fetch typeahead suggestions from Supabase when available, otherwise fall back to local data.
+ * @param {string} query
+ */
+async function fetchTypeaheadSuggestions(query) {
+  const panel = document.getElementById("searchSuggestions");
+  const input = document.getElementById("search");
+  if (!panel || !input) return;
+  const requestId = ++activeSuggestionRequest;
+  let suggestions = [];
+  if (supabase && !FORCE_SAMPLE) {
+    try {
+      const { data, error } = await supabase
+        .from("games")
+        .select(TYPEAHEAD_SELECT_COLUMNS)
+        .ilike(COL_GAME, `${query}%`)
+        .order(COL_GAME, { ascending: true })
+        .limit(TYPEAHEAD_LIMIT);
+      if (error) throw error;
+      suggestions = Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.warn("Typeahead Supabase query failed, using local fallback.", err);
+      suggestions = buildLocalTypeaheadSuggestions(query);
+    }
+  } else {
+    suggestions = buildLocalTypeaheadSuggestions(query);
+  }
+
+  if (requestId !== activeSuggestionRequest) return;
+  renderTypeaheadSuggestions(suggestions);
+}
+
+/**
+ * Local fallback for typeahead suggestions.
+ * @param {string} query
+ * @returns {GameRow[]}
+ */
+function buildLocalTypeaheadSuggestions(query) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return [];
+  return rawData
+    .filter((row) => {
+      const name = (row[COL_GAME] || "").toString().toLowerCase();
+      return name.startsWith(normalized);
+    })
+    .slice(0, TYPEAHEAD_LIMIT);
+}
+
+/**
+ * Render typeahead suggestions panel.
+ * @param {GameRow[]} suggestions
+ */
+function renderTypeaheadSuggestions(suggestions) {
+  const panel = document.getElementById("searchSuggestions");
+  const input = document.getElementById("search");
+  if (!panel || !input) return;
+  if (!suggestions || !suggestions.length) {
+    panel.innerHTML =
+      '<span class="typeahead-empty">No matches yet. Keep typing.</span>';
+    panel.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+    return;
+  }
+  panel.innerHTML = suggestions
+    .map((row) => {
+      const name = escapeHtml(row[COL_GAME] || "Untitled");
+      const encodedValue = encodeURIComponent(row[COL_GAME] || "");
+      const parts = [];
+      if (row[COL_PLATFORM]) parts.push(escapeHtml(row[COL_PLATFORM]));
+      const year = getReleaseYear(row);
+      if (year) parts.push(escapeHtml(year.toString()));
+      const genre =
+        row[COL_GENRE] && row[COL_GENRE].split(",").map((g) => g.trim()).filter(Boolean)[0];
+      if (genre) parts.push(escapeHtml(genre));
+      const subtitle = parts.join(" • ");
+      return `<button type="button" class="typeahead-item" role="option" data-suggestion="${encodedValue}"><span class="typeahead-primary">${name}</span>${
+        subtitle ? `<span class="typeahead-meta">${subtitle}</span>` : ""
+      }</button>`;
+    })
+    .join("");
+  panel.hidden = false;
+  input.setAttribute("aria-expanded", "true");
+}
+
+function clearTypeaheadSuggestions() {
+  const panel = document.getElementById("searchSuggestions");
+  const input = document.getElementById("search");
+  if (!panel || !input) return;
+  panel.hidden = true;
+  panel.innerHTML = "";
+  input.setAttribute("aria-expanded", "false");
+}
+
+/**
+ * Apply a suggestion to the search field and trigger filtering.
+ * @param {string} value
+ */
+function applyTypeaheadSuggestion(value) {
+  const input = document.getElementById("search");
+  if (!input) return;
+  input.value = value;
+  searchValue = value.trim().toLowerCase();
+  clearTypeaheadSuggestions();
+  renderTable(applyFilters(rawData));
+  updateStats(applyFilters(rawData));
+  input.focus();
+}
+
+/**
  * Generate and inject JSON-LD structured data spotlighting top-rated games.
  * @param {GameRow[]} data
  */
@@ -1538,11 +1721,16 @@ if (!disableBootstrapFlag && canBootstrap) {
         renderTable(applyFilters(rawData));
         updateStats(applyFilters(rawData));
       });
-      document.getElementById("search").addEventListener("input", (e) => {
-        searchValue = e.target.value.trim().toLowerCase();
-        renderTable(applyFilters(rawData));
-        updateStats(applyFilters(rawData));
-      });
+      const searchInput = document.getElementById("search");
+      if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+          const value = e.target.value;
+          searchValue = value.trim().toLowerCase();
+          renderTable(applyFilters(rawData));
+          updateStats(applyFilters(rawData));
+          queueTypeaheadSuggestions(value);
+        });
+      }
       document.getElementById("statusFilter").addEventListener("change", (e) => {
         filterStatus = e.target.value;
         savePersistedFilters();
@@ -1584,11 +1772,13 @@ if (!disableBootstrapFlag && canBootstrap) {
         document.getElementById("ratingFilter").value = "";
         document.getElementById("yearStartFilter").value = "";
         document.getElementById("yearEndFilter").value = "";
+        clearTypeaheadSuggestions();
         renderTable(applyFilters(rawData));
         updateStats(applyFilters(rawData));
       });
 
       applyFiltersToInputs();
+      initTypeahead();
       document.getElementById("exportBtn").onclick = exportOwnedGames;
       document.getElementById("shareBtn").onclick = showShareSection;
       document.getElementById("showImport").onclick = showImportSection;

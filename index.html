@@ -99,7 +99,23 @@
           </label>
           <label class="filter-field search-field">
             <span>Search</span>
-            <input id="search" placeholder="Type to filter..." />
+            <div class="typeahead-field">
+              <input
+                id="search"
+                placeholder="Type to filter..."
+                aria-autocomplete="list"
+                aria-controls="searchSuggestions"
+                aria-expanded="false"
+                autocomplete="off"
+              />
+              <div
+                id="searchSuggestions"
+                class="typeahead-panel"
+                role="listbox"
+                aria-label="Suggested games"
+                hidden
+              ></div>
+            </div>
           </label>
         </div>
         <details class="filters-advanced" open>

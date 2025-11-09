@@ -448,6 +448,72 @@ h1 {
   flex: 1;
 }
 
+.typeahead-field {
+  position: relative;
+}
+
+.typeahead-panel {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  right: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface-overlay);
+  box-shadow:
+    0 6px 22px var(--shadow-deep),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 30;
+  padding: 0.2rem 0;
+}
+
+.typeahead-panel[hidden] {
+  display: none;
+}
+
+.typeahead-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  padding: 0.55rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.typeahead-item:hover,
+.typeahead-item:focus-visible {
+  background: var(--surface-hover);
+  color: var(--color-accent);
+  outline: none;
+}
+
+.typeahead-primary {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.typeahead-meta {
+  font-size: 0.82rem;
+  color: var(--text-subtle);
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.typeahead-empty {
+  display: block;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  color: var(--text-subtle);
+}
+
 .clear-button {
   align-self: center;
   padding: 0.5em 1.3em;
