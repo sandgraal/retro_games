@@ -43,3 +43,7 @@ All pull requests run through `.github/workflows/ci.yml`, which:
 - (optional future step) Add `npm run test:e2e` to the workflow when headless browsers are available in CI runners.
 
 Keep these commands green locally before pushing to avoid CI failures.
+
+## Contributing
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup tips, coding standards, and the pull-request checklist.

@@ -1,3 +1,5 @@
+// @ts-check
+
 /*
   Sandgraal's Game List
   Author: Chris Sandgraal
@@ -7,6 +9,29 @@
 */
 
 // === Column Names and Keys ===
+
+/**
+ * @typedef {Object} GameRow
+ * @property {string} [game_name]
+ * @property {string} [platform]
+ * @property {string} [genre]
+ * @property {string} [cover]
+ * @property {string|number} [rating]
+ * @property {string|number} [release_year]
+ * @property {string} [Details]
+ * @property {string[]} [screenshots]
+ * @property {Record<string, any>} [key: string]
+ */
+
+/** @typedef {Record<string, string>} StatusMap */
+/** @typedef {Record<string, string>} NoteMap */
+/**
+ * @typedef {Object} FilterState
+ * @property {string} [filterStatus]
+ * @property {string} [filterRatingMin]
+ * @property {string} [filterYearStart]
+ * @property {string} [filterYearEnd]
+ */
 const COL_GAME = "game_name";
 const COL_PLATFORM = "platform";
 const COL_GENRE = "genre";
@@ -111,12 +136,18 @@ async function loadGameData() {
   }
 }
 
-let rawData = [],
-  gameStatuses = {},
-  gameNotes = {},
-  importedCollection = null,
-  importedNotes = null,
-  persistedFilters = {};
+/** @type {GameRow[]} */
+let rawData = [];
+/** @type {StatusMap} */
+let gameStatuses = {};
+/** @type {NoteMap} */
+let gameNotes = {};
+/** @type {StatusMap|null} */
+let importedCollection = null;
+/** @type {NoteMap|null} */
+let importedNotes = null;
+/** @type {FilterState} */
+let persistedFilters = {};
 let filterPlatform = "",
   filterGenre = "",
   searchValue = "",
@@ -215,6 +246,11 @@ function escapeHtml(str) {
   });
 }
 
+/**
+ * Initialize gallery controls inside modal.
+ * @param {HTMLElement} modal
+ * @param {string[]} images
+ */
 function initializeGallery(modal, images) {
   const galleryEl = modal.querySelector(".modal-gallery");
   if (!galleryEl) return;
@@ -312,6 +348,7 @@ function savePersistedFilters() {
   localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(snapshot));
 }
 
+/** Sync current filter state into the DOM inputs. */
 function applyFiltersToInputs() {
   const platformEl = document.getElementById("platformFilter");
   if (platformEl) platformEl.value = filterPlatform || "";
@@ -356,6 +393,8 @@ function setupFilters(data) {
 
 /**
  * Apply search/filter logic to current data set.
+ * @param {GameRow[]} data
+ * @returns {GameRow[]}
  */
 function applyFilters(data) {
   let statusSource = importedCollection || gameStatuses;
@@ -401,6 +440,7 @@ function applyFilters(data) {
 
 /**
  * Render the ROM table from (filtered) data.
+ * @param {GameRow[]} data
  */
 function renderTable(data) {
   if (sortColumn) {
@@ -683,6 +723,10 @@ function exportCollectionBackup() {
   showStatus("Backup downloaded.", "info");
 }
 
+/**
+ * Build the portable backup payload.
+ * @returns {{statuses: StatusMap, notes: NoteMap, filters: FilterState}}
+ */
 function getBackupPayload() {
   return {
     statuses: gameStatuses,
@@ -691,6 +735,10 @@ function getBackupPayload() {
   };
 }
 
+/**
+ * Restore a backup from an uploaded file.
+ * @param {File} file
+ */
 function restoreCollectionBackup(file) {
   const reader = new FileReader();
   reader.onload = () => {
@@ -751,6 +799,7 @@ function showError(msg) {
 
 /**
  * Show a modal popout with game details.
+ * @param {GameRow} game
  */
 function showGameModal(game) {
   const modal = document.getElementById("gameModal");
