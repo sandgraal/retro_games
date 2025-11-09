@@ -33,6 +33,7 @@ const STATUS_LABELS = STATUS_OPTIONS.reduce((acc, option) => {
   return acc;
 }, {});
 const SAMPLE_DATA_URL = "./data/sample-games.json";
+const FILTER_STORAGE_KEY = "rom_filters";
 
 // === Supabase Config ===
 const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
@@ -113,7 +114,8 @@ let rawData = [],
   gameStatuses = {},
   gameNotes = {},
   importedCollection = null,
-  importedNotes = null;
+  importedNotes = null,
+  persistedFilters = {};
 let filterPlatform = "",
   filterGenre = "",
   searchValue = "",
@@ -180,6 +182,46 @@ function escapeHtml(str) {
   });
 }
 
+function initializeGallery(modal, images) {
+  const galleryEl = modal.querySelector(".modal-gallery");
+  if (!galleryEl) return;
+  const imgEl = galleryEl.querySelector(".gallery-image");
+  const counterEl = galleryEl.querySelector(".gallery-counter");
+  const prevBtn = galleryEl.querySelector(".gallery-nav.prev");
+  const nextBtn = galleryEl.querySelector(".gallery-nav.next");
+  let currentIndex = 0;
+
+  const updateImage = () => {
+    const boundedIndex = ((currentIndex % images.length) + images.length) % images.length;
+    currentIndex = boundedIndex;
+    imgEl.src = images[boundedIndex];
+    imgEl.alt = `${images[boundedIndex]} screenshot`;
+    counterEl.textContent = `${boundedIndex + 1} / ${images.length}`;
+  };
+
+  prevBtn.onclick = () => {
+    currentIndex -= 1;
+    updateImage();
+  };
+  nextBtn.onclick = () => {
+    currentIndex += 1;
+    updateImage();
+  };
+  galleryEl.onkeydown = (e) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      currentIndex -= 1;
+      updateImage();
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      currentIndex += 1;
+      updateImage();
+    }
+  };
+  galleryEl.setAttribute("tabindex", "0");
+  updateImage();
+}
+
 /**
  * LocalStorage: Load & Save status state
  */
@@ -217,6 +259,24 @@ function loadNotes() {
 
 function saveNotes() {
   localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(gameNotes));
+}
+
+function loadPersistedFilters() {
+  try {
+    persistedFilters = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || "{}");
+  } catch {
+    persistedFilters = {};
+  }
+}
+
+function savePersistedFilters() {
+  const snapshot = {
+    filterStatus,
+    filterRatingMin,
+    filterYearStart,
+    filterYearEnd,
+  };
+  localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(snapshot));
 }
 
 /**
@@ -588,10 +648,26 @@ function showGameModal(game) {
   const modal = document.getElementById("gameModal");
   const modalBg = document.getElementById("modalBg");
   const key = (game[COL_GAME] || "") + "___" + (game[COL_PLATFORM] || "");
+  let galleryImages = [];
+  if (Array.isArray(game.screenshots) && game.screenshots.length) {
+    galleryImages = game.screenshots;
+  } else if (game[COL_COVER]) {
+    galleryImages = [game[COL_COVER]];
+  }
+  galleryImages = Array.from(new Set(galleryImages.filter(Boolean)));
   // Build modal HTML (no user HTML injected)
   let html = `<button class="modal-close" title="Close" aria-label="Close">&times;</button>`;
   html += `<div class="modal-title">${game[COL_GAME] || "(No Name)"}</div>`;
   if (game[COL_COVER]) html += `<img src="${game[COL_COVER]}" alt="cover art">`;
+  if (galleryImages.length) {
+    const firstImage = galleryImages[0];
+    html += `<div class="modal-gallery" data-current-index="0">
+      <button class="gallery-nav prev" aria-label="Previous screenshot">&#10094;</button>
+      <img src="${firstImage}" alt="${game[COL_GAME] || ""} media" class="gallery-image">
+      <button class="gallery-nav next" aria-label="Next screenshot">&#10095;</button>
+      <div class="gallery-counter">1 / ${galleryImages.length}</div>
+    </div>`;
+  }
   html += `<dl>`;
   for (let k in game) {
     if ([COL_GAME, COL_COVER].includes(k)) continue;
@@ -641,6 +717,9 @@ function showGameModal(game) {
   document.addEventListener("keydown", escHandler);
   modal.querySelector(".modal-close").onclick = closeModal;
   modalBg.onclick = closeModal;
+  if (galleryImages.length) {
+    initializeGallery(modal, galleryImages);
+  }
   if (!importedCollection) {
     const saveBtn = modal.querySelector("#saveNoteBtn");
     const noteField = modal.querySelector("#noteField");
@@ -689,6 +768,11 @@ if (!disableBootstrapFlag && canBootstrap) {
       if (!rawData.length) throw new Error("No games available to display!");
       loadStatuses();
       loadNotes();
+      loadPersistedFilters();
+      filterStatus = persistedFilters.filterStatus || "";
+      filterRatingMin = persistedFilters.filterRatingMin || "";
+      filterYearStart = persistedFilters.filterYearStart || "";
+      filterYearEnd = persistedFilters.filterYearEnd || "";
       setupFilters(rawData);
       renderTable(applyFilters(rawData));
       updateStats(applyFilters(rawData));
@@ -718,21 +802,45 @@ if (!disableBootstrapFlag && canBootstrap) {
       });
       document.getElementById("statusFilter").addEventListener("change", (e) => {
         filterStatus = e.target.value;
+        savePersistedFilters();
         renderTable(applyFilters(rawData));
         updateStats(applyFilters(rawData));
       });
       document.getElementById("ratingFilter").addEventListener("input", (e) => {
         filterRatingMin = e.target.value.trim();
+        savePersistedFilters();
         renderTable(applyFilters(rawData));
         updateStats(applyFilters(rawData));
       });
       document.getElementById("yearStartFilter").addEventListener("input", (e) => {
         filterYearStart = e.target.value.trim();
+        savePersistedFilters();
         renderTable(applyFilters(rawData));
         updateStats(applyFilters(rawData));
       });
       document.getElementById("yearEndFilter").addEventListener("input", (e) => {
         filterYearEnd = e.target.value.trim();
+        savePersistedFilters();
+        renderTable(applyFilters(rawData));
+        updateStats(applyFilters(rawData));
+      });
+      document.getElementById("clearFilters").addEventListener("click", () => {
+        filterPlatform = "";
+        filterGenre = "";
+        searchValue = "";
+        filterStatus = "";
+        filterRatingMin = "";
+        filterYearStart = "";
+        filterYearEnd = "";
+        persistedFilters = {};
+        localStorage.removeItem(FILTER_STORAGE_KEY);
+        document.getElementById("platformFilter").value = "";
+        document.getElementById("genreFilter").value = "";
+        document.getElementById("search").value = "";
+        document.getElementById("statusFilter").value = "";
+        document.getElementById("ratingFilter").value = "";
+        document.getElementById("yearStartFilter").value = "";
+        document.getElementById("yearEndFilter").value = "";
         renderTable(applyFilters(rawData));
         updateStats(applyFilters(rawData));
       });

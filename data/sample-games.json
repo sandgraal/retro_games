@@ -11,7 +11,11 @@
     "notes": "Part of a series, Re-released/Ported",
     "player_count": "Single",
     "cover": "https://upload.wikimedia.org/wikipedia/en/2/24/Chrono_Trigger.jpg",
-    "Details": "https://en.wikipedia.org/wiki/Chrono_Trigger"
+    "Details": "https://en.wikipedia.org/wiki/Chrono_Trigger",
+    "screenshots": [
+      "https://upload.wikimedia.org/wikipedia/en/2/24/Chrono_Trigger.jpg",
+      "https://i.imgur.com/EEePhGQ.jpg"
+    ]
   },
   {
     "game_name": "Castlevania Symphony Of The Night",
@@ -25,7 +29,10 @@
     "notes": "Part of a series, Re-released/Ported",
     "player_count": "Single",
     "cover": "https://upload.wikimedia.org/wikipedia/en/a/a3/Castlevania_SOTN_PAL.jpg",
-    "Details": "https://en.wikipedia.org/wiki/Castlevania:_Symphony_of_the_Night"
+    "Details": "https://en.wikipedia.org/wiki/Castlevania:_Symphony_of_the_Night",
+    "screenshots": [
+      "https://upload.wikimedia.org/wikipedia/en/a/a3/Castlevania_SOTN_PAL.jpg"
+    ]
   },
   {
     "game_name": "Super Mario 64",
@@ -39,7 +46,11 @@
     "notes": "Part of a series, Re-released/Ported",
     "player_count": "Single",
     "cover": "https://upload.wikimedia.org/wikipedia/en/6/6a/Super_Mario_64_box_cover.jpg",
-    "Details": "https://en.wikipedia.org/wiki/Super_Mario_64"
+    "Details": "https://en.wikipedia.org/wiki/Super_Mario_64",
+    "screenshots": [
+      "https://upload.wikimedia.org/wikipedia/en/6/6a/Super_Mario_64_box_cover.jpg",
+      "https://i.imgur.com/IRnG2HM.jpg"
+    ]
   },
   {
     "game_name": "Mega Man X",
@@ -53,7 +64,10 @@
     "notes": "Part of a series, Re-released/Ported",
     "player_count": "Single",
     "cover": "https://upload.wikimedia.org/wikipedia/en/a/aa/Mega_Man_X_Coverart.png",
-    "Details": "https://en.wikipedia.org/wiki/Mega_Man_X"
+    "Details": "https://en.wikipedia.org/wiki/Mega_Man_X",
+    "screenshots": [
+      "https://upload.wikimedia.org/wikipedia/en/a/aa/Mega_Man_X_Coverart.png"
+    ]
   },
   {
     "game_name": "The Legend of Zelda: Ocarina of Time",
@@ -67,7 +81,10 @@
     "notes": "Part of a series, Re-released/Ported",
     "player_count": "Single",
     "cover": "https://upload.wikimedia.org/wikipedia/en/5/57/The_Legend_of_Zelda_Ocarina_of_Time.jpg",
-    "Details": "https://en.wikipedia.org/wiki/The_Legend_of_Zelda:_Ocarina_of_Time"
+    "Details": "https://en.wikipedia.org/wiki/The_Legend_of_Zelda:_Ocarina_of_Time",
+    "screenshots": [
+      "https://upload.wikimedia.org/wikipedia/en/5/57/The_Legend_of_Zelda_Ocarina_of_Time.jpg"
+    ]
   },
   {
     "game_name": "Sonic the Hedgehog 2",
@@ -81,7 +98,10 @@
     "notes": "Part of a series, Re-released/Ported",
     "player_count": "Single, Co-op",
     "cover": "https://upload.wikimedia.org/wikipedia/en/9/9f/Sonic_the_Hedgehog_2_box_art.jpg",
-    "Details": "https://en.wikipedia.org/wiki/Sonic_the_Hedgehog_2"
+    "Details": "https://en.wikipedia.org/wiki/Sonic_the_Hedgehog_2",
+    "screenshots": [
+      "https://upload.wikimedia.org/wikipedia/en/9/9f/Sonic_the_Hedgehog_2_box_art.jpg"
+    ]
   },
   {
     "game_name": "Final Fantasy VII",
@@ -95,7 +115,10 @@
     "notes": "Part of a series, Re-released/Ported",
     "player_count": "Single",
     "cover": "https://upload.wikimedia.org/wikipedia/en/e/e6/Final_Fantasy_VII_Box_Art.jpg",
-    "Details": "https://en.wikipedia.org/wiki/Final_Fantasy_VII"
+    "Details": "https://en.wikipedia.org/wiki/Final_Fantasy_VII",
+    "screenshots": [
+      "https://upload.wikimedia.org/wikipedia/en/e/e6/Final_Fantasy_VII_Box_Art.jpg"
+    ]
   },
   {
     "game_name": "Metroid Prime",
@@ -109,6 +132,9 @@
     "notes": "Part of a series, Re-released/Ported",
     "player_count": "Single",
     "cover": "https://upload.wikimedia.org/wikipedia/en/f/f9/Metroid_Prime_box_cover.jpg",
-    "Details": "https://en.wikipedia.org/wiki/Metroid_Prime"
+    "Details": "https://en.wikipedia.org/wiki/Metroid_Prime",
+    "screenshots": [
+      "https://upload.wikimedia.org/wikipedia/en/f/f9/Metroid_Prime_box_cover.jpg"
+    ]
   }
 ]

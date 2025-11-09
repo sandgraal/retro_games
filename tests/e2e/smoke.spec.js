@@ -19,6 +19,8 @@ test("loads sample data and opens/closes modal", async ({ page }) => {
   const modal = page.locator("#gameModal");
   await expect(modal).toBeVisible();
   await expect(modal).toContainText("Chrono Trigger");
+  await page.locator(".gallery-nav.next").first().click();
+  await expect(page.locator(".gallery-counter")).toContainText("2 /");
 
   await page.locator("#gameModal .modal-close").click();
   await expect(modal).toBeHidden();

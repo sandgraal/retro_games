@@ -91,6 +91,17 @@ h1 {
   flex: 1;
 }
 
+.clear-button {
+  align-self: flex-end;
+  padding: 0.5em 1.3em;
+  border-radius: 1em;
+  border: 1px solid var(--color-accent);
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 0.8em;
+  cursor: pointer;
+}
+
 .filters select:focus,
 .filters input:focus {
   border-color: var(--color-accent2);
@@ -193,6 +204,14 @@ h1 {
   padding: 0.5em;
   min-height: 100px;
   resize: vertical;
+}
+
+.gallery-nav:focus,
+.gallery-nav:hover,
+.note-editor button:focus,
+.note-editor button:hover {
+  outline: none;
+  box-shadow: 0 0 6px var(--color-accent2);
 }
 
 .note-editor button {
@@ -478,6 +497,38 @@ button:hover {
     0 1px 8px #000a;
   background: #23252a;
   border: 1.5px solid var(--color-accent) 44;
+}
+.modal-gallery {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.6em;
+  align-items: center;
+  margin-bottom: 1em;
+  clear: both;
+}
+.modal-gallery img {
+  max-width: 260px;
+  max-height: 210px;
+  border-radius: 12px;
+  justify-self: center;
+  float: none;
+  margin: 0;
+  border: 1.5px solid var(--color-accent) 44;
+}
+.gallery-nav {
+  background: transparent;
+  border: 1px solid var(--color-accent2);
+  color: var(--color-accent2);
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
+.gallery-counter {
+  grid-column: span 3;
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--color-accent);
 }
 #gameModal .modal-title {
   font-family: var(--font-title);
