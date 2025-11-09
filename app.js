@@ -386,11 +386,9 @@ function registerCarouselWindow(windowEl) {
   if (!windowEl || windowEl.dataset.carouselRegistered) return;
   windowEl.dataset.carouselRegistered = "true";
   registeredCarouselWindows.add(windowEl);
-  windowEl.addEventListener(
-    "scroll",
-    () => updateCarouselButtons(windowEl),
-    { passive: true }
-  );
+  windowEl.addEventListener("scroll", () => updateCarouselButtons(windowEl), {
+    passive: true,
+  });
   if (typeof ResizeObserver === "function") {
     const observer = new ResizeObserver(() => updateCarouselButtons(windowEl));
     observer.observe(windowEl);
@@ -831,8 +829,7 @@ function updateDashboard(statusCounts, data) {
     const genreCounts = {};
     data.forEach((row) => {
       const genres = row[COL_GENRE]
-        ? row[COL_GENRE]
-            .split(",")
+        ? row[COL_GENRE].split(",")
             .map((g) => g.trim())
             .filter(Boolean)
         : [];
@@ -969,8 +966,7 @@ function updateTrendingCarousel(data) {
         ? ratingValue.toFixed(1).replace(/\.0$/, "")
         : "NR";
       const genres = row[COL_GENRE]
-        ? row[COL_GENRE]
-            .split(",")
+        ? row[COL_GENRE].split(",")
             .map((g) => g.trim())
             .filter(Boolean)
         : [];
