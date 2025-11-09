@@ -171,6 +171,38 @@ h1 {
   float: right;
 }
 
+.timeline-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+}
+
+.timeline-bar {
+  display: grid;
+  grid-template-columns: 60px 1fr 40px;
+  align-items: center;
+  font-size: 0.85em;
+  color: #dbe6ff;
+  gap: 0.4em;
+}
+
+.timeline-bar .bar-track {
+  background: #1b2434;
+  border-radius: 999px;
+  height: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-bar .bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-accent2), var(--color-accent));
+}
+
 .status-cell {
   min-width: 130px;
 }

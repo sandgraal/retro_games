@@ -39,6 +39,7 @@ function resetDom() {
         <span id="dash-trade"></span>
       </div>
       <ol id="dash-genres"></ol>
+      <div id="dash-timeline"></div>
     </div>
   `;
 }

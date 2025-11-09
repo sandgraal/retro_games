@@ -620,11 +620,29 @@ function updateDashboard(statusCounts, data) {
   const topGenres = Object.entries(genreCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
-  if (!topGenres.length) {
-    topGenresEl.innerHTML = "<li>No genres yet</li>";
+  topGenresEl.innerHTML = topGenres.length
+    ? topGenres.map(([genre, count]) => `<li>${genre}<strong>${count}</strong></li>`).join("")
+    : "<li>No genres yet</li>";
+
+  const timelineEl = document.getElementById("dash-timeline");
+  if (!timelineEl) return;
+  const yearCounts = {};
+  data.forEach((row) => {
+    const year = getReleaseYear(row);
+    if (year) yearCounts[year] = (yearCounts[year] || 0) + 1;
+  });
+  const sortedYears = Object.entries(yearCounts)
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .slice(-6);
+  if (!sortedYears.length) {
+    timelineEl.textContent = "No release data";
   } else {
-    topGenresEl.innerHTML = topGenres
-      .map(([genre, count]) => `<li>${genre}<strong>${count}</strong></li>`)
+    const max = Math.max(...sortedYears.map(([, count]) => count));
+    timelineEl.innerHTML = sortedYears
+      .map(([year, count]) => {
+        const percent = max ? Math.max((count / max) * 100, 5) : 5;
+        return `<div class="timeline-bar"><span>${year}</span><div class="bar-track"><span class="bar-fill" style="width:${percent}%"></span></div><strong>${count}</strong></div>`;
+      })
       .join("");
   }
 }
