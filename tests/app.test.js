@@ -92,6 +92,7 @@ describe("renderTable", () => {
   it("renders rows and marks owned entries", () => {
     app.__setState({
       statuses: { "Chrono Trigger___SNES": "owned" },
+      notes: {},
     });
     app.renderTable(SAMPLE_DATA);
     const rows = document.querySelectorAll("#romTable tbody tr");
@@ -101,8 +102,6 @@ describe("renderTable", () => {
     );
     expect(chronoRow).toBeTruthy();
     expect(chronoRow.classList.contains("status-owned")).toBe(true);
-    const chronoSelect = chronoRow.querySelector(".status-select");
-    expect(chronoSelect.value).toBe("owned");
     const statusSelect = chronoRow.querySelector(".status-select");
     expect(statusSelect.value).toBe("owned");
     expect(document.getElementById("romTable").style.display).toBe("");
@@ -138,5 +137,14 @@ describe("renderTable", () => {
     const filtered = app.applyFilters(SAMPLE_DATA);
     expect(filtered).toHaveLength(1);
     expect(filtered[0].game_name).toBe("Castlevania Symphony Of The Night");
+  });
+
+  it("shows note indicator when a note exists", () => {
+    app.__setState({
+      notes: { "Chrono Trigger___SNES": "Keep boxed copy" },
+    });
+    app.renderTable(SAMPLE_DATA);
+    const noteDots = document.querySelectorAll(".note-dot");
+    expect(noteDots.length).toBe(1);
   });
 });

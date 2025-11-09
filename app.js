@@ -14,6 +14,7 @@ const COL_COVER = "cover";
 const COL_RATING = "rating";
 const COL_RELEASE_YEAR = "release_year";
 const STORAGE_KEY = "roms_owned";
+const NOTES_STORAGE_KEY = "rom_notes";
 const STATUS_NONE = "none";
 const STATUS_OWNED = "owned";
 const STATUS_WISHLIST = "wishlist";
@@ -110,7 +111,9 @@ async function loadGameData() {
 
 let rawData = [],
   gameStatuses = {},
-  importedCollection = null;
+  gameNotes = {},
+  importedCollection = null,
+  importedNotes = null;
 let filterPlatform = "",
   filterGenre = "",
   searchValue = "",
@@ -145,6 +148,38 @@ function setStatusForKey(key, status) {
   }
 }
 
+function getNoteForKey(key, sourceMap) {
+  const map = sourceMap || gameNotes;
+  return map[key] || "";
+}
+
+function setNoteForKey(key, note) {
+  if (!note || !note.trim()) {
+    delete gameNotes[key];
+  } else {
+    gameNotes[key] = note.trim();
+  }
+}
+
+function escapeHtml(str) {
+  return (str || "").replace(/[&<>"']/g, (ch) => {
+    switch (ch) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      case "'":
+        return "&#39;";
+      default:
+        return ch;
+    }
+  });
+}
+
 /**
  * LocalStorage: Load & Save status state
  */
@@ -169,6 +204,19 @@ function loadStatuses() {
 }
 function saveStatuses() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(gameStatuses));
+}
+
+function loadNotes() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(NOTES_STORAGE_KEY) || "{}");
+    gameNotes = raw && typeof raw === "object" ? raw : {};
+  } catch {
+    gameNotes = {};
+  }
+}
+
+function saveNotes() {
+  localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(gameNotes));
 }
 
 /**
@@ -284,9 +332,13 @@ function renderTable(data) {
         statusValue && statusValue !== STATUS_NONE
           ? `status-pill status-${statusValue}`
           : "status-pill";
+      const noteValue = getNoteForKey(key, importedNotes || gameNotes);
+      const noteBadge = noteValue
+        ? '<span class="note-dot" title="Has note">✎</span>'
+        : "";
       const statusCell = importedCollection
-        ? `<td class="status-cell"><span class="${pillClass}">${statusLabel}</span></td>`
-        : `<td class="status-cell">${renderStatusSelect(key, statusValue)}</td>`;
+        ? `<td class="status-cell"><span class="${pillClass}">${statusLabel}</span>${noteBadge}</td>`
+        : `<td class="status-cell">${renderStatusSelect(key, statusValue)}${noteBadge}</td>`;
       const rowClass =
         statusValue && statusValue !== STATUS_NONE
           ? `game-row status-${statusValue}`
@@ -424,13 +476,21 @@ function exportOwnedGames() {
  * Display the share/import section with a code to copy or a field to import.
  */
 function showShareSection() {
-  let codes = [];
+  const payload = {
+    statuses: {},
+    notes: {},
+  };
   Object.entries(gameStatuses).forEach(([key, status]) => {
     if (status && status !== STATUS_NONE) {
-      codes.push(`${key}::${status}`);
+      payload.statuses[key] = status;
     }
   });
-  let code = btoa(unescape(encodeURIComponent(codes.join("|"))));
+  Object.entries(gameNotes).forEach(([key, note]) => {
+    if (note && note.trim()) {
+      payload.notes[key] = note;
+    }
+  });
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
   document.getElementById("shareSection").style.display = "";
   document.getElementById("shareCode").value = code;
   document.getElementById("importCode").value = "";
@@ -453,16 +513,29 @@ function importCollection() {
     return;
   }
   let coll = {};
+  let noteMap = {};
   try {
     let decoded = decodeURIComponent(escape(atob(code)));
-    decoded.split("|").forEach((entry) => {
-      if (!entry) return;
-      const [key, status] = entry.split("::");
-      if (!key) return;
-      const normalized = status && STATUS_LABELS[status] ? status : STATUS_OWNED;
-      coll[key] = normalized;
+    if (decoded.trim().startsWith("{")) {
+      const parsed = JSON.parse(decoded);
+      if (parsed && typeof parsed === "object") {
+        coll = parsed.statuses || {};
+        noteMap = parsed.notes || {};
+      }
+    } else {
+      decoded.split("|").forEach((entry) => {
+        if (!entry) return;
+        const [key, status] = entry.split("::");
+        if (!key) return;
+        const normalized = status && STATUS_LABELS[status] ? status : STATUS_OWNED;
+        coll[key] = normalized;
+      });
+    }
+    Object.keys(noteMap).forEach((key) => {
+      if (!coll[key]) coll[key] = STATUS_NONE;
     });
     importedCollection = coll;
+    importedNotes = noteMap;
     renderTable(applyFilters(rawData));
     updateStats(applyFilters(rawData));
     document.getElementById("importResult").textContent =
@@ -478,6 +551,7 @@ function importCollection() {
  */
 function closeShareSection() {
   importedCollection = null;
+  importedNotes = null;
   document.getElementById("shareSection").style.display = "none";
   renderTable(applyFilters(rawData));
   updateStats(applyFilters(rawData));
@@ -513,6 +587,7 @@ function showError(msg) {
 function showGameModal(game) {
   const modal = document.getElementById("gameModal");
   const modalBg = document.getElementById("modalBg");
+  const key = (game[COL_GAME] || "") + "___" + (game[COL_PLATFORM] || "");
   // Build modal HTML (no user HTML injected)
   let html = `<button class="modal-close" title="Close" aria-label="Close">&times;</button>`;
   html += `<div class="modal-title">${game[COL_GAME] || "(No Name)"}</div>`;
@@ -535,6 +610,18 @@ function showGameModal(game) {
     game[COL_GAME] || ""
   )}" target="_blank" rel="noopener">GameFAQs</a>`;
   html += `</div>`;
+  const noteValue = getNoteForKey(key, importedNotes || gameNotes);
+  if (importedCollection) {
+    html += `<div class="note-editor read-only"><label>Notes</label><div class="note-view">${
+      noteValue
+        ? escapeHtml(noteValue).replace(/\n/g, "<br>")
+        : "<em>No notes shared.</em>"
+    }</div></div>`;
+  } else {
+    html += `<div class="note-editor"><label for="noteField">Your Notes</label><textarea id="noteField" rows="4" placeholder="Add collection notes...">${escapeHtml(
+      noteValue
+    )}</textarea><button id="saveNoteBtn">Save Note</button></div>`;
+  }
 
   modal.innerHTML = html;
   modal.style.display = modalBg.style.display = "";
@@ -554,6 +641,18 @@ function showGameModal(game) {
   document.addEventListener("keydown", escHandler);
   modal.querySelector(".modal-close").onclick = closeModal;
   modalBg.onclick = closeModal;
+  if (!importedCollection) {
+    const saveBtn = modal.querySelector("#saveNoteBtn");
+    const noteField = modal.querySelector("#noteField");
+    if (saveBtn && noteField) {
+      saveBtn.onclick = () => {
+        setNoteForKey(key, noteField.value);
+        saveNotes();
+        closeModal();
+        renderTable(applyFilters(rawData));
+      };
+    }
+  }
 
   function closeModal() {
     modal.style.display = modalBg.style.display = "none";
@@ -589,6 +688,7 @@ if (!disableBootstrapFlag && canBootstrap) {
       rawData = data;
       if (!rawData.length) throw new Error("No games available to display!");
       loadStatuses();
+      loadNotes();
       setupFilters(rawData);
       renderTable(applyFilters(rawData));
       updateStats(applyFilters(rawData));
@@ -671,6 +771,9 @@ const testApi = {
     if (Object.prototype.hasOwnProperty.call(overrides, "statuses")) {
       gameStatuses = overrides.statuses;
     }
+    if (Object.prototype.hasOwnProperty.call(overrides, "notes")) {
+      gameNotes = overrides.notes;
+    }
     if (Object.prototype.hasOwnProperty.call(overrides, "owned")) {
       const incoming = overrides.owned || {};
       gameStatuses = {};
@@ -715,6 +818,7 @@ const testApi = {
   __getState() {
     return {
       statuses: gameStatuses,
+      notes: gameNotes,
       importedCollection,
       filterPlatform,
       filterGenre,
