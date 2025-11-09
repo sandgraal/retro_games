@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "seed:generate": "node scripts/generate-seed-sql.js",
     "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "sitemap": "node scripts/generate-sitemap.js"
   },
   "repository": {
     "type": "git",

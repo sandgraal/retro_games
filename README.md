@@ -39,6 +39,12 @@ Supabase schema + migration workflow lives in `docs/data-pipeline.md`.
 - `npm test` / `npm run test:watch` – Execute the Vitest suite (jsdom) that covers filter logic and table rendering.
 - `npm run test:e2e` – Playwright smoke test that spins up a static server, forces the sample dataset, and verifies the modal workflow (run `npx playwright install --with-deps` once after cloning).
 
+## SEO & Discoverability
+
+- The UI now emits JSON-LD `VideoGame` + `Review` structured data for the highest-rated titles as soon as the dataset loads, improving search result richness without manual exports.
+- Generate an XML sitemap anytime you deploy by running `SITE_BASE_URL="https://yourdomain.example" npm run sitemap`. The script scans every HTML entry point (currently just `index.html`) and writes `sitemap.xml` at the repo root with fresh timestamps.
+- Submit the generated sitemap to Google Search Console/Bing Webmaster Tools after each production deploy so crawlers pick up collection changes quickly.
+
 ## Continuous Integration
 
 All pull requests run through `.github/workflows/ci.yml`, which:
