@@ -61,10 +61,10 @@ function buildConfig({ envPath, outputPath }) {
 
   const config = { url, anonKey };
   if (tables.length > 0) {
-    config.tables = Array.from(new Set(tables));
+    config.tables = tables;
   }
   if (table) {
-    config.tableName = table;
+    config.table = table;
   }
 
   const content = [
