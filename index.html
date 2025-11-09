@@ -16,76 +16,100 @@
     ></script>
   </head>
   <body>
-    <h1>Sandgraal's Game List</h1>
-    <div class="top-actions">
-      <button id="exportBtn">Export Owned Games</button>
-      <button id="shareBtn">Get Shareable Link</button>
-      <button id="showImport">Import Collection Code</button>
-      <button id="backupBtn">Backup Collection JSON</button>
-      <button id="restoreBtn">Restore Backup</button>
-      <input
-        type="file"
-        id="restoreInput"
-        accept="application/json"
-        style="display: none"
-      />
-    </div>
-    <div class="filters">
-      <label class="filter-field">
-        <span>Platform</span>
-        <select id="platformFilter">
-          <option value="">All Platforms</option>
-        </select>
-      </label>
-      <label class="filter-field">
-        <span>Genre</span>
-        <select id="genreFilter">
-          <option value="">All Genres</option>
-        </select>
-      </label>
-      <label class="filter-field search-field">
-        <span>Search</span>
-        <input id="search" placeholder="Type to filter..." />
-      </label>
-      <label class="filter-field">
-        <span>Status</span>
-        <select id="statusFilter">
-          <option value="">All Statuses</option>
-          <option value="owned">Owned</option>
-          <option value="wishlist">Wishlist</option>
-          <option value="backlog">Backlog</option>
-          <option value="trade">Trade</option>
-        </select>
-      </label>
-      <label class="filter-field">
-        <span>Min Rating</span>
-        <input
-          id="ratingFilter"
-          type="number"
-          inputmode="decimal"
-          min="0"
-          max="10"
-          step="0.1"
-          placeholder="0-10"
-        />
-      </label>
-      <label class="filter-field">
-        <span>Year From</span>
-        <input
-          id="yearStartFilter"
-          type="number"
-          inputmode="numeric"
-          placeholder="1985"
-        />
-      </label>
-      <label class="filter-field">
-        <span>Year To</span>
-        <input id="yearEndFilter" type="number" inputmode="numeric" placeholder="2005" />
-      </label>
-      <button id="clearFilters" class="filter-field clear-button">Clear Filters</button>
-    </div>
-    <div id="stats">Loading stats...</div>
-    <section id="dashboard" aria-label="Collection dashboard">
+    <div class="app-shell">
+      <header class="app-hero">
+        <div class="hero-copy">
+          <h1>Sandgraal's Game List</h1>
+          <p class="hero-subtitle">
+            Curate, track, and share your retro collection without losing the weekend to spreadsheets.
+          </p>
+        </div>
+        <div class="actions-toolbar" role="toolbar" aria-label="Collection actions">
+          <div class="toolbar-group toolbar-group-primary">
+            <button id="exportBtn" class="primary-action">Export Owned Games</button>
+            <button id="shareBtn" class="primary-action">Get Shareable Link</button>
+          </div>
+          <div class="toolbar-group toolbar-group-secondary">
+            <button id="showImport">Import Collection Code</button>
+            <button id="backupBtn">Backup Collection JSON</button>
+            <button id="restoreBtn">Restore Backup</button>
+            <input
+              type="file"
+              id="restoreInput"
+              accept="application/json"
+              style="display: none"
+            />
+          </div>
+        </div>
+      </header>
+      <section class="filters-panel" aria-label="Collection filters">
+        <div class="filters primary-filters">
+          <label class="filter-field">
+            <span>Platform</span>
+            <select id="platformFilter">
+              <option value="">All Platforms</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            <span>Genre</span>
+            <select id="genreFilter">
+              <option value="">All Genres</option>
+            </select>
+          </label>
+          <label class="filter-field search-field">
+            <span>Search</span>
+            <input id="search" placeholder="Type to filter..." />
+          </label>
+        </div>
+        <details class="filters-advanced" open>
+          <summary>Advanced filters</summary>
+          <div class="filters advanced-filters">
+            <label class="filter-field">
+              <span>Status</span>
+              <select id="statusFilter">
+                <option value="">All Statuses</option>
+                <option value="owned">Owned</option>
+                <option value="wishlist">Wishlist</option>
+                <option value="backlog">Backlog</option>
+                <option value="trade">Trade</option>
+              </select>
+            </label>
+            <label class="filter-field">
+              <span>Min Rating</span>
+              <input
+                id="ratingFilter"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                max="10"
+                step="0.1"
+                placeholder="0-10"
+              />
+            </label>
+            <label class="filter-field">
+              <span>Year From</span>
+              <input
+                id="yearStartFilter"
+                type="number"
+                inputmode="numeric"
+                placeholder="1985"
+              />
+            </label>
+            <label class="filter-field">
+              <span>Year To</span>
+              <input
+                id="yearEndFilter"
+                type="number"
+                inputmode="numeric"
+                placeholder="2005"
+              />
+            </label>
+            <button id="clearFilters" class="filter-field clear-button">Clear Filters</button>
+          </div>
+        </details>
+      </section>
+      <div id="stats">Loading stats...</div>
+      <section id="dashboard" aria-label="Collection dashboard">
       <div class="dashboard-card" id="dashboard-statuses">
         <h2>Status Mix</h2>
         <ul>
@@ -106,8 +130,8 @@
         <div id="dash-timeline" class="timeline-bars">Loading...</div>
       </div>
     </section>
-    <div id="shareSection" style="display: none">
-      <button id="closeShare" title="Close">&times;</button>
+      <div id="shareSection" style="display: none">
+        <button id="closeShare" title="Close">&times;</button>
       <div>
         <label for="shareCode">Share Code:</label>
         <input id="shareCode" readonly />
@@ -119,14 +143,15 @@
         <button id="importBtn">View</button>
         <span id="importResult"></span>
       </div>
-    </div>
-    <div id="result">Loading...</div>
+     </div>
+     <div id="result">Loading...</div>
     <table id="romTable" style="display: none">
-      <thead></thead>
-      <tbody></tbody>
-    </table>
-    <div id="modalBg"></div>
-    <div id="gameModal"></div>
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+     <div id="modalBg"></div>
+      <div id="gameModal"></div>
+    </div>
     <script src="config.js" defer></script>
     <script src="app.js" defer></script>
   </body>
