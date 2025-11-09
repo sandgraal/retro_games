@@ -678,6 +678,7 @@ function applyFiltersToInputs() {
   if (yearStartEl) yearStartEl.value = filterYearStart || "";
   const yearEndEl = document.getElementById("yearEndFilter");
   if (yearEndEl) yearEndEl.value = filterYearEnd || "";
+  syncSortControl();
 }
 
 /**
@@ -753,111 +754,156 @@ function applyFilters(data) {
 }
 
 /**
- * Render the ROM table from (filtered) data.
+ * Render the ROM grid from (filtered) data.
  * @param {GameRow[]} data
  */
 function renderTable(data) {
+  const grid = document.getElementById("gameGrid");
+  if (!grid) return;
+  let working = data;
   if (sortColumn) {
-    data = [...data].sort((a, b) => {
-      const valueA = (a[sortColumn] || "").toString().toLowerCase();
-      const valueB = (b[sortColumn] || "").toString().toLowerCase();
-      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
-      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
+    working = [...data].sort((a, b) => compareRows(a, b, sortColumn, sortDirection));
   }
-  if (!data.length) {
-    document.getElementById("romTable").style.display = "none";
+  if (!working.length) {
+    grid.innerHTML =
+      '<div class="grid-empty">No results match your filters. Try adjusting search or filters.</div>';
     showError("No results match your filters.");
     return;
   }
-  const headers = Object.keys(data[0]);
-  const thead = document.querySelector("#romTable thead");
-  const tbody = document.querySelector("#romTable tbody");
-  thead.innerHTML =
-    "<tr><th>Status</th>" +
-    headers
-      .map((h) => {
-        const isActive = h === sortColumn;
-        const directionIndicator =
-          isActive && sortDirection === "asc" ? "▲" : isActive ? "▼" : "";
-        return `<th role="button" tabindex="0" data-sort-key="${h}" aria-sort="${
-          isActive ? (sortDirection === "asc" ? "ascending" : "descending") : "none"
-        }">${h} ${directionIndicator}</th>`;
-      })
-      .join("") +
-    "</tr>";
-  tbody.innerHTML = data
-    .map((row, idx) => {
-      const key = row[COL_GAME] + "___" + row[COL_PLATFORM];
-      const statusValue = getStatusForKey(key, importedCollection || gameStatuses);
-      const statusLabel = STATUS_LABELS[statusValue] || STATUS_LABELS[STATUS_NONE];
-      const pillClass =
-        statusValue && statusValue !== STATUS_NONE
-          ? `status-pill status-${statusValue}`
-          : "status-pill";
-      const noteValue = getNoteForKey(key, importedNotes || gameNotes);
-      const noteBadge = noteValue
-        ? '<span class="note-dot" title="Has note">✎</span>'
-        : "";
-      const statusCell = importedCollection
-        ? `<td class="status-cell"><span class="${pillClass}">${statusLabel}</span>${noteBadge}</td>`
-        : `<td class="status-cell">${renderStatusSelect(key, statusValue)}${noteBadge}</td>`;
-      const rowClass =
-        statusValue && statusValue !== STATUS_NONE
-          ? `game-row status-${statusValue}`
-          : "game-row";
-      return (
-        `<tr data-row="${idx}" class="${rowClass}">` +
-        statusCell +
-        headers
-          .map((h) =>
-            h === COL_COVER && row[h]
-              ? `<td><img src="${row[h]}" alt="cover"></td>`
-              : h === "Details" && row[h]
-                ? `<td><a href="${row[h]}" target="_blank" rel="noopener noreferrer">Info</a></td>`
-                : `<td>${row[h] || ""}</td>`
-          )
-          .join("") +
-        "</tr>"
-      );
-    })
-    .join("");
   hideStatus();
-  document.getElementById("romTable").style.display = "";
-  // Status controls (disabled while viewing imported share)
+  grid.innerHTML = working
+    .map((row, idx) => renderGameCard(row, idx, importedCollection || gameStatuses))
+    .join("");
+
   if (!importedCollection) {
-    tbody.querySelectorAll(".status-select").forEach((select) => {
-      select.onchange = function () {
+    grid.querySelectorAll(".status-select").forEach((select) => {
+      select.addEventListener("change", function onChange() {
         const k = this.getAttribute("data-key");
         setStatusForKey(k, this.value);
         saveStatuses();
         refreshFilteredView("status-select");
-      };
+      });
     });
   }
-  // Row click = show modal (except for checkboxes/links)
-  tbody.querySelectorAll("tr.game-row").forEach((tr) => {
-    tr.onclick = function (e) {
+
+  grid.querySelectorAll(".game-card").forEach((card) => {
+    card.addEventListener("click", (event) => {
       if (
-        e.target.tagName === "INPUT" ||
-        e.target.tagName === "A" ||
-        e.target.classList.contains("status-select")
-      )
+        event.target.closest(".status-select") ||
+        event.target.closest("button") ||
+        event.target.tagName === "SELECT"
+      ) {
         return;
-      const rowIdx = parseInt(tr.getAttribute("data-row"), 10);
-      showGameModal(data[rowIdx]);
-    };
-  });
-  thead.querySelectorAll("th[data-sort-key]").forEach((th) => {
-    th.onclick = () => toggleSort(th.getAttribute("data-sort-key"));
-    th.onkeydown = (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        toggleSort(th.getAttribute("data-sort-key"));
       }
-    };
+      const idx = Number(card.getAttribute("data-row"));
+      showGameModal(working[idx]);
+    });
   });
+  grid.querySelectorAll(".card-actions button").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const idx = Number(button.getAttribute("data-row"));
+      showGameModal(working[idx]);
+    });
+  });
+}
+
+function compareRows(rowA, rowB, column, direction) {
+  const multiplier = direction === "asc" ? 1 : -1;
+  if (column === COL_RELEASE_YEAR) {
+    const yearA = getReleaseYear(rowA);
+    const yearB = getReleaseYear(rowB);
+    const safeA =
+      typeof yearA === "number" ? yearA : direction === "asc" ? Infinity : -Infinity;
+    const safeB =
+      typeof yearB === "number" ? yearB : direction === "asc" ? Infinity : -Infinity;
+    if (safeA === safeB) return 0;
+    return safeA < safeB ? -1 * multiplier : 1 * multiplier;
+  }
+  if (column === COL_RATING) {
+    const ratingA = parseFloat(rowA[COL_RATING]);
+    const ratingB = parseFloat(rowB[COL_RATING]);
+    const safeA = Number.isFinite(ratingA)
+      ? ratingA
+      : direction === "asc"
+        ? Infinity
+        : -Infinity;
+    const safeB = Number.isFinite(ratingB)
+      ? ratingB
+      : direction === "asc"
+        ? Infinity
+        : -Infinity;
+    if (safeA === safeB) return 0;
+    return safeA < safeB ? -1 * multiplier : 1 * multiplier;
+  }
+  const valueA = (rowA[column] || "").toString().toLowerCase();
+  const valueB = (rowB[column] || "").toString().toLowerCase();
+  if (valueA === valueB) return 0;
+  return valueA < valueB ? -1 * multiplier : 1 * multiplier;
+}
+
+function renderGameCard(row, index, statusSource) {
+  const key = row[COL_GAME] + "___" + row[COL_PLATFORM];
+  const statusValue = getStatusForKey(key, statusSource);
+  const statusLabel = STATUS_LABELS[statusValue] || STATUS_LABELS[STATUS_NONE];
+  const overlayStatus =
+    statusValue && statusValue !== STATUS_NONE
+      ? `<span class="status-pill status-${statusValue}">${statusLabel}</span>`
+      : "";
+  const noteValue = getNoteForKey(key, importedNotes || gameNotes);
+  const noteBadge = noteValue
+    ? '<span class="note-dot" title="Has personal note">✎</span>'
+    : "";
+  const cover = row[COL_COVER];
+  const coverMarkup = cover
+    ? `<img src="${cover}" alt="${escapeHtml(row[COL_GAME] || "Cover art")}" loading="lazy">`
+    : `<div class="card-placeholder">${escapeHtml(
+        (row[COL_GAME] || "?").toString().slice(0, 2)
+      )}</div>`;
+  const platformText = row[COL_PLATFORM]
+    ? escapeHtml(row[COL_PLATFORM])
+    : "Unknown platform";
+  const releaseYear = getReleaseYear(row);
+  const platformMeta = releaseYear ? `${platformText} • ${releaseYear}` : platformText;
+  const ratingValue = parseFloat(row[COL_RATING]);
+  const ratingMarkup = Number.isFinite(ratingValue)
+    ? `<span class="card-rating">${ratingValue.toFixed(1).replace(/\.0$/, "")}</span>`
+    : "";
+  const regionMarkup = row.region ? `<span>${escapeHtml(row.region)}</span>` : "";
+  const modeMarkup = row.player_mode ? `<span>${escapeHtml(row.player_mode)}</span>` : "";
+  const metaParts = [ratingMarkup, regionMarkup, modeMarkup].filter(Boolean).join("");
+  const metaMarkup = metaParts ? `<div class="card-meta">${metaParts}</div>` : "";
+  const genres = row[COL_GENRE]
+    ? row[COL_GENRE].split(",")
+        .map((g) => g.trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+  const tagsMarkup = genres.length
+    ? `<div class="card-tags">${genres.map((g) => `<span>${escapeHtml(g)}</span>`).join("")}</div>`
+    : "";
+  const statusControl = importedCollection
+    ? `<div class="card-status-control"><span>Collection</span><span class="status-pill status-${statusValue}">${statusLabel}</span>${noteBadge}</div>`
+    : `<div class="card-status-control"><span>Collection</span>${renderStatusSelect(key, statusValue)}${noteBadge}</div>`;
+
+  return `<article class="game-card" data-row="${index}">
+    <div class="card-media">
+      ${coverMarkup}
+      ${overlayStatus}
+    </div>
+    <div class="card-body">
+      <div class="card-header">
+        <h3 class="card-title">${escapeHtml(row[COL_GAME] || "Untitled")}</h3>
+        <p class="card-subtitle">${platformMeta}</p>
+      </div>
+      ${metaMarkup}
+      ${tagsMarkup}
+      ${statusControl}
+      <div class="card-actions">
+        <button type="button" class="primary-action" data-row="${index}">Details</button>
+      </div>
+    </div>
+  </article>`;
 }
 
 function renderStatusSelect(key, current) {
@@ -869,6 +915,50 @@ function renderStatusSelect(key, current) {
         }</option>`
     ).join("")}
   </select>`;
+}
+
+function syncSortControl() {
+  const sortSelect = document.getElementById("sortControl");
+  if (!sortSelect) return;
+  sortSelect.value = getSortControlValue();
+}
+
+function getSortControlValue() {
+  if (sortColumn === COL_GAME && sortDirection === "desc") return "name-desc";
+  if (sortColumn === COL_RATING && sortDirection === "desc") return "rating-desc";
+  if (sortColumn === COL_RATING && sortDirection === "asc") return "rating-asc";
+  if (sortColumn === COL_RELEASE_YEAR && sortDirection === "desc") return "year-desc";
+  if (sortColumn === COL_RELEASE_YEAR && sortDirection === "asc") return "year-asc";
+  return "name-asc";
+}
+
+function applySortSelection(value) {
+  switch (value) {
+    case "name-desc":
+      sortColumn = COL_GAME;
+      sortDirection = "desc";
+      break;
+    case "rating-desc":
+      sortColumn = COL_RATING;
+      sortDirection = "desc";
+      break;
+    case "rating-asc":
+      sortColumn = COL_RATING;
+      sortDirection = "asc";
+      break;
+    case "year-desc":
+      sortColumn = COL_RELEASE_YEAR;
+      sortDirection = "desc";
+      break;
+    case "year-asc":
+      sortColumn = COL_RELEASE_YEAR;
+      sortDirection = "asc";
+      break;
+    case "name-asc":
+    default:
+      sortColumn = COL_GAME;
+      sortDirection = "asc";
+  }
 }
 
 /**
@@ -1795,6 +1885,7 @@ function toggleSort(column) {
     sortColumn = column;
     sortDirection = "asc";
   }
+  syncSortControl();
   refreshFilteredView(`sort:${column}`);
 }
 
@@ -1878,6 +1969,13 @@ if (!disableBootstrapFlag && canBootstrap) {
         savePersistedFilters();
         refreshFilteredView("filter:year-end");
       });
+      const sortControlEl = document.getElementById("sortControl");
+      if (sortControlEl) {
+        sortControlEl.addEventListener("change", (e) => {
+          applySortSelection(e.target.value);
+          refreshFilteredView("filter:sort");
+        });
+      }
       document.getElementById("clearFilters").addEventListener("click", () => {
         filterPlatform = "";
         filterGenre = "";

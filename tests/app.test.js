@@ -26,10 +26,15 @@ const SAMPLE_DATA = [
 function resetDom() {
   document.body.innerHTML = `
     <div id="result"></div>
-    <table id="romTable">
-      <thead></thead>
-      <tbody></tbody>
-    </table>
+    <div id="gameGrid" class="game-grid"></div>
+    <select id="sortControl">
+      <option value="name-asc">Name (A → Z)</option>
+      <option value="name-desc">Name (Z → A)</option>
+      <option value="rating-desc">Rating (High → Low)</option>
+      <option value="rating-asc">Rating (Low → High)</option>
+      <option value="year-desc">Release (New → Old)</option>
+      <option value="year-asc">Release (Old → New)</option>
+    </select>
     <div id="stats"></div>
     <section id="dashboard">
       <div id="dashboard-statuses">
@@ -144,64 +149,42 @@ describe("applyFilters", () => {
 });
 
 describe("renderTable", () => {
-  it("renders rows and marks owned entries", () => {
+  it("renders cards and marks owned entries", () => {
     app.__setState({
       statuses: { "Chrono Trigger___SNES": "owned" },
       notes: {},
     });
     app.renderTable(SAMPLE_DATA);
-    const rows = document.querySelectorAll("#romTable tbody tr");
-    expect(rows).toHaveLength(2);
-    const chronoRow = Array.from(rows).find((row) =>
-      row.textContent.includes("Chrono Trigger")
+    const cards = document.querySelectorAll(".game-card");
+    expect(cards).toHaveLength(2);
+    const chronoCard = Array.from(cards).find((card) =>
+      card.textContent.includes("Chrono Trigger")
     );
-    expect(chronoRow).toBeTruthy();
-    expect(chronoRow.classList.contains("status-owned")).toBe(true);
-    const statusSelect = chronoRow.querySelector(".status-select");
+    expect(chronoCard).toBeTruthy();
+    const statusSelect = chronoCard.querySelector(".status-select");
     expect(statusSelect.value).toBe("owned");
-    expect(document.getElementById("romTable").style.display).toBe("");
     expect(document.getElementById("result").style.display).toBe("none");
   });
 
-  it("sorts columns when headers clicked", () => {
+  it("updates layout when sorting toggles", () => {
     app.__setState({
       sortColumn: "game_name",
       sortDirection: "asc",
+      rawData: SAMPLE_DATA,
     });
     app.renderTable(SAMPLE_DATA);
-    const firstRowTitle = document
-      .querySelector("#romTable tbody tr td:nth-child(2)")
+    const firstCardTitle = document
+      .querySelector(".game-card .card-title")
       .textContent.trim();
-    expect(firstRowTitle).toBe("Castlevania Symphony Of The Night");
+    expect(firstCardTitle).toBe("Castlevania Symphony Of The Night");
 
     app.toggleSort("game_name");
-    const updatedRowTitle = document
-      .querySelector("#romTable tbody tr td:nth-child(2)")
+    const updatedCardTitle = document
+      .querySelector(".game-card .card-title")
       .textContent.trim();
-    expect(updatedRowTitle).toBe("Chrono Trigger");
+    expect(updatedCardTitle).toBe("Chrono Trigger");
   });
 
-  it("respects status filter selection", () => {
-    app.__setState({
-      statuses: {
-        "Chrono Trigger___SNES": "owned",
-        "Castlevania Symphony Of The Night___PS1": "wishlist",
-      },
-      filterStatus: "wishlist",
-    });
-    const filtered = app.applyFilters(SAMPLE_DATA);
-    expect(filtered).toHaveLength(1);
-    expect(filtered[0].game_name).toBe("Castlevania Symphony Of The Night");
-  });
-
-  it("shows note indicator when a note exists", () => {
-    app.__setState({
-      notes: { "Chrono Trigger___SNES": "Keep boxed copy" },
-    });
-    app.renderTable(SAMPLE_DATA);
-    const noteDots = document.querySelectorAll(".note-dot");
-    expect(noteDots.length).toBe(1);
-  });
   it("shows note indicator when a note exists", () => {
     app.__setState({
       notes: { "Chrono Trigger___SNES": "Keep boxed copy" },

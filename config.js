@@ -2,8 +2,5 @@
 // Update your .env file and rerun the script to change values.
 window.__SUPABASE_CONFIG__ = {
   "url": "https://vssbtwhvdwabbbnrgmde.supabase.co",
-  "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzc2J0d2h2ZHdhYmJibnJnbWRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1NTIxNTgsImV4cCI6MjA2NjEyODE1OH0.f2iRQECEQ_p94mPbzcKsRDA692NWy6CiVjNMU6MjTaM",
-  "tables": [
-    "games_new"
-  ]
+  "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzc2J0d2h2ZHdhYmJibnJnbWRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1NTIxNTgsImV4cCI6MjA2NjEyODE1OH0.f2iRQECEQ_p94mPbzcKsRDA692NWy6CiVjNMU6MjTaM"
 };
