@@ -34,6 +34,7 @@ It’s a clean, modern tool for serious collectors, archivists, and retro fans w
 
 - Rotate Supabase anon/service keys with `node scripts/rotate-supabase-keys.js` (updates `.env` and optionally GitHub secrets).
 - (Optional) Add `SUPABASE_STREAM_PAGE_SIZE=<int>` to tune the paginated `.range()` queries (defaults to 400 rows per chunk).
+- (Optional) Provide RPC names for dashboard aggregates via `SUPABASE_RPC_GENRES` and `SUPABASE_RPC_TIMELINE` (or `rpc.genres` / `rpc.timeline` in `config.js`). The default migrations already ship `rpc_genre_counts` / `rpc_timeline_counts`, so you can leave these unset unless you rename the functions.
 
 No Supabase project yet? The UI now auto-loads the curated `data/sample-games.json` dataset so everything renders immediately. Add real credentials later to swap in live data.
 

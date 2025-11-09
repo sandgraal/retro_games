@@ -78,6 +78,8 @@ const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey || "";
 const DEFAULT_SUPABASE_TABLES = ["games", "games_view", "games_new"];
 const SUPABASE_STREAM_PAGE_SIZE = resolveStreamPageSize();
 const STREAM_PREFETCH_THRESHOLD = 0.65;
+const DEFAULT_GENRE_RPC = "rpc_genre_counts";
+const DEFAULT_TIMELINE_RPC = "rpc_timeline_counts";
 const BROWSE_MODE_INFINITE = "stream";
 const BROWSE_MODE_PAGED = "paged";
 const BROWSE_PREFS_KEY = "rom_browse_prefs";
@@ -864,6 +866,17 @@ function buildRemoteFilterSignature(payload) {
 function parseRating(value) {
   const rating = parseFloat(value);
   return Number.isFinite(rating) ? rating : null;
+}
+
+function normalizeAggregatePayload(payload = {}) {
+  return {
+    search: payload.search || null,
+    platform: payload.platform || null,
+    genre: payload.genre || null,
+    ratingMin: payload.ratingMin ?? null,
+    yearStart: payload.yearStart ?? null,
+    yearEnd: payload.yearEnd ?? null,
+  };
 }
 
 function applySupabaseFilters(query, filters = {}, columnPrefix = "") {
@@ -1683,6 +1696,27 @@ async function fetchAggregateBundle(payload) {
 
 async function fetchGenreAggregates(payload) {
   if (!supabase) return [];
+  const rpcName = AGGREGATE_RPC_GENRES;
+  const normalizedPayload = normalizeAggregatePayload(payload);
+  if (rpcName) {
+    try {
+      const rpcData = await invokeAggregateRpc(rpcName, normalizedPayload);
+      const mapped = (Array.isArray(rpcData) ? rpcData : []).map((entry) => ({
+        name:
+          entry.genre ||
+          entry.name ||
+          entry[COL_GENRE] ||
+          (Array.isArray(entry.genres) ? entry.genres.join(", ") : null),
+        count: Number(entry.count) || 0,
+      }));
+      const filtered = mapped
+        .filter((entry) => entry.name && entry.count > 0)
+        .sort((a, b) => b.count - a.count);
+      if (filtered.length) return filtered;
+    } catch (rpcError) {
+      console.warn(`RPC ${rpcName} failed, falling back to SQL aggregates.`, rpcError);
+    }
+  }
   const tableName = streamState.tableName || SUPABASE_TABLE_CANDIDATES[0];
   let query = supabase
     .from(tableName)
@@ -1715,6 +1749,25 @@ async function fetchGenreAggregates(payload) {
 
 async function fetchTimelineAggregates(payload) {
   if (!supabase) return [];
+  const rpcName = AGGREGATE_RPC_TIMELINE;
+  const normalizedPayload = normalizeAggregatePayload(payload);
+  if (rpcName) {
+    try {
+      const rpcData = await invokeAggregateRpc(rpcName, normalizedPayload);
+      const mapped = (Array.isArray(rpcData) ? rpcData : []).map((entry) => ({
+        year: Number(
+          entry.year ?? entry[COL_RELEASE_YEAR] ?? entry.release_year ?? entry.y
+        ),
+        count: Number(entry.count) || 0,
+      }));
+      const filtered = mapped
+        .filter((entry) => Number.isFinite(entry.year) && entry.count > 0)
+        .sort((a, b) => a.year - b.year);
+      if (filtered.length) return filtered;
+    } catch (rpcError) {
+      console.warn(`RPC ${rpcName} failed, falling back to SQL aggregates.`, rpcError);
+    }
+  }
   const tableName = streamState.tableName || SUPABASE_TABLE_CANDIDATES[0];
   let query = supabase
     .from(tableName)
@@ -1834,6 +1887,16 @@ function computeLocalTimelineSeries(localRows) {
   return Object.entries(counts)
     .map(([year, count]) => ({ year: Number(year), count }))
     .sort((a, b) => a.year - b.year);
+}
+
+async function invokeAggregateRpc(fnName, payload) {
+  if (!supabase || !fnName) {
+    throw new Error("Supabase RPC endpoint unavailable.");
+  }
+  const normalizedPayload = normalizeAggregatePayload(payload);
+  const { data, error } = await supabase.rpc(fnName, normalizedPayload);
+  if (error) throw error;
+  return data;
 }
 
 function scheduleStatusHydration() {
@@ -3438,3 +3501,13 @@ if (typeof module !== "undefined" && module.exports) {
   module.exports = testApi;
 }
 /* eslint-enable no-undef */
+const AGGREGATE_RPC_GENRES =
+  SUPABASE_CONFIG.rpcGenres ||
+  (SUPABASE_CONFIG.rpc && SUPABASE_CONFIG.rpc.genres) ||
+  SUPABASE_CONFIG.rpc_genres ||
+  DEFAULT_GENRE_RPC;
+const AGGREGATE_RPC_TIMELINE =
+  SUPABASE_CONFIG.rpcTimeline ||
+  (SUPABASE_CONFIG.rpc && SUPABASE_CONFIG.rpc.timeline) ||
+  SUPABASE_CONFIG.rpc_timeline ||
+  DEFAULT_TIMELINE_RPC;

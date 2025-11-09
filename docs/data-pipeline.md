@@ -8,6 +8,7 @@ This project now tracks its Supabase schema in `supabase/migrations/`. The initi
 - `game_genres` – many-to-many join between games and genres.
 - `game_media` – screenshot/box art URLs for use in the modal gallery.
 - `user_game_notes` – placeholder table for future server-side statuses/notes once auth lands.
+- `20250301100000_dashboard_aggregates.sql` layers on top with the `rpc_genre_counts` and `rpc_timeline_counts` helper functions. The frontend calls these RPCs (falling back to SQL group queries) to keep dashboard charts accurate without downloading the entire dataset.
 
 ## Workflow
 
