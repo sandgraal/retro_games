@@ -26,6 +26,8 @@ No Supabase project yet? The UI now auto-loads the curated `data/sample-games.js
 
 See `docs/setup.md` for more detailed guidance.
 
+Supabase schema + migration workflow lives in `docs/data-pipeline.md`.
+
 ## Development
 
 - `npm run lint` / `npm run lint:fix` – Run ESLint (with Prettier compat) across the main app file and build scripts.
