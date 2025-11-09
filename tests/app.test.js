@@ -122,6 +122,7 @@ function resetDom() {
 }
 
 beforeEach(() => {
+  app.__teardownVirtualization();
   resetDom();
   app.__setState({
     statuses: {},
@@ -179,6 +180,36 @@ describe("browse pagination controls", () => {
     expect(document.getElementById("browseSummary").textContent).toContain(
       "Showing 1–2 of 5"
     );
+  });
+});
+
+describe("virtualized grid window", () => {
+  it("renders a limited window with spacer padding when dataset is large", async () => {
+    const dataset = buildSampleGames(160);
+    const originalInnerHeight =
+      typeof window.innerHeight === "number" ? window.innerHeight : 0;
+    window.innerHeight = 900;
+    app.__setState({
+      rawData: dataset,
+      browseMode: "stream",
+      paginationState: {
+        pageSize: dataset.length,
+        renderedCount: dataset.length,
+        currentPage: 1,
+        totalItems: dataset.length,
+        totalPages: 1,
+      },
+    });
+    app.refreshFilteredView("test:virtual");
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const virtualization = app.__getVirtualizationState();
+    expect(virtualization.active).toBe(true);
+    const cards = document.querySelectorAll(".game-card");
+    expect(cards.length).toBeGreaterThan(0);
+    expect(cards.length).toBeLessThan(dataset.length);
+    expect(document.querySelectorAll(".virtual-spacer").length).toBe(2);
+    window.innerHeight = originalInnerHeight;
+    app.__teardownVirtualization();
   });
 });
 

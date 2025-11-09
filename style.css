@@ -1162,6 +1162,13 @@ h1 {
   pointer-events: none;
 }
 
+.virtual-spacer {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+}
+
 @media (max-width: 720px) {
   .browse-toolbar {
     flex-direction: column;

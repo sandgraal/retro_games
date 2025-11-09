@@ -8,6 +8,7 @@ _Last updated: June 2024_
 - Vanilla JavaScript orchestrates DOM rendering, Supabase queries, and browser `localStorage` for owned-game tracking.
 - Supabase acts as the backing data store. The frontend expects a `games` table whose columns match the CSV header (`Game Name`, `Platform`, `Rating`, etc.).
 - No build tooling or bundler; assets are edited by hand and delivered directly to the browser.
+- Supabase requests now stream in 400-row pages (configurable) using `.range()`; the UI renders the first chunk immediately and hydrates additional chunks only when the virtualized grid/pagination controls need more data.
 
 ## Data Flow
 
@@ -24,6 +25,7 @@ _Last updated: June 2024_
 - Responsive adjustments for screens below 800px and 700px adjust layout and modal sizes.
 - Filter toolbar now exposes platform, genre, search, status, minimum rating, and release-year range inputs for precise slicing.
 - A browse toolbar surfaces batch-size controls, an infinite-scroll vs. paginated toggle, and a live summary (`browseSummary`) so collectors (or crawlers) can load long lists in manageable chunks or deep-link to `?page=X` routes.
+- Card rendering is virtualized: only the rows within (or near) the viewport mount, with spacer elements maintaining scroll height for buttery navigation through thousands of entries.
 - Accessibility helpers include focus trapping in the modal and keyboard shortcuts (Escape closes modal, Enter triggers import field).
 - Table headers are now interactive, enabling ascending/descending sorting per column with keyboard support.
 
@@ -40,4 +42,4 @@ _Last updated: June 2024_
 - Data integrity relies on manual Supabase updates—no scripts to sync from `games.csv` yet.
 - Accessibility relies on manual QA; no Lighthouse/axe reports are part of the workflow.
 - Security: Supabase anon key must remain public but should still be rotated if exposed. SFTP deployment credentials were removed from version control but may still exist in developer machines.
-- Performance: All rows are fetched at once; while the new browse toolbar limits how many cards render at a time, a true virtualized data flow is still TBD for 10k+ titles.
+- Performance: Supabase pagination now streams data in 400-row chunks and only hydrates additional pages when the virtualized grid needs them, but we still fetch the full dataset client-side eventually; long-term we should explore server-side filtering/aggregation for 10k+ titles.

@@ -70,15 +70,26 @@ const STATUS_LABELS = STATUS_OPTIONS.reduce((acc, option) => {
 const SAMPLE_DATA_URL = "./data/sample-games.json";
 const BACKUP_FILENAME = "sandgraal-collection.json";
 const FILTER_STORAGE_KEY = "rom_filters";
+
+// === Supabase Config ===
+const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
+const SUPABASE_URL = SUPABASE_CONFIG.url || "";
+const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey || "";
 const DEFAULT_SUPABASE_TABLES = ["games", "games_view", "games_new"];
+const SUPABASE_STREAM_PAGE_SIZE = resolveStreamPageSize();
+const STREAM_PREFETCH_THRESHOLD = 0.65;
 const BROWSE_MODE_INFINITE = "stream";
 const BROWSE_MODE_PAGED = "paged";
 const BROWSE_PREFS_KEY = "rom_browse_prefs";
 const PAGE_SIZE_CHOICES = [30, 60, 120];
 const DEFAULT_PAGE_SIZE = 60;
 const INFINITE_ROOT_MARGIN = "800px 0px 800px 0px";
-const BROWSE_PRESERVE_PREFIXES = ["pager:", "infinite:"];
+const BROWSE_PRESERVE_PREFIXES = ["pager:", "infinite:", "stream:"];
 const BROWSE_PRESERVE_REASONS = new Set(["status-select", "note-save"]);
+const VIRTUALIZE_MIN_ITEMS = 80;
+const VIRTUAL_DEFAULT_CARD_HEIGHT = 360;
+const VIRTUAL_OVERSCAN_ROWS = 2;
+const VIRTUAL_SCROLL_THROTTLE_MS = 80;
 
 const reduceMotionQuery =
   typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -136,10 +147,6 @@ function exposePerfInterface() {
 
 exposePerfInterface();
 
-// === Supabase Config ===
-const SUPABASE_CONFIG = window.__SUPABASE_CONFIG__ || {};
-const SUPABASE_URL = SUPABASE_CONFIG.url || "";
-const SUPABASE_ANON_KEY = SUPABASE_CONFIG.anonKey || "";
 const SUPABASE_TABLE_CANDIDATES = (() => {
   const configuredTables = [];
   if (Array.isArray(SUPABASE_CONFIG.tables)) {
@@ -185,8 +192,11 @@ if (FORCE_SAMPLE) {
   );
 }
 
-// === Fetch all games from Supabase ===
-async function fetchGames() {
+// === Fetch paged data from Supabase ===
+async function fetchGamesPage(
+  rangeStart = 0,
+  rangeEnd = rangeStart + SUPABASE_STREAM_PAGE_SIZE - 1
+) {
   if (!supabase) {
     throw new Error(
       "Supabase configuration missing. Copy config.example.js to config.js and add your credentials."
@@ -194,28 +204,33 @@ async function fetchGames() {
   }
 
   const errors = [];
-  for (const tableName of SUPABASE_TABLE_CANDIDATES) {
+  const preferredTables = streamState.tableName
+    ? [
+        streamState.tableName,
+        ...SUPABASE_TABLE_CANDIDATES.filter((name) => name !== streamState.tableName),
+      ]
+    : SUPABASE_TABLE_CANDIDATES;
+
+  for (const tableName of preferredTables) {
     try {
-      let { data, error } = await supabase
+      const query = supabase
         .from(tableName)
-        .select("*")
-        .order(COL_GAME, { ascending: true });
-      if (error) {
-        const missingColumn =
-          typeof error.message === "string" &&
-          error.message.toLowerCase().includes('column "game_name"');
-        if (missingColumn) {
-          ({ data, error } = await supabase.from(tableName).select("*"));
-        }
-      }
+        .select("*", { count: "exact" })
+        .order(COL_GAME, { ascending: true })
+        .range(Math.max(0, rangeStart), Math.max(rangeStart, rangeEnd));
+      const { data, error, count } = await query;
       if (error) {
         throw new Error(`[${tableName}] ${error.message || "Unknown Supabase error"}`);
       }
       if (Array.isArray(data)) {
-        if (SUPABASE_TABLE_CANDIDATES[0] !== tableName) {
-          console.info(`Fetched games from fallback Supabase table: ${tableName}`);
+        if (streamState.tableName !== tableName && streamState.tableName) {
+          console.info(`Switched Supabase table to ${tableName} for paged streaming.`);
         }
-        return data;
+        return {
+          data,
+          tableName,
+          count: typeof count === "number" ? count : null,
+        };
       }
       throw new Error(`[${tableName}] Supabase returned unexpected payload.`);
     } catch (err) {
@@ -248,6 +263,9 @@ async function loadGameData() {
       source: "sample",
       reason: typeof reason === "string" ? reason : reason?.message,
     });
+    streamState.active = false;
+    streamState.hasMore = false;
+    streamState.loading = false;
     return { data: sample, source: "sample", reason };
   };
 
@@ -257,20 +275,48 @@ async function loadGameData() {
 
   try {
     const start = getNow();
-    const data = await fetchGames();
+    const page = await fetchGamesPage(0, streamState.pageSize - 1);
+    const data = Array.isArray(page.data) ? page.data : [];
     const duration = getNow() - start;
-    if (!Array.isArray(data) || data.length === 0) {
+    if (!data.length) {
       recordPerfMetric("data-load", duration, {
         source: "supabase",
-        rows: Array.isArray(data) ? data.length : undefined,
+        rows: 0,
         fallback: "empty-dataset",
       });
+      streamState.active = false;
       return useFallback("Supabase returned zero rows.");
     }
-    recordPerfMetric("data-load", duration, { source: "supabase", rows: data.length });
+    initStreamStateFromPage(page, data.length);
+    recordPerfMetric("data-load", duration, {
+      source: "supabase",
+      rows: data.length,
+      total: streamState.totalCount || undefined,
+    });
     return { data, source: "supabase" };
   } catch (err) {
+    streamState.active = false;
     return useFallback(err);
+  }
+}
+
+function initStreamStateFromPage(page, rowsFetched) {
+  if (!streamState.enabled) {
+    streamState.active = false;
+    return;
+  }
+  streamState.active = true;
+  streamState.tableName =
+    page.tableName || streamState.tableName || SUPABASE_TABLE_CANDIDATES[0];
+  streamState.nextFrom = rowsFetched;
+  streamState.totalCount =
+    typeof page.count === "number" && page.count >= rowsFetched
+      ? page.count
+      : streamState.totalCount;
+  if (typeof streamState.totalCount === "number") {
+    streamState.hasMore = streamState.nextFrom < streamState.totalCount;
+  } else {
+    streamState.hasMore = rowsFetched >= streamState.pageSize;
   }
 }
 
@@ -310,6 +356,37 @@ let paginationState = {
 let latestSortedData = [];
 let infiniteObserver = null;
 let infiniteTickScheduled = false;
+const virtualizationState = {
+  enabled: true,
+  active: false,
+  sourceData: [],
+  container: null,
+  visibleStart: 0,
+  visibleEnd: 0,
+  rowHeight: 0,
+  columns: 1,
+  topPadding: 0,
+  bottomPadding: 0,
+  scrollHandler: null,
+  resizeHandler: null,
+  pendingAnimationFrame: null,
+  pendingMeasureFrame: null,
+  gridGap: 0,
+  lastRenderLength: 0,
+  datasetOffset: 0,
+};
+const streamState = {
+  enabled: !FORCE_SAMPLE && !!supabase,
+  active: false,
+  pageSize: SUPABASE_STREAM_PAGE_SIZE,
+  tableName: null,
+  nextFrom: 0,
+  totalCount: null,
+  hasMore: false,
+  loading: false,
+  error: null,
+  pendingPromise: null,
+};
 
 /**
  * Parse a year string/number into an integer or null when invalid.
@@ -682,6 +759,18 @@ function savePersistedFilters() {
   localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(snapshot));
 }
 
+function resolveStreamPageSize() {
+  const configSize = Number(
+    SUPABASE_CONFIG.streamPageSize ||
+      SUPABASE_CONFIG.pageSize ||
+      SUPABASE_CONFIG.chunkSize
+  );
+  if (Number.isFinite(configSize) && configSize > 0) {
+    return Math.min(Math.max(Math.floor(configSize), 50), 1000);
+  }
+  return 400;
+}
+
 function normalizePageSize(value) {
   if (!Number.isFinite(value)) return DEFAULT_PAGE_SIZE;
   const normalized = PAGE_SIZE_CHOICES.find((choice) => choice === value);
@@ -873,6 +962,8 @@ function applyFilters(data) {
 function renderTable(data, options = {}) {
   const grid = document.getElementById("gameGrid");
   if (!grid) return;
+  const virtualization = options.virtualization;
+  const useVirtualization = Boolean(virtualization && virtualization.enabled);
   let working = data;
   if (!options.skipSort && sortColumn) {
     working = [...data].sort((a, b) => compareRows(a, b, sortColumn, sortDirection));
@@ -884,9 +975,19 @@ function renderTable(data, options = {}) {
     return;
   }
   hideStatus();
-  grid.innerHTML = working
+  let html = "";
+  if (useVirtualization) {
+    const topSize = Math.max(0, Math.floor(virtualization.topPadding || 0));
+    html += `<div class="virtual-spacer" style="height:${topSize}px"></div>`;
+  }
+  html += working
     .map((row, idx) => renderGameCard(row, idx, importedCollection || gameStatuses))
     .join("");
+  if (useVirtualization) {
+    const bottomSize = Math.max(0, Math.floor(virtualization.bottomPadding || 0));
+    html += `<div class="virtual-spacer" style="height:${bottomSize}px"></div>`;
+  }
+  grid.innerHTML = html;
 
   if (!importedCollection) {
     grid.querySelectorAll(".status-select").forEach((select) => {
@@ -928,6 +1029,354 @@ function shouldResetBrowse(reason) {
   return true;
 }
 
+function shouldVirtualize(length) {
+  if (!virtualizationState.enabled) return false;
+  if (typeof window === "undefined") return false;
+  return length >= VIRTUALIZE_MIN_ITEMS;
+}
+
+function renderWindowedGrid(dataset, options = {}) {
+  const grid = document.getElementById("gameGrid");
+  if (!grid) return;
+  const datasetOffset = Number.isFinite(options.offset) ? Number(options.offset) : 0;
+  virtualizationState.datasetOffset = datasetOffset;
+  virtualizationState.container = grid;
+  virtualizationState.sourceData = Array.isArray(dataset) ? dataset : [];
+  virtualizationState.lastRenderLength = virtualizationState.sourceData.length;
+  if (!shouldVirtualize(virtualizationState.sourceData.length)) {
+    const fallbackData = virtualizationState.sourceData;
+    teardownVirtualization();
+    renderTable(fallbackData, { skipSort: true });
+    maybePrefetchStream(datasetOffset + fallbackData.length);
+    return;
+  }
+  virtualizationState.active = true;
+  grid.dataset.virtualized = "true";
+  bindVirtualizationEvents();
+  updateVirtualRange({ force: true });
+}
+
+function bindVirtualizationEvents() {
+  if (virtualizationState.scrollHandler || typeof window === "undefined") return;
+  virtualizationState.scrollHandler = () => scheduleVirtualizationUpdate();
+  virtualizationState.resizeHandler = () => {
+    virtualizationState.rowHeight = 0;
+    virtualizationState.columns = 1;
+    scheduleVirtualizationUpdate(true);
+  };
+  window.addEventListener("scroll", virtualizationState.scrollHandler, { passive: true });
+  window.addEventListener("resize", virtualizationState.resizeHandler);
+}
+
+function teardownVirtualization() {
+  if (virtualizationState.scrollHandler && typeof window !== "undefined") {
+    window.removeEventListener("scroll", virtualizationState.scrollHandler);
+    window.removeEventListener("resize", virtualizationState.resizeHandler);
+  }
+  virtualizationState.scrollHandler = null;
+  virtualizationState.resizeHandler = null;
+  cancelVirtualFrame("pendingAnimationFrame");
+  cancelVirtualFrame("pendingMeasureFrame");
+  virtualizationState.pendingAnimationFrame = null;
+  virtualizationState.pendingMeasureFrame = null;
+  virtualizationState.active = false;
+  virtualizationState.sourceData = [];
+  virtualizationState.visibleStart = 0;
+  virtualizationState.visibleEnd = 0;
+  virtualizationState.topPadding = 0;
+  virtualizationState.bottomPadding = 0;
+  virtualizationState.lastRenderLength = 0;
+  virtualizationState.datasetOffset = 0;
+  if (virtualizationState.container) {
+    delete virtualizationState.container.dataset.virtualized;
+  }
+}
+
+function scheduleVirtualizationUpdate(force) {
+  if (!virtualizationState.active) return;
+  if (virtualizationState.pendingAnimationFrame) return;
+  const run = () => {
+    virtualizationState.pendingAnimationFrame = null;
+    updateVirtualRange({ force: Boolean(force) });
+  };
+  virtualizationState.pendingAnimationFrame = requestVirtualFrame(run);
+}
+
+function updateVirtualRange(options = {}) {
+  if (!virtualizationState.active || !virtualizationState.container) return;
+  const total = virtualizationState.sourceData.length;
+  if (!total) {
+    virtualizationState.topPadding = 0;
+    virtualizationState.bottomPadding = 0;
+    renderTable([], { skipSort: true });
+    return;
+  }
+  const metrics = getVirtualMetrics();
+  const range = computeVirtualRange(metrics);
+  if (
+    !options.force &&
+    range.start === virtualizationState.visibleStart &&
+    range.end === virtualizationState.visibleEnd
+  ) {
+    return;
+  }
+  virtualizationState.visibleStart = range.start;
+  virtualizationState.visibleEnd = range.end;
+  virtualizationState.topPadding = range.topPadding;
+  virtualizationState.bottomPadding = range.bottomPadding;
+  const slice = virtualizationState.sourceData.slice(range.start, range.end);
+  renderTable(slice, {
+    skipSort: true,
+    virtualization: {
+      enabled: true,
+      topPadding: virtualizationState.topPadding,
+      bottomPadding: virtualizationState.bottomPadding,
+    },
+  });
+  if (virtualizationState.rowHeight === 0 || options.force) {
+    queueVirtualMeasurement();
+  }
+  const absoluteEndIndex = virtualizationState.datasetOffset + range.end;
+  maybePrefetchStream(absoluteEndIndex);
+}
+
+function getVirtualMetrics() {
+  const container = virtualizationState.container;
+  if (!container) {
+    return {
+      rowHeight: VIRTUAL_DEFAULT_CARD_HEIGHT,
+      columns: 1,
+      gap: 0,
+    };
+  }
+  const rowHeight = virtualizationState.rowHeight || VIRTUAL_DEFAULT_CARD_HEIGHT;
+  const columns = Math.max(
+    1,
+    virtualizationState.columns || estimateColumnCount(container)
+  );
+  const gap = virtualizationState.gridGap || 0;
+  return { rowHeight, columns, gap };
+}
+
+function estimateColumnCount(container) {
+  try {
+    const firstCard = container.querySelector(".game-card");
+    const gapValue =
+      window.getComputedStyle(container).columnGap ||
+      window.getComputedStyle(container).gap;
+    const gap = parseFloat(gapValue) || 0;
+    virtualizationState.gridGap = gap;
+    if (!firstCard) {
+      const fallbackWidth = 260;
+      return Math.max(
+        1,
+        Math.floor((container.clientWidth + gap) / (fallbackWidth + gap))
+      );
+    }
+    const cardWidth = firstCard.offsetWidth || 260;
+    return Math.max(1, Math.floor((container.clientWidth + gap) / (cardWidth + gap)));
+  } catch {
+    return 1;
+  }
+}
+
+function computeVirtualRange(metrics) {
+  const container = virtualizationState.container;
+  const dataLength = virtualizationState.sourceData.length;
+  if (!container || !dataLength) {
+    return { start: 0, end: 0, topPadding: 0, bottomPadding: 0 };
+  }
+  const { rowHeight, columns } = metrics;
+  const viewportHeight =
+    typeof window !== "undefined" && typeof window.innerHeight === "number"
+      ? window.innerHeight
+      : rowHeight * 6;
+  const containerTop =
+    container.getBoundingClientRect().top +
+    (typeof window !== "undefined" ? window.scrollY || window.pageYOffset || 0 : 0);
+  const viewportTop =
+    typeof window !== "undefined" ? window.scrollY || window.pageYOffset || 0 : 0;
+  const startOffset = Math.max(
+    0,
+    viewportTop - containerTop - rowHeight * VIRTUAL_OVERSCAN_ROWS
+  );
+  const startRow = Math.max(0, Math.floor(startOffset / rowHeight));
+  const rowsInView = Math.ceil(viewportHeight / rowHeight) + VIRTUAL_OVERSCAN_ROWS * 2;
+  const startIndex = Math.min(dataLength, startRow * columns);
+  const endIndex = Math.min(
+    dataLength,
+    Math.max(startIndex + rowsInView * columns, startIndex + columns)
+  );
+  const totalRows = Math.ceil(dataLength / columns);
+  const endRow = Math.ceil(endIndex / columns);
+  const topPadding = startRow * rowHeight;
+  const bottomPadding = Math.max(0, (totalRows - endRow) * rowHeight);
+  return { start: startIndex, end: endIndex, topPadding, bottomPadding };
+}
+
+function queueVirtualMeasurement() {
+  if (virtualizationState.pendingMeasureFrame || typeof window === "undefined") return;
+  virtualizationState.pendingMeasureFrame = requestVirtualFrame(() => {
+    virtualizationState.pendingMeasureFrame = null;
+    measureVirtualMetrics();
+  });
+}
+
+function requestVirtualFrame(callback) {
+  if (
+    typeof window !== "undefined" &&
+    typeof window.requestAnimationFrame === "function"
+  ) {
+    return window.requestAnimationFrame(callback);
+  }
+  return setTimeout(callback, VIRTUAL_SCROLL_THROTTLE_MS);
+}
+
+function cancelVirtualFrame(key) {
+  const handle = virtualizationState[key];
+  if (!handle) return;
+  if (
+    typeof window !== "undefined" &&
+    typeof window.cancelAnimationFrame === "function"
+  ) {
+    window.cancelAnimationFrame(handle);
+  } else {
+    clearTimeout(handle);
+  }
+  virtualizationState[key] = null;
+}
+
+function measureVirtualMetrics() {
+  if (!virtualizationState.container) return;
+  const card = virtualizationState.container.querySelector(".game-card");
+  if (!card || typeof window === "undefined") return;
+  const styles = window.getComputedStyle(virtualizationState.container);
+  const rowGap = parseFloat(styles.rowGap || styles.gap || "0") || 0;
+  virtualizationState.gridGap = rowGap;
+  const cardHeight = card.offsetHeight || VIRTUAL_DEFAULT_CARD_HEIGHT;
+  const cardWidth = card.offsetWidth || 260;
+  const containerWidth = virtualizationState.container.clientWidth || cardWidth;
+  virtualizationState.rowHeight = cardHeight + rowGap;
+  virtualizationState.columns = Math.max(
+    1,
+    Math.floor((containerWidth + rowGap) / (cardWidth + rowGap))
+  );
+  scheduleVirtualizationUpdate(true);
+}
+
+function maybePrefetchStream(anchorIndex) {
+  if (!streamState.active || !streamState.hasMore) return;
+  if (streamState.loading) return;
+  const anchorValue = Number(anchorIndex);
+  if (!Number.isFinite(anchorValue)) return;
+  const fetched = rawData.length;
+  if (!fetched) return;
+  const thresholdIndex = Math.max(0, Math.floor(fetched * STREAM_PREFETCH_THRESHOLD));
+  if (anchorValue >= thresholdIndex) {
+    fetchNextSupabaseChunk("stream:prefetch").catch(() => {
+      /* errors handled in fetchNextSupabaseChunk */
+    });
+  }
+}
+
+async function fetchNextSupabaseChunk(reason = "stream:auto") {
+  if (!streamState.active || !streamState.hasMore) return;
+  if (streamState.loading && streamState.pendingPromise) {
+    return streamState.pendingPromise;
+  }
+  streamState.loading = true;
+  updateBrowseSummaryLoading(true);
+  const from = streamState.nextFrom;
+  const to = from + streamState.pageSize - 1;
+  const promise = (async () => {
+    try {
+      const page = await fetchGamesPage(from, to);
+      const rows = Array.isArray(page.data) ? page.data : [];
+      if (rows.length) {
+        rawData = rawData.concat(rows);
+      }
+      if (page.tableName) {
+        streamState.tableName = page.tableName;
+      }
+      streamState.nextFrom = from + rows.length;
+      if (typeof page.count === "number") {
+        streamState.totalCount = page.count;
+      }
+      if (
+        !rows.length ||
+        rows.length < streamState.pageSize ||
+        (typeof streamState.totalCount === "number" &&
+          streamState.nextFrom >= streamState.totalCount)
+      ) {
+        streamState.hasMore = false;
+      }
+      if (rows.length) {
+        refreshFilteredView(reason.startsWith("stream:") ? reason : `stream:${reason}`);
+        updateTrendingCarousel(rawData);
+        updateStructuredData(rawData);
+      }
+    } catch (err) {
+      streamState.error = err;
+      showStatus("Unable to load additional games from Supabase.", "error");
+      throw err;
+    } finally {
+      streamState.loading = false;
+      streamState.pendingPromise = null;
+      if (!streamState.hasMore) {
+        updateBrowseSummaryLoading(false);
+      }
+    }
+  })();
+  streamState.pendingPromise = promise;
+  return promise.finally(() => {
+    updateBrowseSummaryLoading(false);
+  });
+}
+
+async function ensureDataCapacity(targetCount, reason = "stream:auto") {
+  if (!streamState.active || !streamState.hasMore) return;
+  if (rawData.length >= targetCount) return;
+  const safetyLimit = 8;
+  let attempts = 0;
+  while (rawData.length < targetCount && streamState.hasMore && attempts < safetyLimit) {
+    attempts += 1;
+    try {
+      await fetchNextSupabaseChunk(reason);
+    } catch {
+      return;
+    }
+  }
+}
+
+function getKnownTotalCount() {
+  if (streamState.active && typeof streamState.totalCount === "number") {
+    return streamState.totalCount;
+  }
+  if (streamState.active && streamState.hasMore) {
+    return rawData.length + streamState.pageSize;
+  }
+  return rawData.length;
+}
+
+function updateBrowseSummaryLoading(isLoading) {
+  const summaryEl = document.getElementById("browseSummary");
+  if (!summaryEl) return;
+  if (isLoading) {
+    summaryEl.dataset.loading = "true";
+  } else {
+    delete summaryEl.dataset.loading;
+  }
+  const loadMoreBtn = document.getElementById("loadMoreBtn");
+  if (loadMoreBtn) {
+    if (isLoading) {
+      loadMoreBtn.textContent = "Loading more games…";
+      loadMoreBtn.disabled = true;
+    } else if (!streamState.loading) {
+      loadMoreBtn.disabled = false;
+    }
+  }
+}
+
 function renderPagedWindow(sortedData) {
   paginationState.totalItems = sortedData.length;
   paginationState.totalPages = Math.max(
@@ -941,7 +1390,7 @@ function renderPagedWindow(sortedData) {
     (Math.max(1, paginationState.currentPage) - 1) * paginationState.pageSize;
   const endIndex = Math.min(startIndex + paginationState.pageSize, sortedData.length);
   const working = sortedData.slice(startIndex, endIndex);
-  renderTable(working, { skipSort: true });
+  renderWindowedGrid(working, { offset: startIndex });
   updatePaginationControls(sortedData.length, { start: startIndex, end: endIndex });
   teardownInfiniteObserver();
   syncBrowseParams();
@@ -954,7 +1403,7 @@ function renderInfiniteWindow(sortedData, options = {}) {
     Math.min(paginationState.pageSize, sortedData.length);
   paginationState.renderedCount = Math.min(desiredCount, sortedData.length);
   const working = sortedData.slice(0, paginationState.renderedCount);
-  renderTable(working, { skipSort: true });
+  renderWindowedGrid(working, { offset: 0 });
   updatePaginationControls(sortedData.length, {
     start: 0,
     end: working.length,
@@ -967,13 +1416,19 @@ function renderInfiniteWindow(sortedData, options = {}) {
 
 function updatePaginationControls(totalItems, range = { start: 0, end: 0 }) {
   const summaryEl = document.getElementById("browseSummary");
+  const knownTotal = getKnownTotalCount();
   if (summaryEl) {
+    const effectiveTotal = Math.max(totalItems, knownTotal);
     if (!totalItems) {
       summaryEl.textContent = "No games match the current filters.";
     } else {
-      const startValue = Math.min(range.start + 1, totalItems);
-      const endValue = Math.min(Math.max(range.end, startValue), totalItems);
-      summaryEl.textContent = `Showing ${startValue.toLocaleString()}–${endValue.toLocaleString()} of ${totalItems.toLocaleString()} games`;
+      const startValue = Math.min(range.start + 1, effectiveTotal);
+      const endValue = Math.min(Math.max(range.end, startValue), effectiveTotal);
+      const parts = [
+        `Showing ${startValue.toLocaleString()}–${endValue.toLocaleString()} of ${effectiveTotal.toLocaleString()} games`,
+      ];
+      if (streamState.loading) parts.push("Fetching more…");
+      summaryEl.textContent = parts.join(" • ");
     }
   }
   const paginationEl = document.getElementById("paginationControls");
@@ -989,6 +1444,7 @@ function updatePaginationControls(totalItems, range = { start: 0, end: 0 }) {
     paginationEl.classList.remove("is-hidden");
     paginationEl.innerHTML = buildPaginationMarkup();
     paginationEl.querySelectorAll("button[data-page]").forEach((button) => {
+      button.disabled = !!streamState.loading;
       button.addEventListener("click", (event) => {
         const target = event.currentTarget.getAttribute("data-page");
         handlePaginationClick(target);
@@ -1001,13 +1457,21 @@ function updatePaginationControls(totalItems, range = { start: 0, end: 0 }) {
     paginationEl.classList.add("is-hidden");
   }
   if (!loadMoreBtn) return;
-  if (paginationState.renderedCount >= totalItems || !totalItems) {
+  const moreAvailable =
+    paginationState.renderedCount < totalItems ||
+    (streamState.active && streamState.hasMore);
+  if (!moreAvailable) {
     loadMoreBtn.style.display = "none";
   } else {
     loadMoreBtn.style.display = "";
-    const remaining = totalItems - paginationState.renderedCount;
-    const batchSize = Math.min(paginationState.pageSize, remaining);
-    loadMoreBtn.textContent = `Load ${batchSize} more games`;
+    const remaining = Math.max(totalItems - paginationState.renderedCount, 0);
+    const batchSize = streamState.hasMore
+      ? paginationState.pageSize
+      : Math.min(paginationState.pageSize, remaining || paginationState.pageSize);
+    loadMoreBtn.textContent = streamState.loading
+      ? "Loading more games…"
+      : `Load ${batchSize} more games`;
+    loadMoreBtn.disabled = !!streamState.loading;
   }
 }
 
@@ -1052,8 +1516,15 @@ function handlePaginationClick(target) {
     }
     paginationState.currentPage = pageNumber;
   }
-  scrollGridIntoView();
-  refreshFilteredView("pager:page-change");
+  const targetEndIndex = paginationState.currentPage * paginationState.pageSize;
+  ensureDataCapacity(targetEndIndex, "stream:paged-turn")
+    .catch(() => {
+      /* errors surfaced via showStatus */
+    })
+    .finally(() => {
+      scrollGridIntoView();
+      refreshFilteredView("pager:page-change");
+    });
 }
 
 function scrollGridIntoView() {
@@ -1172,35 +1643,34 @@ function setupInfiniteObserver(totalItems) {
 
 function extendInfiniteWindow(trigger = "sentinel") {
   if (browseMode !== BROWSE_MODE_INFINITE) return;
-  if (paginationState.renderedCount >= paginationState.totalItems) return;
+  const available = Math.max(paginationState.totalItems, getKnownTotalCount());
+  if (
+    paginationState.renderedCount >= available &&
+    !(streamState.active && streamState.hasMore)
+  )
+    return;
   if (infiniteTickScheduled) return;
   infiniteTickScheduled = true;
-  const run = () => {
-    const next = Math.min(
-      paginationState.renderedCount + paginationState.pageSize,
-      paginationState.totalItems
-    );
-    paginationState.renderedCount = next;
-    infiniteTickScheduled = false;
-    const start = getNow();
-    if (latestSortedData.length) {
-      renderInfiniteWindow(latestSortedData, { skipObserver: false });
-      recordPerfMetric(`render:infinite-${trigger}`, getNow() - start, {
-        rows: next,
-        sort: `${sortColumn}:${sortDirection}`,
-      });
-    } else {
-      refreshFilteredView(`infinite:${trigger}`);
-    }
-  };
-  if (
-    typeof window !== "undefined" &&
-    typeof window.requestAnimationFrame === "function"
-  ) {
-    window.requestAnimationFrame(run);
-  } else {
-    setTimeout(run, 0);
-  }
+  const desiredCount = paginationState.renderedCount + paginationState.pageSize;
+  ensureDataCapacity(desiredCount, `stream:infinite-${trigger}`)
+    .catch(() => {
+      /* errors handled elsewhere */
+    })
+    .finally(() => {
+      const next = Math.min(desiredCount, rawData.length);
+      paginationState.renderedCount = next;
+      infiniteTickScheduled = false;
+      const start = getNow();
+      if (latestSortedData.length) {
+        renderInfiniteWindow(latestSortedData, { skipObserver: false });
+        recordPerfMetric(`render:infinite-${trigger}`, getNow() - start, {
+          rows: next,
+          sort: `${sortColumn}:${sortDirection}`,
+        });
+      } else {
+        refreshFilteredView(`infinite:${trigger}`);
+      }
+    });
 }
 
 function compareRows(rowA, rowB, column, direction) {
@@ -1699,9 +2169,10 @@ async function fetchTypeaheadSuggestions(query) {
   const requestId = ++activeSuggestionRequest;
   let suggestions = [];
   if (supabase && !FORCE_SAMPLE) {
+    const typeaheadTable = streamState.tableName || SUPABASE_TABLE_CANDIDATES[0];
     try {
       const { data, error } = await supabase
-        .from("games")
+        .from(typeaheadTable)
         .select(TYPEAHEAD_SELECT_COLUMNS)
         .ilike(COL_GAME, `${query}%`)
         .order(COL_GAME, { ascending: true })
@@ -2459,6 +2930,7 @@ const testApi = {
   toggleSort,
   refreshFilteredView,
   __setBrowseMode: setBrowseMode,
+  __teardownVirtualization: teardownVirtualization,
   __setState(overrides = {}) {
     if (Object.prototype.hasOwnProperty.call(overrides, "statuses")) {
       gameStatuses = overrides.statuses;
@@ -2534,6 +3006,23 @@ const testApi = {
       rawData,
       browseMode,
       paginationState,
+      streamState: {
+        active: streamState.active,
+        hasMore: streamState.hasMore,
+        loading: streamState.loading,
+        nextFrom: streamState.nextFrom,
+        totalCount: streamState.totalCount,
+      },
+    };
+  },
+  __getVirtualizationState() {
+    return {
+      active: virtualizationState.active,
+      visibleStart: virtualizationState.visibleStart,
+      visibleEnd: virtualizationState.visibleEnd,
+      topPadding: virtualizationState.topPadding,
+      bottomPadding: virtualizationState.bottomPadding,
+      sourceLength: virtualizationState.sourceData.length,
     };
   },
 };

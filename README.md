@@ -10,6 +10,8 @@ WIP: A fast, private, and no-nonsense tracker for classic and retro games. A pla
 - One-click JSON backups to move statuses/notes/filters across devices
 - Share your collection with anyone via code—no registration required
 - Choose between infinite scroll batches or paginated pages (with adjustable batch sizes and shareable `?page=` links) so both humans and crawlers can browse huge lists
+- Virtualized grid keeps the DOM lean by only rendering what's in (or near) the viewport, so even five-digit libraries stay silky smooth
+- Supabase data streams in 400-row pages (configurable), so the UI becomes interactive instantly while new chunks hydrate the grid on-demand
 - See box art, details, and direct links to gameplay videos or GameFAQs
 - Fully mobile and desktop compatible
 - Supabase-powered typeahead search with a local fallback so you can jump to titles instantly
@@ -29,6 +31,7 @@ It’s a clean, modern tool for serious collectors, archivists, and retro fans w
 4. Anytime you rotate credentials, update `.env` and rerun `npm run build:config`.
 
 - Rotate Supabase anon/service keys with `node scripts/rotate-supabase-keys.js` (updates `.env` and optionally GitHub secrets).
+- (Optional) Add `SUPABASE_STREAM_PAGE_SIZE=<int>` to tune the paginated `.range()` queries (defaults to 400 rows per chunk).
 
 No Supabase project yet? The UI now auto-loads the curated `data/sample-games.json` dataset so everything renders immediately. Add real credentials later to swap in live data.
 
@@ -48,6 +51,8 @@ Supabase schema + migration workflow lives in `docs/data-pipeline.md`.
 - Rendering and data-load steps emit lightweight metrics. Inspect them via `window.__SANDGRAAL_PERF__.buffer` in DevTools.
 - Enable verbose console logs by running `window.__SANDGRAAL_DEBUG_METRICS__ = true` in DevTools _before_ refreshing (or set it on `globalThis` in tests).
 - Metrics currently captured: Supabase vs. sample data load times and every table re-render (search/filter, sort, share import, etc.) with row counts and sort state.
+- The new virtualized grid windows cards in and out of the DOM (with spacer paddings) so the browse controls can request thousands of games without forcing the browser to mount every card at once.
+- Supabase hydration now occurs via paginated `.range()` queries (default 400 rows). The first page renders immediately, while subsequent pages stream in when you approach the end of the list (or switch pages), keeping bandwidth predictable for huge libraries.
 
 ## SEO & Discoverability
 
