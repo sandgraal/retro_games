@@ -100,7 +100,6 @@ const PRICE_SAMPLE_URL = "./data/sample-price-history.json";
 const PRICE_LATEST_VIEW = "game_price_latest";
 const PRICE_SNAPSHOT_TABLE = "game_price_snapshots";
 const PRICE_FETCH_CHUNK = 200;
-const PRICE_HISTORY_LIMIT = 24;
 const PRICE_HISTORY_PAD = 8;
 const PRICE_STATUS_KEYS = [STATUS_OWNED, STATUS_WISHLIST, STATUS_BACKLOG, STATUS_TRADE];
 const PRICE_SOURCE = "pricecharting";
@@ -121,6 +120,26 @@ const currencyFormatterPrecise =
         maximumFractionDigits: 2,
       })
     : null;
+
+/**
+ * Format an integer (in cents) as a localized currency string.
+ * Falls back to a basic USD representation when Intl is unavailable.
+ * @param {number|string|null|undefined} value
+ * @param {{ precise?: boolean }} [options]
+ * @returns {string}
+ */
+function formatCurrencyFromCents(value, { precise = false } = {}) {
+  if (value === null || value === undefined || value === "") return "—";
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "—";
+  const dollars = precise ? numeric / 100 : Math.round(numeric / 100);
+  const formatter = precise ? currencyFormatterPrecise : currencyFormatterWhole;
+  if (formatter) {
+    return formatter.format(dollars);
+  }
+  const amount = precise ? (numeric / 100).toFixed(2) : dollars.toString();
+  return `$${amount}`;
+}
 const PLATFORM_NAME_ALIASES = {
   SNES: ["Super Nintendo Entertainment System"],
   NES: ["Nintendo Entertainment System"],
@@ -860,6 +879,15 @@ function setStatusForKey(key, status) {
   } else {
     gameStatuses[key] = status;
   }
+}
+
+/**
+ * Resolve the status map that should be considered active.
+ * Prefers an imported collection when present, otherwise falls back to local state.
+ * @returns {StatusMap}
+ */
+function getActiveStatusMap() {
+  return importedCollection || gameStatuses;
 }
 
 /**
@@ -1717,7 +1745,7 @@ function setupFilters(data) {
  * @param {StatusMap} [statusSource]
  * @returns {boolean}
  */
-function doesRowMatchFilters(row, statusSource = importedCollection || gameStatuses) {
+function doesRowMatchFilters(row, statusSource = getActiveStatusMap()) {
   if (!row) return false;
   if (filterPlatform && row[COL_PLATFORM] !== filterPlatform) return false;
   if (filterGenre) {
@@ -1758,7 +1786,7 @@ function doesRowMatchFilters(row, statusSource = importedCollection || gameStatu
  * @returns {GameRow[]}
  */
 function applyFilters(data) {
-  const statusSource = importedCollection || gameStatuses;
+  const statusSource = getActiveStatusMap();
   return data.filter((row) => doesRowMatchFilters(row, statusSource));
 }
 
@@ -1789,7 +1817,7 @@ function renderTable(data, options = {}) {
     html += `<div class="virtual-spacer" style="height:${topSize}px"></div>`;
   }
   html += working
-    .map((row, idx) => renderGameCard(row, idx, importedCollection || gameStatuses))
+    .map((row, idx) => renderGameCard(row, idx, getActiveStatusMap()))
     .join("");
   if (useVirtualization) {
     const bottomSize = Math.max(0, Math.floor(virtualization.bottomPadding || 0));
@@ -2588,7 +2616,7 @@ async function invokeAggregateRpc(fnName, payload) {
 
 function scheduleStatusHydration() {
   if (!shouldUseServerFiltering() || !supabase) return;
-  const statusSource = importedCollection || gameStatuses;
+  const statusSource = getActiveStatusMap();
   const missingKeys = Object.keys(statusSource).filter((key) => {
     const status = statusSource[key];
     if (!status || status === STATUS_NONE) return false;
@@ -2979,7 +3007,7 @@ function updateStats(data) {
 }
 
 function computeStatusCounts() {
-  const statusSource = importedCollection || gameStatuses;
+  const statusSource = getActiveStatusMap();
   const counts = {
     [STATUS_OWNED]: 0,
     [STATUS_WISHLIST]: 0,
@@ -3012,7 +3040,7 @@ function computeStatusCounts() {
 }
 
 function collectStatusRows() {
-  const statusSource = importedCollection || gameStatuses;
+  const statusSource = getActiveStatusMap();
   const result = [];
   if (!statusSource) return result;
   let fallbackRows = null;
@@ -3205,6 +3233,23 @@ function timeAgo(timestamp) {
   if (diff < 3600000) return `${Math.max(1, Math.round(diff / 60000))}m`;
   if (diff < 86400000) return `${Math.max(1, Math.round(diff / 3600000))}h`;
   return `${Math.max(1, Math.round(diff / 86400000))}d`;
+}
+
+/**
+ * Produce a relative time label from a date-like input.
+ * @param {string|number|Date|null|undefined} value
+ * @returns {string}
+ */
+function formatRelativeDate(value) {
+  if (!value) return "";
+  const timestamp =
+    value instanceof Date
+      ? value.getTime()
+      : typeof value === "number"
+        ? value
+        : Date.parse(value);
+  if (!Number.isFinite(timestamp)) return "";
+  return timeAgo(timestamp);
 }
 
 if (priceInsights && priceInsights.isEnabled()) {
@@ -4319,30 +4364,30 @@ function showError(msg) {
 
 function buildPricePanelMarkup(key) {
   const safeKey = escapeHtml(key || "");
-  return `<section class="modal-price-panel" data-price-panel data-price-key="${safeKey}">
-    <div class="price-panel-header">
-      <h3>Market Value</h3>
-      <span class="price-updated" data-price-role="updated"></span>
-    </div>
-    <div class="price-panel-body" data-price-body hidden>
-      <div class="price-panel-row">
+  return `<section class="price-panel" data-price-panel data-price-key="${safeKey}">
+    <h3>Price &amp; Value</h3>
+    <div class="price-panel-grid">
+      <div class="price-panel-metric">
         <span>Loose</span>
-        <strong data-price-role="loose">—</strong>
+        <strong data-price-loose>—</strong>
       </div>
-      <div class="price-panel-row">
+      <div class="price-panel-metric">
         <span>CIB</span>
-        <strong data-price-role="cib">—</strong>
+        <strong data-price-cib>—</strong>
       </div>
-      <div class="price-panel-row">
+      <div class="price-panel-metric">
         <span>New</span>
-        <strong data-price-role="new">—</strong>
+        <strong data-price-new>—</strong>
+      </div>
+      <div class="price-panel-metric">
+        <span>Tracked Status</span>
+        <strong data-price-status>—</strong>
       </div>
     </div>
-    <div class="price-history-panel" data-price-role="history" hidden>
-      <div class="price-chart" data-price-role="chart"></div>
-      <p class="price-trend" data-price-role="trend"></p>
+    <div class="price-panel-history">
+      <canvas data-price-sparkline width="260" height="80"></canvas>
     </div>
-    <p class="price-panel-empty" data-price-empty>No verified pricing data yet.</p>
+    <p class="price-panel-note" data-price-note>Fetching live prices…</p>
   </section>`;
 }
 
@@ -4614,39 +4659,20 @@ function showGameModal(game) {
       <div class="gallery-counter">1 / ${galleryImages.length}</div>
     </div>`;
   }
-  html += `<dl>`;
-  for (let k in game) {
-    if ([COL_GAME, COL_COVER].includes(k)) continue;
-    if (!game[k]) continue;
-    html += `<dt>${k}:</dt><dd>${game[k]}</dd>`;
+  const metadataSections = buildModalMetadataSections(game);
+  if (metadataSections) {
+    html += metadataSections;
+  } else {
+    html += `<dl>`;
+    for (let k in game) {
+      if ([COL_GAME, COL_COVER].includes(k)) continue;
+      if (!game[k]) continue;
+      html += `<dt>${k}:</dt><dd>${game[k]}</dd>`;
+    }
+    html += `</dl>`;
   }
-  html += `</dl>`;
   if (priceInsights && priceInsights.isEnabled()) {
-    html += `<section class="price-panel" data-price-panel>
-      <h3>Price &amp; Value</h3>
-      <div class="price-panel-grid">
-        <div class="price-panel-metric">
-          <span>Loose</span>
-          <strong data-price-loose>—</strong>
-        </div>
-        <div class="price-panel-metric">
-          <span>CIB</span>
-          <strong data-price-cib>—</strong>
-        </div>
-        <div class="price-panel-metric">
-          <span>New</span>
-          <strong data-price-new>—</strong>
-        </div>
-        <div class="price-panel-metric">
-          <span>Tracked Status</span>
-          <strong data-price-status>—</strong>
-        </div>
-      </div>
-      <div class="price-panel-history">
-        <canvas data-price-sparkline width="260" height="80"></canvas>
-      </div>
-      <p class="price-panel-note" data-price-note>Fetching live prices…</p>
-    </section>`;
+    html += buildPricePanelMarkup(key);
   }
   // Resource links (Google, YouTube, GameFAQs)
   const query = encodeURIComponent(
@@ -4724,7 +4750,7 @@ function renderModalPricePanel(modal, game) {
   if (!panel) return;
   const key = buildRowKey(game);
   if (!key) return;
-  const statusSource = importedCollection || gameStatuses;
+  const statusSource = getActiveStatusMap();
   const status = statusSource[key] || STATUS_NONE;
   const noteEl = panel.querySelector("[data-price-note]");
   if (noteEl) noteEl.textContent = "Fetching live prices…";
