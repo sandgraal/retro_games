@@ -135,7 +135,7 @@ function formatCurrencyFromCents(value, { precise = false } = {}) {
   const dollars = precise ? numeric / 100 : Math.round(numeric / 100);
   const formatter = precise ? currencyFormatterPrecise : currencyFormatterWhole;
   if (formatter) {
-    return formatter.format(precise ? numeric / 100 : dollars);
+    return formatter.format(dollars);
   }
   const amount = precise ? (numeric / 100).toFixed(2) : dollars.toString();
   return `$${amount}`;
