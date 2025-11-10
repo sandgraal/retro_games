@@ -95,6 +95,12 @@
   --font-body: "Segoe UI", Arial, sans-serif;
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 :root[data-theme="dark"] {
   color-scheme: dark;
 }
@@ -301,7 +307,9 @@ h1 {
   display: grid;
   gap: clamp(1.75rem, 4vw, 3rem);
   padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 6vw, 4rem);
-  max-width: min(1200px, 100%);
+  width: 100%;
+  max-width: 1200px;
+  width: min(1200px, 100%);
   margin: 0 auto;
 }
 
@@ -1152,7 +1160,7 @@ h1 {
 
 .game-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 1.4rem;
   margin-bottom: 3rem;
 }
@@ -1944,6 +1952,6 @@ footer .egg {
   }
 
   .game-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
   }
 }
