@@ -261,6 +261,42 @@
             </div>
           </div>
         </div>
+        <div class="dashboard-card" id="dashboard-valuation" aria-live="polite">
+          <div class="valuation-header">
+            <h2>Collection Value</h2>
+            <button id="valuationRefresh" type="button" class="ghost-button">
+              Refresh Prices
+            </button>
+          </div>
+          <p id="valuationStatus" class="valuation-status">
+            Connect a PriceCharting token to see live valuations.
+          </p>
+          <div class="valuation-grid" role="list">
+            <div class="valuation-metric" role="listitem">
+              <span>Owned</span>
+              <strong id="valuation-owned">—</strong>
+            </div>
+            <div class="valuation-metric" role="listitem">
+              <span>Wishlist</span>
+              <strong id="valuation-wishlist">—</strong>
+            </div>
+            <div class="valuation-metric" role="listitem">
+              <span>Backlog</span>
+              <strong id="valuation-backlog">—</strong>
+            </div>
+            <div class="valuation-metric" role="listitem">
+              <span>Trade</span>
+              <strong id="valuation-trade">—</strong>
+            </div>
+            <div class="valuation-metric valuation-total" role="listitem">
+              <span>Total</span>
+              <strong id="valuation-total">—</strong>
+            </div>
+          </div>
+          <div class="valuation-trend" aria-label="Collection value trend">
+            <canvas id="valuationSparkline" width="320" height="100"></canvas>
+          </div>
+        </div>
         <div class="dashboard-card" id="dashboard-top-genres">
           <h2>Top Genres</h2>
           <div class="genre-carousel">
