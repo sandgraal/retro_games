@@ -91,6 +91,16 @@ begin
 end;
 $$;
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_roles where rolname = 'service_role'
+  ) then
+    execute 'create role service_role';
+  end if;
+end;
+$$;
+
 grant select on table public.game_price_snapshots to anon, authenticated;
 grant select on public.game_price_latest to anon, authenticated;
 
