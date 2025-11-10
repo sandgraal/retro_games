@@ -3,6 +3,19 @@
 
 begin;
 
+-- Ensure grant targets exist in non-Supabase local environments
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname = 'anon') then
+    execute 'create role anon noinherit nologin';
+  end if;
+
+  if not exists (select 1 from pg_roles where rolname = 'authenticated') then
+    execute 'create role authenticated noinherit nologin';
+  end if;
+end;
+$$;
+
 create or replace function public.rpc_genre_counts(
   _search text default null,
   _platform text default null,
