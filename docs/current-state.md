@@ -19,6 +19,7 @@ _Last updated: March 2025_
 4. Users can export owned titles to CSV, backup their entire collection (statuses, notes, filters) as JSON, or create a share code (base64-encoded JSON). Importing a share code or backup restores a read-only or editable view, respectively.
 5. Clicking a row opens a modal with metadata and quick links to Google, YouTube gameplay, and GameFAQs searches.
 6. When Supabase is available, dashboard stats/aggregates hydrate on-demand: status metrics fetch only the rows tied to your Owned/Wishlist/Backlog/Trade entries, and the top-genre / release-timeline widgets call lightweight Supabase RPCs (falling back to SQL grouping) so the charts reflect the full dataset without downloading it all.
+7. Price snapshots from PriceCharting live in the `game_price_snapshots` table (surfaceable via the `game_price_latest` view). The frontend pulls those lightweight rows to power the new Collection Value dashboard card plus per-game modal insights, falling back to `data/sample-price-history.json` when Supabase or API credentials are unavailable.
 
 ## UI & Styling
 
@@ -29,6 +30,8 @@ _Last updated: March 2025_
 - Card rendering is virtualized: only the rows within (or near) the viewport mount, with spacer elements maintaining scroll height for buttery navigation through thousands of entries.
 - Accessibility helpers include focus trapping in the modal and keyboard shortcuts (Escape closes modal, Enter triggers import field).
 - Table headers are now interactive, enabling ascending/descending sorting per column with keyboard support.
+- A dedicated Collection Value card surfaces loose/CIB/new totals per status (Owned/Wishlist/Backlog/Trade) and the latest snapshot timestamp, while the modal presents a price panel with current values plus a sparkline showing recent history for each title.
+- The modal now groups metadata into “Release & Rating,” “Gameplay,” and “Regions & Versions” cards so rating tiers, player modes/counts, regions, notes, and reference links are easy to scan instead of living in an undifferentiated list.
 
 ## Operational Notes
 

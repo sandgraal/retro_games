@@ -120,6 +120,58 @@ function resetDom() {
         <strong id="valuation-trade"></strong>
         <strong id="valuation-total"></strong>
         <canvas id="valuationSparkline" width="200" height="80"></canvas>
+      <div class="dashboard-card dashboard-price" id="dashboard-price" data-loaded="false">
+        <div class="price-summary-header">
+          <h2>Collection Value</h2>
+          <span class="price-summary-updated" data-price-summary-updated>Awaiting price snapshots…</span>
+        </div>
+        <p class="price-summary-empty" data-price-summary-empty>Populate price data to see totals.</p>
+        <div class="price-summary-grid">
+          <article class="price-summary-block" data-price-status="owned">
+            <header>
+              <span>Owned</span>
+              <small><span id="price-owned-priced">0</span>/<span id="price-owned-count">0</span> priced</small>
+            </header>
+            <dl>
+              <div><dt>Loose</dt><dd id="price-owned-loose">—</dd></div>
+              <div><dt>CIB</dt><dd id="price-owned-cib">—</dd></div>
+              <div><dt>New</dt><dd id="price-owned-new">—</dd></div>
+            </dl>
+          </article>
+          <article class="price-summary-block" data-price-status="wishlist">
+            <header>
+              <span>Wishlist</span>
+              <small><span id="price-wishlist-priced">0</span>/<span id="price-wishlist-count">0</span> priced</small>
+            </header>
+            <dl>
+              <div><dt>Loose</dt><dd id="price-wishlist-loose">—</dd></div>
+              <div><dt>CIB</dt><dd id="price-wishlist-cib">—</dd></div>
+              <div><dt>New</dt><dd id="price-wishlist-new">—</dd></div>
+            </dl>
+          </article>
+          <article class="price-summary-block" data-price-status="backlog">
+            <header>
+              <span>Backlog</span>
+              <small><span id="price-backlog-priced">0</span>/<span id="price-backlog-count">0</span> priced</small>
+            </header>
+            <dl>
+              <div><dt>Loose</dt><dd id="price-backlog-loose">—</dd></div>
+              <div><dt>CIB</dt><dd id="price-backlog-cib">—</dd></div>
+              <div><dt>New</dt><dd id="price-backlog-new">—</dd></div>
+            </dl>
+          </article>
+          <article class="price-summary-block" data-price-status="trade">
+            <header>
+              <span>Trade</span>
+              <small><span id="price-trade-priced">0</span>/<span id="price-trade-count">0</span> priced</small>
+            </header>
+            <dl>
+              <div><dt>Loose</dt><dd id="price-trade-loose">—</dd></div>
+              <div><dt>CIB</dt><dd id="price-trade-cib">—</dd></div>
+              <div><dt>New</dt><dd id="price-trade-new">—</dd></div>
+            </dl>
+          </article>
+        </div>
       </div>
       <div class="genre-carousel">
         <div id="dash-genres-window" data-carousel-window>
@@ -405,5 +457,33 @@ describe("dashboard", () => {
     expect(payload.notes["Chrono Trigger___SNES"]).toBe("Find CIB");
     expect(payload.filters.filterStatus).toBe("wishlist");
     expect(payload.filters.filterYearStart).toBe("1990");
+  });
+});
+
+describe("price summary", () => {
+  it("renders collection totals when price snapshots exist", () => {
+    app.__setState({
+      statuses: { "Chrono Trigger___SNES": "owned" },
+    });
+    app.__setPriceState({
+      latest: {
+        "Chrono Trigger___SNES": {
+          game_key: "Chrono Trigger___SNES",
+          loose_price_cents: 17500,
+          cib_price_cents: 46500,
+          new_price_cents: 72500,
+          snapshot_date: "2025-03-10",
+          source: "pricecharting",
+        },
+      },
+      lastUpdated: "2025-03-10",
+    });
+    app.updateCollectionValueSummary();
+    expect(document.getElementById("price-owned-loose").textContent).toContain("175");
+    expect(document.getElementById("price-owned-count").textContent).toBe("1");
+    expect(document.getElementById("price-owned-priced").textContent).toBe("1");
+    expect(document.querySelector("[data-price-summary-updated]").textContent).toContain(
+      "2025"
+    );
   });
 });

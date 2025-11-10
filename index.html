@@ -295,6 +295,122 @@
           </div>
           <div class="valuation-trend" aria-label="Collection value trend">
             <canvas id="valuationSparkline" width="320" height="100"></canvas>
+        <div
+          class="dashboard-card dashboard-price"
+          id="dashboard-price"
+          data-loaded="false"
+        >
+          <div class="price-summary-header">
+            <h2>Collection Value</h2>
+            <span class="price-summary-updated" data-price-summary-updated>
+              Awaiting price snapshots…
+            </span>
+          </div>
+          <p class="price-summary-empty" data-price-summary-empty>
+            Run the PriceCharting sync script to populate live valuations.
+          </p>
+          <div class="price-summary-grid">
+            <article class="price-summary-block" data-price-status="owned">
+              <header>
+                <span>Owned</span>
+                <small
+                  ><span id="price-owned-priced">0</span>/<span id="price-owned-count"
+                    >0</span
+                  >
+                  priced</small
+                >
+              </header>
+              <dl>
+                <div>
+                  <dt>Loose</dt>
+                  <dd id="price-owned-loose">—</dd>
+                </div>
+                <div>
+                  <dt>CIB</dt>
+                  <dd id="price-owned-cib">—</dd>
+                </div>
+                <div>
+                  <dt>New</dt>
+                  <dd id="price-owned-new">—</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="price-summary-block" data-price-status="wishlist">
+              <header>
+                <span>Wishlist</span>
+                <small
+                  ><span id="price-wishlist-priced">0</span>/<span
+                    id="price-wishlist-count"
+                    >0</span
+                  >
+                  priced</small
+                >
+              </header>
+              <dl>
+                <div>
+                  <dt>Loose</dt>
+                  <dd id="price-wishlist-loose">—</dd>
+                </div>
+                <div>
+                  <dt>CIB</dt>
+                  <dd id="price-wishlist-cib">—</dd>
+                </div>
+                <div>
+                  <dt>New</dt>
+                  <dd id="price-wishlist-new">—</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="price-summary-block" data-price-status="backlog">
+              <header>
+                <span>Backlog</span>
+                <small
+                  ><span id="price-backlog-priced">0</span>/<span id="price-backlog-count"
+                    >0</span
+                  >
+                  priced</small
+                >
+              </header>
+              <dl>
+                <div>
+                  <dt>Loose</dt>
+                  <dd id="price-backlog-loose">—</dd>
+                </div>
+                <div>
+                  <dt>CIB</dt>
+                  <dd id="price-backlog-cib">—</dd>
+                </div>
+                <div>
+                  <dt>New</dt>
+                  <dd id="price-backlog-new">—</dd>
+                </div>
+              </dl>
+            </article>
+            <article class="price-summary-block" data-price-status="trade">
+              <header>
+                <span>Trade</span>
+                <small
+                  ><span id="price-trade-priced">0</span>/<span id="price-trade-count"
+                    >0</span
+                  >
+                  priced</small
+                >
+              </header>
+              <dl>
+                <div>
+                  <dt>Loose</dt>
+                  <dd id="price-trade-loose">—</dd>
+                </div>
+                <div>
+                  <dt>CIB</dt>
+                  <dd id="price-trade-cib">—</dd>
+                </div>
+                <div>
+                  <dt>New</dt>
+                  <dd id="price-trade-new">—</dd>
+                </div>
+              </dl>
+            </article>
           </div>
         </div>
         <div class="dashboard-card" id="dashboard-top-genres">

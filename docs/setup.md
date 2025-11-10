@@ -68,6 +68,26 @@ Open `http://localhost:8080` and the app will load credentials from the generate
 If Supabase credentials are missing or the fetch fails, the app automatically falls back to `data/sample-games.json`. This guarantees that first-time contributors still see a populated UI while backend access is being configured.
 Append `?sample=1` to the URL (or set `window.__SANDGRAAL_FORCE_SAMPLE__ = true` before loading) to force the sample dataset even when real credentials are present—useful for demos and automated testing.
 
+## Price data (optional)
+
+1. Add the PriceCharting token and Supabase service-role key to `.env`:
+
+   ```
+   PRICECHARTING_TOKEN=your-token
+   SUPABASE_SERVICE_ROLE_KEY=service-role-key
+   # Optional:
+   # PRICECHARTING_BASE_URL=https://www.pricecharting.com/api
+   # PRICECHARTING_REFRESH_HOURS=24
+   ```
+
+2. Fetch valuations and upsert them into Supabase:
+
+   ```bash
+   npm run prices:update -- --limit 25
+   ```
+
+   Use `--filter "mario"` for targeted runs or `--dry-run` to verify credentials without writes. Snapshots populate the `game_price_snapshots` table / `game_price_latest` view automatically consumed by the frontend.
+
 ## Troubleshooting
 
 - **Missing .env** – The generator will exit with instructions if `.env` is not found. Copy `.env.example` and try again.
