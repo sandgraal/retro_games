@@ -24,9 +24,9 @@ begin
       returns uuid
       language sql
       stable
-      as $$
+      as $func$
         select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
-      $$;
+      $func$;
     $$;
   end if;
 end;
