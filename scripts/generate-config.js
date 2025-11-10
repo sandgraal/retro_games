@@ -53,6 +53,13 @@ function buildConfig({ envPath, outputPath }) {
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
+  const priceToken = (process.env.PRICECHARTING_TOKEN || "").trim();
+  const priceCurrency = (process.env.PRICECHARTING_CURRENCY || "").trim();
+  const priceCacheHoursRaw = (process.env.PRICECHARTING_CACHE_HOURS || "").trim();
+  const priceCacheHours =
+    priceCacheHoursRaw && !Number.isNaN(Number(priceCacheHoursRaw))
+      ? Number(priceCacheHoursRaw)
+      : null;
 
   if (!url || !anonKey) {
     console.error("❌ SUPABASE_URL and SUPABASE_ANON_KEY must be defined in .env.");
@@ -65,6 +72,14 @@ function buildConfig({ envPath, outputPath }) {
   }
   if (table) {
     config.table = table;
+  }
+  if (priceToken || priceCurrency || priceCacheHours) {
+    config.pricing = {};
+    if (priceToken) config.pricing.token = priceToken;
+    if (priceCurrency) config.pricing.currency = priceCurrency.toUpperCase();
+    if (priceCacheHours && priceCacheHours > 0) {
+      config.pricing.cacheHours = priceCacheHours;
+    }
   }
 
   const content = [
