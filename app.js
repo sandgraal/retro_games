@@ -158,6 +158,22 @@ const reduceMotionQuery =
     ? window.matchMedia("(prefers-reduced-motion: reduce)")
     : null;
 const registeredCarouselWindows = new Set();
+
+const FIELD_ALIAS_MAP = {
+  [COL_GAME]: [COL_GAME, "gameName", "Game Name"],
+  [COL_PLATFORM]: [COL_PLATFORM, "Platform"],
+  [COL_GENRE]: [COL_GENRE, "Genre"],
+  [COL_RELEASE_YEAR]: [COL_RELEASE_YEAR, "releaseYear", "Release Year"],
+  [COL_RATING]: [COL_RATING, "Rating"],
+  [COL_COVER]: [COL_COVER, "cover_url", "coverUrl", "Cover"],
+  screenshots: ["screenshots", "Screenshots"],
+  ratingCategory: ["rating_category", "ratingCategory", "Rating Category"],
+  playerMode: ["player_mode", "playerMode", "Player Mode"],
+  playerCount: ["player_count", "playerCount", "Player Count"],
+  region: ["region", "Region"],
+  notes: ["notes", "Notes"],
+  detailsUrl: ["details_url", "detailsUrl", "Details", "details"],
+};
 let carouselControlsBound = false;
 const PERF_BUFFER_LIMIT = 50;
 const perfMetrics = [];
@@ -871,6 +887,49 @@ function cacheStatusRows(rows) {
     const key = buildRowKey(row);
     if (key) statusRowCache.set(key, row);
   });
+}
+
+function getAliasKeys(aliasKey) {
+  if (!aliasKey) return [];
+  const base = FIELD_ALIAS_MAP[aliasKey];
+  if (base && Array.isArray(base)) return base;
+  if (typeof aliasKey === "string" && aliasKey.includes("_")) {
+    const spaced = aliasKey
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+    return [aliasKey, spaced];
+  }
+  return [aliasKey];
+}
+
+function resolveGameField(game, aliasKey) {
+  if (!game) return "";
+  const aliases = getAliasKeys(aliasKey);
+  for (const key of aliases) {
+    if (Object.prototype.hasOwnProperty.call(game, key)) {
+      const value = game[key];
+      if (value !== undefined && value !== null && value !== "") {
+        return typeof value === "string" ? value.trim() : value;
+      }
+    }
+  }
+  return "";
+}
+
+function markFieldConsumed(consumed, aliasKey) {
+  const aliases = getAliasKeys(aliasKey);
+  aliases.forEach((key) => consumed.add(key));
+}
+
+function formatFieldLabel(fieldName) {
+  if (!fieldName) return "";
+  return fieldName
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function escapeHtml(str) {
@@ -3862,6 +3921,147 @@ function hydrateModalPricePanel(modal, key) {
   }
 }
 
+function buildMetadataCard(title, items, { layout = "grid", footerHtml = "" } = {}) {
+  const safeTitle = title ? escapeHtml(title) : "";
+  const hasItems = Array.isArray(items) && items.length > 0;
+  const containerClass = layout === "stacked" ? "metadata-list" : "metadata-grid";
+  const itemClass = layout === "stacked" ? "metadata-item stacked" : "metadata-item";
+  const body = hasItems
+    ? items
+        .map((item) => {
+          const label = escapeHtml(item.label || "");
+          const value = escapeHtml(String(item.value ?? ""));
+          return `<div class="${itemClass}">
+            <p class="metadata-label">${label}</p>
+            <p class="metadata-value">${value}</p>
+          </div>`;
+        })
+        .join("")
+    : "";
+  if (!hasItems && !footerHtml) return "";
+  return `<article class="modal-section">
+    ${safeTitle ? `<h3>${safeTitle}</h3>` : ""}
+    ${hasItems ? `<div class="${containerClass}">${body}</div>` : ""}
+    ${footerHtml || ""}
+  </article>`;
+}
+
+function buildFallbackMetadata(game, consumed) {
+  if (!game) return "";
+  const items = Object.keys(game)
+    .filter((key) => {
+      if (consumed.has(key)) return false;
+      const value = game[key];
+      if (value === null || value === undefined || value === "") return false;
+      if (typeof value === "object") return false;
+      return true;
+    })
+    .map((key) => ({
+      label: formatFieldLabel(key),
+      value: game[key],
+    }));
+  if (!items.length) return "";
+  return buildMetadataCard("Additional Details", items, { layout: "stacked" });
+}
+
+function buildModalMetadataSections(game) {
+  if (!game) return "";
+  const consumed = new Set();
+  markFieldConsumed(consumed, COL_GAME);
+  markFieldConsumed(consumed, COL_COVER);
+  markFieldConsumed(consumed, "cover_url");
+  markFieldConsumed(consumed, "coverUrl");
+  markFieldConsumed(consumed, "screenshots");
+  const sections = [];
+
+  const releaseItems = [];
+  const platformValue = resolveGameField(game, COL_PLATFORM);
+  if (platformValue) {
+    releaseItems.push({ label: "Platform", value: platformValue });
+    markFieldConsumed(consumed, COL_PLATFORM);
+  }
+  const releaseYear = getReleaseYear(game);
+  if (releaseYear) {
+    releaseItems.push({ label: "Release Year", value: releaseYear });
+    markFieldConsumed(consumed, COL_RELEASE_YEAR);
+  }
+  const ratingValue = parseFloat(game[COL_RATING]);
+  const ratingCategory = resolveGameField(game, "ratingCategory");
+  if (Number.isFinite(ratingValue)) {
+    let text = ratingValue.toFixed(1).replace(/\.0$/, "");
+    if (ratingCategory) text += ` (${ratingCategory})`;
+    releaseItems.push({ label: "Rating", value: text });
+    markFieldConsumed(consumed, COL_RATING);
+    if (ratingCategory) markFieldConsumed(consumed, "ratingCategory");
+  } else if (ratingCategory) {
+    releaseItems.push({ label: "Rating Tier", value: ratingCategory });
+    markFieldConsumed(consumed, "ratingCategory");
+  }
+  if (releaseItems.length) {
+    sections.push(buildMetadataCard("Release & Rating", releaseItems));
+  }
+
+  const gameplayItems = [];
+  const genreValue = resolveGameField(game, COL_GENRE);
+  if (genreValue) {
+    const genres = genreValue
+      .split(",")
+      .map((g) => g.trim())
+      .filter(Boolean)
+      .join(", ");
+    gameplayItems.push({ label: "Genre", value: genres || genreValue });
+    markFieldConsumed(consumed, COL_GENRE);
+  }
+  const modeValue = resolveGameField(game, "playerMode");
+  if (modeValue) {
+    gameplayItems.push({ label: "Player Mode", value: modeValue });
+    markFieldConsumed(consumed, "playerMode");
+  }
+  const playerCount = resolveGameField(game, "playerCount");
+  if (playerCount) {
+    gameplayItems.push({ label: "Players", value: playerCount });
+    markFieldConsumed(consumed, "playerCount");
+  }
+  if (gameplayItems.length) {
+    sections.push(buildMetadataCard("Gameplay", gameplayItems));
+  }
+
+  const regionItems = [];
+  const regionValue = resolveGameField(game, "region");
+  if (regionValue) {
+    regionItems.push({ label: "Regions", value: regionValue });
+    markFieldConsumed(consumed, "region");
+  }
+  const notesValue = resolveGameField(game, "notes");
+  if (notesValue) {
+    regionItems.push({ label: "Notes", value: notesValue });
+    markFieldConsumed(consumed, "notes");
+  }
+  const detailsUrl = resolveGameField(game, "detailsUrl");
+  if (detailsUrl) {
+    markFieldConsumed(consumed, "detailsUrl");
+  }
+  if (regionItems.length || detailsUrl) {
+    const footerHtml = detailsUrl
+      ? `<div class="metadata-footer"><a class="metadata-link" href="${escapeHtml(
+          detailsUrl
+        )}" target="_blank" rel="noopener">View reference</a></div>`
+      : "";
+    sections.push(
+      buildMetadataCard("Regions & Versions", regionItems, {
+        layout: "stacked",
+        footerHtml,
+      })
+    );
+  }
+
+  const fallback = buildFallbackMetadata(game, consumed);
+  if (fallback) sections.push(fallback);
+
+  if (!sections.length) return "";
+  return `<div class="modal-sections">${sections.join("")}</div>`;
+}
+
 function renderPriceHistoryChart(container, history) {
   if (!container) return;
   const series = Array.isArray(history)
@@ -3927,13 +4127,7 @@ function showGameModal(game) {
       <div class="gallery-counter">1 / ${galleryImages.length}</div>
     </div>`;
   }
-  html += `<dl>`;
-  for (let k in game) {
-    if ([COL_GAME, COL_COVER].includes(k)) continue;
-    if (!game[k]) continue;
-    html += `<dt>${k}:</dt><dd>${game[k]}</dd>`;
-  }
-  html += `</dl>`;
+  html += buildModalMetadataSections(game);
   html += buildPricePanelMarkup(key);
   // Resource links (Google, YouTube, GameFAQs)
   const query = encodeURIComponent(
