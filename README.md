@@ -18,6 +18,7 @@ WIP: A fast, private, and no-nonsense tracker for classic and retro games. A pla
 - See box art, details, and direct links to gameplay videos or GameFAQs
 - Fully mobile and desktop compatible
 - Supabase-powered typeahead search with a local fallback so you can jump to titles instantly
+- Optional PriceCharting integration surfaces loose/CIB/new valuations per game, keeps a price-history sparkline in the modal, and estimates total collection value by status.
 
 This is not another bloated ROM launcher or subscription service.
 It’s a clean, modern tool for serious collectors, archivists, and retro fans who want control over their library.
@@ -36,6 +37,7 @@ It’s a clean, modern tool for serious collectors, archivists, and retro fans w
 - Rotate Supabase anon/service keys with `node scripts/rotate-supabase-keys.js` (updates `.env` and optionally GitHub secrets).
 - (Optional) Add `SUPABASE_STREAM_PAGE_SIZE=<int>` to tune the paginated `.range()` queries (defaults to 400 rows per chunk).
 - (Optional) Provide RPC names for dashboard aggregates via `SUPABASE_RPC_GENRES` and `SUPABASE_RPC_TIMELINE` (or `rpc.genres` / `rpc.timeline` in `config.js`). The default migrations already ship `rpc_genre_counts` / `rpc_timeline_counts`, so you can leave these unset unless you rename the functions.
+- (Optional) Enable live valuations by adding `PRICECHARTING_TOKEN=<your-token>` (plus optional `PRICECHARTING_CURRENCY` and `PRICECHARTING_CACHE_HOURS`)—the dashboard will fetch PriceCharting data, cache it locally, and chart per-status totals.
 
 No Supabase project yet? The UI now auto-loads the curated `data/sample-games.json` dataset so everything renders immediately. Add real credentials later to swap in live data.
 

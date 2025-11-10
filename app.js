@@ -151,13 +151,47 @@ const PLATFORM_NAME_ALIASES = {
   ARCADE: ["Arcade game", "Arcade"],
   "ATARI 2600": ["Atari 2600"],
 };
+const PRICECHARTING_CONFIG = SUPABASE_CONFIG.pricing || {};
+const PRICECHARTING_TOKEN = (PRICECHARTING_CONFIG.token || "").trim();
+const PRICECHARTING_CURRENCY = (PRICECHARTING_CONFIG.currency || "USD")
+  .toString()
+  .trim()
+  .toUpperCase();
+const PRICECHARTING_CACHE_HOURS = Number(PRICECHARTING_CONFIG.cacheHours);
+const PRICE_CACHE_TTL_MS =
+  Number.isFinite(PRICECHARTING_CACHE_HOURS) && PRICECHARTING_CACHE_HOURS > 0
+    ? PRICECHARTING_CACHE_HOURS * 60 * 60 * 1000
+    : 1000 * 60 * 60 * 12;
+const PRICE_CACHE_KEY = "rom_price_quotes_v1";
+const PRICE_HISTORY_LIMIT = 40;
+const PRICE_FETCH_CONCURRENCY = 2;
+const PRICE_API_BASE_URL = "https://www.pricecharting.com";
+const VALUATION_HISTORY_KEY = "rom_collection_valuation_history_v1";
+const VALUATION_HISTORY_LIMIT = 120;
 const fallbackCoverCache = loadFallbackCoverCache();
+const priceInsights = createPriceInsights();
 
 const reduceMotionQuery =
   typeof window !== "undefined" && typeof window.matchMedia === "function"
     ? window.matchMedia("(prefers-reduced-motion: reduce)")
     : null;
 const registeredCarouselWindows = new Set();
+
+const FIELD_ALIAS_MAP = {
+  [COL_GAME]: [COL_GAME, "gameName", "Game Name"],
+  [COL_PLATFORM]: [COL_PLATFORM, "Platform"],
+  [COL_GENRE]: [COL_GENRE, "Genre"],
+  [COL_RELEASE_YEAR]: [COL_RELEASE_YEAR, "releaseYear", "Release Year"],
+  [COL_RATING]: [COL_RATING, "Rating"],
+  [COL_COVER]: [COL_COVER, "cover_url", "coverUrl", "Cover"],
+  screenshots: ["screenshots", "Screenshots"],
+  ratingCategory: ["rating_category", "ratingCategory", "Rating Category"],
+  playerMode: ["player_mode", "playerMode", "Player Mode"],
+  playerCount: ["player_count", "playerCount", "Player Count"],
+  region: ["region", "Region"],
+  notes: ["notes", "Notes"],
+  detailsUrl: ["details_url", "detailsUrl", "Details", "details"],
+};
 let carouselControlsBound = false;
 const PERF_BUFFER_LIMIT = 50;
 const perfMetrics = [];
@@ -873,6 +907,49 @@ function cacheStatusRows(rows) {
   });
 }
 
+function getAliasKeys(aliasKey) {
+  if (!aliasKey) return [];
+  const base = FIELD_ALIAS_MAP[aliasKey];
+  if (base && Array.isArray(base)) return base;
+  if (typeof aliasKey === "string" && aliasKey.includes("_")) {
+    const spaced = aliasKey
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+    return [aliasKey, spaced];
+  }
+  return [aliasKey];
+}
+
+function resolveGameField(game, aliasKey) {
+  if (!game) return "";
+  const aliases = getAliasKeys(aliasKey);
+  for (const key of aliases) {
+    if (Object.prototype.hasOwnProperty.call(game, key)) {
+      const value = game[key];
+      if (value !== undefined && value !== null && value !== "") {
+        return typeof value === "string" ? value.trim() : value;
+      }
+    }
+  }
+  return "";
+}
+
+function markFieldConsumed(consumed, aliasKey) {
+  const aliases = getAliasKeys(aliasKey);
+  aliases.forEach((key) => consumed.add(key));
+}
+
+function formatFieldLabel(fieldName) {
+  if (!fieldName) return "";
+  return fieldName
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function escapeHtml(str) {
   return (str || "").replace(/[&<>"']/g, (ch) => {
     switch (ch) {
@@ -905,35 +982,349 @@ function formatPercent(value, count = 0) {
   return `${Math.round(value)}%`;
 }
 
-function formatCurrencyFromCents(cents, { precise = false, fallback = "—" } = {}) {
-  if (!Number.isFinite(cents)) return fallback;
-  const dollars = cents / 100;
-  if (precise && currencyFormatterPrecise) {
-    return currencyFormatterPrecise.format(dollars);
-  }
-  if (!precise && currencyFormatterWhole) {
-    return currencyFormatterWhole.format(dollars);
-  }
-  return `$${dollars.toFixed(precise ? 2 : 0)}`;
-}
-
-function formatRelativeDate(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
+function createCurrencyFormatter(currency) {
+  const fallback = "USD";
+  const normalized =
+    currency && typeof currency === "string" ? currency.toUpperCase() : fallback;
   try {
-    return date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: normalized });
   } catch {
-    return date.toISOString().slice(0, 10);
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: fallback });
   }
 }
 
-function getActiveStatusMap() {
-  return importedCollection || gameStatuses;
+function normalizePriceValue(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return Number((numeric / 100).toFixed(2));
+}
+
+function selectStatusPrice(status, prices) {
+  if (!prices) return null;
+  const loose = prices.loose ?? null;
+  const cib = prices.cib ?? null;
+  const brandNew = prices.new ?? null;
+  switch (status) {
+    case STATUS_WISHLIST:
+      return brandNew ?? cib ?? loose;
+    case STATUS_TRADE:
+      return loose ?? cib ?? brandNew;
+    case STATUS_BACKLOG:
+    case STATUS_OWNED:
+    default:
+      return cib ?? loose ?? brandNew;
+  }
+}
+
+function resolveConsoleHint(platformName) {
+  if (!platformName) return "";
+  const upper = platformName.toUpperCase();
+  if (PRICECHARTING_CONFIG.consoleHints && PRICECHARTING_CONFIG.consoleHints[upper]) {
+    return PRICECHARTING_CONFIG.consoleHints[upper];
+  }
+  if (PLATFORM_NAME_ALIASES[upper] && PLATFORM_NAME_ALIASES[upper].length) {
+    return PLATFORM_NAME_ALIASES[upper][0];
+  }
+  return platformName;
+}
+
+function buildPriceQuery(row) {
+  if (!row) return "";
+  const title = (row[COL_GAME] || "").trim();
+  const platform = (row[COL_PLATFORM] || "").trim();
+  if (!title) return "";
+  const consoleHint = resolveConsoleHint(platform);
+  return [title, consoleHint].filter(Boolean).join(" ").trim();
+}
+
+function createPriceInsights() {
+  const supportsFetch = typeof fetch === "function";
+  const enabled = Boolean(PRICECHARTING_TOKEN && supportsFetch);
+  const currencyFormatter = createCurrencyFormatter(PRICECHARTING_CURRENCY);
+  const cache =
+    enabled && typeof localStorage !== "undefined"
+      ? (() => {
+          try {
+            const raw = localStorage.getItem(PRICE_CACHE_KEY);
+            if (!raw) return {};
+            const parsed = JSON.parse(raw);
+            return parsed && typeof parsed === "object" ? parsed : {};
+          } catch {
+            return {};
+          }
+        })()
+      : {};
+  const valuationHistory =
+    enabled && typeof localStorage !== "undefined"
+      ? (() => {
+          try {
+            const raw = localStorage.getItem(VALUATION_HISTORY_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return [];
+            return parsed.slice(-VALUATION_HISTORY_LIMIT);
+          } catch {
+            return [];
+          }
+        })()
+      : [];
+  const listeners = new Set();
+  const queue = [];
+  const pending = new Map();
+  let inflight = 0;
+  const fetchImpl =
+    supportsFetch && typeof window !== "undefined"
+      ? fetch.bind(window)
+      : supportsFetch && typeof globalThis !== "undefined"
+        ? fetch.bind(globalThis)
+        : null;
+
+  function persistCache() {
+    if (typeof localStorage === "undefined") return;
+    try {
+      localStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(cache));
+    } catch {
+      /* noop */
+    }
+  }
+
+  function persistHistory() {
+    if (typeof localStorage === "undefined") return;
+    try {
+      localStorage.setItem(VALUATION_HISTORY_KEY, JSON.stringify(valuationHistory));
+    } catch {
+      /* noop */
+    }
+  }
+
+  function notify() {
+    listeners.forEach((listener) => {
+      try {
+        listener();
+      } catch {
+        /* ignore subscriber errors */
+      }
+    });
+  }
+
+  function isEntryFresh(entry) {
+    if (!entry || !entry.fetchedAt) return false;
+    return Date.now() - entry.fetchedAt < PRICE_CACHE_TTL_MS;
+  }
+
+  function buildHistory(previous, prices) {
+    const history = Array.isArray(previous?.history) ? [...previous.history] : [];
+    history.push({
+      ts: Date.now(),
+      loose: prices.loose ?? null,
+      cib: prices.cib ?? null,
+      new: prices.new ?? null,
+    });
+    if (history.length > PRICE_HISTORY_LIMIT) {
+      history.splice(0, history.length - PRICE_HISTORY_LIMIT);
+    }
+    return history;
+  }
+
+  async function requestPricecharting(path) {
+    if (!fetchImpl) return null;
+    const response = await fetchImpl(`${PRICE_API_BASE_URL}${path}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`PriceCharting responded with ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async function fetchQuote(row, previousEntry) {
+    if (!row) return null;
+    const query = buildPriceQuery(row);
+    if (!query) return null;
+    const key = buildRowKey(row);
+    if (!key) return null;
+    let payload = null;
+    if (previousEntry && previousEntry.productId) {
+      try {
+        payload = await requestPricecharting(
+          `/api/product?t=${PRICECHARTING_TOKEN}&id=${encodeURIComponent(previousEntry.productId)}`
+        );
+      } catch {
+        payload = null;
+      }
+    }
+    if (!payload) {
+      payload = await requestPricecharting(
+        `/api/product?t=${PRICECHARTING_TOKEN}&q=${encodeURIComponent(query)}`
+      );
+    }
+    if (!payload || payload.status !== "success") return null;
+    const prices = {
+      loose: normalizePriceValue(payload["loose-price"]),
+      cib: normalizePriceValue(payload["cib-price"]),
+      new: normalizePriceValue(payload["new-price"]),
+    };
+    return {
+      key,
+      query,
+      productId: payload.id,
+      productName: payload["product-name"] || row[COL_GAME] || "",
+      consoleName: payload["console-name"] || row[COL_PLATFORM] || "",
+      fetchedAt: Date.now(),
+      prices,
+      history: buildHistory(previousEntry, prices),
+    };
+  }
+
+  function dequeue() {
+    if (!enabled) return;
+    if (inflight >= PRICE_FETCH_CONCURRENCY) return;
+    const job = queue.shift();
+    if (!job) return;
+    inflight += 1;
+    const prior = job.force ? null : cache[job.key];
+    fetchQuote(job.row, prior)
+      .then((quote) => {
+        if (quote) {
+          cache[job.key] = quote;
+          persistCache();
+          notify();
+        }
+        job.resolve(quote);
+      })
+      .catch((error) => {
+        if (typeof console !== "undefined" && typeof console.debug === "function") {
+          console.debug("PriceCharting fetch failed", error);
+        }
+        job.resolve(null);
+      })
+      .finally(() => {
+        inflight -= 1;
+        dequeue();
+      });
+  }
+
+  function schedule(entry, force) {
+    const key = entry && (entry.key || buildRowKey(entry.row));
+    if (!key || !entry.row) return Promise.resolve(null);
+    if (!force && isEntryFresh(cache[key])) return Promise.resolve(cache[key]);
+    if (pending.has(key)) return pending.get(key);
+    const job = {
+      key,
+      row: entry.row,
+      force: !!force,
+    };
+    const promise = new Promise((resolve) => {
+      job.resolve = resolve;
+    }).finally(() => {
+      pending.delete(key);
+    });
+    pending.set(key, promise);
+    queue.push(job);
+    dequeue();
+    return promise;
+  }
+
+  function queueRows(rows, options = {}) {
+    if (!enabled || !Array.isArray(rows) || rows.length === 0) {
+      return Promise.resolve([]);
+    }
+    return Promise.all(rows.map((entry) => schedule(entry, options.force)));
+  }
+
+  function summarize(rows) {
+    const totals = {
+      [STATUS_OWNED]: 0,
+      [STATUS_WISHLIST]: 0,
+      [STATUS_BACKLOG]: 0,
+      [STATUS_TRADE]: 0,
+      total: 0,
+    };
+    let missing = 0;
+    let lastUpdated = 0;
+    rows.forEach((entry) => {
+      const key = entry.key || buildRowKey(entry.row);
+      if (!key) {
+        missing += 1;
+        return;
+      }
+      const quote = cache[key];
+      if (!quote) {
+        missing += 1;
+        return;
+      }
+      const value = selectStatusPrice(entry.status, quote.prices);
+      if (!Number.isFinite(value)) {
+        missing += 1;
+        return;
+      }
+      totals[entry.status] = (totals[entry.status] || 0) + value;
+      totals.total += value;
+      if (quote.fetchedAt > lastUpdated) lastUpdated = quote.fetchedAt;
+    });
+    if (rows.length && missing === 0 && totals.total > 0) {
+      const snapshot = Number(totals.total.toFixed(2));
+      const latest = valuationHistory[valuationHistory.length - 1];
+      if (!latest || latest.total !== snapshot) {
+        valuationHistory.push({ ts: Date.now(), total: snapshot });
+        if (valuationHistory.length > VALUATION_HISTORY_LIMIT) {
+          valuationHistory.splice(0, valuationHistory.length - VALUATION_HISTORY_LIMIT);
+        }
+        persistHistory();
+      }
+    }
+    return {
+      totals,
+      missing,
+      lastUpdated,
+      history: valuationHistory.slice(),
+    };
+  }
+
+  function subscribe(listener) {
+    if (typeof listener === "function") {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    }
+    return () => {};
+  }
+
+  function getQuote(key) {
+    return cache[key] || null;
+  }
+
+  function getHistoryForKey(key) {
+    const entry = cache[key];
+    return entry && Array.isArray(entry.history) ? entry.history : [];
+  }
+
+  function formatCurrency(value) {
+    if (!Number.isFinite(value)) return "—";
+    return currencyFormatter.format(value);
+  }
+
+  function setQuoteForTest(key, entry) {
+    if (!key || !entry) return;
+    cache[key] = entry;
+    persistCache();
+  }
+
+  return {
+    isEnabled: () => enabled,
+    queueRows,
+    refreshRows(rows) {
+      return queueRows(rows, { force: true });
+    },
+    summarize,
+    subscribe,
+    getQuote,
+    getQuoteHistory: getHistoryForKey,
+    getHistory: () => valuationHistory.slice(),
+    formatCurrency,
+    __setQuoteForTest: setQuoteForTest,
+    __buildQuery: buildPriceQuery,
+  };
 }
 
 function updateCarouselButtons(windowEl) {
@@ -2620,6 +3011,31 @@ function computeStatusCounts() {
   return { counts, missing };
 }
 
+function collectStatusRows() {
+  const statusSource = importedCollection || gameStatuses;
+  const result = [];
+  if (!statusSource) return result;
+  let fallbackRows = null;
+  Object.entries(statusSource).forEach(([key, status]) => {
+    if (!status || status === STATUS_NONE) return;
+    let row = statusRowCache.get(key);
+    if (!row) {
+      if (!fallbackRows) {
+        fallbackRows = new Map();
+        rawData.forEach((entry) => {
+          const entryKey = buildRowKey(entry);
+          if (entryKey && !fallbackRows.has(entryKey)) fallbackRows.set(entryKey, entry);
+        });
+      }
+      row = fallbackRows.get(key);
+    }
+    if (row) {
+      result.push({ key, status, row });
+    }
+  });
+  return result;
+}
+
 function updateDashboard(statusCounts, data) {
   initCarouselControls();
   const statusConfig = [
@@ -2663,6 +3079,136 @@ function updateDashboard(statusCounts, data) {
 
   renderGenreWidget(data);
   renderTimelineWidget(data);
+  renderValuationSummary();
+}
+
+function renderValuationSummary(options = {}) {
+  const card = document.getElementById("dashboard-valuation");
+  const statusEl = document.getElementById("valuationStatus");
+  if (!card || !statusEl) return;
+  if (!priceInsights || !priceInsights.isEnabled()) {
+    card.dataset.disabled = "true";
+    delete card.dataset.loading;
+    statusEl.textContent = "Connect a PriceCharting token to see live valuations.";
+    ["owned", "wishlist", "backlog", "trade", "total"].forEach((key) =>
+      setValuationMetric(key, null)
+    );
+    drawSparkline([]);
+    return;
+  }
+  delete card.dataset.disabled;
+  const trackedRows = collectStatusRows();
+  priceInsights.queueRows(trackedRows, { force: !!options.force });
+  const summary = priceInsights.summarize(trackedRows);
+  ["owned", "wishlist", "backlog", "trade"].forEach((key) => {
+    const statusKey =
+      key === "owned"
+        ? STATUS_OWNED
+        : key === "wishlist"
+          ? STATUS_WISHLIST
+          : key === "backlog"
+            ? STATUS_BACKLOG
+            : STATUS_TRADE;
+    setValuationMetric(key, summary.totals[statusKey]);
+  });
+  setValuationMetric("total", summary.totals.total);
+  if (!trackedRows.length) {
+    statusEl.textContent = "Tag games with statuses to estimate their value.";
+    delete card.dataset.loading;
+  } else if (summary.missing > 0) {
+    statusEl.textContent = `Fetching ${summary.missing} price point${
+      summary.missing === 1 ? "" : "s"
+    }…`;
+    card.dataset.loading = "true";
+  } else if (summary.lastUpdated) {
+    const ago = timeAgo(summary.lastUpdated);
+    statusEl.textContent =
+      ago === "just now" ? "Updated just now." : `Updated ${ago} ago.`;
+    delete card.dataset.loading;
+  } else {
+    statusEl.textContent = "Live prices ready.";
+    delete card.dataset.loading;
+  }
+  drawSparkline(summary.history);
+}
+
+function setValuationMetric(id, value) {
+  const el = document.getElementById(`valuation-${id}`);
+  if (!el) return;
+  if (!priceInsights || !priceInsights.isEnabled() || !Number.isFinite(value)) {
+    el.textContent = "—";
+    return;
+  }
+  el.textContent = priceInsights.formatCurrency(value);
+}
+
+function drawSparkline(history, canvasOverride, strokeColor = "#5db1ff") {
+  const canvas = canvasOverride || document.getElementById("valuationSparkline");
+  if (!canvas || typeof canvas.getContext !== "function") return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const width = canvas.clientWidth || canvas.width || 320;
+  const height = canvas.clientHeight || canvas.height || 100;
+  const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  if (typeof ctx.resetTransform === "function") {
+    ctx.resetTransform();
+  } else {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  }
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, width, height);
+  const points =
+    Array.isArray(history) && history.length
+      ? history
+          .map((point) => Number(point.total))
+          .filter((value) => Number.isFinite(value))
+      : [];
+  if (!points.length) {
+    ctx.strokeStyle = "rgba(255,255,255,0.2)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, height - 4);
+    ctx.lineTo(width, height - 4);
+    ctx.stroke();
+    return;
+  }
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min || 1;
+  const step = points.length === 1 ? width : width / (points.length - 1);
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  points.forEach((value, index) => {
+    const x = index * step;
+    const y = height - ((value - min) / range) * (height - 6) - 3;
+    if (index === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.lineTo(width, height);
+  ctx.lineTo(0, height);
+  ctx.closePath();
+  const gradient = ctx.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, "rgba(93, 177, 255, 0.3)");
+  gradient.addColorStop(1, "rgba(93, 177, 255, 0)");
+  ctx.fillStyle = gradient;
+  ctx.fill();
+}
+
+function timeAgo(timestamp) {
+  if (!timestamp) return "";
+  const diff = Date.now() - timestamp;
+  if (diff < 60000) return "just now";
+  if (diff < 3600000) return `${Math.max(1, Math.round(diff / 60000))}m`;
+  if (diff < 86400000) return `${Math.max(1, Math.round(diff / 3600000))}h`;
+  return `${Math.max(1, Math.round(diff / 86400000))}d`;
+}
+
+if (priceInsights && priceInsights.isEnabled()) {
+  priceInsights.subscribe(() => renderValuationSummary());
 }
 
 function markCollectionValueDirty() {
@@ -3862,6 +4408,147 @@ function hydrateModalPricePanel(modal, key) {
   }
 }
 
+function buildMetadataCard(title, items, { layout = "grid", footerHtml = "" } = {}) {
+  const safeTitle = title ? escapeHtml(title) : "";
+  const hasItems = Array.isArray(items) && items.length > 0;
+  const containerClass = layout === "stacked" ? "metadata-list" : "metadata-grid";
+  const itemClass = layout === "stacked" ? "metadata-item stacked" : "metadata-item";
+  const body = hasItems
+    ? items
+        .map((item) => {
+          const label = escapeHtml(item.label || "");
+          const value = escapeHtml(String(item.value ?? ""));
+          return `<div class="${itemClass}">
+            <p class="metadata-label">${label}</p>
+            <p class="metadata-value">${value}</p>
+          </div>`;
+        })
+        .join("")
+    : "";
+  if (!hasItems && !footerHtml) return "";
+  return `<article class="modal-section">
+    ${safeTitle ? `<h3>${safeTitle}</h3>` : ""}
+    ${hasItems ? `<div class="${containerClass}">${body}</div>` : ""}
+    ${footerHtml || ""}
+  </article>`;
+}
+
+function buildFallbackMetadata(game, consumed) {
+  if (!game) return "";
+  const items = Object.keys(game)
+    .filter((key) => {
+      if (consumed.has(key)) return false;
+      const value = game[key];
+      if (value === null || value === undefined || value === "") return false;
+      if (typeof value === "object") return false;
+      return true;
+    })
+    .map((key) => ({
+      label: formatFieldLabel(key),
+      value: game[key],
+    }));
+  if (!items.length) return "";
+  return buildMetadataCard("Additional Details", items, { layout: "stacked" });
+}
+
+function buildModalMetadataSections(game) {
+  if (!game) return "";
+  const consumed = new Set();
+  markFieldConsumed(consumed, COL_GAME);
+  markFieldConsumed(consumed, COL_COVER);
+  markFieldConsumed(consumed, "cover_url");
+  markFieldConsumed(consumed, "coverUrl");
+  markFieldConsumed(consumed, "screenshots");
+  const sections = [];
+
+  const releaseItems = [];
+  const platformValue = resolveGameField(game, COL_PLATFORM);
+  if (platformValue) {
+    releaseItems.push({ label: "Platform", value: platformValue });
+    markFieldConsumed(consumed, COL_PLATFORM);
+  }
+  const releaseYear = getReleaseYear(game);
+  if (releaseYear) {
+    releaseItems.push({ label: "Release Year", value: releaseYear });
+    markFieldConsumed(consumed, COL_RELEASE_YEAR);
+  }
+  const ratingValue = parseFloat(game[COL_RATING]);
+  const ratingCategory = resolveGameField(game, "ratingCategory");
+  if (Number.isFinite(ratingValue)) {
+    let text = ratingValue.toFixed(1).replace(/\.0$/, "");
+    if (ratingCategory) text += ` (${ratingCategory})`;
+    releaseItems.push({ label: "Rating", value: text });
+    markFieldConsumed(consumed, COL_RATING);
+    if (ratingCategory) markFieldConsumed(consumed, "ratingCategory");
+  } else if (ratingCategory) {
+    releaseItems.push({ label: "Rating Tier", value: ratingCategory });
+    markFieldConsumed(consumed, "ratingCategory");
+  }
+  if (releaseItems.length) {
+    sections.push(buildMetadataCard("Release & Rating", releaseItems));
+  }
+
+  const gameplayItems = [];
+  const genreValue = resolveGameField(game, COL_GENRE);
+  if (genreValue) {
+    const genres = genreValue
+      .split(",")
+      .map((g) => g.trim())
+      .filter(Boolean)
+      .join(", ");
+    gameplayItems.push({ label: "Genre", value: genres || genreValue });
+    markFieldConsumed(consumed, COL_GENRE);
+  }
+  const modeValue = resolveGameField(game, "playerMode");
+  if (modeValue) {
+    gameplayItems.push({ label: "Player Mode", value: modeValue });
+    markFieldConsumed(consumed, "playerMode");
+  }
+  const playerCount = resolveGameField(game, "playerCount");
+  if (playerCount) {
+    gameplayItems.push({ label: "Players", value: playerCount });
+    markFieldConsumed(consumed, "playerCount");
+  }
+  if (gameplayItems.length) {
+    sections.push(buildMetadataCard("Gameplay", gameplayItems));
+  }
+
+  const regionItems = [];
+  const regionValue = resolveGameField(game, "region");
+  if (regionValue) {
+    regionItems.push({ label: "Regions", value: regionValue });
+    markFieldConsumed(consumed, "region");
+  }
+  const notesValue = resolveGameField(game, "notes");
+  if (notesValue) {
+    regionItems.push({ label: "Notes", value: notesValue });
+    markFieldConsumed(consumed, "notes");
+  }
+  const detailsUrl = resolveGameField(game, "detailsUrl");
+  if (detailsUrl) {
+    markFieldConsumed(consumed, "detailsUrl");
+  }
+  if (regionItems.length || detailsUrl) {
+    const footerHtml = detailsUrl
+      ? `<div class="metadata-footer"><a class="metadata-link" href="${escapeHtml(
+          detailsUrl
+        )}" target="_blank" rel="noopener">View reference</a></div>`
+      : "";
+    sections.push(
+      buildMetadataCard("Regions & Versions", regionItems, {
+        layout: "stacked",
+        footerHtml,
+      })
+    );
+  }
+
+  const fallback = buildFallbackMetadata(game, consumed);
+  if (fallback) sections.push(fallback);
+
+  if (!sections.length) return "";
+  return `<div class="modal-sections">${sections.join("")}</div>`;
+}
+
 function renderPriceHistoryChart(container, history) {
   if (!container) return;
   const series = Array.isArray(history)
@@ -3934,7 +4621,33 @@ function showGameModal(game) {
     html += `<dt>${k}:</dt><dd>${game[k]}</dd>`;
   }
   html += `</dl>`;
-  html += buildPricePanelMarkup(key);
+  if (priceInsights && priceInsights.isEnabled()) {
+    html += `<section class="price-panel" data-price-panel>
+      <h3>Price &amp; Value</h3>
+      <div class="price-panel-grid">
+        <div class="price-panel-metric">
+          <span>Loose</span>
+          <strong data-price-loose>—</strong>
+        </div>
+        <div class="price-panel-metric">
+          <span>CIB</span>
+          <strong data-price-cib>—</strong>
+        </div>
+        <div class="price-panel-metric">
+          <span>New</span>
+          <strong data-price-new>—</strong>
+        </div>
+        <div class="price-panel-metric">
+          <span>Tracked Status</span>
+          <strong data-price-status>—</strong>
+        </div>
+      </div>
+      <div class="price-panel-history">
+        <canvas data-price-sparkline width="260" height="80"></canvas>
+      </div>
+      <p class="price-panel-note" data-price-note>Fetching live prices…</p>
+    </section>`;
+  }
   // Resource links (Google, YouTube, GameFAQs)
   const query = encodeURIComponent(
     (game[COL_GAME] || "") + " " + (game[COL_PLATFORM] || "")
@@ -3966,6 +4679,10 @@ function showGameModal(game) {
     modal.style.display = "block";
     modal.focus();
   }, 1);
+
+  if (priceInsights && priceInsights.isEnabled()) {
+    renderModalPricePanel(modal, game);
+  }
 
   // Trap focus for accessibility
   modal.setAttribute("tabindex", "-1");
@@ -3999,6 +4716,55 @@ function showGameModal(game) {
     modal.innerHTML = "";
     document.removeEventListener("keydown", escHandler);
   }
+}
+
+function renderModalPricePanel(modal, game) {
+  if (!priceInsights || !priceInsights.isEnabled() || !modal || !game) return;
+  const panel = modal.querySelector("[data-price-panel]");
+  if (!panel) return;
+  const key = buildRowKey(game);
+  if (!key) return;
+  const statusSource = importedCollection || gameStatuses;
+  const status = statusSource[key] || STATUS_NONE;
+  const noteEl = panel.querySelector("[data-price-note]");
+  if (noteEl) noteEl.textContent = "Fetching live prices…";
+  const entry = [{ key, status, row: game }];
+  const cached = priceInsights.getQuoteForKey(key);
+  if (cached) updateModalPricePanel(panel, cached, status);
+  priceInsights.queueRows(entry).then(() => {
+    const updated = priceInsights.getQuoteForKey(key);
+    updateModalPricePanel(panel, updated, status);
+  });
+}
+
+function updateModalPricePanel(panel, quote, status) {
+  if (!panel || !priceInsights || !priceInsights.isEnabled()) return;
+  const looseEl = panel.querySelector("[data-price-loose]");
+  const cibEl = panel.querySelector("[data-price-cib]");
+  const newEl = panel.querySelector("[data-price-new]");
+  const statusEl = panel.querySelector("[data-price-status]");
+  const noteEl = panel.querySelector("[data-price-note]");
+  const sparkline = panel.querySelector("[data-price-sparkline]");
+  const prices = (quote && quote.prices) || {};
+  if (looseEl) looseEl.textContent = priceInsights.formatCurrency(prices.loose);
+  if (cibEl) cibEl.textContent = priceInsights.formatCurrency(prices.cib);
+  if (newEl) newEl.textContent = priceInsights.formatCurrency(prices.new);
+  const statusValue = selectStatusPrice(status, prices);
+  if (statusEl) statusEl.textContent = priceInsights.formatCurrency(statusValue);
+  if (!quote) {
+    if (noteEl) noteEl.textContent = "Still looking for a PriceCharting match.";
+    drawSparkline([], sparkline, "#ff8cf9");
+    return;
+  }
+  if (noteEl) {
+    if (Number.isFinite(statusValue)) {
+      const label = STATUS_LABELS[status] || "Tracked";
+      noteEl.textContent = `${label} estimate: ${priceInsights.formatCurrency(statusValue)}`;
+    } else {
+      noteEl.textContent = "Price data saved, but no value for this status.";
+    }
+  }
+  drawSparkline(quote.history || [], sparkline, "#ff8cf9");
 }
 
 function toggleSort(column) {
@@ -4165,6 +4931,12 @@ if (!disableBootstrapFlag && canBootstrap) {
           restoreInput.value = "";
         }
       });
+      const valuationRefreshBtn = document.getElementById("valuationRefresh");
+      if (valuationRefreshBtn) {
+        valuationRefreshBtn.addEventListener("click", () => {
+          renderValuationSummary({ force: true });
+        });
+      }
     })
     .catch((err) => {
       const message = err && err.message ? err.message : err;
@@ -4244,6 +5016,28 @@ const testApi = {
     }
   },
   __getBackupPayload: getBackupPayload,
+  __pricing: {
+    isEnabled: () => !!(priceInsights && priceInsights.isEnabled()),
+    buildQuery: buildPriceQuery,
+    summarize(rows) {
+      if (!priceInsights) return null;
+      return priceInsights.summarize(Array.isArray(rows) ? rows : []);
+    },
+    format(value) {
+      if (!priceInsights) return value;
+      return priceInsights.formatCurrency(value);
+    },
+    __injectQuote(key, quote) {
+      if (priceInsights && priceInsights.__setQuoteForTest) {
+        priceInsights.__setQuoteForTest(key, quote);
+      }
+    },
+    __forceEnable(state = true) {
+      if (priceInsights) {
+        priceInsights.isEnabled = () => !!state;
+      }
+    },
+  },
   __getState() {
     return {
       statuses: gameStatuses,

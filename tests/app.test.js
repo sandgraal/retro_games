@@ -111,6 +111,15 @@ function resetDom() {
           <span id="dash-trade-percent"></span>
         </div>
       </div>
+      <div id="dashboard-valuation">
+        <button id="valuationRefresh"></button>
+        <p id="valuationStatus"></p>
+        <strong id="valuation-owned"></strong>
+        <strong id="valuation-wishlist"></strong>
+        <strong id="valuation-backlog"></strong>
+        <strong id="valuation-trade"></strong>
+        <strong id="valuation-total"></strong>
+        <canvas id="valuationSparkline" width="200" height="80"></canvas>
       <div class="dashboard-card dashboard-price" id="dashboard-price" data-loaded="false">
         <div class="price-summary-header">
           <h2>Collection Value</h2>
@@ -259,6 +268,40 @@ describe("browse pagination controls", () => {
     expect(document.getElementById("browseSummary").textContent).toContain(
       "Showing 1–2 of 5"
     );
+  });
+});
+
+describe("price insights helpers", () => {
+  it("builds a PriceCharting query that includes platform hints", () => {
+    const query = app.__pricing.buildQuery(SAMPLE_DATA[0]);
+    expect(query).toContain("Chrono Trigger");
+    expect(query.toLowerCase()).toContain("super nintendo");
+  });
+
+  it("summarizes injected quotes into valuation totals", () => {
+    app.__pricing.__forceEnable(true);
+    const now = Date.now();
+    app.__pricing.__injectQuote("Chrono Trigger___SNES", {
+      prices: { loose: 80.25, cib: 120.5, new: 210 },
+      fetchedAt: now,
+      history: [],
+    });
+    app.__pricing.__injectQuote("Castlevania Symphony Of The Night___PS1", {
+      prices: { new: 250.25 },
+      fetchedAt: now,
+      history: [],
+    });
+    const summary = app.__pricing.summarize([
+      { key: "Chrono Trigger___SNES", status: "owned", row: SAMPLE_DATA[0] },
+      {
+        key: "Castlevania Symphony Of The Night___PS1",
+        status: "wishlist",
+        row: SAMPLE_DATA[1],
+      },
+    ]);
+    expect(summary.totals.owned).toBeCloseTo(120.5, 2);
+    expect(summary.totals.wishlist).toBeCloseTo(250.25, 2);
+    expect(summary.totals.total).toBeCloseTo(370.75, 2);
   });
 });
 

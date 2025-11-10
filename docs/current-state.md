@@ -31,6 +31,7 @@ _Last updated: March 2025_
 - Accessibility helpers include focus trapping in the modal and keyboard shortcuts (Escape closes modal, Enter triggers import field).
 - Table headers are now interactive, enabling ascending/descending sorting per column with keyboard support.
 - A dedicated Collection Value card surfaces loose/CIB/new totals per status (Owned/Wishlist/Backlog/Trade) and the latest snapshot timestamp, while the modal presents a price panel with current values plus a sparkline showing recent history for each title.
+- The modal now groups metadata into “Release & Rating,” “Gameplay,” and “Regions & Versions” cards so rating tiers, player modes/counts, regions, notes, and reference links are easy to scan instead of living in an undifferentiated list.
 
 ## Operational Notes
 
