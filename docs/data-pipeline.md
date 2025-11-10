@@ -15,8 +15,9 @@ This project now tracks its Supabase schema in `supabase/migrations/`. The initi
 1. Install Supabase CLI (`npm install -g supabase` or follow Supabase docs).
 2. Authenticate and link your project (`supabase login`, `supabase link --project-ref <ref>`).
 3. Apply migrations: `supabase db push` (dev) or `supabase db reset` (local Docker).
-4. Populate lookup tables and games via the seeding SQL generator: `npm run seed:generate` to produce `supabase/seed.sql`, then run `supabase db remote commit --file supabase/seed.sql` or `psql` against your instance.
-5. Schedule backups via `.github/workflows/db-backup.yml` (requires `SUPABASE_DB_URL` secret); artifacts retain the latest dump.
+4. Validate migrations with `scripts/run-supabase-lint.sh` (wraps `supabase db lint` but gracefully skips if the `plpgsql_check` extension is unavailable on the target database).
+5. Populate lookup tables and games via the seeding SQL generator: `npm run seed:generate` to produce `supabase/seed.sql`, then run `supabase db remote commit --file supabase/seed.sql` or `psql` against your instance.
+6. Schedule backups via `.github/workflows/db-backup.yml` (requires `SUPABASE_DB_URL` secret); artifacts retain the latest dump.
 
 ## Next steps
 
