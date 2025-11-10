@@ -87,4 +87,4 @@ jobs:
       - name: Supabase db lint
         env:
           PGSSLMODE: disable
-        run: supabase db lint --db-url "$DATABASE_URL" --fail-on error
+        run: scripts/run-supabase-lint.sh
