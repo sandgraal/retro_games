@@ -75,6 +75,14 @@ jobs:
         with:
           version: latest
       - name: Apply migrations and seed
-        run: supabase db reset --db-url "$DATABASE_URL" --yes
+        run: |
+          set -euo pipefail
+          for file in supabase/migrations/*.sql; do
+            [ -e "$file" ] || continue
+            echo "Applying migration: $file"
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$file"
+          done
+          echo "Seeding database"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/seed.sql
       - name: Supabase db lint
         run: supabase db lint --db-url "$DATABASE_URL" --fail-on error
