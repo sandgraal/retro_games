@@ -4362,9 +4362,8 @@ function showError(msg) {
   showStatus(msg, "error");
 }
 
-function buildPricePanelMarkup(key) {
-  const safeKey = escapeHtml(key || "");
-  return `<section class="price-panel" data-price-panel data-price-key="${safeKey}">
+function buildPricePanelMarkup() {
+  return `<section class="price-panel" data-price-panel>
     <h3>Price &amp; Value</h3>
     <div class="price-panel-grid">
       <div class="price-panel-metric">
@@ -4672,7 +4671,7 @@ function showGameModal(game) {
     html += `</dl>`;
   }
   if (priceInsights && priceInsights.isEnabled()) {
-    html += buildPricePanelMarkup(key);
+    html += buildPricePanelMarkup();
   }
   // Resource links (Google, YouTube, GameFAQs)
   const query = encodeURIComponent(
