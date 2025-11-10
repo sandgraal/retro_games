@@ -31,6 +31,10 @@ SUPABASE_ANON_KEY=anon-key
 # SUPABASE_STREAM_PAGE_SIZE=400
 # SUPABASE_RPC_GENRES=rpc_genre_counts
 # SUPABASE_RPC_TIMELINE=rpc_timeline_counts
+# Optional PriceCharting integration (leave unset to disable)
+# PRICECHARTING_TOKEN=your-api-token
+# PRICECHARTING_CURRENCY=USD
+# PRICECHARTING_CACHE_HOURS=12
 ```
 
 ## 3. Generate `config.js`
