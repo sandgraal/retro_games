@@ -9,7 +9,7 @@ create extension if not exists "pgcrypto"; -- for gen_random_uuid
 -- Ensure the auth schema/function exist so policies referencing auth.uid() succeed
 create schema if not exists auth;
 
-do $$
+do $do$
 begin
   if not exists (
     select 1
@@ -19,7 +19,7 @@ begin
       and n.nspname = 'auth'
       and pg_get_function_identity_arguments(p.oid) = ''
   ) then
-    execute $$
+    execute $exec$
       create function auth.uid()
       returns uuid
       language sql
@@ -27,10 +27,10 @@ begin
       as $func$
         select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
       $func$;
-    $$;
+    $exec$;
   end if;
 end;
-$$;
+$do$;
 
 create table if not exists public.platforms (
   id uuid primary key default gen_random_uuid(),
