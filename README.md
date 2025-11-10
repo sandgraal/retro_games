@@ -69,6 +69,14 @@ Want the Collection Value card and modal price panel to light up with real valua
 
 3. When Supabase or API credentials are unavailable, the UI falls back to `data/sample-price-history.json` so contributors can still see how the experience behaves.
 
+### Automated refresh via GitHub Actions
+
+Once your Supabase project and API token are configured, you can let GitHub keep valuations fresh automatically:
+
+- Populate the `PRICECHARTING_TOKEN`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` secrets in your repository (optionally add `PRICECHARTING_REFRESH_HOURS` to fine-tune the minimum refresh window).
+- The scheduled workflow at `.github/workflows/price-refresh.yml` runs twice per day (and can be triggered manually) to execute `npm run prices:update` with a default limit of 25 titles per run, persisting its progress in `data/pricecharting-cache.json` via the GitHub Actions cache.
+- Use the manual `workflow_dispatch` inputs to override the limit, target games via substring filter, force a refresh regardless of cache age, or perform a dry run before enabling production secrets.
+
 ## Development
 
 - `npm run lint` / `npm run lint:fix` – Run ESLint (with Prettier compat) across the main app file and build scripts.

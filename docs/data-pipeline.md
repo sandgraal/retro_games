@@ -48,4 +48,8 @@ Run it with:
 PRICECHARTING_TOKEN=... SUPABASE_SERVICE_ROLE_KEY=... npm run prices:update -- --limit 25
 ```
 
-Use `--filter "chrono trigger"` for targeted refreshes or `--dry-run` to validate credentials without writing. Cron the script (or port it to a Cloud Function) to satisfy the “background jobs refresh pricing data” bullet from the implementation plan.
+Use `--filter "chrono trigger"` for targeted refreshes or `--dry-run` to validate credentials without writing. The scheduled GitHub Actions workflow described below now runs this utility regularly; fall back to the CLI when you need manual overrides or local debugging.
+
+## Automated price refresh workflow
+
+The repository ships `.github/workflows/price-refresh.yml`, which installs dependencies, restores the cached `data/pricecharting-cache.json`, and runs `npm run prices:update -- --limit 25` twice per day. Configure the `PRICECHARTING_TOKEN`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` secrets (plus optional `PRICECHARTING_REFRESH_HOURS`) in GitHub to enable the job. Trigger it manually when you need an ad-hoc update, override the default limit/filter via `workflow_dispatch` inputs, or pass `dry_run=true` to verify credentials without writing snapshots.

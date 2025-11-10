@@ -1,0 +1,95 @@
+name: Price Snapshot Refresh
+
+on:
+  schedule:
+    # Run twice per day to keep valuations reasonably fresh without hammering the API
+    - cron: "15 */12 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Maximum number of games to refresh (defaults to 25)"
+        required: false
+        default: "25"
+      filter:
+        description: "Optional case-insensitive substring to target specific games/platforms"
+        required: false
+      force:
+        description: "Set to true to ignore the refresh window and always update matching games"
+        required: false
+        default: "false"
+      dry_run:
+        description: "Set to true to exercise the script without writing to Supabase"
+        required: false
+        default: "false"
+
+env:
+  REFRESH_LIMIT: ${{ github.event.inputs.limit || '25' }}
+  REFRESH_FILTER: ${{ github.event.inputs.filter || '' }}
+  REFRESH_FORCE: ${{ github.event.inputs.force || 'false' }}
+  REFRESH_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore price cache
+        id: price-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/pricecharting-cache.json
+          key: price-cache-${{ github.run_id }}
+          restore-keys: |
+            price-cache-
+
+      - name: Ensure cache file exists
+        run: |
+          mkdir -p data
+          if [ ! -f data/pricecharting-cache.json ]; then
+            echo "{}" > data/pricecharting-cache.json
+          fi
+
+      - name: Refresh PriceCharting snapshots
+        env:
+          PRICECHARTING_TOKEN: ${{ secrets.PRICECHARTING_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PRICECHARTING_REFRESH_HOURS: ${{ secrets.PRICECHARTING_REFRESH_HOURS || '' }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PRICECHARTING_TOKEN:-}" ] || [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "PRICECHARTING_TOKEN, SUPABASE_URL, and SUPABASE_SERVICE_ROLE_KEY secrets are required." >&2
+            exit 1
+          fi
+
+          ARGS=(--limit "${REFRESH_LIMIT:-25}")
+          if [ -n "${REFRESH_FILTER:-}" ]; then
+            ARGS+=("--filter" "${REFRESH_FILTER}")
+          fi
+          if [ "${REFRESH_FORCE:-false}" = "true" ]; then
+            ARGS+=("--force")
+          fi
+          if [ "${REFRESH_DRY_RUN:-false}" = "true" ]; then
+            ARGS+=("--dry-run")
+          fi
+
+          echo "Running price refresh with args: ${ARGS[*]}"
+          npm run prices:update -- "${ARGS[@]}"
+
+      - name: Save price cache
+        if: ${{ success() }}
+        uses: actions/cache/save@v4
+        with:
+          path: data/pricecharting-cache.json
+          key: price-cache-${{ github.run_id }}
