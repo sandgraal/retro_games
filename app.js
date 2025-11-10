@@ -4729,10 +4729,10 @@ function renderModalPricePanel(modal, game) {
   const noteEl = panel.querySelector("[data-price-note]");
   if (noteEl) noteEl.textContent = "Fetching live prices…";
   const entry = [{ key, status, row: game }];
-  const cached = priceInsights.getQuoteForKey(key);
+  const cached = priceInsights.getQuote(key);
   if (cached) updateModalPricePanel(panel, cached, status);
   priceInsights.queueRows(entry).then(() => {
-    const updated = priceInsights.getQuoteForKey(key);
+    const updated = priceInsights.getQuote(key);
     updateModalPricePanel(panel, updated, status);
   });
 }
