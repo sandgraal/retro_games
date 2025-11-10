@@ -66,7 +66,8 @@ begin
       and tablename = 'game_price_snapshots'
       and policyname = 'service snapshot inserts'
   ) then
-    execute 'create policy "service snapshot inserts" on public.game_price_snapshots for insert with check (auth.role() = ''service_role'')';
+    execute $$create policy "service snapshot inserts" on public.game_price_snapshots
+      for insert with check (coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role')$$;
   end if;
 
   if not exists (
@@ -76,7 +77,8 @@ begin
       and tablename = 'game_price_snapshots'
       and policyname = 'service snapshot deletes'
   ) then
-    execute 'create policy "service snapshot deletes" on public.game_price_snapshots for delete using (auth.role() = ''service_role'')';
+    execute $$create policy "service snapshot deletes" on public.game_price_snapshots
+      for delete using (coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role')$$;
   end if;
 end;
 $$;
