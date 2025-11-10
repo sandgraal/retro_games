@@ -312,6 +312,20 @@ h1 {
   margin: 0 auto;
 }
 
+/* Prevent grid/flex children from forcing horizontal overflow */
+.app-shell > *,
+.app-hero > *,
+.filters-panel > *,
+.trending-section > *,
+.trending-carousel,
+.trending-carousel > *,
+.genre-carousel,
+.genre-carousel > *,
+#dashboard > *,
+.browse-toolbar > * {
+  min-width: 0;
+}
+
 .app-hero {
   display: grid;
   gap: clamp(1rem, 2.5vw, 2.4rem);
