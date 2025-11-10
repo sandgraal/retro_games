@@ -85,4 +85,6 @@ jobs:
           echo "Seeding database"
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/seed.sql
       - name: Supabase db lint
+        env:
+          PGSSLMODE: disable
         run: supabase db lint --db-url "$DATABASE_URL" --fail-on error
