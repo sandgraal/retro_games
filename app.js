@@ -96,6 +96,31 @@ const FALLBACK_COVER_CACHE_KEY = "rom_cover_cache_v1";
 const FALLBACK_COVER_CACHE_LIMIT = 400;
 const FALLBACK_COVER_RETRY_MS = 1000 * 60 * 60 * 24 * 7;
 const FALLBACK_COVER_ATTEMPT_LIMIT = 25;
+const PRICE_SAMPLE_URL = "./data/sample-price-history.json";
+const PRICE_LATEST_VIEW = "game_price_latest";
+const PRICE_SNAPSHOT_TABLE = "game_price_snapshots";
+const PRICE_FETCH_CHUNK = 200;
+const PRICE_HISTORY_LIMIT = 24;
+const PRICE_HISTORY_PAD = 8;
+const PRICE_STATUS_KEYS = [STATUS_OWNED, STATUS_WISHLIST, STATUS_BACKLOG, STATUS_TRADE];
+const PRICE_SOURCE = "pricecharting";
+const currencyFormatterWhole =
+  typeof Intl !== "undefined"
+    ? new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0,
+      })
+    : null;
+const currencyFormatterPrecise =
+  typeof Intl !== "undefined"
+    ? new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : null;
 const PLATFORM_NAME_ALIASES = {
   SNES: ["Super Nintendo Entertainment System"],
   NES: ["Nintendo Entertainment System"],
@@ -353,6 +378,183 @@ async function loadGameData() {
   }
 }
 
+let samplePriceDataPromise = null;
+
+async function hydratePriceData(rows) {
+  if (!Array.isArray(rows) || !rows.length) return;
+  const keys = Array.from(new Set(rows.map((row) => buildRowKey(row)).filter(Boolean)));
+  if (!keys.length) return;
+  try {
+    let latestRecords = [];
+    if (supabase) {
+      latestRecords = await fetchLatestPricesFromSupabase(keys);
+    } else {
+      latestRecords = await fetchLatestPricesFromSample(keys);
+      priceState.fallback = true;
+    }
+    if (!Array.isArray(latestRecords) || !latestRecords.length) return;
+    indexLatestPrices(latestRecords);
+    priceState.ready = true;
+    priceState.summaryDirty = true;
+    updateCollectionValueSummary();
+  } catch (err) {
+    console.warn("Price data unavailable:", err);
+    if (!priceState.fallback) {
+      try {
+        const sampleRecords = await fetchLatestPricesFromSample(keys);
+        if (Array.isArray(sampleRecords) && sampleRecords.length) {
+          priceState.fallback = true;
+          indexLatestPrices(sampleRecords);
+          priceState.summaryDirty = true;
+          updateCollectionValueSummary();
+        }
+      } catch (fallbackErr) {
+        console.warn("Sample price history unavailable:", fallbackErr);
+      }
+    }
+  }
+}
+
+async function fetchLatestPricesFromSupabase(keys) {
+  if (!supabase || !keys.length) return [];
+  const rows = [];
+  for (let i = 0; i < keys.length; i += PRICE_FETCH_CHUNK) {
+    const chunk = keys.slice(i, i + PRICE_FETCH_CHUNK);
+    const { data, error } = await supabase
+      .from(PRICE_LATEST_VIEW)
+      .select(
+        "game_key, game_name, platform, product_id, product_name, console_name, currency, loose_price_cents, cib_price_cents, new_price_cents, source, snapshot_date, fetched_at"
+      )
+      .in("game_key", chunk);
+    if (error) {
+      throw new Error(error.message || "Supabase price lookup failed.");
+    }
+    if (Array.isArray(data)) rows.push(...data);
+  }
+  return rows;
+}
+
+async function ensureSamplePriceData() {
+  if (samplePriceDataPromise) return samplePriceDataPromise;
+  if (typeof fetch !== "function") {
+    throw new Error("Fetch API unavailable for loading sample pricing data.");
+  }
+  samplePriceDataPromise = fetch(PRICE_SAMPLE_URL, { cache: "no-store" })
+    .then((response) => {
+      if (!response.ok) throw new Error("Sample price history missing.");
+      return response.json();
+    })
+    .then((payload) => {
+      priceState.fallbackLatest = Array.isArray(payload.latest) ? payload.latest : [];
+      priceState.fallbackHistory = payload.history || {};
+      return priceState.fallbackLatest;
+    })
+    .catch((err) => {
+      samplePriceDataPromise = null;
+      throw err;
+    });
+  return samplePriceDataPromise;
+}
+
+async function fetchLatestPricesFromSample(keys) {
+  const latest = await ensureSamplePriceData();
+  if (!Array.isArray(latest) || !latest.length) return [];
+  if (!keys || !keys.length) return latest;
+  const keySet = new Set(keys);
+  return latest.filter((entry) => entry && keySet.has(entry.game_key));
+}
+
+function indexLatestPrices(records) {
+  const nextMap = new Map();
+  let newestSnapshot = null;
+  records.forEach((record) => {
+    if (!record || !record.game_key) return;
+    nextMap.set(record.game_key, record);
+    if (record.snapshot_date) {
+      const date = new Date(record.snapshot_date);
+      if (!Number.isNaN(date.getTime())) {
+        if (!newestSnapshot || date > newestSnapshot) {
+          newestSnapshot = date;
+        }
+      }
+    }
+  });
+  priceState.latest = nextMap;
+  priceState.lastUpdated = newestSnapshot;
+}
+
+function resolvePriceValue(entry) {
+  if (!entry || typeof entry !== "object") return null;
+  if (Number.isFinite(entry.cib_price_cents)) return entry.cib_price_cents;
+  if (Number.isFinite(entry.loose_price_cents)) return entry.loose_price_cents;
+  if (Number.isFinite(entry.new_price_cents)) return entry.new_price_cents;
+  return null;
+}
+
+async function loadPriceHistory(gameKey) {
+  if (!gameKey) return [];
+  if (priceState.histories.has(gameKey)) {
+    const cached = priceState.histories.get(gameKey);
+    return Array.isArray(cached) ? cached : [];
+  }
+  if (priceState.fallback && priceState.fallbackHistory[gameKey]) {
+    const fallbackHistory = normalizeHistoryEntries(priceState.fallbackHistory[gameKey]);
+    priceState.histories.set(gameKey, fallbackHistory);
+    return fallbackHistory;
+  }
+  if (!supabase) return [];
+  if (priceState.historyRequests.has(gameKey)) {
+    return priceState.historyRequests.get(gameKey);
+  }
+  const historyPromise = (async () => {
+    const { data, error } = await supabase
+      .from(PRICE_SNAPSHOT_TABLE)
+      .select("snapshot_date, loose_price_cents, cib_price_cents, new_price_cents")
+      .eq("game_key", gameKey)
+      .order("snapshot_date", { ascending: true })
+      .limit(PRICE_HISTORY_LIMIT);
+    if (error) {
+      throw new Error(error.message || "Price history query failed.");
+    }
+    const normalized = normalizeHistoryEntries(data || []);
+    priceState.histories.set(gameKey, normalized);
+    return normalized;
+  })();
+  priceState.historyRequests.set(gameKey, historyPromise);
+  return historyPromise.finally(() => priceState.historyRequests.delete(gameKey));
+}
+
+function normalizeHistoryEntries(entries) {
+  if (!Array.isArray(entries)) return [];
+  return entries
+    .map((entry) => ({
+      snapshot_date: entry.snapshot_date,
+      loose_price_cents: normalizeCents(entry.loose_price_cents),
+      cib_price_cents: normalizeCents(entry.cib_price_cents),
+      new_price_cents: normalizeCents(entry.new_price_cents),
+    }))
+    .filter((entry) => entry && entry.snapshot_date)
+    .sort((a, b) => {
+      const timeA = new Date(a.snapshot_date).getTime();
+      const timeB = new Date(b.snapshot_date).getTime();
+      return timeA - timeB;
+    });
+}
+
+function normalizeCents(value) {
+  if (Number.isFinite(value)) return value;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function computePriceDelta(history) {
+  if (!Array.isArray(history) || history.length < 2) return null;
+  const first = resolvePriceValue(history[0]);
+  const last = resolvePriceValue(history[history.length - 1]);
+  if (!Number.isFinite(first) || !Number.isFinite(last) || first === 0) return null;
+  return ((last - first) / first) * 100;
+}
+
 function initStreamStateFromPage(page, rowsFetched, filterPayload = null) {
   if (!streamState.enabled) {
     streamState.active = false;
@@ -397,6 +599,17 @@ let importedCollection = null;
 let importedNotes = null;
 /** @type {FilterState} */
 let persistedFilters = {};
+const priceState = {
+  latest: new Map(),
+  histories: new Map(),
+  fallbackHistory: {},
+  fallbackLatest: [],
+  lastUpdated: null,
+  ready: false,
+  fallback: false,
+  summaryDirty: true,
+  historyRequests: new Map(),
+};
 let filterPlatform = "",
   filterGenre = "",
   searchValue = "",
@@ -692,6 +905,37 @@ function formatPercent(value, count = 0) {
   return `${Math.round(value)}%`;
 }
 
+function formatCurrencyFromCents(cents, { precise = false, fallback = "—" } = {}) {
+  if (!Number.isFinite(cents)) return fallback;
+  const dollars = cents / 100;
+  if (precise && currencyFormatterPrecise) {
+    return currencyFormatterPrecise.format(dollars);
+  }
+  if (!precise && currencyFormatterWhole) {
+    return currencyFormatterWhole.format(dollars);
+  }
+  return `$${dollars.toFixed(precise ? 2 : 0)}`;
+}
+
+function formatRelativeDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  try {
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
+}
+
+function getActiveStatusMap() {
+  return importedCollection || gameStatuses;
+}
+
 function updateCarouselButtons(windowEl) {
   if (!windowEl || !windowEl.parentElement) return;
   const parent = windowEl.parentElement;
@@ -829,9 +1073,11 @@ function loadStatuses() {
   } catch {
     gameStatuses = {};
   }
+  markCollectionValueDirty();
 }
 function saveStatuses() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(gameStatuses));
+  markCollectionValueDirty();
 }
 
 function loadNotes() {
@@ -2419,6 +2665,77 @@ function updateDashboard(statusCounts, data) {
   renderTimelineWidget(data);
 }
 
+function markCollectionValueDirty() {
+  priceState.summaryDirty = true;
+  updateCollectionValueSummary();
+}
+
+function updateCollectionValueSummary() {
+  if (typeof document === "undefined") return;
+  if (!priceState.latest || !priceState.latest.size) return;
+  if (!priceState.summaryDirty && priceState.ready) return;
+  const container = document.getElementById("dashboard-price");
+  if (!container) return;
+  const totals = computeCollectionValueTotals(getActiveStatusMap());
+  PRICE_STATUS_KEYS.forEach((status) => {
+    const metrics = totals[status];
+    if (!metrics) return;
+    const looseEl = document.getElementById(`price-${status}-loose`);
+    const cibEl = document.getElementById(`price-${status}-cib`);
+    const newEl = document.getElementById(`price-${status}-new`);
+    const countEl = document.getElementById(`price-${status}-count`);
+    const pricedEl = document.getElementById(`price-${status}-priced`);
+    const looseText =
+      metrics.priced > 0 ? formatCurrencyFromCents(metrics.loose || 0) : "—";
+    const cibText = metrics.priced > 0 ? formatCurrencyFromCents(metrics.cib || 0) : "—";
+    const newText = metrics.priced > 0 ? formatCurrencyFromCents(metrics.new || 0) : "—";
+    if (looseEl) looseEl.textContent = looseText;
+    if (cibEl) cibEl.textContent = cibText;
+    if (newEl) newEl.textContent = newText;
+    if (countEl) countEl.textContent = metrics.count.toString();
+    if (pricedEl) pricedEl.textContent = metrics.priced.toString();
+  });
+  const updatedEl = container.querySelector("[data-price-summary-updated]");
+  if (updatedEl) {
+    updatedEl.textContent = priceState.lastUpdated
+      ? `Updated ${formatRelativeDate(priceState.lastUpdated)}`
+      : "";
+  }
+  container.dataset.loaded = "true";
+  priceState.summaryDirty = false;
+  priceState.ready = true;
+}
+
+function computeCollectionValueTotals(statusMap) {
+  const totals = {};
+  PRICE_STATUS_KEYS.forEach((status) => {
+    totals[status] = {
+      count: 0,
+      priced: 0,
+      loose: 0,
+      cib: 0,
+      new: 0,
+    };
+  });
+  if (!statusMap || typeof statusMap !== "object") return totals;
+  Object.entries(statusMap).forEach(([key, status]) => {
+    if (!status || !totals[status]) return;
+    const latest = priceState.latest.get(key);
+    totals[status].count += 1;
+    if (!latest) return;
+    const looseValue = normalizeCents(latest.loose_price_cents) || 0;
+    const cibValue = normalizeCents(latest.cib_price_cents) || 0;
+    const newValue = normalizeCents(latest.new_price_cents) || 0;
+    if (looseValue || cibValue || newValue) {
+      totals[status].priced += 1;
+    }
+    totals[status].loose += looseValue;
+    totals[status].cib += cibValue;
+    totals[status].new += newValue;
+  });
+  return totals;
+}
+
 /**
  * Re-render filtered data and capture render duration metrics.
  * @param {string} reason
@@ -3344,6 +3661,7 @@ function importCollection() {
     importedCollection = coll;
     importedNotes = noteMap;
     refreshFilteredView("share-import");
+    markCollectionValueDirty();
     document.getElementById("importResult").textContent =
       "Imported! Viewing shared collection.";
   } catch (e) {
@@ -3360,6 +3678,7 @@ function closeShareSection() {
   importedNotes = null;
   document.getElementById("shareSection").style.display = "none";
   refreshFilteredView("share-close");
+  markCollectionValueDirty();
 }
 
 function exportCollectionBackup() {
@@ -3452,6 +3771,134 @@ function showError(msg) {
   showStatus(msg, "error");
 }
 
+function buildPricePanelMarkup(key) {
+  const safeKey = escapeHtml(key || "");
+  return `<section class="modal-price-panel" data-price-panel data-price-key="${safeKey}">
+    <div class="price-panel-header">
+      <h3>Market Value</h3>
+      <span class="price-updated" data-price-role="updated"></span>
+    </div>
+    <div class="price-panel-body" data-price-body hidden>
+      <div class="price-panel-row">
+        <span>Loose</span>
+        <strong data-price-role="loose">—</strong>
+      </div>
+      <div class="price-panel-row">
+        <span>CIB</span>
+        <strong data-price-role="cib">—</strong>
+      </div>
+      <div class="price-panel-row">
+        <span>New</span>
+        <strong data-price-role="new">—</strong>
+      </div>
+    </div>
+    <div class="price-history-panel" data-price-role="history" hidden>
+      <div class="price-chart" data-price-role="chart"></div>
+      <p class="price-trend" data-price-role="trend"></p>
+    </div>
+    <p class="price-panel-empty" data-price-empty>No verified pricing data yet.</p>
+  </section>`;
+}
+
+function hydrateModalPricePanel(modal, key) {
+  if (!modal) return;
+  const panel = modal.querySelector("[data-price-panel]");
+  if (!panel) return;
+  const emptyEl = panel.querySelector("[data-price-empty]");
+  const bodyEl = panel.querySelector("[data-price-body]");
+  const historyWrap = panel.querySelector("[data-price-role='history']");
+  const updatedEl = panel.querySelector("[data-price-role='updated']");
+  const latest = priceState.latest.get(key);
+  if (!latest) {
+    if (emptyEl) emptyEl.hidden = false;
+    if (bodyEl) bodyEl.hidden = true;
+    if (historyWrap) historyWrap.hidden = true;
+    if (updatedEl) updatedEl.textContent = "";
+    return;
+  }
+  if (emptyEl) emptyEl.hidden = true;
+  if (bodyEl) bodyEl.hidden = false;
+  if (historyWrap) historyWrap.hidden = false;
+  const looseEl = panel.querySelector("[data-price-role='loose']");
+  const cibEl = panel.querySelector("[data-price-role='cib']");
+  const newEl = panel.querySelector("[data-price-role='new']");
+  if (looseEl) {
+    looseEl.textContent = formatCurrencyFromCents(latest.loose_price_cents, {
+      precise: true,
+    });
+  }
+  if (cibEl) {
+    cibEl.textContent = formatCurrencyFromCents(latest.cib_price_cents, {
+      precise: true,
+    });
+  }
+  if (newEl) {
+    newEl.textContent = formatCurrencyFromCents(latest.new_price_cents, {
+      precise: true,
+    });
+  }
+  if (updatedEl) {
+    const sourceLabel = latest.source || PRICE_SOURCE;
+    const when = latest.snapshot_date || latest.fetched_at;
+    updatedEl.textContent = when
+      ? `${sourceLabel} • ${formatRelativeDate(when)}`
+      : sourceLabel;
+  }
+  const chartEl = panel.querySelector("[data-price-role='chart']");
+  const trendEl = panel.querySelector("[data-price-role='trend']");
+  if (chartEl) {
+    chartEl.innerHTML = '<div class="price-chart-loading">Loading history…</div>';
+    loadPriceHistory(key)
+      .then((history) => {
+        renderPriceHistoryChart(chartEl, history);
+        if (trendEl) {
+          trendEl.textContent = formatPriceTrend(history);
+        }
+      })
+      .catch(() => {
+        chartEl.innerHTML = '<p class="price-chart-empty">Unable to load history.</p>';
+        if (trendEl) trendEl.textContent = "";
+      });
+  }
+}
+
+function renderPriceHistoryChart(container, history) {
+  if (!container) return;
+  const series = Array.isArray(history)
+    ? history
+        .map((entry) => ({
+          value: resolvePriceValue(entry),
+        }))
+        .filter((point) => Number.isFinite(point.value))
+    : [];
+  if (!series.length) {
+    container.innerHTML = '<p class="price-chart-empty">No history yet.</p>';
+    return;
+  }
+  const values = series.map((point) => point.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const pointsAttr = series
+    .map((point, index) => {
+      const x = (index / (series.length - 1 || 1)) * 100;
+      const normalized = (point.value - min) / range;
+      const y = 100 - normalized * (100 - PRICE_HISTORY_PAD * 2) - PRICE_HISTORY_PAD;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+  container.innerHTML = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Recent price trend">
+    <polyline class="price-history-line" points="${pointsAttr}" fill="none" vector-effect="non-scaling-stroke" />
+  </svg>`;
+}
+
+function formatPriceTrend(history) {
+  const delta = computePriceDelta(history);
+  if (delta === null) return "Trend data coming soon.";
+  const direction = delta > 0 ? "↑" : delta < 0 ? "↓" : "→";
+  return `${direction} ${Math.abs(delta).toFixed(1)}% across ${history.length} points`;
+}
+
 /**
  * Show a modal popout with game details.
  * @param {GameRow} game
@@ -3487,6 +3934,7 @@ function showGameModal(game) {
     html += `<dt>${k}:</dt><dd>${game[k]}</dd>`;
   }
   html += `</dl>`;
+  html += buildPricePanelMarkup(key);
   // Resource links (Google, YouTube, GameFAQs)
   const query = encodeURIComponent(
     (game[COL_GAME] || "") + " " + (game[COL_PLATFORM] || "")
@@ -3532,6 +3980,7 @@ function showGameModal(game) {
   if (galleryImages.length) {
     initializeGallery(modal, galleryImages);
   }
+  hydrateModalPricePanel(modal, key);
   if (!importedCollection) {
     const saveBtn = modal.querySelector("#saveNoteBtn");
     const noteField = modal.querySelector("#noteField");
@@ -3579,6 +4028,7 @@ if (!disableBootstrapFlag && canBootstrap) {
     .then(({ data, source, reason }) => {
       rawData = data;
       cacheStatusRows(rawData);
+      hydratePriceData(rawData);
       const coverHydrationPromise = hydrateFallbackCovers(rawData);
       if (!rawData.length) throw new Error("No games available to display!");
       loadStatuses();
@@ -3728,6 +4178,7 @@ const testApi = {
   setupFilters,
   updateStats,
   updateDashboard,
+  updateCollectionValueSummary,
   updateTrendingCarousel,
   showError,
   toggleSort,
@@ -3828,6 +4279,26 @@ const testApi = {
       bottomPadding: virtualizationState.bottomPadding,
       sourceLength: virtualizationState.sourceData.length,
     };
+  },
+  __setPriceState(overrides = {}) {
+    if (overrides.latest) {
+      const next = new Map();
+      Object.entries(overrides.latest).forEach(([key, value]) => {
+        next.set(key, value);
+      });
+      priceState.latest = next;
+    }
+    if (overrides.histories) {
+      const history = new Map();
+      Object.entries(overrides.histories).forEach(([key, value]) => {
+        history.set(key, value);
+      });
+      priceState.histories = history;
+    }
+    if (Object.prototype.hasOwnProperty.call(overrides, "lastUpdated")) {
+      priceState.lastUpdated = overrides.lastUpdated;
+    }
+    priceState.summaryDirty = true;
   },
 };
 

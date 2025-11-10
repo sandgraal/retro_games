@@ -25,3 +25,27 @@ This project now tracks its Supabase schema in `supabase/migrations/`. The initi
 - [x] Document recovery playbook once backup automation is in place (`docs/recovery-playbook.md`).
 
 Keep this document updated whenever schema/migration workflows change.
+
+## Price data ingestion
+
+PriceCharting valuations now feed the app via the `game_price_snapshots` table (and the `game_price_latest` view). Each row stores:
+
+- `game_key` / `game_name` / `platform` – ties the snapshot back to the frontend compound key (`game_name___platform`).
+- `product_id`, `product_name`, `console_name` – metadata returned by PriceCharting.
+- `loose_price_cents`, `cib_price_cents`, `new_price_cents`, `currency` – integer cents for easy arithmetic.
+- `source`, `snapshot_date`, `fetched_at`, `metadata` – auditing + optional extras (release date, raw payload).
+
+Row Level Security allows public read access while inserts/deletes are restricted to the service role. The accompanying ingestion helper lives at `scripts/update-price-snapshots.js` and:
+
+1. Reads `games.csv` to build a de-duped list of `game_name + platform`.
+2. Uses the PriceCharting API (`PRICECHARTING_TOKEN`, optionally `PRICECHARTING_BASE_URL`) to fetch the latest price for the next stale title.
+3. Writes/upserts a snapshot via Supabase REST (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`) and keeps a local cache in `data/pricecharting-cache.json`.
+4. Updates the fallback dataset `data/sample-price-history.json` so the UI still showcases the feature when Supabase credentials aren’t present.
+
+Run it with:
+
+```bash
+PRICECHARTING_TOKEN=... SUPABASE_SERVICE_ROLE_KEY=... npm run prices:update -- --limit 25
+```
+
+Use `--filter "chrono trigger"` for targeted refreshes or `--dry-run` to validate credentials without writing. Cron the script (or port it to a Cloud Function) to satisfy the “background jobs refresh pricing data” bullet from the implementation plan.

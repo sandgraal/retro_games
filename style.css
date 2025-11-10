@@ -572,6 +572,99 @@ h1 {
   letter-spacing: 1px;
 }
 
+.dashboard-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+}
+
+.price-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75em;
+}
+
+.price-summary-updated {
+  font-size: 0.75em;
+  color: var(--color-accent2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.price-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.8em;
+}
+
+.price-summary-block {
+  border: 1px solid var(--surface-glass);
+  border-radius: 12px;
+  padding: 0.85em;
+  background: rgba(16, 12, 34, 0.6);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.price-summary-block header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-subtle);
+  margin-bottom: 0.4em;
+}
+
+.price-summary-block header span {
+  font-family: var(--font-title);
+  color: var(--color-accent);
+}
+
+.price-summary-block header small {
+  font-size: 0.7em;
+  color: var(--text-subtle);
+}
+
+.price-summary-block dl {
+  margin: 0;
+  display: grid;
+  gap: 0.45em;
+}
+
+.price-summary-block dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.price-summary-block dt {
+  margin: 0;
+  font-size: 0.7em;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.price-summary-block dd {
+  margin: 0;
+  font-size: 1em;
+  color: var(--color-accent);
+  font-family: var(--font-title);
+}
+
+.price-summary-empty {
+  margin: 0;
+  font-size: 0.8em;
+  color: var(--text-subtle);
+  text-align: center;
+}
+
+#dashboard-price[data-loaded="true"] [data-price-summary-empty] {
+  display: none;
+}
+
 .status-progress {
   display: grid;
   gap: 0.9em;
@@ -1608,6 +1701,80 @@ button:hover {
   margin: 0 0 0.3em 0.7em;
   color: var(--text-highlight);
   font-size: 1em;
+}
+.modal-price-panel {
+  border-top: 1px solid var(--surface-glass);
+  margin-top: 1.2em;
+  padding-top: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+}
+.price-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6em;
+}
+.price-panel-header h3 {
+  font-size: 0.95em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  margin: 0;
+}
+.price-panel-header .price-updated {
+  font-size: 0.75em;
+  color: var(--text-subtle);
+}
+.price-panel-body {
+  display: grid;
+  gap: 0.35em;
+}
+.price-panel-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95em;
+  color: var(--text-highlight);
+}
+.price-panel-row strong {
+  font-family: var(--font-title);
+  font-size: 1em;
+  color: var(--color-accent);
+}
+.price-history-panel {
+  border: 1px solid var(--surface-glass);
+  border-radius: 12px;
+  padding: 0.75em;
+  background: rgba(9, 12, 30, 0.45);
+}
+.price-chart {
+  width: 100%;
+  height: 120px;
+}
+.price-chart svg {
+  width: 100%;
+  height: 100%;
+}
+.price-history-line {
+  stroke: var(--color-accent);
+  stroke-width: 2;
+}
+.price-panel-empty,
+.price-chart-loading,
+.price-chart-empty,
+.price-trend {
+  font-size: 0.8em;
+  color: var(--text-subtle);
+  margin: 0.25em 0 0 0;
+}
+.price-panel-empty {
+  margin-top: 0.5em;
+}
+.price-history-panel[hidden],
+.price-panel-body[hidden] {
+  display: none !important;
 }
 #gameModal .external-links {
   margin-top: 1.2em;
