@@ -3235,6 +3235,22 @@ function timeAgo(timestamp) {
   return `${Math.max(1, Math.round(diff / 86400000))}d`;
 }
 
+function formatAbsoluteDate(value) {
+  if (!value) return "";
+  const date =
+    value instanceof Date
+      ? value
+      : typeof value === "number"
+        ? new Date(value)
+        : new Date(String(value));
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
 /**
  * Produce a relative time label from a date-like input.
  * @param {string|number|Date|null|undefined} value
@@ -3288,9 +3304,17 @@ function updateCollectionValueSummary() {
   });
   const updatedEl = container.querySelector("[data-price-summary-updated]");
   if (updatedEl) {
-    updatedEl.textContent = priceState.lastUpdated
-      ? `Updated ${formatRelativeDate(priceState.lastUpdated)}`
-      : "";
+    const absoluteLabel = formatAbsoluteDate(priceState.lastUpdated);
+    const relativeLabel = formatRelativeDate(priceState.lastUpdated);
+    if (absoluteLabel && relativeLabel) {
+      updatedEl.textContent = `Updated ${absoluteLabel} (${relativeLabel})`;
+    } else if (absoluteLabel) {
+      updatedEl.textContent = `Updated ${absoluteLabel}`;
+    } else if (relativeLabel) {
+      updatedEl.textContent = `Updated ${relativeLabel}`;
+    } else {
+      updatedEl.textContent = "";
+    }
   }
   container.dataset.loaded = "true";
   priceState.summaryDirty = false;
