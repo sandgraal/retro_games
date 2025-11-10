@@ -47,11 +47,39 @@ from public.game_price_snapshots
 order by game_key, source, snapshot_date desc, fetched_at desc;
 
 alter table public.game_price_snapshots enable row level security;
-create policy if not exists "read price snapshots" on public.game_price_snapshots for select using (true);
-create policy if not exists "service snapshot inserts" on public.game_price_snapshots
-  for insert with check (auth.role() = 'service_role');
-create policy if not exists "service snapshot deletes" on public.game_price_snapshots
-  for delete using (auth.role() = 'service_role');
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'game_price_snapshots'
+      and policyname = 'read price snapshots'
+  ) then
+    execute 'create policy "read price snapshots" on public.game_price_snapshots for select using (true)';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'game_price_snapshots'
+      and policyname = 'service snapshot inserts'
+  ) then
+    execute 'create policy "service snapshot inserts" on public.game_price_snapshots for insert with check (auth.role() = ''service_role'')';
+  end if;
+
+  if not exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'game_price_snapshots'
+      and policyname = 'service snapshot deletes'
+  ) then
+    execute 'create policy "service snapshot deletes" on public.game_price_snapshots for delete using (auth.role() = ''service_role'')';
+  end if;
+end;
+$$;
 
 grant select on table public.game_price_snapshots to anon, authenticated;
 grant select on public.game_price_latest to anon, authenticated;
