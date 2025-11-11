@@ -109,6 +109,11 @@ const REGION_LABELS = {
   PAL: "PAL",
   JPN: "JPN",
 };
+const REGION_PATTERNS = {
+  NTSC: ["ntsc", "usa", "north america", "canada"],
+  PAL: ["pal", "europe", "eu", "uk", "australia"],
+  JPN: ["jpn", "japan"],
+};
 const REGION_MATCHERS = {
   NTSC: [/(^|\b)(ntsc|usa|north america|canada)(\b|$)/i],
   PAL: [/(^|\b)(pal|europe|eu|uk|australia)(\b|$)/i],
@@ -1663,18 +1668,12 @@ function applySupabaseFilters(query, filters = {}, columnPrefix = "") {
     query = query.lte(column(COL_RELEASE_YEAR), filters.yearEnd);
   }
   if (filters.region) {
+    const patterns = REGION_PATTERNS[filters.region];
     const clauses = [];
-    if (filters.region === "NTSC") {
-      clauses.push(`${column("region")}.ilike.%USA%`);
-      clauses.push(`${column("region")}.ilike.%NTSC%`);
-      clauses.push(`${column("region")}.ilike.%North America%`);
-    } else if (filters.region === "PAL") {
-      clauses.push(`${column("region")}.ilike.%PAL%`);
-      clauses.push(`${column("region")}.ilike.%Europe%`);
-      clauses.push(`${column("region")}.ilike.%UK%`);
-    } else if (filters.region === "JPN") {
-      clauses.push(`${column("region")}.ilike.%Japan%`);
-      clauses.push(`${column("region")}.ilike.%JPN%`);
+    if (patterns && patterns.length) {
+      for (const pat of patterns) {
+        clauses.push(`${column("region")}.ilike.%${pat}%`);
+      }
     }
     if (clauses.length) {
       query = query.or(clauses.join(","));
