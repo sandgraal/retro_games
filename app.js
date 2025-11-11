@@ -4037,7 +4037,7 @@ function buildStoragePublicUrl(bucket, path) {
   if (!bucket || !path || !STORAGE_PUBLIC_BASE) return null;
   if (bucket !== STORAGE_PUBLIC_BUCKET) return null;
   const trimmed = path.toString().replace(/^\/+/, "");
-  return `${STORAGE_PUBLIC_BASE}/${encodeStoragePath(trimmed)}`;
+  return `${STORAGE_PUBLIC_BASE}/${bucket}/${encodeStoragePath(trimmed)}`;
 }
 
 function resolveStorageCover(row) {
@@ -5506,6 +5506,9 @@ const testApi = {
   __setBrowseMode: setBrowseMode,
   __teardownVirtualization: teardownVirtualization,
   __buildRemoteFilterPayload: buildRemoteFilterPayload,
+  __encodeStoragePath: encodeStoragePath,
+  __buildStoragePublicUrl: buildStoragePublicUrl,
+  __resolveStorageCover: resolveStorageCover,
   __setState(overrides = {}) {
     if (Object.prototype.hasOwnProperty.call(overrides, "statuses")) {
       gameStatuses = overrides.statuses;
@@ -5645,6 +5648,12 @@ const testApi = {
       priceState.lastUpdated = overrides.lastUpdated;
     }
     priceState.summaryDirty = true;
+  },
+  __getStorageConstants() {
+    return {
+      STORAGE_PUBLIC_BASE,
+      STORAGE_PUBLIC_BUCKET,
+    };
   },
 };
 
