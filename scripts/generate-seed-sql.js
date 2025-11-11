@@ -6,6 +6,7 @@ const { parse } = require("csv-parse/sync");
 const ROOT = path.resolve(__dirname, "..");
 const csvPath = path.join(ROOT, "games.csv");
 const outputPath = path.join(ROOT, "supabase", "seed.sql");
+const DEFAULT_COVER_BUCKET = "game-covers";
 
 if (!fs.existsSync(csvPath)) {
   console.error("games.csv not found at", csvPath);
@@ -29,6 +30,20 @@ function escapeLiteral(value) {
 function numberLiteral(value, digits = 2) {
   if (value === null || value === undefined || Number.isNaN(value)) return "null";
   return Number(value).toFixed(digits);
+}
+
+function resolveRegionCode(input) {
+  if (!input) return null;
+  const normalized = input.toString().toLowerCase();
+  if (/jpn|japan/.test(normalized)) return "JPN";
+  if (/pal|europe|uk|australia/.test(normalized)) return "PAL";
+  if (/ntsc|usa|north america|canada/.test(normalized)) return "NTSC";
+  return null;
+}
+
+function buildCoverPath({ name, platformSlug }) {
+  const gameSlug = slugify(name).slice(0, 80) || "game";
+  return `covers/${platformSlug}/${gameSlug}.jpg`;
 }
 
 const csvContent = fs.readFileSync(csvPath, "utf8");
@@ -78,6 +93,7 @@ records.forEach((row, index) => {
     cover,
     details,
     genres: genreList,
+    regionCode: resolveRegionCode(row["Region"]?.trim()),
   });
 });
 
@@ -115,7 +131,9 @@ games.forEach((game) => {
 
   if (game.cover) {
     lines.push(
-      `insert into public.game_media (game_id, media_url, media_type)\nselect g.id, ${escapeLiteral(game.cover)}, 'image' from public.games g\njoin public.platforms p on g.platform_id = p.id\nwhere g.name = ${escapeLiteral(game.name)} and p.slug = ${escapeLiteral(game.platformSlug)}\non conflict do nothing;`
+      `insert into public.game_media (game_id, media_url, media_type, storage_bucket, storage_path, source_label, region_code, is_primary)\nselect g.id, ${escapeLiteral(game.cover)}, 'image', ${escapeLiteral(DEFAULT_COVER_BUCKET)}, ${escapeLiteral(
+        buildCoverPath(game)
+      )}, 'seed', ${escapeLiteral(game.regionCode)}, true from public.games g\njoin public.platforms p on g.platform_id = p.id\nwhere g.name = ${escapeLiteral(game.name)} and p.slug = ${escapeLiteral(game.platformSlug)}\non conflict do nothing;`
     );
   }
 });
