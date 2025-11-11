@@ -55,11 +55,20 @@ This audit verifies roadmap items in Phases 1 and 2. Each bullet either confirms
 - ⚠️ Region toggles/variant linking are still pending; filters only handle platform, genre, rating, year, search, and status today.【F:app.js†L1720-L1780】【F:docs/implementation-plan.md†L35-L41】
 - ⚠️ A community contribution workflow and media archival strategy have not been codified—Supabase schema lacks review queues, and documentation covers only database backups.【F:supabase/migrations/20250107120000_init.sql†L81-L110】【F:docs/recovery-playbook.md†L1-L29】【F:docs/implementation-plan.md†L35-L41】
 
-## Manual Input Needed
+## Manual Input Decisions & Priorities
 
-- Prioritize the remaining Content Quality & Media tasks (Supabase Storage rollout, region toggles/variant UX, community contribution workflow, archival plan) so engineering can scope the next iteration.【F:docs/implementation-plan.md†L35-L41】
-  - Confirm which storage provider/CDN we should use (Supabase Storage, third-party CDN, or keep remote URLs) and any budget/retention constraints.
-  - Decide whether the initial region toggle should cover NTSC/PAL/JPN only or expand to additional variants and whether variants affect pricing aggregation.
-- Provide operational direction on where to host media assets and how to moderate community submissions before schema/UI work proceeds.【F:docs/implementation-plan.md†L35-L41】
-  - Establish contribution guidelines (submission formats, review SLAs, rejection reasons) and identify the moderation team/permissions.
-  - Approve an archival policy for large art/manual scans (size limits, preferred formats, takedown process) so we can encode it in tooling and documentation.
+- **Execution order:** Continue with the Content Quality & Media initiatives exactly as listed in the implementation plan—start with Supabase Storage rollout, follow with region toggles/variant UX, then build the contribution workflow, and finish with archival tooling/policies.【F:docs/implementation-plan.md†L35-L41】
+- **Storage/CDN:** Use Supabase Storage buckets fronted by the built-in CDN edge cache. Configure `public` buckets for cover thumbnails and `authenticated` buckets for high-resolution media; enable object versioning and 30-day lifecycle rules for deleted assets.【F:docs/implementation-plan.md†L35-L41】
+- **Region toggles:** Launch the initial toggle with NTSC, PAL, and JPN variants. Treat variants as display-level filters—pricing aggregation should default to the primary region but surface variant price deltas in the modal.
+- **Hosting & moderation operations:**
+  - Route uploads through signed Supabase Storage URLs from a dedicated `media-service` key to keep uploads auditable.
+  - Adopt a two-step moderation queue: community submissions land in a `pending_media` table, and moderators promote approved assets into the production bucket via a review dashboard.
+  - Grant moderation rights to the core content team (Product + Community leads) using a Supabase role that limits access to review tooling without exposing pricing data.
+- **Contribution guidelines:**
+  - Accept PNG or high-quality JPG (sRGB) for covers, PDF for manuals, and MP4 (H.264) clips under 30 seconds; enforce max upload size of 25 MB per asset.
+  - Require submitters to provide source attribution and region tags; automated checks should reject missing metadata and flag duplicates by hash.
+  - Promise a 5-business-day SLA for review outcomes; automated emails (or dashboard notifications) must cite specific rejection reasons (e.g., copyright risk, poor quality, incorrect metadata).
+- **Archival policy:**
+  - Store preservation-grade scans (TIFF or PDF/A) in an `archive` bucket with 250 MB per-file limit; derivatives for the app should be generated asynchronously and cached in Supabase Storage.
+  - Maintain a takedown protocol: honor verified rights-holder requests within 72 hours, log removals, and retain tombstone metadata so share codes don’t break.
+  - Back up archive buckets weekly to cold storage (Supabase PITR + external S3-compatible bucket) and document restore steps alongside the recovery playbook.
