@@ -58,4 +58,8 @@ This audit verifies roadmap items in Phases 1 and 2. Each bullet either confirms
 ## Manual Input Needed
 
 - Prioritize the remaining Content Quality & Media tasks (Supabase Storage rollout, region toggles/variant UX, community contribution workflow, archival plan) so engineering can scope the next iteration.【F:docs/implementation-plan.md†L35-L41】
+  - Confirm which storage provider/CDN we should use (Supabase Storage, third-party CDN, or keep remote URLs) and any budget/retention constraints.
+  - Decide whether the initial region toggle should cover NTSC/PAL/JPN only or expand to additional variants and whether variants affect pricing aggregation.
 - Provide operational direction on where to host media assets and how to moderate community submissions before schema/UI work proceeds.【F:docs/implementation-plan.md†L35-L41】
+  - Establish contribution guidelines (submission formats, review SLAs, rejection reasons) and identify the moderation team/permissions.
+  - Approve an archival policy for large art/manual scans (size limits, preferred formats, takedown process) so we can encode it in tooling and documentation.
