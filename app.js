@@ -4830,9 +4830,8 @@ async function loadVariantPriceDeltas() {
   if (variantPriceMap.size) return;
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from("game_variant_price_deltas")
-        .select("*");
+      // Call the function with default baseline_region parameter ('NTSC')
+      const { data, error } = await supabase.rpc("game_variant_price_deltas", {});
       if (!error && Array.isArray(data)) {
         ingestVariantPrices(data);
         return;
