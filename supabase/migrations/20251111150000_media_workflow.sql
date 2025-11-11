@@ -172,6 +172,7 @@ grant select on public.game_price_latest to anon, authenticated;
 -- This design allows flexibility for PAL-exclusive titles or other regional variants
 -- that may not have an NTSC counterpart. The default baseline remains 'NTSC' for
 -- backward compatibility, but callers can specify alternative regions as needed.
+drop view if exists public.game_variant_price_deltas;
 create or replace function public.game_variant_price_deltas(baseline_region text default 'NTSC')
 returns table (
   game_key text,
