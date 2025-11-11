@@ -34,6 +34,7 @@
             <button id="showImport">Import Collection Code</button>
             <button id="backupBtn">Backup Collection JSON</button>
             <button id="restoreBtn">Restore Backup</button>
+            <button id="contributeBtn">Submit Media</button>
             <input
               type="file"
               id="restoreInput"
@@ -97,6 +98,48 @@
               <option value="">All Genres</option>
             </select>
           </label>
+          <div
+            class="filter-field region-filter"
+            data-region-toggle
+            role="group"
+            aria-label="Region filter"
+          >
+            <span class="region-filter-label">Region</span>
+            <div class="region-filter-buttons">
+              <button
+                type="button"
+                class="region-btn"
+                data-region-option=""
+                aria-pressed="false"
+              >
+                All
+              </button>
+              <button
+                type="button"
+                class="region-btn"
+                data-region-option="NTSC"
+                aria-pressed="false"
+              >
+                NTSC
+              </button>
+              <button
+                type="button"
+                class="region-btn"
+                data-region-option="PAL"
+                aria-pressed="false"
+              >
+                PAL
+              </button>
+              <button
+                type="button"
+                class="region-btn"
+                data-region-option="JPN"
+                aria-pressed="false"
+              >
+                JPN
+              </button>
+            </div>
+          </div>
           <label class="filter-field search-field">
             <span>Search</span>
             <div class="typeahead-field">
@@ -178,6 +221,86 @@
           </div>
         </details>
       </section>
+
+      <div
+        id="contributeModal"
+        class="modal"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div class="modal-content contribute-dialog">
+          <button
+            type="button"
+            class="modal-close"
+            data-contribute-close
+            aria-label="Close"
+          >
+            &times;
+          </button>
+          <h2>Submit Media</h2>
+          <p class="modal-subtitle">
+            Upload cover art, manuals, or clips that follow the community guidelines.
+            Approved assets appear after moderator review.
+          </p>
+          <form id="contributeForm" class="contribute-form">
+            <label>
+              <span>Game Title</span>
+              <input type="text" name="title" required placeholder="Chrono Trigger" />
+            </label>
+            <label>
+              <span>Platform</span>
+              <input type="text" name="platform" required placeholder="SNES" />
+            </label>
+            <label>
+              <span>Region</span>
+              <select name="region" required>
+                <option value="NTSC">NTSC</option>
+                <option value="PAL">PAL</option>
+                <option value="JPN">JPN</option>
+              </select>
+            </label>
+            <label>
+              <span>Asset Type</span>
+              <select name="assetType" required>
+                <option value="image">Cover / Screenshot (PNG or JPG)</option>
+                <option value="manual">Manual (PDF)</option>
+                <option value="video">Clip (MP4, &lt;30s)</option>
+              </select>
+            </label>
+            <label>
+              <span>Source URL (for attribution)</span>
+              <input type="url" name="sourceUrl" required placeholder="https://" />
+            </label>
+            <label class="file-field">
+              <span>Upload File</span>
+              <input
+                type="file"
+                name="file"
+                accept="image/png,image/jpeg,application/pdf,video/mp4"
+                required
+              />
+            </label>
+            <label>
+              <span>Contact (optional)</span>
+              <input type="email" name="contact" placeholder="you@example.com" />
+            </label>
+            <label>
+              <span>Notes (optional)</span>
+              <textarea
+                name="notes"
+                rows="3"
+                placeholder="Tell moderators anything helpful"
+              ></textarea>
+            </label>
+            <div class="contribute-actions">
+              <button type="submit" class="primary-action">Submit</button>
+              <button type="button" data-contribute-close>Cancel</button>
+            </div>
+            <p class="contribute-status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
       <div id="stats">Loading stats...</div>
       <section id="dashboard" aria-label="Collection dashboard">
         <div class="dashboard-card" id="dashboard-statuses">

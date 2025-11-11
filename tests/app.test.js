@@ -196,6 +196,7 @@ beforeEach(() => {
     filterRatingMin: "",
     filterYearStart: "",
     filterYearEnd: "",
+    filterRegion: "",
     rawData: SAMPLE_DATA,
   });
 });
@@ -220,6 +221,7 @@ describe("remote filter payloads", () => {
       ratingMin: 8.5,
       yearStart: 1990,
       yearEnd: 1995,
+      region: "",
       sortColumn: "rating",
       sortDirection: "desc",
     });
@@ -372,6 +374,17 @@ describe("applyFilters", () => {
     expect(yearFiltered).toHaveLength(1);
     expect(yearFiltered[0].game_name).toBe("Castlevania Symphony Of The Night");
   });
+
+  it("filters by region availability when toggled", () => {
+    const dataset = [
+      { ...SAMPLE_DATA[0], region: "USA" },
+      { ...SAMPLE_DATA[1], region: "Japan" },
+    ];
+    app.__setState({ rawData: dataset, filterRegion: "JPN" });
+    const regionFiltered = app.applyFilters(dataset);
+    expect(regionFiltered).toHaveLength(1);
+    expect(regionFiltered[0].game_name).toBe("Castlevania Symphony Of The Night");
+  });
 });
 
 describe("renderTable", () => {
@@ -450,6 +463,7 @@ describe("dashboard", () => {
         filterRatingMin: "9",
         filterYearStart: "1990",
         filterYearEnd: "2000",
+        filterRegion: "PAL",
       },
     });
     const payload = getBackupPayload();
@@ -457,6 +471,7 @@ describe("dashboard", () => {
     expect(payload.notes["Chrono Trigger___SNES"]).toBe("Find CIB");
     expect(payload.filters.filterStatus).toBe("wishlist");
     expect(payload.filters.filterYearStart).toBe("1990");
+    expect(payload.filters.filterRegion).toBe("PAL");
   });
 });
 

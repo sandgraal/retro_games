@@ -60,6 +60,11 @@ function buildConfig({ envPath, outputPath }) {
     priceCacheHoursRaw && !Number.isNaN(Number(priceCacheHoursRaw))
       ? Number(priceCacheHoursRaw)
       : null;
+  const storagePublicBucket = (process.env.SUPABASE_STORAGE_PUBLIC_BUCKET || "").trim();
+  const storageAuthBucket = (process.env.SUPABASE_STORAGE_AUTH_BUCKET || "").trim();
+  const storageArchiveBucket = (process.env.SUPABASE_STORAGE_ARCHIVE_BUCKET || "").trim();
+  const storagePendingBucket = (process.env.SUPABASE_STORAGE_PENDING_BUCKET || "").trim();
+  const storageCdnUrl = (process.env.SUPABASE_STORAGE_CDN_URL || "").trim();
 
   if (!url || !anonKey) {
     console.error("❌ SUPABASE_URL and SUPABASE_ANON_KEY must be defined in .env.");
@@ -80,6 +85,20 @@ function buildConfig({ envPath, outputPath }) {
     if (priceCacheHours && priceCacheHours > 0) {
       config.pricing.cacheHours = priceCacheHours;
     }
+  }
+  if (
+    storagePublicBucket ||
+    storageAuthBucket ||
+    storageArchiveBucket ||
+    storagePendingBucket ||
+    storageCdnUrl
+  ) {
+    config.storage = {};
+    if (storagePublicBucket) config.storage.publicBucket = storagePublicBucket;
+    if (storageAuthBucket) config.storage.authBucket = storageAuthBucket;
+    if (storageArchiveBucket) config.storage.archiveBucket = storageArchiveBucket;
+    if (storagePendingBucket) config.storage.pendingBucket = storagePendingBucket;
+    if (storageCdnUrl) config.storage.cdnUrl = storageCdnUrl;
   }
 
   const content = [

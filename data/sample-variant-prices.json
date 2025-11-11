@@ -1,0 +1,26 @@
+[
+  {
+    "game_key": "Chrono Trigger___SNES",
+    "region_code": "PAL",
+    "currency": "USD",
+    "loose_price_cents": 42000,
+    "cib_price_cents": 58000,
+    "new_price_cents": 92000,
+    "loose_delta_percent": 12.5,
+    "cib_delta_percent": 15.1,
+    "new_delta_percent": 18.3,
+    "snapshot_date": "2025-10-20"
+  },
+  {
+    "game_key": "Chrono Trigger___SNES",
+    "region_code": "JPN",
+    "currency": "USD",
+    "loose_price_cents": 31000,
+    "cib_price_cents": 45000,
+    "new_price_cents": 64000,
+    "loose_delta_percent": -15.2,
+    "cib_delta_percent": -12.6,
+    "new_delta_percent": -9.4,
+    "snapshot_date": "2025-10-20"
+  }
+]

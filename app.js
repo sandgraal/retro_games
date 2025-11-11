@@ -20,6 +20,10 @@
  * @property {string|number} [release_year]
  * @property {string} [Details]
  * @property {string[]} [screenshots]
+ * @property {string} [storage_bucket]
+ * @property {string} [storage_path]
+ * @property {string} [region_code]
+ * @property {string[]} [region_codes]
  * @property {Record<string, any>} [key: string]
  */
 
@@ -31,6 +35,7 @@
  * @property {string} [filterRatingMin]
  * @property {string} [filterYearStart]
  * @property {string} [filterYearEnd]
+ * @property {string} [filterRegion]
  */
 const COL_GAME = "game_name";
 const COL_PLATFORM = "platform";
@@ -96,7 +101,28 @@ const FALLBACK_COVER_CACHE_KEY = "rom_cover_cache_v1";
 const FALLBACK_COVER_CACHE_LIMIT = 400;
 const FALLBACK_COVER_RETRY_MS = 1000 * 60 * 60 * 24 * 7;
 const FALLBACK_COVER_ATTEMPT_LIMIT = 25;
+const DEFAULT_STORAGE_PUBLIC_BUCKET = "game-covers";
+const DEFAULT_STORAGE_PENDING_BUCKET = "media-pending";
+const REGION_CODES = ["NTSC", "PAL", "JPN"];
+const REGION_LABELS = {
+  NTSC: "NTSC",
+  PAL: "PAL",
+  JPN: "JPN",
+};
+const REGION_MATCHERS = {
+  NTSC: [/(^|\b)(ntsc|usa|north america|canada)(\b|$)/i],
+  PAL: [/(^|\b)(pal|europe|eu|uk|australia)(\b|$)/i],
+  JPN: [/(^|\b)(jpn|japan)(\b|$)/i],
+};
+
+const CONTRIBUTION_MAX_BYTES = 25 * 1024 * 1024;
+const CONTRIBUTION_ALLOWED_TYPES = {
+  image: ["image/png", "image/jpeg"],
+  manual: ["application/pdf"],
+  video: ["video/mp4"],
+};
 const PRICE_SAMPLE_URL = "./data/sample-price-history.json";
+const VARIANT_PRICE_SAMPLE_URL = "./data/sample-variant-prices.json";
 const PRICE_LATEST_VIEW = "game_price_latest";
 const PRICE_SNAPSHOT_TABLE = "game_price_snapshots";
 const PRICE_FETCH_CHUNK = 200;
@@ -187,8 +213,19 @@ const PRICE_FETCH_CONCURRENCY = 2;
 const PRICE_API_BASE_URL = "https://www.pricecharting.com";
 const VALUATION_HISTORY_KEY = "rom_collection_valuation_history_v1";
 const VALUATION_HISTORY_LIMIT = 120;
+const STORAGE_CONFIG = SUPABASE_CONFIG.storage || {};
+const STORAGE_PUBLIC_BUCKET =
+  STORAGE_CONFIG.publicBucket || DEFAULT_STORAGE_PUBLIC_BUCKET;
+const STORAGE_PENDING_BUCKET =
+  STORAGE_CONFIG.pendingBucket || DEFAULT_STORAGE_PENDING_BUCKET;
+const STORAGE_CDN_URL = (
+  STORAGE_CONFIG.cdnUrl ||
+  (SUPABASE_URL ? `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1` : "")
+).replace(/\/$/, "");
+const STORAGE_PUBLIC_BASE = STORAGE_CDN_URL ? `${STORAGE_CDN_URL}/object/public` : "";
 const fallbackCoverCache = loadFallbackCoverCache();
 const priceInsights = createPriceInsights();
+const variantPriceMap = new Map();
 
 const reduceMotionQuery =
   typeof window !== "undefined" && typeof window.matchMedia === "function"
@@ -202,12 +239,28 @@ const FIELD_ALIAS_MAP = {
   [COL_GENRE]: [COL_GENRE, "Genre"],
   [COL_RELEASE_YEAR]: [COL_RELEASE_YEAR, "releaseYear", "Release Year"],
   [COL_RATING]: [COL_RATING, "Rating"],
-  [COL_COVER]: [COL_COVER, "cover_url", "coverUrl", "Cover"],
+  [COL_COVER]: [
+    COL_COVER,
+    "cover_url",
+    "coverUrl",
+    "Cover",
+    "cover_path",
+    "cover_storage_path",
+    "coverPublicUrl",
+    "cover_public_url",
+  ],
   screenshots: ["screenshots", "Screenshots"],
   ratingCategory: ["rating_category", "ratingCategory", "Rating Category"],
   playerMode: ["player_mode", "playerMode", "Player Mode"],
   playerCount: ["player_count", "playerCount", "Player Count"],
-  region: ["region", "Region"],
+  region: [
+    "region",
+    "Region",
+    "region_code",
+    "regionCode",
+    "region_codes",
+    "regionCodes",
+  ],
   notes: ["notes", "Notes"],
   detailsUrl: ["details_url", "detailsUrl", "Details", "details"],
 };
@@ -382,6 +435,7 @@ async function loadGameData() {
     console.warn("Using local sample data due to Supabase issue:", reason);
     const start = getNow();
     const sample = await fetchSampleGames();
+    normalizeIncomingRows(sample);
     recordPerfMetric("data-load", getNow() - start, {
       source: "sample",
       reason: typeof reason === "string" ? reason : reason?.message,
@@ -408,6 +462,7 @@ async function loadGameData() {
     const baseFilters = shouldUseServerFiltering() ? buildRemoteFilterPayload() : null;
     const page = await fetchGamesPage(0, streamState.pageSize - 1, baseFilters);
     const data = Array.isArray(page.data) ? page.data : [];
+    normalizeIncomingRows(data);
     const duration = getNow() - start;
     if (!data.length) {
       recordPerfMetric("data-load", duration, {
@@ -670,6 +725,7 @@ let filterPlatform = "",
   filterRatingMin = "",
   filterYearStart = "",
   filterYearEnd = "",
+  filterRegion = "",
   sortColumn = COL_GAME,
   sortDirection = "asc";
 let typeaheadTimer = null;
@@ -706,6 +762,8 @@ const virtualizationState = {
   lastRenderLength: 0,
   datasetOffset: 0,
 };
+
+let contributionModalOpen = false;
 const streamState = {
   enabled: !FORCE_SAMPLE && !!supabase,
   active: false,
@@ -1526,7 +1584,9 @@ function savePersistedFilters() {
     filterRatingMin,
     filterYearStart,
     filterYearEnd,
+    filterRegion,
   };
+  persistedFilters = snapshot;
   localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(snapshot));
 }
 
@@ -1554,6 +1614,7 @@ function buildRemoteFilterPayload() {
     ratingMin: parseRating(filterRatingMin),
     yearStart: parseYear(filterYearStart),
     yearEnd: parseYear(filterYearEnd),
+    region: filterRegion || "",
     sortColumn,
     sortDirection,
   };
@@ -1576,6 +1637,7 @@ function normalizeAggregatePayload(payload = {}) {
     ratingMin: payload.ratingMin ?? null,
     yearStart: payload.yearStart ?? null,
     yearEnd: payload.yearEnd ?? null,
+    region: payload.region || null,
   };
 }
 
@@ -1599,6 +1661,24 @@ function applySupabaseFilters(query, filters = {}, columnPrefix = "") {
   }
   if (filters.yearEnd !== null && filters.yearEnd !== undefined) {
     query = query.lte(column(COL_RELEASE_YEAR), filters.yearEnd);
+  }
+  if (filters.region) {
+    const clauses = [];
+    if (filters.region === "NTSC") {
+      clauses.push(`${column("region")}.ilike.%USA%`);
+      clauses.push(`${column("region")}.ilike.%NTSC%`);
+      clauses.push(`${column("region")}.ilike.%North America%`);
+    } else if (filters.region === "PAL") {
+      clauses.push(`${column("region")}.ilike.%PAL%`);
+      clauses.push(`${column("region")}.ilike.%Europe%`);
+      clauses.push(`${column("region")}.ilike.%UK%`);
+    } else if (filters.region === "JPN") {
+      clauses.push(`${column("region")}.ilike.%Japan%`);
+      clauses.push(`${column("region")}.ilike.%JPN%`);
+    }
+    if (clauses.length) {
+      query = query.or(clauses.join(","));
+    }
   }
   return query;
 }
@@ -1711,6 +1791,7 @@ function applyFiltersToInputs() {
   if (browseModeEl) browseModeEl.value = browseMode;
   const pageSizeEl = document.getElementById("pageSizeSelect");
   if (pageSizeEl) pageSizeEl.value = paginationState.pageSize.toString();
+  updateRegionToggleActive();
   syncSortControl();
 }
 
@@ -1737,6 +1818,52 @@ function setupFilters(data) {
   genreSel.innerHTML =
     `<option value="">All Genres</option>` +
     genres.map((g) => `<option>${g}</option>`).join("");
+}
+
+function updateRegionToggleActive() {
+  const buttons = document.querySelectorAll("[data-region-option]");
+  buttons.forEach((button) => {
+    const value = button.getAttribute("data-region-option") || "";
+    if (value === filterRegion) {
+      button.classList.add("is-active");
+      button.setAttribute("aria-pressed", "true");
+    } else {
+      button.classList.remove("is-active");
+      button.setAttribute("aria-pressed", "false");
+    }
+  });
+}
+
+function setupRegionToggle() {
+  const container = document.querySelector("[data-region-toggle]");
+  if (!container) return;
+  container.querySelectorAll("[data-region-option]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const value = button.getAttribute("data-region-option") || "";
+      filterRegion = value;
+      savePersistedFilters();
+      updateRegionToggleActive();
+      refreshFilteredView("filter:region");
+    });
+  });
+  updateRegionToggleActive();
+}
+
+function getRegionCodesForRow(row) {
+  if (!row) return [];
+  if (Array.isArray(row.__regionCodes)) return row.__regionCodes;
+  const computed = computeRegionCodes(row);
+  row.__regionCodes = computed;
+  return computed;
+}
+
+function rowMatchesRegion(row, regionCode) {
+  if (!regionCode) return true;
+  const codes = getRegionCodesForRow(row);
+  if (!codes.length) {
+    return regionCode === "NTSC";
+  }
+  return codes.includes(regionCode);
 }
 
 /**
@@ -1777,6 +1904,7 @@ function doesRowMatchFilters(row, statusSource = getActiveStatusMap()) {
   if (importedCollection && (!key || !importedCollection[key])) return false;
   const rowStatus = key ? getStatusForKey(key, statusSource) : STATUS_NONE;
   if (filterStatus && rowStatus !== filterStatus) return false;
+  if (filterRegion && !rowMatchesRegion(row, filterRegion)) return false;
   return true;
 }
 
@@ -2128,6 +2256,7 @@ async function fetchNextSupabaseChunk(reason = "stream:auto") {
     try {
       const page = await fetchGamesPage(from, to, streamState.filterPayload);
       const rows = Array.isArray(page.data) ? page.data : [];
+      normalizeIncomingRows(rows);
       let coverHydrationPromise = Promise.resolve(false);
       if (rows.length) {
         rawData = rawData.concat(rows);
@@ -3898,6 +4027,87 @@ function normalizeImageUrl(value, origin) {
   return `${origin}/${stringValue}`;
 }
 
+function encodeStoragePath(path) {
+  return path
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+}
+
+function buildStoragePublicUrl(bucket, path) {
+  if (!bucket || !path || !STORAGE_PUBLIC_BASE) return null;
+  if (bucket !== STORAGE_PUBLIC_BUCKET) return null;
+  const trimmed = path.toString().replace(/^\/+/, "");
+  return `${STORAGE_PUBLIC_BASE}/${encodeStoragePath(trimmed)}`;
+}
+
+function resolveStorageCover(row) {
+  if (!row || typeof row !== "object") return null;
+  const bucket =
+    row.storage_bucket || row.cover_bucket || row.coverBucket || row.cover_storage_bucket;
+  const path =
+    row.storage_path || row.cover_path || row.cover_storage_path || row.coverPath;
+  if (bucket && path) {
+    const url = buildStoragePublicUrl(bucket, path);
+    if (url) return url;
+  }
+  if (row.cover_public_url) return row.cover_public_url;
+  return null;
+}
+
+function detectRegionCodesFromString(value) {
+  if (!value) return [];
+  const input = value.toString();
+  const normalized = input
+    .split(/[,/]/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+  const codes = new Set();
+  normalized.forEach((token) => {
+    REGION_CODES.forEach((code) => {
+      if (REGION_MATCHERS[code].some((pattern) => pattern.test(token))) {
+        codes.add(code);
+      }
+    });
+  });
+  return Array.from(codes);
+}
+
+function computeRegionCodes(row) {
+  if (!row || typeof row !== "object") return [];
+  const codes = new Set();
+  const explicit = row.region_code || row.regionCode;
+  if (explicit) codes.add(explicit.toString().toUpperCase());
+  const list = row.region_codes || row.regionCodes;
+  if (Array.isArray(list)) {
+    list.forEach((code) => {
+      if (code) codes.add(code.toString().toUpperCase());
+    });
+  }
+  const regionField = resolveGameField(row, "region");
+  detectRegionCodesFromString(regionField).forEach((code) => codes.add(code));
+  return Array.from(codes);
+}
+
+function applyRowEnhancements(row) {
+  if (!row || typeof row !== "object") return;
+  const storageCover = resolveStorageCover(row);
+  if (storageCover) {
+    row[COL_COVER] = storageCover;
+  }
+  const regions = computeRegionCodes(row);
+  row.__regionCodes = regions;
+  if (!row.region && regions.length) {
+    row.region = regions.join(", ");
+  }
+}
+
+function normalizeIncomingRows(rows) {
+  if (!Array.isArray(rows)) return rows;
+  rows.forEach(applyRowEnhancements);
+  return rows;
+}
+
 /**
  * Attempt to backfill missing cover art using external sources.
  * @param {GameRow[]} rows
@@ -4348,6 +4558,7 @@ function restoreCollectionBackup(file) {
         filterRatingMin = persistedFilters.filterRatingMin || "";
         filterYearStart = persistedFilters.filterYearStart || "";
         filterYearEnd = persistedFilters.filterYearEnd || "";
+        filterRegion = persistedFilters.filterRegion || "";
         savePersistedFilters();
       }
       applyFiltersToInputs();
@@ -4359,6 +4570,179 @@ function restoreCollectionBackup(file) {
     }
   };
   reader.readAsText(file);
+}
+function setupContributionWorkflow() {
+  const openBtn = document.getElementById("contributeBtn");
+  const modal = document.getElementById("contributeModal");
+  const form = document.getElementById("contributeForm");
+  if (!openBtn || !modal || !form) return;
+  const closeButtons = modal.querySelectorAll("[data-contribute-close]");
+  openBtn.addEventListener("click", openContributionModal);
+  closeButtons.forEach((button) => {
+    button.addEventListener("click", closeContributionModal);
+  });
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeContributionModal();
+    }
+  });
+  form.addEventListener("submit", handleContributionSubmit);
+}
+
+function openContributionModal() {
+  const modal = document.getElementById("contributeModal");
+  if (!modal) return;
+  contributionModalOpen = true;
+  modal.setAttribute("aria-hidden", "false");
+  const form = document.getElementById("contributeForm");
+  setContributionStatus("");
+  if (form) {
+    const firstInput = form.querySelector("input, select, textarea");
+    if (firstInput && typeof firstInput.focus === "function") {
+      firstInput.focus();
+    }
+  }
+  document.addEventListener("keydown", handleContributionEscape, true);
+}
+
+function closeContributionModal() {
+  const modal = document.getElementById("contributeModal");
+  if (!modal) return;
+  contributionModalOpen = false;
+  modal.setAttribute("aria-hidden", "true");
+  document.removeEventListener("keydown", handleContributionEscape, true);
+  const form = document.getElementById("contributeForm");
+  if (form) {
+    form.reset();
+  }
+  setContributionStatus("");
+}
+
+function handleContributionEscape(event) {
+  if (!contributionModalOpen) return;
+  if (event.key === "Escape") {
+    event.stopPropagation();
+    closeContributionModal();
+  }
+}
+
+function setContributionStatus(message, variant = "info") {
+  const statusEl = document.querySelector(".contribute-status");
+  if (!statusEl) return;
+  statusEl.textContent = message || "";
+  statusEl.dataset.variant = variant;
+}
+
+function buildContributionPayload(formData) {
+  const title = (formData.get("title") || "").toString().trim();
+  const platform = (formData.get("platform") || "").toString().trim();
+  const region = (formData.get("region") || "NTSC").toString().trim();
+  const assetType = (formData.get("assetType") || "image").toString().trim();
+  const sourceUrl = (formData.get("sourceUrl") || "").toString().trim();
+  const contact = (formData.get("contact") || "").toString().trim();
+  const notes = (formData.get("notes") || "").toString().trim();
+  const row = { [COL_GAME]: title, [COL_PLATFORM]: platform };
+  const key = buildRowKey(row) || `${title}___${platform}`;
+  return {
+    title,
+    platform,
+    regionCode: region || "NTSC",
+    assetType: assetType || "image",
+    sourceUrl,
+    contact,
+    notes,
+    gameKey: key,
+  };
+}
+
+async function handleContributionSubmit(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!(form instanceof HTMLFormElement)) return;
+  if (!supabase) {
+    setContributionStatus("Supabase credentials missing. Unable to submit.", "error");
+    return;
+  }
+  const formData = new FormData(form);
+  const file = formData.get("file");
+  if (!(file instanceof File)) {
+    setContributionStatus("Select a file to upload.", "error");
+    return;
+  }
+  const payload = buildContributionPayload(formData);
+  if (!payload.title || !payload.platform || !payload.sourceUrl) {
+    setContributionStatus("Title, platform, and source URL are required.", "error");
+    return;
+  }
+  const allowed =
+    CONTRIBUTION_ALLOWED_TYPES[payload.assetType] || CONTRIBUTION_ALLOWED_TYPES.image;
+  if (!allowed.includes(file.type)) {
+    setContributionStatus("Unsupported file type. Check the guidelines.", "error");
+    return;
+  }
+  if (file.size > CONTRIBUTION_MAX_BYTES) {
+    setContributionStatus("File exceeds the 25MB limit.", "error");
+    return;
+  }
+
+  try {
+    setContributionStatus("Requesting upload slot…");
+    const { data: uploadData, error: uploadError } = await supabase.functions.invoke(
+      "request-media-upload",
+      {
+        body: {
+          filename: file.name,
+          contentType: file.type,
+          byteSize: file.size,
+          assetType: payload.assetType,
+          regionCode: payload.regionCode,
+        },
+      }
+    );
+    if (uploadError || !uploadData) {
+      throw new Error(uploadError?.message || "Unable to request upload URL");
+    }
+    const bucket = uploadData.bucket || STORAGE_PENDING_BUCKET;
+    const storagePath = uploadData.path;
+    const token = uploadData.token;
+    if (!bucket || !storagePath || !token) {
+      throw new Error("Invalid upload response from server.");
+    }
+    setContributionStatus("Uploading file…");
+    const storage = supabase.storage.from(bucket);
+    const uploadResult = await storage.uploadToSignedUrl(storagePath, token, file, {
+      contentType: file.type,
+    });
+    if (uploadResult.error) {
+      throw new Error(uploadResult.error.message || "Upload failed");
+    }
+    setContributionStatus("Recording submission…");
+    const { error: insertError } = await supabase.from("pending_media").insert({
+      game_key: payload.gameKey,
+      title: payload.title,
+      platform: payload.platform,
+      region_code: payload.regionCode,
+      asset_type: payload.assetType,
+      original_filename: file.name,
+      content_type: file.type,
+      byte_size: file.size,
+      storage_bucket: bucket,
+      storage_path: storagePath,
+      source_url: payload.sourceUrl,
+      submitted_by: payload.contact || null,
+      notes: payload.notes || null,
+    });
+    if (insertError) {
+      throw new Error(insertError.message || "Unable to save submission");
+    }
+    setContributionStatus(
+      "Thanks! Moderators will review your submission within five business days.",
+      "success"
+    );
+    form.reset();
+  } catch (error) {
+    setContributionStatus(error.message || "Unable to submit right now.", "error");
+  }
 }
 
 /**
@@ -4411,7 +4795,117 @@ function buildPricePanelMarkup() {
       <canvas data-price-sparkline width="260" height="80"></canvas>
     </div>
     <p class="price-panel-note" data-price-note>Fetching live prices…</p>
+    <div class="price-panel-variants" data-price-variants hidden>
+      <h4>Regional Variants</h4>
+      <ul class="price-variant-list" data-price-variant-list></ul>
+    </div>
   </section>`;
+}
+
+function ingestVariantPrices(rows) {
+  if (!Array.isArray(rows)) return;
+  rows.forEach((row) => {
+    if (!row || !row.game_key || !row.region_code) return;
+    const key = row.game_key;
+    const region = row.region_code;
+    if (!variantPriceMap.has(key)) {
+      variantPriceMap.set(key, new Map());
+    }
+    const entry = {
+      region: region,
+      currency: row.currency || "USD",
+      loose: row.loose_price_cents ?? null,
+      cib: row.cib_price_cents ?? null,
+      brandNew: row.new_price_cents ?? null,
+      looseDelta: row.loose_delta_percent ?? null,
+      cibDelta: row.cib_delta_percent ?? null,
+      newDelta: row.new_delta_percent ?? null,
+      snapshotDate: row.snapshot_date || null,
+    };
+    variantPriceMap.get(key).set(region, entry);
+  });
+}
+
+async function loadVariantPriceDeltas() {
+  if (variantPriceMap.size) return;
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("game_variant_price_deltas")
+        .select("*");
+      if (!error && Array.isArray(data)) {
+        ingestVariantPrices(data);
+        return;
+      }
+    } catch (error) {
+      if (typeof console !== "undefined") {
+        console.debug("Variant price fetch failed", error);
+      }
+    }
+  }
+  try {
+    const response = await fetch(VARIANT_PRICE_SAMPLE_URL, { cache: "no-store" });
+    if (response.ok) {
+      const payload = await response.json();
+      ingestVariantPrices(Array.isArray(payload) ? payload : []);
+    }
+  } catch (error) {
+    if (typeof console !== "undefined") {
+      console.debug("Variant price fallback load failed", error);
+    }
+  }
+}
+
+function getVariantPricesForKey(key) {
+  if (!key) return [];
+  const entry = variantPriceMap.get(key);
+  if (!entry) return [];
+  return Array.from(entry.values());
+}
+
+function formatVariantDelta(value) {
+  if (value === null || value === undefined) return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  const sign = numeric > 0 ? "+" : "";
+  return `${sign}${numeric.toFixed(1)}%`;
+}
+
+function renderVariantPrices(panel, key) {
+  if (!panel) return;
+  const container = panel.querySelector("[data-price-variants]");
+  const listEl = panel.querySelector("[data-price-variant-list]");
+  if (!container || !listEl) return;
+  const variants = getVariantPricesForKey(key).filter((entry) => entry.region !== "NTSC");
+  if (!variants.length) {
+    container.hidden = true;
+    listEl.innerHTML = "";
+    return;
+  }
+  const items = variants
+    .map((entry) => {
+      const delta = entry.cibDelta ?? entry.looseDelta ?? entry.newDelta;
+      const deltaLabel = formatVariantDelta(delta);
+      const lines = [];
+      if (entry.cib !== null) {
+        lines.push(`CIB: ${formatCurrencyFromCents(entry.cib, { precise: true })}`);
+      }
+      if (entry.loose !== null) {
+        lines.push(`Loose: ${formatCurrencyFromCents(entry.loose, { precise: true })}`);
+      }
+      if (entry.brandNew !== null) {
+        lines.push(`New: ${formatCurrencyFromCents(entry.brandNew, { precise: true })}`);
+      }
+      const subtitle = lines.join(" · ");
+      const deltaText = deltaLabel
+        ? `<span class="price-variant-delta">${deltaLabel}</span>`
+        : "";
+      const label = REGION_LABELS[entry.region] || entry.region;
+      return `<li><strong>${label}</strong> ${deltaText}<div class="price-variant-meta">${subtitle}</div></li>`;
+    })
+    .join("");
+  listEl.innerHTML = items;
+  container.hidden = false;
 }
 
 function hydrateModalPricePanel(modal, key) {
@@ -4474,6 +4968,7 @@ function hydrateModalPricePanel(modal, key) {
         if (trendEl) trendEl.textContent = "";
       });
   }
+  renderVariantPrices(panel, key);
 }
 
 function buildMetadataCard(title, items, { layout = "grid", footerHtml = "" } = {}) {
@@ -4853,11 +5348,17 @@ if (!disableBootstrapFlag && canBootstrap) {
       filterRatingMin = persistedFilters.filterRatingMin || "";
       filterYearStart = persistedFilters.filterYearStart || "";
       filterYearEnd = persistedFilters.filterYearEnd || "";
+      filterRegion = persistedFilters.filterRegion || "";
       setupFilters(rawData);
+      setupRegionToggle();
       setupBrowseControls();
+      setupContributionWorkflow();
       refreshFilteredView("initial-load");
       updateTrendingCarousel(rawData);
       updateStructuredData(rawData);
+      loadVariantPriceDeltas().catch(() => {
+        /* ignore variant price load errors */
+      });
       coverHydrationPromise
         .then((mutated) => {
           if (mutated) {
@@ -5045,6 +5546,9 @@ const testApi = {
     if (Object.prototype.hasOwnProperty.call(overrides, "filterYearEnd")) {
       filterYearEnd = overrides.filterYearEnd;
     }
+    if (Object.prototype.hasOwnProperty.call(overrides, "filterRegion")) {
+      filterRegion = overrides.filterRegion;
+    }
     if (Object.prototype.hasOwnProperty.call(overrides, "filters")) {
       persistedFilters = overrides.filters;
     }
@@ -5099,6 +5603,7 @@ const testApi = {
       filterRatingMin,
       filterYearStart,
       filterYearEnd,
+      filterRegion,
       sortColumn,
       sortDirection,
       rawData,

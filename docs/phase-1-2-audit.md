@@ -51,9 +51,9 @@ This audit verifies roadmap items in Phases 1 and 2. Each bullet either confirms
 ### Content Quality & Media
 
 - ✅ The gallery carousel enforces keyboard navigation and alt text as promised for accessibility.【F:app.js†L1374-L1471】
-- ⚠️ Supabase Storage/CDN integration remains outstanding: the app still renders remote `cover` URLs from row data, and no storage buckets are configured.【F:app.js†L2851-L2899】【F:docs/implementation-plan.md†L35-L40】
-- ⚠️ Region toggles/variant linking are still pending; filters only handle platform, genre, rating, year, search, and status today.【F:app.js†L1720-L1780】【F:docs/implementation-plan.md†L35-L41】
-- ⚠️ A community contribution workflow and media archival strategy have not been codified—Supabase schema lacks review queues, and documentation covers only database backups.【F:supabase/migrations/20250107120000_init.sql†L81-L110】【F:docs/recovery-playbook.md†L1-L29】【F:docs/implementation-plan.md†L35-L41】
+- ✅ Supabase Storage/CDN integration now drives cover resolution through Storage buckets with row-level policies and client helpers, falling back to remote URLs only when needed.【F:supabase/migrations/20251111150000_media_workflow.sql†L1-L200】【F:app.js†L240-L330】【F:app.js†L3888-L3960】
+- ✅ Region toggles and variant pricing deltas ship with an accessible filter UI and modal summaries for NTSC/PAL/JPN variants.【F:index.html†L80-L123】【F:app.js†L1670-L1870】【F:app.js†L4760-L4845】【F:style.css†L440-L520】
+- ✅ Community submissions flow into a moderated queue with signed upload URLs, pending media tables, and archival tooling to snapshot buckets.【F:supabase/migrations/20251111150000_media_workflow.sql†L24-L200】【F:supabase/functions/request-media-upload/index.ts†L1-L120】【F:app.js†L4520-L4715】【F:index.html†L110-L170】【F:scripts/archive-media.js†L1-L140】
 
 ## Manual Input Decisions & Priorities
 

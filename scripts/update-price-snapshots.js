@@ -13,6 +13,11 @@ const CACHE_HISTORY_LIMIT = 64;
 const DEFAULT_REFRESH_HOURS = 24;
 const REQUEST_DELAY_MS = 600;
 const SOURCE = "pricecharting";
+const REGION_FACTORS = {
+  NTSC: { loose: 1, cib: 1, new: 1 },
+  PAL: { loose: 1.12, cib: 1.1, new: 1.15 },
+  JPN: { loose: 0.85, cib: 0.88, new: 0.92 },
+};
 
 function loadEnv() {
   const envFile = path.join(ROOT, ".env");
@@ -78,6 +83,25 @@ function buildGameKey(name, platform) {
   return `${name}___${platform}`;
 }
 
+function resolveRegionCodes(raw) {
+  if (!raw) return [];
+  const normalized = raw.toString().toLowerCase();
+  const codes = new Set();
+  if (/ntsc|usa|north america|canada/.test(normalized)) codes.add("NTSC");
+  if (/pal|europe|uk|australia/.test(normalized)) codes.add("PAL");
+  if (/jpn|japan/.test(normalized)) codes.add("JPN");
+  return Array.from(codes);
+}
+
+function resolvePrimaryRegion(game) {
+  if (Array.isArray(game.regionCodes) && game.regionCodes.length) {
+    if (game.regionCodes.includes("NTSC")) return "NTSC";
+    if (game.regionCodes.includes("PAL")) return "PAL";
+    if (game.regionCodes.includes("JPN")) return "JPN";
+  }
+  return "NTSC";
+}
+
 function readGames(filter) {
   ensureFileExists(CSV_PATH, "games.csv");
   const csvContent = fs.readFileSync(CSV_PATH, "utf8");
@@ -93,6 +117,8 @@ function readGames(filter) {
       key,
       name,
       platform,
+      regionRaw: row["Region"]?.trim() || "",
+      regionCodes: resolveRegionCodes(row["Region"]?.trim()),
     });
   });
   return Array.from(unique.values());
@@ -153,7 +179,7 @@ async function fetchProduct({ name, platform }, queryConsole, baseUrl, token) {
   return payload;
 }
 
-function toSnapshot(game, payload) {
+function toSnapshot(game, payload, regionCode) {
   const now = new Date();
   return {
     game_key: game.key,
@@ -169,6 +195,7 @@ function toSnapshot(game, payload) {
     source: SOURCE,
     snapshot_date: now.toISOString().slice(0, 10),
     fetched_at: now.toISOString(),
+    region_code: regionCode || "NTSC",
     metadata: {
       release_date: payload["release-date"] || null,
     },
@@ -220,6 +247,48 @@ async function persistSnapshotSupabase(snapshot, endpoint, serviceKey) {
   return true;
 }
 
+function multiplyPrice(value, factor) {
+  if (!Number.isFinite(value) || !Number.isFinite(factor)) return null;
+  return Math.round(value * factor);
+}
+
+async function persistVariantPricesSupabase(game, snapshot, endpoint, serviceKey) {
+  if (!endpoint || !serviceKey) return false;
+  const fetchImpl = await ensureFetch();
+  const regions = Array.isArray(game.regionCodes) ? game.regionCodes : [];
+  const baseRegion = snapshot.region_code || resolvePrimaryRegion(game);
+  const variants = regions.filter((code) => code && code !== baseRegion);
+  if (!variants.length) return false;
+  const payload = variants.map((code) => {
+    const factors = REGION_FACTORS[code] || REGION_FACTORS.NTSC;
+    return {
+      game_key: game.key,
+      region_code: code,
+      currency: snapshot.currency,
+      loose_price_cents: multiplyPrice(snapshot.loose_price_cents, factors.loose),
+      cib_price_cents: multiplyPrice(snapshot.cib_price_cents, factors.cib),
+      new_price_cents: multiplyPrice(snapshot.new_price_cents, factors.new),
+      source: snapshot.source,
+      snapshot_date: snapshot.snapshot_date,
+    };
+  });
+  const response = await fetchImpl(endpoint, {
+    method: "POST",
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Variant upsert failed (${response.status}): ${text}`);
+  }
+  return true;
+}
+
 function selectGames(games, cache, options, refreshHours) {
   const decorated = games.map((game) => {
     const cached = cache[game.key];
@@ -264,6 +333,9 @@ async function main() {
   const supabaseEndpoint = supabaseUrl
     ? `${supabaseUrl.replace(/\/$/, "")}/rest/v1/game_price_snapshots`
     : null;
+  const variantEndpoint = supabaseUrl
+    ? `${supabaseUrl.replace(/\/$/, "")}/rest/v1/game_variant_prices`
+    : null;
   const consoleMap = readConsoleMap();
   const games = readGames(options.filter);
   const cache = readCache();
@@ -288,10 +360,12 @@ async function main() {
     const consoleHint = resolveConsole(game.platform, consoleMap);
     try {
       const payload = await fetchProduct(game, consoleHint, priceBase, priceToken);
-      const snapshot = toSnapshot(game, payload);
+      const primaryRegion = resolvePrimaryRegion(game);
+      const snapshot = toSnapshot(game, payload, primaryRegion);
       updateCacheRecord(cache, snapshot);
       if (!options.dryRun) {
         await persistSnapshotSupabase(snapshot, supabaseEndpoint, serviceKey);
+        await persistVariantPricesSupabase(game, snapshot, variantEndpoint, serviceKey);
       }
       success += 1;
       console.log(
