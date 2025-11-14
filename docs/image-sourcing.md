@@ -25,6 +25,14 @@ When a game row ships without a `cover` URL, the client now tries to look up art
 
 This best-effort backfill keeps empty cards from lingering during data entry, but it is not a licensing substitute: always prefer supplying explicit, vetted URLs in your seed data so that Supabase exports, offline mode, and SEO metadata stay deterministic.
 
+## Automation Backlog
+
+To reduce manual curation effort, prioritize the following automation tasks (tracked in `docs/implementation-plan.md`):
+
+1. **API-driven cover import.** Build a Supabase Edge Function or scheduled worker that requests cover art from IGDB (or similar APIs) for rows still missing a `cover` URL, uploads approved assets into Supabase Storage, and writes the canonical URL back to the database and CSV exports.
+2. **Expanded fallback crawler.** Create a background job that re-attempts Wikipedia and MobyGames lookups for unresolved titles, caching successes in Supabase and the offline JSON dataset so subsequent builds receive the artwork automatically.
+3. **Audit & retry CLI.** Ship a `scripts/audit-missing-covers.js` utility that enumerates titles without artwork, queues automated fetches, and opens tracking issues when multiple sources fail so the team only reviews the toughest edge cases.
+
 ## Hosting & Performance Tips
 
 - Always use HTTPS URLs—mixed-content warnings will block `http://` links when the site is served over TLS. The `normalizeImageUrl` helper in `app.js` passes through secure URLs untouched and only rewrites relative paths.
