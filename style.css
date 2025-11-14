@@ -54,6 +54,16 @@
 
   --glow-primary-soft: rgba(111, 230, 224, 0.45);
   --glow-primary-strong: rgba(111, 230, 224, 0.65);
+
+  /* Button interaction tokens */
+  --button-interaction-bg-start: rgba(111, 230, 224, 0.24);
+  --button-interaction-bg-end: rgba(111, 230, 224, 0.08);
+  --button-interaction-border: rgba(111, 230, 224, 0.5);
+  --button-base-bg-start: rgba(111, 230, 224, 0.16);
+  --button-base-bg-end: rgba(111, 230, 224, 0.05);
+  --button-base-border: rgba(111, 230, 224, 0.3);
+  --button-hover-border: rgba(111, 230, 224, 0.55);
+
   --hero-title-start: #81f3ff;
   --hero-title-end: #2ad6d2;
   --hero-title-glow: rgba(129, 243, 255, 0.6);
@@ -485,16 +495,16 @@ body {
   backdrop-filter: blur(4px);
   background-image: linear-gradient(
     140deg,
-    rgba(111, 230, 224, 0.16),
-    rgba(111, 230, 224, 0.05)
+    var(--button-base-bg-start),
+    var(--button-base-bg-end)
   );
-  border: 1px solid rgba(111, 230, 224, 0.3);
+  border: 1px solid var(--button-base-border);
   box-shadow: 0 10px 26px rgba(3, 12, 24, 0.35);
 }
 
 .actions-toolbar button:hover,
 .actions-toolbar button:focus-visible {
-  border-color: rgba(111, 230, 224, 0.55);
+  border-color: var(--button-hover-border);
   box-shadow: 0 16px 32px rgba(3, 12, 24, 0.45);
 }
 
@@ -1176,10 +1186,10 @@ body {
 .carousel-control:focus-visible {
   background: linear-gradient(
     160deg,
-    rgba(111, 230, 224, 0.24),
-    rgba(111, 230, 224, 0.08)
+    var(--button-interaction-bg-start),
+    var(--button-interaction-bg-end)
   );
-  border-color: rgba(111, 230, 224, 0.5);
+  border-color: var(--button-interaction-border);
   color: var(--hero-title-start);
   transform: translateY(-4px) scale(1.03);
   box-shadow:
