@@ -5154,6 +5154,8 @@ function formatPriceTrend(history) {
 function showGameModal(game) {
   const modal = document.getElementById("gameModal");
   const modalBg = document.getElementById("modalBg");
+  const previouslyFocused = document.activeElement;
+  const modalTitleId = "gameModalTitle";
   const key = (game[COL_GAME] || "") + "___" + (game[COL_PLATFORM] || "");
   let galleryImages = [];
   if (Array.isArray(game.screenshots) && game.screenshots.length) {
@@ -5164,7 +5166,9 @@ function showGameModal(game) {
   galleryImages = Array.from(new Set(galleryImages.filter(Boolean)));
   // Build modal HTML (no user HTML injected)
   let html = `<button class="modal-close" title="Close" aria-label="Close">&times;</button>`;
-  html += `<div class="modal-title">${game[COL_GAME] || "(No Name)"}</div>`;
+  html += `<div class="modal-title" id="${modalTitleId}">${
+    game[COL_GAME] || "(No Name)"
+  }</div>`;
   if (game[COL_COVER]) html += `<img src="${game[COL_COVER]}" alt="cover art">`;
   if (galleryImages.length) {
     const firstImage = galleryImages[0];
@@ -5215,6 +5219,10 @@ function showGameModal(game) {
   }
 
   modal.innerHTML = html;
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", modalTitleId);
+  modal.setAttribute("aria-hidden", "false");
   modal.style.display = modalBg.style.display = "";
   setTimeout(() => {
     modalBg.style.display = "block";
@@ -5256,7 +5264,15 @@ function showGameModal(game) {
   function closeModal() {
     modal.style.display = modalBg.style.display = "none";
     modal.innerHTML = "";
+    modal.setAttribute("aria-hidden", "true");
+    modal.removeAttribute("role");
+    modal.removeAttribute("aria-modal");
+    modal.removeAttribute("aria-labelledby");
+    modal.removeAttribute("tabindex");
     document.removeEventListener("keydown", escHandler);
+    if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+      previouslyFocused.focus();
+    }
   }
 }
 
