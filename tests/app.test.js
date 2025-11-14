@@ -517,16 +517,9 @@ describe("storage URL helpers", () => {
 
   it("builds storage public URL with bucket and path", () => {
     const constants = app.__getStorageConstants();
-    // Mock Supabase config for testing
-    window.__SUPABASE_CONFIG__ = {
-      storage: {
-        cdnUrl: "https://example.supabase.co/storage/v1",
-        publicBucket: "game-covers",
-      },
-    };
-
-    // Note: We need to test with the current runtime constants
-    // In a real scenario with config, the URL would include the bucket
+    // Note: Cannot mock window.__SUPABASE_CONFIG__ after app.js is loaded;
+    // constants are initialized at module load time. This test uses the runtime constants.
+    // In a real scenario with config, the URL would include the bucket.
     const bucket = constants.STORAGE_PUBLIC_BUCKET || "game-covers";
     const path = "covers/game1.jpg";
 
