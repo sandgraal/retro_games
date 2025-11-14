@@ -4130,6 +4130,12 @@ function setRowCover(row, value, { provisional = false } = {}) {
   return true;
 }
 
+/**
+ * Resolve the first valid screenshot URL from a game row's screenshots array.
+ * Used as a fallback when no dedicated cover image exists.
+ * @param {GameRow} row - Game data object with screenshots property
+ * @returns {string} First valid screenshot URL or empty string if none found
+ */
 function resolveScreenshotCover(row) {
   if (!row || typeof row !== "object") return "";
   const screenshots = Array.isArray(row.screenshots) ? row.screenshots : [];
