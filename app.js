@@ -4109,6 +4109,14 @@ function normalizeCoverUrl(value) {
   return "";
 }
 
+/**
+ * Set a cover URL on a game row, with optional provisional flag.
+ * @param {GameRow} row - Game data object to modify
+ * @param {string|object|any} value - Cover URL value to normalize and assign
+ * @param {object} [options] - Configuration options
+ * @param {boolean} [options.provisional=false] - Mark cover as provisional (temporary screenshot)
+ * @returns {boolean} True if cover was successfully set, false otherwise
+ */
 function setRowCover(row, value, { provisional = false } = {}) {
   if (!row || typeof row !== "object") return false;
   const normalized = normalizeCoverUrl(value);
