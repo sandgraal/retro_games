@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import app from "../app.js";
 const getBackupPayload = app.__getBackupPayload || (() => ({}));
 
@@ -198,6 +198,79 @@ beforeEach(() => {
     filterYearEnd: "",
     filterRegion: "",
     rawData: SAMPLE_DATA,
+  });
+});
+
+describe("cover fallbacks", () => {
+  let originalFetch;
+
+  beforeEach(() => {
+    originalFetch = global.fetch;
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.clear();
+    }
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("extracts Wikipedia titles from detail URLs", () => {
+    const title = app.__extractWikipediaTitleFromUrl(
+      "https://en.wikipedia.org/wiki/Final_Fantasy_VI"
+    );
+    expect(title).toBe("Final Fantasy VI");
+  });
+
+  it("normalizes screenshot fallbacks as provisional covers", () => {
+    const rows = [
+      {
+        game_name: "Sample Game",
+        platform: "SNES",
+        screenshots: ["https://example.com/screenshot.png"],
+      },
+    ];
+    app.__normalizeIncomingRows(rows);
+    expect(rows[0].cover).toBe("https://example.com/screenshot.png");
+    expect(rows[0].__provisionalCover).toBe(true);
+  });
+
+  it("prioritizes detail-page matches when building Wikipedia queries", () => {
+    const queries = app.__buildFallbackCoverQueries(
+      "Chrono Trigger",
+      "SNES",
+      "Chrono Trigger (video game)"
+    );
+    expect(queries[0]).toBe("Chrono Trigger (video game)");
+    expect(queries).toContain("Chrono Trigger");
+  });
+
+  it("hydrates missing covers and replaces provisional screenshots", async () => {
+    const rows = [
+      {
+        game_name: "Chrono Trigger",
+        platform: "SNES",
+        screenshots: ["https://example.com/screenshot.png"],
+      },
+    ];
+    app.__normalizeIncomingRows(rows);
+    const responsePayload = {
+      type: "standard",
+      originalimage: { source: "https://images.example.com/chrono-trigger.jpg" },
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(responsePayload),
+    });
+    global.fetch = fetchMock;
+
+    const mutated = await app.__hydrateFallbackCovers(rows);
+
+    expect(mutated).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(rows[0].cover).toBe("https://images.example.com/chrono-trigger.jpg");
+    expect(rows[0].__provisionalCover).toBeUndefined();
   });
 });
 
