@@ -1272,8 +1272,8 @@ body {
   z-index: 1;
 }
 
-.trending-carousel::before,
-.trending-carousel::after {
+.trending-window::before,
+.trending-window::after {
   content: "";
   position: absolute;
   top: 0;
@@ -1283,14 +1283,14 @@ body {
   z-index: 2;
 }
 
-.trending-carousel::before {
-  left: clamp(20px, 5vw, 56px);
-  background: linear-gradient(90deg, rgba(12, 18, 30, 0.95), rgba(12, 18, 30, 0));
+.trending-window::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(18, 26, 40, 0.95), rgba(18, 26, 40, 0));
 }
 
-.trending-carousel::after {
-  right: clamp(20px, 5vw, 56px);
-  background: linear-gradient(270deg, rgba(12, 18, 30, 0.95), rgba(12, 18, 30, 0));
+.trending-window::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(18, 26, 40, 0.95), rgba(18, 26, 40, 0));
 }
 
 .trending-window {
@@ -1306,6 +1306,8 @@ body {
     inset 0 0 0 1px rgba(255, 255, 255, 0.03),
     inset 0 22px 44px rgba(5, 12, 28, 0.55);
   backdrop-filter: blur(14px);
+  scrollbar-color: rgba(111, 230, 224, 0.3) rgba(10, 16, 28, 0.45);
+  scrollbar-width: thin;
 }
 
 .trending-window:focus-visible {
@@ -1425,7 +1427,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .actions-toolbar button,
   .carousel-control,
-  .trending-card {
+  .trending-card,
+  .trending-card::before {
     transition-duration: 0.01ms !important;
   }
 
