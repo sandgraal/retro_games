@@ -1305,6 +1305,8 @@ body {
     inset 0 0 0 1px rgba(255, 255, 255, 0.03),
     inset 0 22px 44px rgba(5, 12, 28, 0.55);
   backdrop-filter: blur(14px);
+  scrollbar-color: rgba(111, 230, 224, 0.3) rgba(10, 16, 28, 0.45);
+  scrollbar-width: thin;
 }
 
 .trending-window:focus-visible {
