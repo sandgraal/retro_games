@@ -4381,7 +4381,7 @@ function extractWikipediaTitleFromUrl(url) {
   try {
     const parsed = new URL(url);
     const host = parsed.hostname.toLowerCase();
-    if (!host.endsWith("wikipedia.org")) return "";
+    if (!isValidWikipediaHost(host)) return "";
     if (parsed.pathname.startsWith("/wiki/")) {
       const article = parsed.pathname.replace(/^\/wiki\//, "").replace(/\/+/g, "/");
       const decoded = decodeURIComponent(article);
@@ -4395,6 +4395,20 @@ function extractWikipediaTitleFromUrl(url) {
     return "";
   }
   return "";
+}
+
+/**
+ * Return true if the host is a valid Wikipedia domain (e.g. en.wikipedia.org, wikipedia.org).
+ * @param {string} host
+ * @returns {boolean}
+ */
+function isValidWikipediaHost(host) {
+  if (!host || typeof host !== "string") return false;
+  if (host === "wikipedia.org") return true;
+  // Accept <subdomain>.wikipedia.org, e.g. en.wikipedia.org, de.wikipedia.org
+  const parts = host.split(".");
+  if (parts.length === 3 && parts[1] === "wikipedia" && parts[2] === "org") return true;
+  return false;
 }
 
 async function fetchWikipediaImageFromMedia(query) {
