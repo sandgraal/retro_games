@@ -4403,7 +4403,7 @@ function extractWikipediaTitleFromUrl(url) {
     const host = parsed.hostname.toLowerCase();
     if (!isValidWikipediaHost(host)) return "";
     if (parsed.pathname.startsWith("/wiki/")) {
-      const article = parsed.pathname.replace(/^\/wiki\//, "").replace(/\/+/g, "/");
+      const article = parsed.pathname.replace(/^\/wiki\//, "");
       const decoded = decodeURIComponent(article);
       return decoded.replace(/_/g, " ").trim();
     }
