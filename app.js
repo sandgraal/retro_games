@@ -4330,6 +4330,7 @@ async function fetchFallbackCoverFromWikipedia(row) {
  * Build candidate article titles for Wikipedia lookup.
  * @param {string} title
  * @param {string} platform
+ * @param {string} [detailsTitle] - Optional Wikipedia article title extracted from details URL
  * @returns {string[]}
  */
 function buildFallbackCoverQueries(title, platform, detailsTitle) {
