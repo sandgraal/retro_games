@@ -110,6 +110,7 @@ All pull requests run through `.github/workflows/ci.yml`, which:
 - Installs dependencies with `npm ci` on Node 20.
 - Runs `npm run lint`, `npm run format:check`, and `npm test`.
 - Executes a `gitleaks` scan to block accidental secret commits.
+- Audits the built site with Lighthouse CI (`npm run lighthouse`), enforcing performance, accessibility, best-practices, and SEO thresholds.
 - (optional future step) Add `npm run test:e2e` to the workflow when headless browsers are available in CI runners.
 
 Keep these commands green locally before pushing to avoid CI failures.
