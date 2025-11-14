@@ -70,21 +70,25 @@ create index if not exists pending_media_game_key_idx on public.pending_media (g
 
 alter table public.pending_media enable row level security;
 
-create policy if not exists "submit pending media" on public.pending_media
+drop policy if exists "submit pending media" on public.pending_media;
+create policy "submit pending media" on public.pending_media
   for insert
   with check (status = 'pending');
 
-create policy if not exists "moderators view pending media" on public.pending_media
+drop policy if exists "moderators view pending media" on public.pending_media;
+create policy "moderators view pending media" on public.pending_media
   for select using (
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
   );
 
-create policy if not exists "moderators update pending media" on public.pending_media
+drop policy if exists "moderators update pending media" on public.pending_media;
+create policy "moderators update pending media" on public.pending_media
   for update using (
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
   );
 
-create policy if not exists "service delete pending media" on public.pending_media
+drop policy if exists "service delete pending media" on public.pending_media;
+create policy "service delete pending media" on public.pending_media
   for delete using (
     coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role'
   );
@@ -94,19 +98,22 @@ grant select, update on public.pending_media to content_moderator;
 grant select, insert, update, delete on public.pending_media to service_role;
 
 -- Allow service and moderators to manage approved media records.
-create policy if not exists "manage game media" on public.game_media
+drop policy if exists "manage game media" on public.game_media;
+create policy "manage game media" on public.game_media
   for insert with check (
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
   );
 
-create policy if not exists "update game media" on public.game_media
+drop policy if exists "update game media" on public.game_media;
+create policy "update game media" on public.game_media
   for update using (
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
   ) with check (
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
   );
 
-create policy if not exists "delete game media" on public.game_media
+drop policy if exists "delete game media" on public.game_media;
+create policy "delete game media" on public.game_media
   for delete using (
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
   );
@@ -133,12 +140,15 @@ create index if not exists game_variant_prices_game_region_idx on public.game_va
 
 alter table public.game_variant_prices enable row level security;
 
-create policy if not exists "read variant prices" on public.game_variant_prices for select using (true);
+drop policy if exists "read variant prices" on public.game_variant_prices;
+create policy "read variant prices" on public.game_variant_prices for select using (true);
 
-create policy if not exists "service upsert variant prices" on public.game_variant_prices
+drop policy if exists "service upsert variant prices" on public.game_variant_prices;
+create policy "service upsert variant prices" on public.game_variant_prices
   for insert with check (coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role');
 
-create policy if not exists "service update variant prices" on public.game_variant_prices
+drop policy if exists "service update variant prices" on public.game_variant_prices;
+create policy "service update variant prices" on public.game_variant_prices
   for update using (coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role')
   with check (coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role');
 
@@ -231,16 +241,19 @@ grant execute on function public.game_variant_price_deltas(text) to anon, authen
 -- Storage object policies for the new buckets.
 alter table storage.objects enable row level security;
 
-create policy if not exists "public read covers" on storage.objects
+drop policy if exists "public read covers" on storage.objects;
+create policy "public read covers" on storage.objects
   for select using (bucket_id = 'game-covers');
 
-create policy if not exists "upload pending media" on storage.objects
+drop policy if exists "upload pending media" on storage.objects;
+create policy "upload pending media" on storage.objects
   for insert with check (
     bucket_id = 'media-pending' and
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('', 'anon', 'authenticated')
   );
 
-create policy if not exists "moderator manage media" on storage.objects
+drop policy if exists "moderator manage media" on storage.objects;
+create policy "moderator manage media" on storage.objects
   for update using (
     bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
@@ -250,13 +263,15 @@ create policy if not exists "moderator manage media" on storage.objects
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
   );
 
-create policy if not exists "moderator read secure media" on storage.objects
+drop policy if exists "moderator read secure media" on storage.objects;
+create policy "moderator read secure media" on storage.objects
   for select using (
     bucket_id in ('media-pending', 'media-auth', 'media-archive') and
     coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
   );
 
-create policy if not exists "service delete media" on storage.objects
+drop policy if exists "service delete media" on storage.objects;
+create policy "service delete media" on storage.objects
   for delete using (
     bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
     coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role'
