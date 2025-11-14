@@ -1297,7 +1297,7 @@ body {
   flex: 1;
   overflow-x: auto;
   scroll-behavior: smooth;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
   border-radius: 18px;
   background: linear-gradient(160deg, rgba(18, 26, 40, 0.88), rgba(12, 20, 32, 0.82));
   padding: 0.95rem 0.85rem 1rem;
