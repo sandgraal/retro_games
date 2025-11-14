@@ -33,13 +33,14 @@ Thanks for keeping Sandgraal's Retro Games list sharp. This document captures th
 - `npm test` (Vitest, jsdom) covers filtering, rendering, and helper logic.
 - `npm run test:e2e` (Playwright) smoke-tests the modal, gallery, and controls. Run after major UI changes.
 - `npm run lint` and `npm run format:check` must pass; CI blocks otherwise.
+- `npm run lighthouse` runs the same performance/accessibility assertions enforced in CI.
 
 ## 5. Pull request checklist
 
 - [ ] Feature toggles/flags default to safe values.
 - [ ] Updated docs (`README.md`, `docs/current-state.md`, plan checkboxes) to reflect new behavior.
 - [ ] Added/updated tests for new logic (unit + e2e where applicable).
-- [ ] Ran `npm run lint`, `npm run format:check`, `npm test`, `npm run test:e2e` (if UI change).
+- [ ] Ran `npm run lint`, `npm run format:check`, `npm test`, `npm run lighthouse`, `npm run test:e2e` (if UI change).
 - [ ] Linked related issue/plan row in the PR description.
 
 ## 6. Review expectations
