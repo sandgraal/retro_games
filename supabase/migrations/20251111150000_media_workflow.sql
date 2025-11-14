@@ -140,14 +140,53 @@ create index if not exists game_variant_prices_game_region_idx on public.game_va
 
 alter table public.game_variant_prices enable row level security;
 
-drop policy if exists "read variant prices" on public.game_variant_prices;
+do $$
+begin
+  if exists (
+    select 1
+    from pg_policies p
+    where p.schemaname = 'public'
+      and p.tablename = 'game_variant_prices'
+      and p.policyname = 'read variant prices'
+  ) then
+    execute 'drop policy "read variant prices" on public.game_variant_prices';
+  end if;
+end;
+$$;
+
 create policy "read variant prices" on public.game_variant_prices for select using (true);
 
-drop policy if exists "service upsert variant prices" on public.game_variant_prices;
+do $$
+begin
+  if exists (
+    select 1
+    from pg_policies p
+    where p.schemaname = 'public'
+      and p.tablename = 'game_variant_prices'
+      and p.policyname = 'service upsert variant prices'
+  ) then
+    execute 'drop policy "service upsert variant prices" on public.game_variant_prices';
+  end if;
+end;
+$$;
+
 create policy "service upsert variant prices" on public.game_variant_prices
   for insert with check (coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role');
 
-drop policy if exists "service update variant prices" on public.game_variant_prices;
+do $$
+begin
+  if exists (
+    select 1
+    from pg_policies p
+    where p.schemaname = 'public'
+      and p.tablename = 'game_variant_prices'
+      and p.policyname = 'service update variant prices'
+  ) then
+    execute 'drop policy "service update variant prices" on public.game_variant_prices';
+  end if;
+end;
+$$;
+
 create policy "service update variant prices" on public.game_variant_prices
   for update using (coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role')
   with check (coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role');
@@ -161,9 +200,21 @@ alter table public.game_price_snapshots
 create index if not exists game_price_snapshots_region_idx on public.game_price_snapshots (region_code);
 
 -- Drop dependent objects so the latest view can be recreated with the new column signature.
-drop view if exists public.game_variant_price_deltas;
+do $$
+begin
+  if to_regclass('public.game_variant_price_deltas') is not null then
+    execute 'drop view public.game_variant_price_deltas';
+  end if;
+end;
+$$;
 
-drop view if exists public.game_price_latest;
+do $$
+begin
+  if to_regclass('public.game_price_latest') is not null then
+    execute 'drop view public.game_price_latest';
+  end if;
+end;
+$$;
 
 create view public.game_price_latest as
 select distinct on (game_key, source, region_code)
@@ -242,42 +293,93 @@ $$ language sql stable;
 grant execute on function public.game_variant_price_deltas(text) to anon, authenticated;
 
 -- Storage object policies for the new buckets.
-alter table storage.objects enable row level security;
+do $$
+begin
+  if to_regclass('storage.objects') is not null then
+    execute 'alter table storage.objects enable row level security';
 
-drop policy if exists "public read covers" on storage.objects;
-create policy "public read covers" on storage.objects
-  for select using (bucket_id = 'game-covers');
+    if exists (
+      select 1
+      from pg_policies p
+      where p.schemaname = 'storage'
+        and p.tablename = 'objects'
+        and p.policyname = 'public read covers'
+    ) then
+      execute 'drop policy "public read covers" on storage.objects';
+    end if;
 
-drop policy if exists "upload pending media" on storage.objects;
-create policy "upload pending media" on storage.objects
-  for insert with check (
-    bucket_id = 'media-pending' and
-    coalesce(current_setting('request.jwt.claim.role', true), '') in ('', 'anon', 'authenticated')
-  );
+    execute $$create policy "public read covers" on storage.objects
+      for select using (bucket_id = 'game-covers')$$;
 
-drop policy if exists "moderator manage media" on storage.objects;
-create policy "moderator manage media" on storage.objects
-  for update using (
-    bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
-    coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
-  )
-  with check (
-    bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
-    coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
-  );
+    if exists (
+      select 1
+      from pg_policies p
+      where p.schemaname = 'storage'
+        and p.tablename = 'objects'
+        and p.policyname = 'upload pending media'
+    ) then
+      execute 'drop policy "upload pending media" on storage.objects';
+    end if;
 
-drop policy if exists "moderator read secure media" on storage.objects;
-create policy "moderator read secure media" on storage.objects
-  for select using (
-    bucket_id in ('media-pending', 'media-auth', 'media-archive') and
-    coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
-  );
+    execute $$create policy "upload pending media" on storage.objects
+      for insert with check (
+        bucket_id = 'media-pending' and
+        coalesce(current_setting('request.jwt.claim.role', true), '') in ('', 'anon', 'authenticated')
+      )$$;
 
-drop policy if exists "service delete media" on storage.objects;
-create policy "service delete media" on storage.objects
-  for delete using (
-    bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
-    coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role'
-  );
+    if exists (
+      select 1
+      from pg_policies p
+      where p.schemaname = 'storage'
+        and p.tablename = 'objects'
+        and p.policyname = 'moderator manage media'
+    ) then
+      execute 'drop policy "moderator manage media" on storage.objects';
+    end if;
+
+    execute $$create policy "moderator manage media" on storage.objects
+      for update using (
+        bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
+        coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
+      )
+      with check (
+        bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
+        coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
+      )$$;
+
+    if exists (
+      select 1
+      from pg_policies p
+      where p.schemaname = 'storage'
+        and p.tablename = 'objects'
+        and p.policyname = 'moderator read secure media'
+    ) then
+      execute 'drop policy "moderator read secure media" on storage.objects';
+    end if;
+
+    execute $$create policy "moderator read secure media" on storage.objects
+      for select using (
+        bucket_id in ('media-pending', 'media-auth', 'media-archive') and
+        coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
+      )$$;
+
+    if exists (
+      select 1
+      from pg_policies p
+      where p.schemaname = 'storage'
+        and p.tablename = 'objects'
+        and p.policyname = 'service delete media'
+    ) then
+      execute 'drop policy "service delete media" on storage.objects';
+    end if;
+
+    execute $$create policy "service delete media" on storage.objects
+      for delete using (
+        bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
+        coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role'
+      )$$;
+  end if;
+end;
+$$;
 
 commit;
