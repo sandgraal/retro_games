@@ -4,7 +4,7 @@ Use this guide to configure Supabase credentials without committing secrets.
 
 ## Prerequisites
 
-- Node.js 18+ and npm.
+- Node.js 20.19+ and npm.
 - Supabase project URL and anon key with access to the table or view that holds your games (defaults to trying `games`, then `games_view`, then `games_new`).
 
 ## 1. Install dependencies

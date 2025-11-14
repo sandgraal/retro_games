@@ -107,7 +107,7 @@ Once your Supabase project and API token are configured, you can let GitHub keep
 
 All pull requests run through `.github/workflows/ci.yml`, which:
 
-- Installs dependencies with `npm ci` on Node 20.
+- Installs dependencies with `npm ci` on Node 20.19+.
 - Runs `npm run lint`, `npm run format:check`, and `npm test`.
 - Executes a `gitleaks` scan to block accidental secret commits.
 - Audits the built site with Lighthouse CI (`npm run lighthouse`), enforcing performance, accessibility, best-practices, and SEO thresholds.
