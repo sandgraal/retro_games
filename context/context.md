@@ -17,7 +17,7 @@
 
 - **Develop**: `python -m http.server 8080` (or any static server) from repo root.
 - **Build**: Not required; assets served as-is.
-- **Test/Lint**: No automated tooling configured yet.
+- **Test/Lint**: `npm run lint`, `npm run format:check`, `npm test`, and `npm run lighthouse` (via Lighthouse CI).
 - **Data maintenance**: Update Supabase `games` table (optionally regenerate `games.csv`).
 
 ## key_paths_by_feature
