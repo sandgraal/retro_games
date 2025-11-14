@@ -3,14 +3,21 @@
 
 begin;
 
--- Ensure storage buckets exist for public covers, authenticated media, archive, and pending uploads.
-insert into storage.buckets (id, name, public)
-values
-  ('game-covers', 'game-covers', true),
-  ('media-auth', 'media-auth', false),
-  ('media-archive', 'media-archive', false),
-  ('media-pending', 'media-pending', false)
-on conflict (id) do update set name = excluded.name, public = excluded.public;
+do $$
+begin
+  if to_regclass('storage.buckets') is not null then
+    insert into storage.buckets (id, name, public)
+    values
+      ('game-covers', 'game-covers', true),
+      ('media-auth', 'media-auth', false),
+      ('media-archive', 'media-archive', false),
+      ('media-pending', 'media-pending', false)
+    on conflict (id) do update set name = excluded.name, public = excluded.public;
+  else
+    raise notice 'storage schema not installed; skipping bucket provisioning';
+  end if;
+end;
+$$;
 
 -- Create role for content moderators if it does not exist.
 do $$
@@ -172,6 +179,7 @@ grant select on public.game_price_latest to anon, authenticated;
 -- This design allows flexibility for PAL-exclusive titles or other regional variants
 -- that may not have an NTSC counterpart. The default baseline remains 'NTSC' for
 -- backward compatibility, but callers can specify alternative regions as needed.
+drop view if exists public.game_variant_price_deltas;
 create or replace function public.game_variant_price_deltas(baseline_region text default 'NTSC')
 returns table (
   game_key text,
