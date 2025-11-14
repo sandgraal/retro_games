@@ -4,7 +4,7 @@ Thanks for keeping Sandgraal's Retro Games list sharp. This document captures th
 
 ## 1. Prerequisites
 
-- Node.js 18+ and npm.
+- Node.js 20.19+ and npm.
 - Python (or any static server) for local preview.
 - Supabase anon key + URL (optional while prototyping; fallback sample data is bundled).
 
