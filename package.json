@@ -17,7 +17,7 @@
     "seed:generate": "node scripts/generate-seed-sql.js",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "serve:lighthouse": "http-server . -p 4173 -a 127.0.0.1 -c 604800 --silent",
+    "serve:lighthouse": "http-server . -p 4173 -a 127.0.0.1 -c 31536000 --silent",
     "lighthouse": "npx @lhci/cli autorun --config=lighthouserc.json",
     "sitemap": "node scripts/generate-sitemap.js",
     "prices:update": "node scripts/update-price-snapshots.js",
