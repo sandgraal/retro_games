@@ -308,8 +308,8 @@ begin
       execute 'drop policy "public read covers" on storage.objects';
     end if;
 
-    execute $$create policy "public read covers" on storage.objects
-      for select using (bucket_id = 'game-covers')$$;
+    execute $policy$create policy "public read covers" on storage.objects
+      for select using (bucket_id = 'game-covers')$policy$;
 
     if exists (
       select 1
@@ -321,11 +321,11 @@ begin
       execute 'drop policy "upload pending media" on storage.objects';
     end if;
 
-    execute $$create policy "upload pending media" on storage.objects
+    execute $policy$create policy "upload pending media" on storage.objects
       for insert with check (
         bucket_id = 'media-pending' and
         coalesce(current_setting('request.jwt.claim.role', true), '') in ('', 'anon', 'authenticated')
-      )$$;
+      )$policy$;
 
     if exists (
       select 1
@@ -337,7 +337,7 @@ begin
       execute 'drop policy "moderator manage media" on storage.objects';
     end if;
 
-    execute $$create policy "moderator manage media" on storage.objects
+    execute $policy$create policy "moderator manage media" on storage.objects
       for update using (
         bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
         coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
@@ -345,7 +345,7 @@ begin
       with check (
         bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
         coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
-      )$$;
+      )$policy$;
 
     if exists (
       select 1
@@ -357,11 +357,11 @@ begin
       execute 'drop policy "moderator read secure media" on storage.objects';
     end if;
 
-    execute $$create policy "moderator read secure media" on storage.objects
+    execute $policy$create policy "moderator read secure media" on storage.objects
       for select using (
         bucket_id in ('media-pending', 'media-auth', 'media-archive') and
         coalesce(current_setting('request.jwt.claim.role', true), '') in ('service_role', 'content_moderator')
-      )$$;
+      )$policy$;
 
     if exists (
       select 1
@@ -373,11 +373,11 @@ begin
       execute 'drop policy "service delete media" on storage.objects';
     end if;
 
-    execute $$create policy "service delete media" on storage.objects
+    execute $policy$create policy "service delete media" on storage.objects
       for delete using (
         bucket_id in ('media-pending', 'game-covers', 'media-auth', 'media-archive') and
         coalesce(current_setting('request.jwt.claim.role', true), '') = 'service_role'
-      )$$;
+      )$policy$;
   end if;
 end;
 $$;
