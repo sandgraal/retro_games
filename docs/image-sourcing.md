@@ -23,7 +23,17 @@ The Retro Games List frontend expects every game entry to provide an absolute im
 
 When a game row ships without a `cover` URL, the client now tries to look up artwork via the Wikipedia REST API. The lookup runs after the first dataset load (and whenever new rows stream in) and, when successful, stores the discovered HTTPS image URL in `localStorage` so repeat visits render instantly. Failed lookups are cached for seven days to avoid hammering the API.
 
+The fallback worker now favors explicit Wikipedia detail links stored in the dataset, expands queries with platform aliases, and—as a last resort—pulls from the page media list so stub summaries can still surface box art. If a row ships with screenshots but no cover, the first screenshot appears immediately as a provisional thumbnail while the background lookup replaces it with a canonical image when one is found.
+
 This best-effort backfill keeps empty cards from lingering during data entry, but it is not a licensing substitute: always prefer supplying explicit, vetted URLs in your seed data so that Supabase exports, offline mode, and SEO metadata stay deterministic.
+
+## Automation Backlog
+
+To reduce manual curation effort, prioritize the following automation tasks (tracked in `docs/implementation-plan.md`):
+
+1. **API-driven cover import.** Build a Supabase Edge Function or scheduled worker that requests cover art from IGDB (or similar APIs) for rows still missing a `cover` URL, uploads approved assets into Supabase Storage, and writes the canonical URL back to the database and CSV exports.
+2. **Expanded fallback crawler.** Create a background job that re-attempts Wikipedia and MobyGames lookups for unresolved titles, caching successes in Supabase and the offline JSON dataset so subsequent builds receive the artwork automatically.
+3. **Audit & retry CLI.** Ship a `scripts/audit-missing-covers.js` utility that enumerates titles without artwork, queues automated fetches, and opens tracking issues when multiple sources fail so the team only reviews the toughest edge cases.
 
 ## Hosting & Performance Tips
 
