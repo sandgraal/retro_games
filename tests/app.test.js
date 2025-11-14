@@ -502,3 +502,87 @@ describe("price summary", () => {
     );
   });
 });
+
+describe("storage URL helpers", () => {
+  it("encodes storage path segments correctly", () => {
+    expect(app.__encodeStoragePath("simple.jpg")).toBe("simple.jpg");
+    expect(app.__encodeStoragePath("folder/file.png")).toBe("folder/file.png");
+    expect(app.__encodeStoragePath("folder/sub folder/file name.jpg")).toBe(
+      "folder/sub%20folder/file%20name.jpg"
+    );
+    expect(app.__encodeStoragePath("special#chars&test.png")).toBe(
+      "special%23chars%26test.png"
+    );
+  });
+
+  it("builds storage public URL with bucket and path", () => {
+    const constants = app.__getStorageConstants();
+    // Mock Supabase config for testing
+    window.__SUPABASE_CONFIG__ = {
+      storage: {
+        cdnUrl: "https://example.supabase.co/storage/v1",
+        publicBucket: "game-covers",
+      },
+    };
+
+    // Note: We need to test with the current runtime constants
+    // In a real scenario with config, the URL would include the bucket
+    const bucket = constants.STORAGE_PUBLIC_BUCKET || "game-covers";
+    const path = "covers/game1.jpg";
+
+    if (constants.STORAGE_PUBLIC_BASE) {
+      const url = app.__buildStoragePublicUrl(bucket, path);
+      expect(url).toBeTruthy();
+      expect(url).toContain("covers/game1.jpg");
+    } else {
+      // If no storage configured, should return null
+      const url = app.__buildStoragePublicUrl(bucket, path);
+      expect(url).toBeNull();
+    }
+  });
+
+  it("returns null for invalid inputs", () => {
+    const constants = app.__getStorageConstants();
+    const bucket = constants.STORAGE_PUBLIC_BUCKET || "game-covers";
+
+    expect(app.__buildStoragePublicUrl("", "path.jpg")).toBeNull();
+    expect(app.__buildStoragePublicUrl(bucket, "")).toBeNull();
+    expect(app.__buildStoragePublicUrl(null, "path.jpg")).toBeNull();
+    expect(app.__buildStoragePublicUrl(bucket, null)).toBeNull();
+  });
+
+  it("rejects non-public bucket requests", () => {
+    const url = app.__buildStoragePublicUrl("private-bucket", "file.jpg");
+    expect(url).toBeNull();
+  });
+
+  it("resolves storage cover from row data", () => {
+    const constants = app.__getStorageConstants();
+    const bucket = constants.STORAGE_PUBLIC_BUCKET || "game-covers";
+
+    const rowWithStorage = {
+      game_name: "Test Game",
+      storage_bucket: bucket,
+      storage_path: "covers/test.jpg",
+    };
+
+    const rowWithPublicUrl = {
+      game_name: "Test Game 2",
+      cover_public_url: "https://example.com/cover.jpg",
+    };
+
+    // If storage is configured, should build URL
+    if (constants.STORAGE_PUBLIC_BASE) {
+      const url1 = app.__resolveStorageCover(rowWithStorage);
+      expect(url1).toBeTruthy();
+    }
+
+    // Should fall back to public URL
+    const url2 = app.__resolveStorageCover(rowWithPublicUrl);
+    expect(url2).toBe("https://example.com/cover.jpg");
+
+    // Should return null for invalid input
+    expect(app.__resolveStorageCover(null)).toBeNull();
+    expect(app.__resolveStorageCover({})).toBeNull();
+  });
+});

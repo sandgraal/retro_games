@@ -109,6 +109,11 @@ const REGION_LABELS = {
   PAL: "PAL",
   JPN: "JPN",
 };
+const REGION_PATTERNS = {
+  NTSC: ["ntsc", "usa", "north america", "canada"],
+  PAL: ["pal", "europe", "eu", "uk", "australia"],
+  JPN: ["jpn", "japan"],
+};
 const REGION_MATCHERS = {
   NTSC: [/(^|\b)(ntsc|usa|north america|canada)(\b|$)/i],
   PAL: [/(^|\b)(pal|europe|eu|uk|australia)(\b|$)/i],
@@ -1663,18 +1668,12 @@ function applySupabaseFilters(query, filters = {}, columnPrefix = "") {
     query = query.lte(column(COL_RELEASE_YEAR), filters.yearEnd);
   }
   if (filters.region) {
+    const patterns = REGION_PATTERNS[filters.region];
     const clauses = [];
-    if (filters.region === "NTSC") {
-      clauses.push(`${column("region")}.ilike.%USA%`);
-      clauses.push(`${column("region")}.ilike.%NTSC%`);
-      clauses.push(`${column("region")}.ilike.%North America%`);
-    } else if (filters.region === "PAL") {
-      clauses.push(`${column("region")}.ilike.%PAL%`);
-      clauses.push(`${column("region")}.ilike.%Europe%`);
-      clauses.push(`${column("region")}.ilike.%UK%`);
-    } else if (filters.region === "JPN") {
-      clauses.push(`${column("region")}.ilike.%Japan%`);
-      clauses.push(`${column("region")}.ilike.%JPN%`);
+    if (patterns && patterns.length) {
+      for (const pat of patterns) {
+        clauses.push(`${column("region")}.ilike.%${pat}%`);
+      }
     }
     if (clauses.length) {
       query = query.or(clauses.join(","));
@@ -4038,7 +4037,7 @@ function buildStoragePublicUrl(bucket, path) {
   if (!bucket || !path || !STORAGE_PUBLIC_BASE) return null;
   if (bucket !== STORAGE_PUBLIC_BUCKET) return null;
   const trimmed = path.toString().replace(/^\/+/, "");
-  return `${STORAGE_PUBLIC_BASE}/${encodeStoragePath(trimmed)}`;
+  return `${STORAGE_PUBLIC_BASE}/${bucket}/${encodeStoragePath(trimmed)}`;
 }
 
 function resolveStorageCover(row) {
@@ -4830,9 +4829,8 @@ async function loadVariantPriceDeltas() {
   if (variantPriceMap.size) return;
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from("game_variant_price_deltas")
-        .select("*");
+      // Call the function with default baseline_region parameter ('NTSC')
+      const { data, error } = await supabase.rpc("game_variant_price_deltas", {});
       if (!error && Array.isArray(data)) {
         ingestVariantPrices(data);
         return;
@@ -5508,6 +5506,9 @@ const testApi = {
   __setBrowseMode: setBrowseMode,
   __teardownVirtualization: teardownVirtualization,
   __buildRemoteFilterPayload: buildRemoteFilterPayload,
+  __encodeStoragePath: encodeStoragePath,
+  __buildStoragePublicUrl: buildStoragePublicUrl,
+  __resolveStorageCover: resolveStorageCover,
   __setState(overrides = {}) {
     if (Object.prototype.hasOwnProperty.call(overrides, "statuses")) {
       gameStatuses = overrides.statuses;
@@ -5647,6 +5648,12 @@ const testApi = {
       priceState.lastUpdated = overrides.lastUpdated;
     }
     priceState.summaryDirty = true;
+  },
+  __getStorageConstants() {
+    return {
+      STORAGE_PUBLIC_BASE,
+      STORAGE_PUBLIC_BUCKET,
+    };
   },
 };
 

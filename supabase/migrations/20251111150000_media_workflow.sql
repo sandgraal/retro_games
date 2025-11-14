@@ -167,36 +167,59 @@ order by game_key, source, region_code, snapshot_date desc, fetched_at desc;
 
 grant select on public.game_price_latest to anon, authenticated;
 
-create or replace view public.game_variant_price_deltas as
-select
-  v.game_key,
-  v.region_code,
-  v.currency,
-  v.loose_price_cents,
-  v.cib_price_cents,
-  v.new_price_cents,
-  v.source,
-  v.snapshot_date,
-  base.loose_price_cents as base_loose_price_cents,
-  base.cib_price_cents as base_cib_price_cents,
-  base.new_price_cents as base_new_price_cents,
-  case
-    when base.loose_price_cents is null or base.loose_price_cents = 0 or v.loose_price_cents is null then null
-    else round(((v.loose_price_cents - base.loose_price_cents)::numeric / base.loose_price_cents) * 100, 2)
-  end as loose_delta_percent,
-  case
-    when base.cib_price_cents is null or base.cib_price_cents = 0 or v.cib_price_cents is null then null
-    else round(((v.cib_price_cents - base.cib_price_cents)::numeric / base.cib_price_cents) * 100, 2)
-  end as cib_delta_percent,
-  case
-    when base.new_price_cents is null or base.new_price_cents = 0 or v.new_price_cents is null then null
-    else round(((v.new_price_cents - base.new_price_cents)::numeric / base.new_price_cents) * 100, 2)
-  end as new_delta_percent
-from public.game_variant_prices v
-left join public.game_price_latest base
-  on base.game_key = v.game_key and base.source = v.source and base.region_code = 'NTSC';
+-- The baseline region for price deltas is now configurable via the function parameter.
+-- If a game does not have a variant in the baseline region, delta columns will be null.
+-- This design allows flexibility for PAL-exclusive titles or other regional variants
+-- that may not have an NTSC counterpart. The default baseline remains 'NTSC' for
+-- backward compatibility, but callers can specify alternative regions as needed.
+drop view if exists public.game_variant_price_deltas;
+create or replace function public.game_variant_price_deltas(baseline_region text default 'NTSC')
+returns table (
+  game_key text,
+  region_code text,
+  currency text,
+  loose_price_cents integer,
+  cib_price_cents integer,
+  new_price_cents integer,
+  source text,
+  snapshot_date date,
+  base_loose_price_cents integer,
+  base_cib_price_cents integer,
+  base_new_price_cents integer,
+  loose_delta_percent numeric,
+  cib_delta_percent numeric,
+  new_delta_percent numeric
+) as $$
+  select
+    v.game_key,
+    v.region_code,
+    v.currency,
+    v.loose_price_cents,
+    v.cib_price_cents,
+    v.new_price_cents,
+    v.source,
+    v.snapshot_date,
+    base.loose_price_cents as base_loose_price_cents,
+    base.cib_price_cents as base_cib_price_cents,
+    base.new_price_cents as base_new_price_cents,
+    case
+      when base.loose_price_cents is null or base.loose_price_cents = 0 or v.loose_price_cents is null then null
+      else round(((v.loose_price_cents - base.loose_price_cents)::numeric / base.loose_price_cents) * 100, 2)
+    end as loose_delta_percent,
+    case
+      when base.cib_price_cents is null or base.cib_price_cents = 0 or v.cib_price_cents is null then null
+      else round(((v.cib_price_cents - base.cib_price_cents)::numeric / base.cib_price_cents) * 100, 2)
+    end as cib_delta_percent,
+    case
+      when base.new_price_cents is null or base.new_price_cents = 0 or v.new_price_cents is null then null
+      else round(((v.new_price_cents - base.new_price_cents)::numeric / base.new_price_cents) * 100, 2)
+    end as new_delta_percent
+  from public.game_variant_prices v
+  left join public.game_price_latest base
+    on base.game_key = v.game_key and base.source = v.source and base.region_code = baseline_region;
+$$ language sql stable;
 
-grant select on public.game_variant_price_deltas to anon, authenticated;
+grant execute on function public.game_variant_price_deltas(text) to anon, authenticated;
 
 -- Storage object policies for the new buckets.
 alter table storage.objects enable row level security;

@@ -44,13 +44,16 @@ async function listObjects(bucket, fetchImpl) {
   let cursor = null;
   const base = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/list/${bucket}`;
   do {
-    const params = new URLSearchParams({ limit: "1000" });
-    if (cursor) params.set("cursor", cursor);
-    const response = await fetchImpl(`${base}?${params.toString()}`, {
+    const body = { limit: 1000 };
+    if (cursor) body.cursor = cursor;
+    const response = await fetchImpl(base, {
+      method: "POST",
       headers: {
         apikey: SERVICE_KEY,
         Authorization: `Bearer ${SERVICE_KEY}`,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify(body),
     });
     if (!response.ok) {
       const text = await response.text();
