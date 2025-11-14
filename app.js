@@ -4136,12 +4136,6 @@ function resolveScreenshotCover(row) {
   for (const candidate of screenshots) {
     const url = normalizeCoverUrl(candidate);
     if (url) return url;
-    if (candidate && typeof candidate === "object") {
-      if (typeof candidate.url === "string") {
-        const normalized = normalizeCoverUrl(candidate.url);
-        if (normalized) return normalized;
-      }
-    }
   }
   return "";
 }
