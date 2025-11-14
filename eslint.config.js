@@ -27,6 +27,7 @@ const nodeScriptsConfig = {
   },
   rules: {
     ...js.configs.recommended.rules,
+    "no-redeclare": ["error", { builtinGlobals: false }],
   },
 };
 
