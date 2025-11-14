@@ -4385,6 +4385,11 @@ function resolvePlatformSearchTerms(platform) {
   return Array.from(terms).filter(Boolean);
 }
 
+/**
+ * Extract Wikipedia article title from a game row's details URL.
+ * @param {GameRow} row - Game data object
+ * @returns {string} Extracted Wikipedia title or empty string if not found
+ */
 function extractWikipediaTitleFromRow(row) {
   if (!row || typeof row !== "object") return "";
   const detailsUrl = resolveGameField(row, "detailsUrl");
