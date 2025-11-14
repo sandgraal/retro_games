@@ -228,6 +228,8 @@
         aria-hidden="true"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="contributeModalTitle"
+        aria-describedby="contributeModalDescription"
       >
         <div class="modal-content contribute-dialog">
           <button
@@ -238,8 +240,8 @@
           >
             &times;
           </button>
-          <h2>Submit Media</h2>
-          <p class="modal-subtitle">
+          <h2 id="contributeModalTitle">Submit Media</h2>
+          <p id="contributeModalDescription" class="modal-subtitle">
             Upload cover art, manuals, or clips that follow the community guidelines.
             Approved assets appear after moderator review.
           </p>
@@ -597,7 +599,9 @@
         </div>
       </section>
       <div id="shareSection" style="display: none">
-        <button id="closeShare" title="Close">&times;</button>
+        <button id="closeShare" title="Close" aria-label="Close share panel">
+          &times;
+        </button>
         <div>
           <label for="shareCode">Share Code:</label>
           <input id="shareCode" readonly />
@@ -619,8 +623,8 @@
       ></nav>
       <button id="loadMoreBtn" class="load-more" type="button">Load more games</button>
       <div id="gridSentinel" class="grid-sentinel" aria-hidden="true"></div>
-      <div id="modalBg"></div>
-      <div id="gameModal"></div>
+      <div id="modalBg" aria-hidden="true"></div>
+      <div id="gameModal" aria-hidden="true"></div>
     </div>
     <script src="config.js" defer></script>
     <script src="app.js" defer></script>
