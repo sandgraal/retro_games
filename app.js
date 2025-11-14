@@ -4080,6 +4080,72 @@ function resolveStorageCover(row) {
   return null;
 }
 
+/**
+ * Normalize a cover URL value to a valid HTTPS URL string.
+ * Handles string values, objects with url/href/source properties, and nested structures.
+ * Returns an empty string if the value is invalid or cannot be normalized.
+ * @param {string|object|any} value - Cover URL in various formats (string, object with url/href/source, or nested)
+ * @returns {string} Normalized HTTPS URL or empty string if invalid
+ */
+function normalizeCoverUrl(value) {
+  if (!value) return "";
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return "";
+  }
+  if (typeof value === "object") {
+    if (typeof value.url === "string") {
+      return normalizeCoverUrl(value.url);
+    }
+    if (typeof value.href === "string") {
+      return normalizeCoverUrl(value.href);
+    }
+    if (typeof value.source === "string") {
+      return normalizeCoverUrl(value.source);
+    }
+  }
+  return "";
+}
+
+/**
+ * Set a cover URL on a game row, with optional provisional flag.
+ * @param {GameRow} row - Game data object to modify
+ * @param {string|object|any} value - Cover URL value to normalize and assign
+ * @param {object} [options] - Configuration options
+ * @param {boolean} [options.provisional=false] - Mark cover as provisional (temporary screenshot)
+ * @returns {boolean} True if cover was successfully set, false otherwise
+ */
+function setRowCover(row, value, { provisional = false } = {}) {
+  if (!row || typeof row !== "object") return false;
+  const normalized = normalizeCoverUrl(value);
+  if (!normalized) return false;
+  row[COL_COVER] = normalized;
+  if (provisional) {
+    row.__provisionalCover = true;
+  } else {
+    delete row.__provisionalCover;
+  }
+  return true;
+}
+
+/**
+ * Resolve the first valid screenshot URL from a game row's screenshots array.
+ * Used as a fallback when no dedicated cover image exists.
+ * @param {GameRow} row - Game data object with screenshots property
+ * @returns {string} First valid screenshot URL or empty string if none found
+ */
+function resolveScreenshotCover(row) {
+  if (!row || typeof row !== "object") return "";
+  const screenshots = Array.isArray(row.screenshots) ? row.screenshots : [];
+  for (const candidate of screenshots) {
+    const url = normalizeCoverUrl(candidate);
+    if (url) return url;
+  }
+  return "";
+}
+
 function detectRegionCodesFromString(value) {
   if (!value) return [];
   const input = value.toString();
@@ -4117,8 +4183,20 @@ function computeRegionCodes(row) {
 function applyRowEnhancements(row) {
   if (!row || typeof row !== "object") return;
   const storageCover = resolveStorageCover(row);
-  if (storageCover) {
-    row[COL_COVER] = storageCover;
+  if (setRowCover(row, storageCover)) {
+    return;
+  }
+  const normalizedCover = normalizeCoverUrl(row[COL_COVER]);
+  if (normalizedCover) {
+    setRowCover(row, normalizedCover);
+  } else {
+    delete row[COL_COVER];
+    const screenshotCover = resolveScreenshotCover(row);
+    if (screenshotCover) {
+      setRowCover(row, screenshotCover, { provisional: true });
+    } else {
+      delete row.__provisionalCover;
+    }
   }
   const regions = computeRegionCodes(row);
   row.__regionCodes = regions;
@@ -4150,13 +4228,13 @@ async function hydrateFallbackCovers(rows) {
     if (!key) return;
     const cached = fallbackCoverCache.get(key);
     if (cached && cached.url) {
-      if (!row[COL_COVER]) {
-        row[COL_COVER] = cached.url;
+      if (setRowCover(row, cached.url)) {
         mutated = true;
       }
       return;
     }
-    if (row[COL_COVER]) return;
+    const hasPermanentCover = row[COL_COVER] && !row.__provisionalCover;
+    if (hasPermanentCover) return;
     if (cached && !shouldRetryFallbackCover(cached, now)) {
       return;
     }
@@ -4176,11 +4254,19 @@ async function hydrateFallbackCovers(rows) {
   for (const item of missing) {
     try {
       const coverUrl = await fetchFallbackCoverFromWikipedia(item.row);
-      if (coverUrl) {
-        item.row[COL_COVER] = coverUrl;
+      if (coverUrl && setRowCover(item.row, coverUrl)) {
         fallbackCoverCache.set(item.key, { url: coverUrl, timestamp: Date.now() });
         hadUpdates = true;
       } else {
+        if (!item.row[COL_COVER]) {
+          const screenshotCover = resolveScreenshotCover(item.row);
+          if (
+            screenshotCover &&
+            setRowCover(item.row, screenshotCover, { provisional: true })
+          ) {
+            hadUpdates = true;
+          }
+        }
         fallbackCoverCache.set(item.key, { url: "", failedAt: Date.now() });
       }
     } catch (error) {
@@ -4205,7 +4291,8 @@ async function fetchFallbackCoverFromWikipedia(row) {
   const title = (row && row[COL_GAME] ? row[COL_GAME] : "").toString().trim();
   if (!title) return undefined;
   const platform = (row && row[COL_PLATFORM] ? row[COL_PLATFORM] : "").toString().trim();
-  const queries = buildFallbackCoverQueries(title, platform);
+  const preferredTitle = extractWikipediaTitleFromRow(row);
+  const queries = buildFallbackCoverQueries(title, platform, preferredTitle);
   if (!queries.length) return undefined;
   for (const query of queries) {
     const endpoint = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
@@ -4232,6 +4319,10 @@ async function fetchFallbackCoverFromWikipedia(row) {
       if (image) {
         return image;
       }
+      const mediaImage = await fetchWikipediaImageFromMedia(query);
+      if (mediaImage) {
+        return mediaImage;
+      }
     } catch (error) {
       if (typeof console !== "undefined" && typeof console.debug === "function") {
         console.debug("Wikipedia cover fetch error", query, error);
@@ -4245,21 +4336,32 @@ async function fetchFallbackCoverFromWikipedia(row) {
  * Build candidate article titles for Wikipedia lookup.
  * @param {string} title
  * @param {string} platform
+ * @param {string} [detailsTitle] - Optional Wikipedia article title extracted from details URL
  * @returns {string[]}
  */
-function buildFallbackCoverQueries(title, platform) {
+function buildFallbackCoverQueries(title, platform, detailsTitle) {
   const cleanedTitle = title.replace(/\s+/g, " ").trim();
-  if (!cleanedTitle) return [];
+  if (!cleanedTitle && !detailsTitle) return [];
   const queries = new Set();
+  if (detailsTitle) {
+    const normalizedDetails = detailsTitle.replace(/\s+/g, " ").trim();
+    if (normalizedDetails) {
+      queries.add(normalizedDetails);
+    }
+  }
   const normalizedPlatform = platform.replace(/\s+/g, " ").trim();
   if (normalizedPlatform) {
     resolvePlatformSearchTerms(normalizedPlatform).forEach((term) => {
-      queries.add(`${cleanedTitle} (${term})`);
+      if (cleanedTitle) {
+        queries.add(`${cleanedTitle} (${term})`);
+      }
     });
   }
-  queries.add(cleanedTitle);
-  if (!/video game/i.test(cleanedTitle)) {
-    queries.add(`${cleanedTitle} (video game)`);
+  if (cleanedTitle) {
+    queries.add(cleanedTitle);
+    if (!/video game/i.test(cleanedTitle)) {
+      queries.add(`${cleanedTitle} (video game)`);
+    }
   }
   return Array.from(queries);
 }
@@ -4282,6 +4384,121 @@ function resolvePlatformSearchTerms(platform) {
     }
   }
   return Array.from(terms).filter(Boolean);
+}
+
+/**
+ * Extract Wikipedia article title from a game row's details URL.
+ * @param {GameRow} row - Game data object
+ * @returns {string} Extracted Wikipedia title or empty string if not found
+ */
+function extractWikipediaTitleFromRow(row) {
+  if (!row || typeof row !== "object") return "";
+  const detailsUrl = resolveGameField(row, "detailsUrl");
+  return extractWikipediaTitleFromUrl(detailsUrl);
+}
+
+/**
+ * Extract the Wikipedia article title from a Wikipedia URL.
+ * @param {string} url - Full Wikipedia URL (either /wiki/ path or query parameter format)
+ * @returns {string} Decoded article title with underscores replaced by spaces, or empty string if invalid
+ */
+function extractWikipediaTitleFromUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    if (!isValidWikipediaHost(host)) return "";
+    if (parsed.pathname.startsWith("/wiki/")) {
+      const article = parsed.pathname.replace(/^\/wiki\//, "");
+      const decoded = decodeURIComponent(article);
+      return decoded.replace(/_/g, " ").trim();
+    }
+    const titleParam = parsed.searchParams.get("title");
+    if (titleParam) {
+      return decodeURIComponent(titleParam).replace(/_/g, " ").trim();
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+/**
+ * Return true if the host is a valid Wikipedia domain (e.g. en.wikipedia.org, wikipedia.org).
+ * @param {string} host
+ * @returns {boolean}
+ */
+function isValidWikipediaHost(host) {
+  if (!host || typeof host !== "string") return false;
+  if (host === "wikipedia.org") return true;
+  // Accept <subdomain>.wikipedia.org, e.g. en.wikipedia.org, de.wikipedia.org
+  const parts = host.split(".");
+  if (parts.length === 3 && parts[1] === "wikipedia" && parts[2] === "org") return true;
+  return false;
+}
+
+async function fetchWikipediaImageFromMedia(query) {
+  if (!query || typeof fetch !== "function") return undefined;
+  const endpoint = `https://en.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(query)}`;
+  try {
+    const response = await fetch(endpoint, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+    if (!response.ok) {
+      return undefined;
+    }
+    const payload = await response.json();
+    if (!payload || typeof payload !== "object" || !Array.isArray(payload.items)) {
+      return undefined;
+    }
+    for (const item of payload.items) {
+      const source = extractWikipediaMediaSource(item);
+      if (source) {
+        return source;
+      }
+    }
+  } catch (error) {
+    if (typeof console !== "undefined" && typeof console.debug === "function") {
+      console.debug("Wikipedia media fetch error", query, error);
+    }
+  }
+  return undefined;
+}
+
+function extractWikipediaMediaSource(item) {
+  if (!item || typeof item !== "object") return "";
+  if (item.type && item.type !== "image") return "";
+  const candidates = [];
+  if (item.original && typeof item.original.source === "string") {
+    candidates.push(item.original.source);
+  }
+  if (Array.isArray(item.srcset)) {
+    item.srcset.forEach((entry) => {
+      if (entry && typeof entry.src === "string") {
+        candidates.push(entry.src);
+      }
+    });
+  }
+  if (Array.isArray(item.sources)) {
+    item.sources.forEach((entry) => {
+      if (entry && typeof entry.url === "string") {
+        candidates.push(entry.url);
+      }
+      if (entry && typeof entry.src === "string") {
+        candidates.push(entry.src);
+      }
+    });
+  }
+  if (typeof item.href === "string") {
+    candidates.push(item.href);
+  }
+  for (const candidate of candidates) {
+    const normalized = normalizeCoverUrl(candidate);
+    if (normalized) return normalized;
+  }
+  return "";
 }
 
 /**
@@ -5553,6 +5770,11 @@ const testApi = {
   __encodeStoragePath: encodeStoragePath,
   __buildStoragePublicUrl: buildStoragePublicUrl,
   __resolveStorageCover: resolveStorageCover,
+  __resolveScreenshotCover: resolveScreenshotCover,
+  __normalizeIncomingRows: normalizeIncomingRows,
+  __hydrateFallbackCovers: hydrateFallbackCovers,
+  __buildFallbackCoverQueries: buildFallbackCoverQueries,
+  __extractWikipediaTitleFromUrl: extractWikipediaTitleFromUrl,
   __setState(overrides = {}) {
     if (Object.prototype.hasOwnProperty.call(overrides, "statuses")) {
       gameStatuses = overrides.statuses;

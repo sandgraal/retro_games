@@ -23,6 +23,8 @@ The Retro Games List frontend expects every game entry to provide an absolute im
 
 When a game row ships without a `cover` URL, the client now tries to look up artwork via the Wikipedia REST API. The lookup runs after the first dataset load (and whenever new rows stream in) and, when successful, stores the discovered HTTPS image URL in `localStorage` so repeat visits render instantly. Failed lookups are cached for seven days to avoid hammering the API.
 
+The fallback worker now favors explicit Wikipedia detail links stored in the dataset, expands queries with platform aliases, and—as a last resort—pulls from the page media list so stub summaries can still surface box art. If a row ships with screenshots but no cover, the first screenshot appears immediately as a provisional thumbnail while the background lookup replaces it with a canonical image when one is found.
+
 This best-effort backfill keeps empty cards from lingering during data entry, but it is not a licensing substitute: always prefer supplying explicit, vetted URLs in your seed data so that Supabase exports, offline mode, and SEO metadata stay deterministic.
 
 ## Automation Backlog
