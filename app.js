@@ -4080,6 +4080,13 @@ function resolveStorageCover(row) {
   return null;
 }
 
+/**
+ * Normalize a cover URL value to a valid HTTPS URL string.
+ * Handles string values, objects with url/href/source properties, and nested structures.
+ * Returns an empty string if the value is invalid or cannot be normalized.
+ * @param {string|object|any} value - Cover URL in various formats (string, object with url/href/source, or nested)
+ * @returns {string} Normalized HTTPS URL or empty string if invalid
+ */
 function normalizeCoverUrl(value) {
   if (!value) return "";
   if (typeof value === "string") {
