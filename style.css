@@ -267,6 +267,7 @@
       --color-accent: #d7923b;
       --color-accent-strong: #e5a85a;
       --color-accent-secondary: #1b9fa3;
+      --color-accent2: var(--color-accent-secondary);
       --color-green: #228b5a;
       --color-error: #d94b4b;
       --color-warning: #d7923b;
@@ -309,6 +310,22 @@
       --glow-primary-soft: rgba(16, 150, 161, 0.25);
       --glow-primary-strong: rgba(16, 150, 161, 0.35);
       --glow-amber: rgba(215, 146, 59, 0.35);
+      --hero-title-start: #1b9fa3;
+      --hero-title-end: #0e7c85;
+      --hero-title-glow: rgba(16, 150, 161, 0.28);
+      --panel-border-highlight: rgba(16, 150, 161, 0.18);
+      --panel-sheen: rgba(16, 150, 161, 0.12);
+      --carousel-control-glow: rgba(16, 150, 161, 0.35);
+      --carousel-control-bg: linear-gradient(
+        155deg,
+        rgba(255, 255, 255, 0.95),
+        rgba(237, 244, 251, 0.9)
+      );
+      --carousel-control-border: rgba(16, 150, 161, 0.25);
+      --trending-card-start: rgba(255, 255, 255, 0.92);
+      --trending-card-end: rgba(235, 244, 251, 0.92);
+      --trending-card-border: rgba(16, 150, 161, 0.18);
+      --trending-card-highlight: rgba(16, 150, 161, 0.18);
       --glow-success-strong: rgba(44, 166, 119, 0.45);
       --glow-success-soft: rgba(65, 197, 144, 0.25);
 
