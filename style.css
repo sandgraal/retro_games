@@ -1424,7 +1424,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .actions-toolbar button,
   .carousel-control,
-  .trending-card {
+  .trending-card,
+  .trending-card::before {
     transition-duration: 0.01ms !important;
   }
 
