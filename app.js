@@ -5223,6 +5223,7 @@ function showGameModal(game) {
   modal.setAttribute("aria-modal", "true");
   modal.setAttribute("aria-labelledby", modalTitleId);
   modal.setAttribute("aria-hidden", "false");
+  modalBg.setAttribute("aria-hidden", "false");
   modal.style.display = modalBg.style.display = "";
   setTimeout(() => {
     modalBg.style.display = "block";
@@ -5265,6 +5266,7 @@ function showGameModal(game) {
     modal.style.display = modalBg.style.display = "none";
     modal.innerHTML = "";
     modal.setAttribute("aria-hidden", "true");
+    modalBg.setAttribute("aria-hidden", "true");
     modal.removeAttribute("role");
     modal.removeAttribute("aria-modal");
     modal.removeAttribute("aria-labelledby");
