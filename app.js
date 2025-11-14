@@ -4376,6 +4376,11 @@ function extractWikipediaTitleFromRow(row) {
   return extractWikipediaTitleFromUrl(detailsUrl);
 }
 
+/**
+ * Extract the Wikipedia article title from a Wikipedia URL.
+ * @param {string} url - Full Wikipedia URL (either /wiki/ path or query parameter format)
+ * @returns {string} Decoded article title with underscores replaced by spaces, or empty string if invalid
+ */
 function extractWikipediaTitleFromUrl(url) {
   if (!url || typeof url !== "string") return "";
   try {
