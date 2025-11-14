@@ -51,6 +51,7 @@
   --shadow-soft: rgba(0, 0, 0, 0.4);
   --shadow-strong: rgba(0, 0, 0, 0.65);
   --shadow-deep: rgba(0, 0, 0, 0.75);
+  --text-shadow: rgba(3, 12, 28, 0.65);
 
   --glow-primary-soft: rgba(111, 230, 224, 0.45);
   --glow-primary-strong: rgba(111, 230, 224, 0.65);
@@ -375,7 +376,7 @@ body {
     var(--hero-title-end)
   );
   text-shadow:
-    0 14px 36px rgba(3, 12, 28, 0.65),
+    0 14px 36px var(--text-shadow),
     0 0 32px var(--hero-title-glow);
 }
 
@@ -462,7 +463,7 @@ body {
   color: var(--text-soft);
   line-height: 1.7;
   max-width: 52ch;
-  text-shadow: 0 12px 30px rgba(2, 10, 26, 0.6);
+  text-shadow: 0 12px 30px var(--text-shadow);
 }
 
 .actions-toolbar {
@@ -1252,7 +1253,7 @@ body {
   text-transform: uppercase;
   color: var(--hero-title-start);
   text-shadow:
-    0 10px 26px rgba(3, 12, 26, 0.6),
+    0 10px 26px var(--text-shadow),
     0 0 22px var(--hero-title-glow);
 }
 
