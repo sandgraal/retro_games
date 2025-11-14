@@ -77,13 +77,59 @@ Updates trigger full re-render + stats recalculation. No incremental updates.
 - Image alt text auto-generated from cover field
 - Close button and background click both dismiss
 
+## Build, Test, and Development Commands
+
+### Essential Commands
+
+Before making changes, always run these commands to understand the baseline:
+
+```bash
+npm install              # Install dependencies (run once after clone)
+npm run lint             # Check code style and common errors
+npm run format:check     # Verify code formatting
+npm test                 # Run unit tests (Vitest)
+npm run test:e2e         # Run end-to-end tests (Playwright)
+npm run build:config     # Generate config.js from .env
+```
+
+### Development Workflow
+
+```bash
+# 1. Start local development server
+python -m http.server 8080    # Or any static server
+
+# 2. Make changes, then validate frequently
+npm run lint:fix              # Auto-fix linting issues
+npm run format                # Auto-format code
+npm test                      # Verify unit tests pass
+npm run test:e2e              # Verify e2e tests pass (after UI changes)
+
+# 3. Before committing
+npm run lint && npm run format:check && npm test
+```
+
+### Test Creation Guidelines
+
+- **Unit tests** (Vitest): Cover filtering logic, data transformations, helper functions
+  - Located in `tests/*.test.js`
+  - Use jsdom for DOM testing
+  - Mock Supabase calls to avoid external dependencies
+- **E2E tests** (Playwright): Cover user workflows, modal interactions, navigation
+  - Located in `tests/*.spec.js`
+  - Test against sample data (not live Supabase)
+  - Verify accessibility and keyboard navigation
+- Always add tests for new features; update tests when changing behavior
+- Maintain test coverage for critical paths (search, filter, modal, collection management)
+
 ## Setup & Debugging
 
 **First-Time Setup:**
 
 ```bash
-cp config.example.js config.js
-# Edit config.js with real Supabase URL + anonKey
+npm install
+cp .env.example .env
+# Edit .env with Supabase URL + anonKey (optional for development)
+npm run build:config     # Generate config.js from .env
 python -m http.server 8080
 # Open http://localhost:8080
 ```
@@ -112,6 +158,10 @@ To test without Supabase:
 - Use compound game keys (`game___platform`) for ownership tracking to prevent collisions
 - Keep CSS minimal; use CSS variables (defined in `:root`) for theming
 - Maintain vanilla JS/HTML/CSS stack
+- Run linters and tests before every commit
+- Write tests for new features and bug fixes
+- Document complex logic with JSDoc comments
+- Use existing constants and avoid magic strings/numbers
 
 ❌ **DON'T:**
 
@@ -120,11 +170,117 @@ To test without Supabase:
 - Store user data server-side without explicit opt-in
 - Use innerHTML for dynamic content from Supabase fields
 - Refactor table/modal into components without considering backward compatibility
+- Skip tests or remove existing tests
+- Commit unformatted code (run `npm run format` first)
+- Add external dependencies without justification
 
-## Roadmap Anchors
+## CI/CD Pipeline
 
-Per `docs/implementation-plan.md`:
+All pull requests must pass these checks (enforced by `.github/workflows/ci.yml`):
 
----
+1. **Linting**: `npm run lint` - ESLint with Prettier compatibility
+2. **Formatting**: `npm run format:check` - Prettier formatting validation
+3. **Unit Tests**: `npm test` - Vitest test suite
+4. **Security Scan**: `gitleaks` - Prevents accidental secret commits
+5. **Lighthouse CI**: Performance, accessibility, SEO, and best practices audits
 
-For questions about unclear patterns, review `docs/current-state.md` or `context/context.md`, then ask the user for clarification before proceeding.
+Before pushing changes:
+
+- Ensure all commands pass locally
+- Fix any linting or formatting issues with `npm run lint:fix` and `npm run format`
+- Add or update tests as needed
+- Verify no secrets are committed (check `.env` vs `.env.example`)
+
+## Security Guidelines
+
+### Secret Management
+
+- **NEVER** commit real Supabase credentials or API tokens
+- Use `.env` for local secrets (gitignored)
+- Use `.env.example` as a template (committed)
+- `config.js` is generated from `.env` via `npm run build:config`
+- CI uses GitHub Secrets for automated workflows
+
+### Common Security Pitfalls
+
+- Don't use `innerHTML` with user-generated or Supabase content (XSS risk)
+- Validate and sanitize all input before storing in localStorage
+- Escape CSV content when exporting collections
+- Use `textContent` or `createElement` for dynamic DOM updates
+- Supabase RLS policies protect server-side data; client-side code assumes anon key exposure
+
+### Dependency Security
+
+- Run `npm audit` periodically to check for vulnerabilities
+- Review dependency changes in PRs carefully
+- Prefer minimal, well-maintained libraries
+- The gitleaks CI check blocks secret commits
+
+## Common Pitfalls & Troubleshooting
+
+### Issue: "Supabase credentials missing" warning
+
+- **Cause**: No `.env` file or missing `SUPABASE_URL`/`SUPABASE_ANON_KEY`
+- **Solution**: Copy `.env.example` to `.env` and add credentials, or continue with sample data
+- **Expected**: App gracefully falls back to `data/sample-games.json`
+
+### Issue: Tests fail with "window is not defined"
+
+- **Cause**: Missing jsdom setup in test file
+- **Solution**: Check that test imports from `tests/app.test.js` properly setup jsdom environment
+
+### Issue: E2E tests timeout
+
+- **Cause**: Static server not running or page not loading
+- **Solution**: Verify `npm run serve:lighthouse` works, check Playwright config
+
+### Issue: Linting errors after code changes
+
+- **Cause**: Code doesn't follow ESLint/Prettier rules
+- **Solution**: Run `npm run lint:fix` and `npm run format`
+
+### Issue: Build config fails
+
+- **Cause**: Malformed `.env` file
+- **Solution**: Compare `.env` structure with `.env.example`, ensure proper key=value format
+
+## Roadmap & Documentation
+
+Per `docs/implementation-plan.md`, this project follows a phased development approach.
+
+**Key Documentation Files:**
+
+- `docs/current-state.md` - Current feature status and architecture decisions
+- `docs/implementation-plan.md` - Roadmap and future features
+- `docs/data-pipeline.md` - Supabase schema and data flow
+- `docs/setup.md` - Detailed setup instructions
+- `CONTRIBUTING.md` - Contributor guidelines and PR checklist
+
+For questions about unclear patterns, review these docs, then ask the user for clarification before proceeding.
+
+## Working with Copilot
+
+When assigned an issue:
+
+1. **Understand the scope**: Read issue description, acceptance criteria, and linked docs
+2. **Explore the codebase**: Review relevant files and understand existing patterns
+3. **Run baseline tests**: Verify current state with `npm run lint && npm test`
+4. **Make minimal changes**: Focus on solving the specific issue without refactoring
+5. **Add/update tests**: Ensure new behavior is covered
+6. **Validate thoroughly**: Run all checks before creating PR
+7. **Document changes**: Update relevant docs if behavior or setup changes
+
+**Best suited for Copilot:**
+
+- Bug fixes with clear reproduction steps
+- Adding tests for existing functionality
+- Small feature additions that follow existing patterns
+- Documentation updates
+- Code formatting and linting fixes
+
+**Not ideal for Copilot:**
+
+- Large architectural refactors
+- Security-sensitive authentication changes
+- Complex Supabase schema migrations
+- Features requiring UX/design decisions
