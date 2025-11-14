@@ -1271,8 +1271,8 @@ body {
   z-index: 1;
 }
 
-.trending-carousel::before,
-.trending-carousel::after {
+.trending-window::before,
+.trending-window::after {
   content: "";
   position: absolute;
   top: 0;
@@ -1282,14 +1282,14 @@ body {
   z-index: 2;
 }
 
-.trending-carousel::before {
-  left: clamp(20px, 5vw, 56px);
-  background: linear-gradient(90deg, rgba(12, 18, 30, 0.95), rgba(12, 18, 30, 0));
+.trending-window::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(18, 26, 40, 0.95), rgba(18, 26, 40, 0));
 }
 
-.trending-carousel::after {
-  right: clamp(20px, 5vw, 56px);
-  background: linear-gradient(270deg, rgba(12, 18, 30, 0.95), rgba(12, 18, 30, 0));
+.trending-window::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(18, 26, 40, 0.95), rgba(18, 26, 40, 0));
 }
 
 .trending-window {
