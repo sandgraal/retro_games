@@ -134,6 +134,7 @@ const PRICE_FETCH_CHUNK = 200;
 const PRICE_HISTORY_PAD = 8;
 const PRICE_STATUS_KEYS = [STATUS_OWNED, STATUS_WISHLIST, STATUS_BACKLOG, STATUS_TRADE];
 const PRICE_SOURCE = "pricecharting";
+let dynamicIdCounter = 0;
 const currencyFormatterWhole =
   typeof Intl !== "undefined"
     ? new Intl.NumberFormat("en-US", {
@@ -3045,14 +3046,28 @@ function renderGameCard(row, index, statusSource) {
   </article>`;
 }
 
+function sanitizeForId(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 function renderStatusSelect(key, current, gameTitle, platform) {
   const name =
     typeof gameTitle === "string" && gameTitle.trim() ? gameTitle.trim() : "this game";
   const platformName =
     typeof platform === "string" && platform.trim() ? platform.trim() : "";
   const accessibleName = `Collection status for ${name}${platformName ? ` on ${platformName}` : ""}`;
+  const sanitizedKey = sanitizeForId(key);
+  const uniqueFragment = sanitizedKey || `auto-${dynamicIdCounter++}`;
+  const selectId = `status-${uniqueFragment}`;
+  const labelId = `${selectId}-label`;
 
-  return `<select class="status-select" data-key="${key}" aria-label="${escapeHtml(accessibleName)}">
+  return `<label class="sr-only" for="${selectId}" id="${labelId}">${escapeHtml(
+    accessibleName
+  )}</label><select class="status-select" data-key="${key}" id="${selectId}" aria-labelledby="${labelId}">
     ${STATUS_OPTIONS.map(
       (option) =>
         `<option value="${option.value}" ${current === option.value ? "selected" : ""}>${
