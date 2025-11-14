@@ -4095,7 +4095,7 @@ function normalizeCoverUrl(value) {
     if (/^https?:\/\//i.test(trimmed)) return trimmed;
     return "";
   }
-  if (value && typeof value === "object") {
+  if (typeof value === "object") {
     if (typeof value.url === "string") {
       return normalizeCoverUrl(value.url);
     }
