@@ -51,6 +51,7 @@
   --shadow-soft: rgba(0, 0, 0, 0.4);
   --shadow-strong: rgba(0, 0, 0, 0.65);
   --shadow-deep: rgba(0, 0, 0, 0.75);
+  --text-shadow: rgba(3, 12, 28, 0.65);
 
   --glow-primary-soft: rgba(111, 230, 224, 0.45);
   --glow-primary-strong: rgba(111, 230, 224, 0.65);
@@ -385,7 +386,7 @@ body {
     var(--hero-title-end)
   );
   text-shadow:
-    0 14px 36px rgba(3, 12, 28, 0.65),
+    0 14px 36px var(--text-shadow),
     0 0 32px var(--hero-title-glow);
 }
 
@@ -472,7 +473,7 @@ body {
   color: var(--text-soft);
   line-height: 1.7;
   max-width: 52ch;
-  text-shadow: 0 12px 30px rgba(2, 10, 26, 0.6);
+  text-shadow: 0 12px 30px var(--text-shadow);
 }
 
 .actions-toolbar {
@@ -1262,7 +1263,7 @@ body {
   text-transform: uppercase;
   color: var(--hero-title-start);
   text-shadow:
-    0 10px 26px rgba(3, 12, 26, 0.6),
+    0 10px 26px var(--text-shadow),
     0 0 22px var(--hero-title-glow);
 }
 
@@ -1281,8 +1282,8 @@ body {
   z-index: 1;
 }
 
-.trending-carousel::before,
-.trending-carousel::after {
+.trending-window::before,
+.trending-window::after {
   content: "";
   position: absolute;
   top: 0;
@@ -1292,14 +1293,14 @@ body {
   z-index: 2;
 }
 
-.trending-carousel::before {
-  left: clamp(20px, 5vw, 56px);
-  background: linear-gradient(90deg, rgba(12, 18, 30, 0.95), rgba(12, 18, 30, 0));
+.trending-window::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(18, 26, 40, 0.95), rgba(18, 26, 40, 0));
 }
 
-.trending-carousel::after {
-  right: clamp(20px, 5vw, 56px);
-  background: linear-gradient(270deg, rgba(12, 18, 30, 0.95), rgba(12, 18, 30, 0));
+.trending-window::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(18, 26, 40, 0.95), rgba(18, 26, 40, 0));
 }
 
 .trending-window {
@@ -1307,7 +1308,7 @@ body {
   flex: 1;
   overflow-x: auto;
   scroll-behavior: smooth;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
   border-radius: 18px;
   background: linear-gradient(160deg, rgba(18, 26, 40, 0.88), rgba(12, 20, 32, 0.82));
   padding: 0.95rem 0.85rem 1rem;
@@ -1315,6 +1316,8 @@ body {
     inset 0 0 0 1px rgba(255, 255, 255, 0.03),
     inset 0 22px 44px rgba(5, 12, 28, 0.55);
   backdrop-filter: blur(14px);
+  scrollbar-color: rgba(111, 230, 224, 0.3) rgba(10, 16, 28, 0.45);
+  scrollbar-width: thin;
 }
 
 .trending-window:focus-visible {
@@ -1434,7 +1437,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .actions-toolbar button,
   .carousel-control,
-  .trending-card {
+  .trending-card,
+  .trending-card::before {
     transition-duration: 0.01ms !important;
   }
 
