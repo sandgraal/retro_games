@@ -3018,7 +3018,12 @@ function renderGameCard(row, index, statusSource) {
     : "";
   const statusControl = importedCollection
     ? `<div class="card-status-control"><span>Collection</span><span class="status-pill status-${statusValue}">${statusLabel}</span>${noteBadge}</div>`
-    : `<div class="card-status-control"><span>Collection</span>${renderStatusSelect(key, statusValue)}${noteBadge}</div>`;
+    : `<div class="card-status-control"><span>Collection</span>${renderStatusSelect(
+        key,
+        statusValue,
+        row[COL_GAME],
+        row[COL_PLATFORM]
+      )}${noteBadge}</div>`;
 
   return `<article class="game-card" data-row="${index}">
     <div class="card-media">
@@ -3040,8 +3045,14 @@ function renderGameCard(row, index, statusSource) {
   </article>`;
 }
 
-function renderStatusSelect(key, current) {
-  return `<select class="status-select" data-key="${key}">
+function renderStatusSelect(key, current, gameTitle, platform) {
+  const name =
+    typeof gameTitle === "string" && gameTitle.trim() ? gameTitle.trim() : "this game";
+  const platformName =
+    typeof platform === "string" && platform.trim() ? platform.trim() : "";
+  const accessibleName = `Collection status for ${name}${platformName ? ` on ${platformName}` : ""}`;
+
+  return `<select class="status-select" data-key="${key}" aria-label="${escapeHtml(accessibleName)}">
     ${STATUS_OPTIONS.map(
       (option) =>
         `<option value="${option.value}" ${current === option.value ? "selected" : ""}>${
