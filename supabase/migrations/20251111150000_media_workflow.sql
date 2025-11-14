@@ -155,13 +155,17 @@ create policy "service update variant prices" on public.game_variant_prices
 grant select on public.game_variant_prices to anon, authenticated;
 grant insert, update on public.game_variant_prices to service_role;
 
--- Extend price snapshots with region metadata and refresh latest view.
 alter table public.game_price_snapshots
   add column if not exists region_code text default 'NTSC';
 
 create index if not exists game_price_snapshots_region_idx on public.game_price_snapshots (region_code);
 
-create or replace view public.game_price_latest as
+-- Drop dependent objects so the latest view can be recreated with the new column signature.
+drop view if exists public.game_variant_price_deltas;
+
+drop view if exists public.game_price_latest;
+
+create view public.game_price_latest as
 select distinct on (game_key, source, region_code)
   id,
   game_key,
@@ -189,7 +193,6 @@ grant select on public.game_price_latest to anon, authenticated;
 -- This design allows flexibility for PAL-exclusive titles or other regional variants
 -- that may not have an NTSC counterpart. The default baseline remains 'NTSC' for
 -- backward compatibility, but callers can specify alternative regions as needed.
-drop view if exists public.game_variant_price_deltas;
 create or replace function public.game_variant_price_deltas(baseline_region text default 'NTSC')
 returns table (
   game_key text,
