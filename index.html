@@ -31,24 +31,52 @@
             spreadsheets.
           </p>
         </div>
-        <div class="actions-toolbar" role="toolbar" aria-label="Collection actions">
-          <div class="toolbar-group toolbar-group-primary">
-            <button id="exportBtn" class="primary-action">Export Owned Games</button>
-            <button id="shareBtn" class="primary-action">Get Shareable Link</button>
+        <details class="actions-panel">
+          <summary class="actions-summary">
+            <span class="summary-icon" aria-hidden="true">🎮</span>
+            <span class="summary-text">
+              Collection Actions
+              <span class="summary-sub">Export, share, import, and backup tools</span>
+            </span>
+            <span class="summary-caret" aria-hidden="true">▾</span>
+          </summary>
+          <div class="actions-toolbar" role="toolbar" aria-label="Collection actions">
+            <div class="toolbar-group toolbar-group-primary">
+              <button id="exportBtn" class="primary-action">
+                <span class="action-icon" aria-hidden="true">📤</span>
+                <span class="action-label">Export Owned Games</span>
+              </button>
+              <button id="shareBtn" class="primary-action">
+                <span class="action-icon" aria-hidden="true">🔗</span>
+                <span class="action-label">Get Shareable Link</span>
+              </button>
+            </div>
+            <div class="toolbar-group toolbar-group-secondary">
+              <button id="showImport">
+                <span class="action-icon" aria-hidden="true">📥</span>
+                <span class="action-label">Import Collection Code</span>
+              </button>
+              <button id="backupBtn">
+                <span class="action-icon" aria-hidden="true">🗃️</span>
+                <span class="action-label">Backup Collection JSON</span>
+              </button>
+              <button id="restoreBtn">
+                <span class="action-icon" aria-hidden="true">↺</span>
+                <span class="action-label">Restore Backup</span>
+              </button>
+              <button id="contributeBtn">
+                <span class="action-icon" aria-hidden="true">📸</span>
+                <span class="action-label">Submit Media</span>
+              </button>
+              <input
+                type="file"
+                id="restoreInput"
+                accept="application/json"
+                style="display: none"
+              />
+            </div>
           </div>
-          <div class="toolbar-group toolbar-group-secondary">
-            <button id="showImport">Import Collection Code</button>
-            <button id="backupBtn">Backup Collection JSON</button>
-            <button id="restoreBtn">Restore Backup</button>
-            <button id="contributeBtn">Submit Media</button>
-            <input
-              type="file"
-              id="restoreInput"
-              accept="application/json"
-              style="display: none"
-            />
-          </div>
-        </div>
+        </details>
       </header>
       <main id="mainContent" tabindex="-1">
         <section
