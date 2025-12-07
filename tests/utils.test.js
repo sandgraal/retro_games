@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 
 import { escapeHtml } from "../app/utils/dom.js";
 import {
@@ -3995,6 +3995,8 @@ import {
   SAMPLE_DATA_URL,
   REGION_CODES,
   REGION_PATTERNS,
+  applySupabaseFilters,
+  applyRowEnhancements,
   computeRegionCodes,
   normalizeIncomingRows,
   buildRowKey,
@@ -4088,6 +4090,169 @@ describe("data/loader", () => {
     it("returns null for row without platform", () => {
       const result = buildRowKey({ game_name: "Test" });
       expect(result).toBeNull();
+    });
+  });
+
+  describe("applySupabaseFilters", () => {
+    // Mock query builder that tracks calls
+    function createMockQuery() {
+      const calls = [];
+      const query = {
+        ilike: vi.fn().mockImplementation(function (col, val) {
+          calls.push({ method: "ilike", col, val });
+          return query;
+        }),
+        eq: vi.fn().mockImplementation(function (col, val) {
+          calls.push({ method: "eq", col, val });
+          return query;
+        }),
+        gte: vi.fn().mockImplementation(function (col, val) {
+          calls.push({ method: "gte", col, val });
+          return query;
+        }),
+        lte: vi.fn().mockImplementation(function (col, val) {
+          calls.push({ method: "lte", col, val });
+          return query;
+        }),
+        or: vi.fn().mockImplementation(function (clauses) {
+          calls.push({ method: "or", clauses });
+          return query;
+        }),
+        getCalls: () => calls,
+      };
+      return query;
+    }
+
+    it("returns query unchanged when no filters provided", () => {
+      const query = createMockQuery();
+      const result = applySupabaseFilters(query, {});
+      expect(result).toBe(query);
+      expect(query.getCalls()).toHaveLength(0);
+    });
+
+    it("returns query unchanged when filters is null", () => {
+      const query = createMockQuery();
+      const result = applySupabaseFilters(query, null);
+      expect(result).toBe(query);
+    });
+
+    it("applies search filter with ilike", () => {
+      const query = createMockQuery();
+      applySupabaseFilters(query, { search: "mario" });
+      const calls = query.getCalls();
+      expect(calls).toHaveLength(1);
+      expect(calls[0].method).toBe("ilike");
+      expect(calls[0].val).toBe("%mario%");
+    });
+
+    it("applies platform filter with eq", () => {
+      const query = createMockQuery();
+      applySupabaseFilters(query, { platform: "SNES" });
+      const calls = query.getCalls();
+      expect(calls).toHaveLength(1);
+      expect(calls[0].method).toBe("eq");
+      expect(calls[0].val).toBe("SNES");
+    });
+
+    it("applies genre filter with ilike", () => {
+      const query = createMockQuery();
+      applySupabaseFilters(query, { genre: "RPG" });
+      const calls = query.getCalls();
+      expect(calls).toHaveLength(1);
+      expect(calls[0].method).toBe("ilike");
+      expect(calls[0].val).toBe("%RPG%");
+    });
+
+    it("applies ratingMin filter with gte", () => {
+      const query = createMockQuery();
+      applySupabaseFilters(query, { ratingMin: 8.5 });
+      const calls = query.getCalls();
+      expect(calls).toHaveLength(1);
+      expect(calls[0].method).toBe("gte");
+      expect(calls[0].val).toBe(8.5);
+    });
+
+    it("applies yearStart filter with gte", () => {
+      const query = createMockQuery();
+      applySupabaseFilters(query, { yearStart: 1990 });
+      const calls = query.getCalls();
+      expect(calls).toHaveLength(1);
+      expect(calls[0].method).toBe("gte");
+      expect(calls[0].val).toBe(1990);
+    });
+
+    it("applies yearEnd filter with lte", () => {
+      const query = createMockQuery();
+      applySupabaseFilters(query, { yearEnd: 2000 });
+      const calls = query.getCalls();
+      expect(calls).toHaveLength(1);
+      expect(calls[0].method).toBe("lte");
+      expect(calls[0].val).toBe(2000);
+    });
+
+    it("applies region filter with or clause", () => {
+      const query = createMockQuery();
+      applySupabaseFilters(query, { region: "NTSC" });
+      const calls = query.getCalls();
+      expect(calls).toHaveLength(1);
+      expect(calls[0].method).toBe("or");
+      expect(calls[0].clauses).toContain("region.ilike.%usa%");
+    });
+
+    it("applies multiple filters", () => {
+      const query = createMockQuery();
+      applySupabaseFilters(query, {
+        search: "zelda",
+        platform: "NES",
+        ratingMin: 9,
+      });
+      const calls = query.getCalls();
+      expect(calls).toHaveLength(3);
+    });
+
+    it("uses column prefix when provided", () => {
+      const query = createMockQuery();
+      applySupabaseFilters(query, { platform: "SNES" }, "games");
+      const calls = query.getCalls();
+      expect(calls[0].col).toBe("games.platform");
+    });
+  });
+
+  describe("applyRowEnhancements", () => {
+    it("handles null row gracefully", () => {
+      expect(() => applyRowEnhancements(null)).not.toThrow();
+    });
+
+    it("handles non-object row gracefully", () => {
+      expect(() => applyRowEnhancements("not an object")).not.toThrow();
+    });
+
+    it("computes region codes for row with region", () => {
+      const row = { game_name: "Test", region: "USA" };
+      applyRowEnhancements(row);
+      expect(row.__regionCodes).toContain("NTSC");
+    });
+
+    it("sets region field from computed codes if not present", () => {
+      const row = { game_name: "Test", region_code: "usa, europe" };
+      applyRowEnhancements(row);
+      expect(row.__regionCodes).toContain("NTSC");
+      expect(row.__regionCodes).toContain("PAL");
+    });
+
+    it("preserves existing cover URL", () => {
+      const row = { game_name: "Test", cover: "https://example.com/cover.jpg" };
+      applyRowEnhancements(row);
+      expect(row.cover).toBe("https://example.com/cover.jpg");
+    });
+
+    it("uses screenshot as fallback when no cover", () => {
+      const row = {
+        game_name: "Test",
+        screenshots: ["https://example.com/screenshot.jpg"],
+      };
+      applyRowEnhancements(row);
+      expect(row.cover).toBe("https://example.com/screenshot.jpg");
     });
   });
 });
