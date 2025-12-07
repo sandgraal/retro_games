@@ -3456,3 +3456,268 @@ describe("ui/grid", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ui/dashboard tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  calculateAverageRating,
+  countPlatforms,
+  calculatePlatformBreakdown,
+  getTopPlatforms,
+  formatTopPlatformsDisplay,
+  calculateCompletionPercentage,
+  computeStatusCounts,
+  calculateBarWidth,
+  formatStatusSummary,
+  buildStatValue,
+  buildTrendIndicator,
+  buildProgressBar,
+  buildCarouselCover,
+  buildRecentAdditionsCarousel,
+} from "../app/ui/dashboard.js";
+
+describe("ui/dashboard", () => {
+  describe("calculateAverageRating", () => {
+    it("calculates average from ratings", () => {
+      const data = [{ rating: 8 }, { rating: 9 }, { rating: 10 }];
+      const result = calculateAverageRating(data);
+      expect(result.average).toBe(9);
+      expect(result.count).toBe(3);
+    });
+
+    it("ignores non-numeric ratings", () => {
+      const data = [{ rating: 8 }, { rating: "N/A" }, { rating: 10 }];
+      const result = calculateAverageRating(data);
+      expect(result.average).toBe(9);
+      expect(result.count).toBe(2);
+    });
+
+    it("returns null average for empty data", () => {
+      expect(calculateAverageRating([]).average).toBe(null);
+      expect(calculateAverageRating(null).average).toBe(null);
+    });
+
+    it("uses custom field name", () => {
+      const data = [{ score: 7 }, { score: 9 }];
+      const result = calculateAverageRating(data, "score");
+      expect(result.average).toBe(8);
+    });
+  });
+
+  describe("countPlatforms", () => {
+    it("counts unique platforms", () => {
+      const data = [{ platform: "SNES" }, { platform: "NES" }, { platform: "SNES" }];
+      const result = countPlatforms(data);
+      expect(result.count).toBe(2);
+      expect(result.platforms).toContain("SNES");
+      expect(result.platforms).toContain("NES");
+    });
+
+    it("filters out empty platforms", () => {
+      const data = [{ platform: "SNES" }, { platform: "" }, { platform: null }];
+      const result = countPlatforms(data);
+      expect(result.count).toBe(1);
+    });
+
+    it("returns empty for invalid input", () => {
+      expect(countPlatforms(null).count).toBe(0);
+    });
+  });
+
+  describe("calculatePlatformBreakdown", () => {
+    it("counts games per platform", () => {
+      const games = [{ platform: "SNES" }, { platform: "SNES" }, { platform: "NES" }];
+      const result = calculatePlatformBreakdown(games);
+      expect(result.SNES).toBe(2);
+      expect(result.NES).toBe(1);
+    });
+
+    it("handles empty array", () => {
+      expect(calculatePlatformBreakdown([])).toEqual({});
+    });
+  });
+
+  describe("getTopPlatforms", () => {
+    it("returns top N platforms", () => {
+      const breakdown = { SNES: 10, NES: 5, GB: 3 };
+      const result = getTopPlatforms(breakdown, 2);
+      expect(result.length).toBe(2);
+      expect(result[0].platform).toBe("SNES");
+      expect(result[0].count).toBe(10);
+      expect(result[0].percentage).toBe(56); // 10/(10+5+3) ≈ 56%
+    });
+
+    it("returns empty for invalid input", () => {
+      expect(getTopPlatforms(null)).toEqual([]);
+      expect(getTopPlatforms({})).toEqual([]);
+    });
+  });
+
+  describe("formatTopPlatformsDisplay", () => {
+    it("formats platforms with percentages", () => {
+      const breakdown = { SNES: 10, NES: 5 };
+      const result = formatTopPlatformsDisplay(breakdown, 2);
+      expect(result).toContain("SNES");
+      expect(result).toContain("%");
+    });
+
+    it("returns placeholder for empty breakdown", () => {
+      expect(formatTopPlatformsDisplay({})).toBe("No games yet");
+    });
+  });
+
+  describe("calculateCompletionPercentage", () => {
+    it("calculates percentage", () => {
+      expect(calculateCompletionPercentage(50, 100)).toBe(50);
+      expect(calculateCompletionPercentage(25, 100)).toBe(25);
+    });
+
+    it("handles edge cases", () => {
+      expect(calculateCompletionPercentage(0, 100)).toBe(0);
+      expect(calculateCompletionPercentage(100, 0)).toBe(0);
+      expect(calculateCompletionPercentage(null, 100)).toBe(0);
+    });
+  });
+
+  describe("computeStatusCounts", () => {
+    it("counts statuses from maps", () => {
+      const maps = {
+        owned: { a: true, b: true },
+        wishlist: { c: true },
+        backlog: {},
+        trade: { d: true },
+      };
+      const result = computeStatusCounts(maps);
+      expect(result.owned).toBe(2);
+      expect(result.wishlist).toBe(1);
+      expect(result.backlog).toBe(0);
+      expect(result.trade).toBe(1);
+      expect(result.total).toBe(4);
+    });
+
+    it("handles null input", () => {
+      const result = computeStatusCounts(null);
+      expect(result.total).toBe(0);
+    });
+  });
+
+  describe("calculateBarWidth", () => {
+    it("calculates width percentage", () => {
+      expect(calculateBarWidth(50, 100)).toBe("50.0%");
+      expect(calculateBarWidth(100, 100)).toBe("100.0%");
+    });
+
+    it("returns minimum for small non-zero values", () => {
+      expect(calculateBarWidth(1, 1000)).toBe("1%");
+    });
+
+    it("returns 0% for zero count", () => {
+      expect(calculateBarWidth(0, 100)).toBe("0.0%");
+    });
+  });
+
+  describe("formatStatusSummary", () => {
+    it("formats status counts", () => {
+      const counts = { owned: 10, wishlist: 5, backlog: 3, trade: 0 };
+      const result = formatStatusSummary(counts);
+      expect(result).toContain("Owned: 10");
+      expect(result).toContain("Wishlist: 5");
+      expect(result).not.toContain("Trade:");
+    });
+
+    it("returns empty for null", () => {
+      expect(formatStatusSummary(null)).toBe("");
+    });
+  });
+
+  describe("buildStatValue", () => {
+    it("builds stat value HTML", () => {
+      const html = buildStatValue(100, "games");
+      expect(html).toContain("100");
+      expect(html).toContain("games");
+      expect(html).toContain("stat-value");
+    });
+
+    it("handles no label", () => {
+      const html = buildStatValue(50);
+      expect(html).toContain("50");
+      expect(html).not.toContain("stat-label");
+    });
+  });
+
+  describe("buildTrendIndicator", () => {
+    it("builds upward trend", () => {
+      const html = buildTrendIndicator(100, "up");
+      expect(html).toContain("↗");
+      expect(html).not.toContain("down");
+    });
+
+    it("builds downward trend", () => {
+      const html = buildTrendIndicator(50, "down");
+      expect(html).toContain("↘");
+      expect(html).toContain("down");
+    });
+  });
+
+  describe("buildProgressBar", () => {
+    it("builds progress bar HTML", () => {
+      const html = buildProgressBar(75, "myBar");
+      expect(html).toContain("stat-progress");
+      expect(html).toContain("75%");
+      expect(html).toContain('id="myBar"');
+    });
+
+    it("clamps percentage", () => {
+      const html = buildProgressBar(150);
+      expect(html).toContain("100%");
+    });
+  });
+
+  describe("buildCarouselCover", () => {
+    it("builds cover item HTML", () => {
+      const game = {
+        id: 123,
+        cover: "https://example.com/cover.jpg",
+        game_name: "Zelda",
+      };
+      const html = buildCarouselCover(game);
+      expect(html).toContain("carousel-cover");
+      expect(html).toContain("Zelda");
+      expect(html).toContain('data-game-id="123"');
+    });
+
+    it("uses placeholder for missing cover", () => {
+      const game = { id: 1, game_name: "Test" };
+      const html = buildCarouselCover(game);
+      expect(html).toContain("placeholder.png");
+    });
+  });
+
+  describe("buildRecentAdditionsCarousel", () => {
+    it("builds carousel from games", () => {
+      const games = [
+        { id: 1, game_name: "A" },
+        { id: 2, game_name: "B" },
+      ];
+      const html = buildRecentAdditionsCarousel(games);
+      expect(html).toContain('data-game-id="1"');
+      expect(html).toContain('data-game-id="2"');
+    });
+
+    it("limits games shown", () => {
+      const games = Array.from({ length: 10 }, (_, i) => ({
+        id: i,
+        game_name: `Game${i}`,
+      }));
+      const html = buildRecentAdditionsCarousel(games, 3);
+      const matches = html.match(/carousel-cover/g);
+      expect(matches).toHaveLength(3);
+    });
+
+    it("shows empty message for no games", () => {
+      const html = buildRecentAdditionsCarousel([]);
+      expect(html).toContain("carousel-empty");
+    });
+  });
+});
