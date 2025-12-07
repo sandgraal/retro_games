@@ -60,6 +60,17 @@ import {
   BROWSE_MODE_PAGED,
   DEFAULT_PAGE_SIZE,
 } from "../app/state/preferences.js";
+import {
+  getCacheTimestamp,
+  shouldRetryFallbackCover,
+  getCachedCover,
+  setCachedCover,
+  hasCachedCover,
+  getCacheSize,
+  clearCoverCache,
+  resetCacheState,
+  FALLBACK_COVER_RETRY_MS,
+} from "../app/state/cache.js";
 
 describe("dom utilities", () => {
   it("escapes HTML special characters", () => {
@@ -368,5 +379,55 @@ describe("preferences state", () => {
     expect(getBrowseMode()).toBe(BROWSE_MODE_INFINITE);
     expect(getPageSize()).toBe(DEFAULT_PAGE_SIZE);
     expect(getCurrentPage()).toBe(1);
+  });
+});
+
+describe("cache state", () => {
+  beforeEach(() => {
+    resetCacheState();
+  });
+
+  it("getCacheTimestamp extracts timestamps correctly", () => {
+    expect(getCacheTimestamp(null)).toBe(0);
+    expect(getCacheTimestamp({})).toBe(0);
+    expect(getCacheTimestamp({ timestamp: 12345 })).toBe(12345);
+    expect(getCacheTimestamp({ failedAt: 67890 })).toBe(67890);
+    expect(getCacheTimestamp({ timestamp: 12345, failedAt: 67890 })).toBe(12345);
+  });
+
+  it("shouldRetryFallbackCover handles various states", () => {
+    const now = Date.now();
+
+    // No entry - should retry
+    expect(shouldRetryFallbackCover(null, now)).toBe(true);
+    expect(shouldRetryFallbackCover(undefined, now)).toBe(true);
+
+    // Has URL - don't retry
+    expect(shouldRetryFallbackCover({ url: "http://example.com/img.jpg" }, now)).toBe(
+      false
+    );
+
+    // Failed recently - don't retry
+    expect(shouldRetryFallbackCover({ failedAt: now - 1000 }, now)).toBe(false);
+
+    // Failed long ago - should retry
+    expect(
+      shouldRetryFallbackCover({ failedAt: now - FALLBACK_COVER_RETRY_MS - 1000 }, now)
+    ).toBe(true);
+  });
+
+  it("cover cache operations work correctly", () => {
+    expect(getCacheSize()).toBe(0);
+    expect(hasCachedCover("game___platform")).toBe(false);
+
+    setCachedCover("game___platform", { url: "http://example.com/cover.jpg" });
+    expect(getCacheSize()).toBe(1);
+    expect(hasCachedCover("game___platform")).toBe(true);
+    expect(getCachedCover("game___platform")).toEqual({
+      url: "http://example.com/cover.jpg",
+    });
+
+    clearCoverCache();
+    expect(getCacheSize()).toBe(0);
   });
 });
