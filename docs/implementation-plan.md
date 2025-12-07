@@ -1,10 +1,10 @@
 # Implementation Plan – World-Class Retro Games Hub
 
-_Last updated: November 2025_
+_Last updated: December 2025_
 
 ## Purpose
 
-This document operationalizes the high-level implementation plan into actionable, bite-sized tasks so any contributor (human or AI agent) can understand what to build next. It should be read alongside [`docs/current-state.md`](./current-state.md) for baseline architecture details.
+This document operationalizes the high-level implementation plan into actionable, bite-sized tasks so any contributor (human or AI agent) can understand what to build next. It should be read alongside [`docs/current-state.md`](./current-state.md) for baseline architecture details and [`docs/refactoring-roadmap.md`](./refactoring-roadmap.md) for the critical modularization work.
 
 ## Guiding Principles
 
@@ -12,17 +12,65 @@ This document operationalizes the high-level implementation plan into actionable
 - **Local-first with optional cloud sync** – Ensure the experience works entirely offline with seamless Supabase-backed synchronization for persistence and multi-device usage.
 - **Collector-centric UX** – Design every feature to help collectors manage, value, and share their collections.
 - **Operational excellence** – Maintain high code quality via automated testing, CI, observability, and clear contributor workflows.
+- **Maintainable architecture** – Keep codebase modular, testable, and approachable for new contributors.
 - **Retro-inspired modern UI** – Blend nostalgic visual cues with accessible, responsive design.
 - **Preservation & archival** – Capture and safeguard rare media, metadata, and historical context for retro titles.
 - **Comprehensive & unified platform** – Combine metadata, pricing, collection management, and community features into a cohesive hub.
 
 ## Roadmap Structure
 
-Work is organized into four build phases plus operational cadences. Each phase is subdivided into tracks with goal statements, exit criteria, and granular tasks. Tracks can run in parallel when dependencies are satisfied.
+Work is organized into five build phases plus operational cadences. Each phase is subdivided into tracks with goal statements, exit criteria, and granular tasks. Tracks can run in parallel when dependencies are satisfied.
 
-### Phase 1 – Foundation Hardening (Weeks 1–6)
+**⚠️ CRITICAL: Phase 0 (Refactoring) must be completed before significant new feature work.** The current 5,940-line monolithic `app.js` creates unsustainable maintenance burden and blocks contributor onboarding.
 
-Objective: modernize the tooling, configuration, and backend foundations to support rapid iteration.
+### Phase 0 – Architecture Refactoring (Weeks 1–4) 🔴 **CRITICAL**
+
+**Objective**: Modularize codebase to enable sustainable development and team scaling.
+
+**Context**: The application is feature-complete and production-ready, but has grown organically into a single 5,940-line file with 218+ functions. This creates:
+
+- High cognitive load (impossible to hold in working memory)
+- ESLint timeouts and slow developer tools
+- Difficult testing and debugging
+- Hard contributor onboarding
+- Merge conflict risk with multiple developers
+
+**Strategy**: Surgical refactoring (NOT rewrite) using ES6 modules with no build step required.
+
+**📖 See [`docs/refactoring-roadmap.md`](./refactoring-roadmap.md) for complete Phase 0 details, day-by-day tasks, and module structure.**
+
+| Track                          | Goal                            | Exit Criteria                                                       | Key Deliverables                                                                                                                                    |
+| ------------------------------ | ------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Module Structure Setup**     | Create organizational framework | Folder structure created, module loading working                    | `app/` directory with `main.js`, `state/`, `data/`, `ui/`, `features/`, `utils/` subdirectories                                                     |
+| **Extract Utilities**          | Isolate pure functions first    | All utility functions in dedicated modules, tests passing           | `utils/dom.js`, `utils/format.js`, `utils/validation.js`, `utils/keys.js`                                                                           |
+| **Extract State Management**   | Centralize application state    | All state in modules, localStorage abstraction complete             | `state/collection.js`, `state/filters.js`, `state/preferences.js`, `state/cache.js`                                                                 |
+| **Extract Data Layer**         | Isolate all external I/O        | Clean API boundary, Supabase logic isolated, tests mock easily      | `data/supabase.js`, `data/loader.js`, `data/aggregates.js`, `data/pricing.js`, `data/storage.js`                                                    |
+| **Extract UI Modules**         | Separate rendering from logic   | Each UI component in own file, clean interfaces                     | `ui/grid.js`, `ui/modal.js`, `ui/filters.js`, `ui/dashboard.js`, `ui/carousel.js`, `ui/theme.js`                                                    |
+| **Extract Feature Modules**    | Isolate complex feature logic   | Features independently testable, clear boundaries                   | `features/virtualization.js`, `features/pagination.js`, `features/search.js`, `features/sharing.js`, `features/sorting.js`, `features/filtering.js` |
+| **Update Test Infrastructure** | Tests work with new structure   | All tests passing, coverage maintained/improved                     | Module-specific tests, integration tests, 60%+ coverage                                                                                             |
+| **Documentation & Cleanup**    | Clear handoff to next phase     | Architecture documented, old code removed, migration guide complete | `docs/architecture.md`, updated contributing docs, migration guide                                                                                  |
+
+**Success Metrics for Phase 0**:
+
+- ✅ No file exceeds 500 lines
+- ✅ No function exceeds 50 lines
+- ✅ ESLint completes in <10 seconds
+- ✅ Test coverage ≥60%
+- ✅ All existing tests passing
+- ✅ Zero regressions in functionality
+- ✅ Documentation complete
+
+**Risk Mitigation**:
+
+- Feature freeze during refactoring (only bug fixes)
+- Daily smoke tests on staging
+- Incremental PR strategy (one track at a time)
+- Pair with senior dev for first module extraction
+- Keep `app.js` as fallback until migration complete
+
+---
+
+### Phase 1 – Foundation Hardening (COMPLETE ✅)
 
 | Track                   | Goal                                  | Exit Criteria                                                                                                            | Bite-Sized Tasks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | ----------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

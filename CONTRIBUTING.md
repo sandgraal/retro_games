@@ -1,5 +1,17 @@
 # Contributing Guide
 
+**⚠️ IMPORTANT: Feature Freeze in Effect** (December 2025)
+
+We're currently refactoring the monolithic `app.js` (5,940 lines) into maintainable ES6 modules. During this **Phase 0 refactoring period**:
+
+- ❌ **NO new features** accepted
+- ✅ Critical bug fixes only
+- ✅ Phase 0 refactoring contributions welcome
+- ✅ Documentation improvements
+- ✅ Test additions (if not blocked by refactoring)
+
+**See [`docs/refactoring-roadmap.md`](docs/refactoring-roadmap.md) for details and how to help.**
+
 Thanks for keeping Sandgraal's Retro Games list sharp. This document captures the essential steps to get set up, code safely, and ship reviews quickly.
 
 ## 1. Prerequisites

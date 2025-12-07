@@ -1,13 +1,14 @@
 # Current State Overview
 
-_Last updated: March 2025_
+_Last updated: December 2025_
 
 ## Architecture
 
 - Single-page application served as static assets (`index.html`, `style.css`, `app.js`).
-- Vanilla JavaScript orchestrates DOM rendering, Supabase queries, and browser `localStorage` for owned-game tracking.
+- Vanilla JavaScript (5,940 lines) orchestrates DOM rendering, Supabase queries, and browser `localStorage` for owned-game tracking.
+- **⚠️ CRITICAL**: Monolithic structure (`app.js`) needs refactoring—see [`docs/refactoring-roadmap.md`](./refactoring-roadmap.md) for detailed plan.
 - Supabase acts as the backing data store. The frontend expects a `games` table whose columns match the CSV header (`Game Name`, `Platform`, `Rating`, etc.).
-- No build tooling or bundler; assets are edited by hand and delivered directly to the browser.
+- No build tooling or bundler; assets are edited by hand and delivered directly to the browser via ES6 module syntax support in modern browsers.
 - Supabase requests now stream in 400-row pages (configurable) using `.range()`; the UI renders the first chunk immediately and hydrates additional chunks only when the virtualized grid/pagination controls need more data.
 
 ## Data Flow
@@ -42,8 +43,46 @@ _Last updated: March 2025_
 
 ## Gaps & Risks
 
-- No automated tests, linting, or formatting guardrails; regressions must be caught manually.
-- Data integrity relies on manual Supabase updates—no scripts to sync from `games.csv` yet.
-- Accessibility relies on manual QA; no Lighthouse/axe reports are part of the workflow.
-- Security: Supabase anon key must remain public but should still be rotated if exposed. SFTP deployment credentials were removed from version control but may still exist in developer machines.
-- Performance: Supabase pagination now streams data in 400-row chunks and server-side filters ensure we only hydrate the rows that match the current query, but we still eventually download the full dataset when no filters are applied; long-term we should explore server-side aggregation (statuses, stats) for 10k+ titles.
+### Code Organization (CRITICAL 🔴)
+
+- **Monolithic structure**: 5,940-line `app.js` with 218 functions creates unsustainable maintenance burden
+- **ESLint timeouts**: File too large for efficient linting
+- **High cognitive load**: Impossible to understand entire codebase at once
+- **Difficult testing**: Monolithic structure hampers unit testing
+- **Contributor friction**: New developers overwhelmed by file size
+- **Merge conflicts**: Multiple developers risk conflicts editing same giant file
+- **Solution**: See [`docs/refactoring-roadmap.md`](./refactoring-roadmap.md) for 4-week modularization plan
+
+### Technical Debt
+
+- Test coverage only ~12% (22KB tests for 5,940 lines code) - need 60%+ target
+- CSS has duplication in theme variables (2,808 lines) - needs DRY refactoring
+- Some functions exceed 200 lines (`refreshFilteredView`) - need decomposition
+- 50+ global variables scattered - need state management centralization
+
+### Data & Security
+
+- Data integrity relies on manual Supabase updates—seeding scripts exist but need automation
+- Security: Supabase anon key rotation process documented, Gitleaks in CI prevents secret commits
+- Accessibility relies on manual QA; Lighthouse CI now enforces thresholds but manual screen reader testing needed
+
+### Performance
+
+- Supabase pagination streams data in 400-row chunks and server-side filters ensure we only hydrate rows matching current query
+- Virtualized grid handles large datasets efficiently
+- For 10k+ titles with no filters, we eventually download full dataset—could explore more server-side aggregation
+- PriceCharting integration adds price data without blocking main UI
+
+## Next Steps
+
+**Highest Priority**:
+
+1. **Complete Phase 0 Refactoring** (4 weeks) - Modularize `app.js` into maintainable ES6 modules. See [`docs/refactoring-roadmap.md`](./refactoring-roadmap.md).
+2. **Increase Test Coverage** - Target 60% minimum after refactoring makes testing easier.
+3. **CSS Refactoring** - DRY up theme variables, consider CSS architecture patterns.
+
+**Medium Priority**: 4. **Media Workflow Completion** - Finish automated cover import, archival tooling per [`docs/implementation-plan.md`](./implementation-plan.md) Phase 2. 5. **Performance Profiling** - Systematic performance monitoring with large datasets (10k+ games). 6. **Type Safety** - Consistent JSDoc or TypeScript integration.
+
+**Lower Priority**: 7. **Community Features** - Per implementation plan Phase 3-4. 8. **Monitoring & Analytics** - User behavior insights respecting privacy.
+
+See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive roadmap.

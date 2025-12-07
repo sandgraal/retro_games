@@ -1,0 +1,22 @@
+QUICK AGENT HANDOFF PROMPT (Copy-Paste This)
+=============================================
+
+Review project status in docs/AGENT_QUICKSTART.md and docs/refactoring-roadmap.md. 
+
+Pick the next highest-priority unchecked task (Phase 0 refactoring is CRITICAL). 
+
+Work autonomously making minimal changes, testing frequently (npm run lint && npm test). 
+
+Stop when you hit a decision point, blocker, or complete 4 hours of work. 
+
+Create PR with:
+1. What changed (bullet list)
+2. Progress update (roadmap checkboxes)  
+3. Why you stopped & what intervention is needed
+4. Instructions for next agent
+
+Follow feature freeze: NO new features, only Phase 0 refactoring and critical bug fixes. 
+
+Ensure all tests pass and docs updated before PR.
+
+See .github/AGENT_HANDOFF_PROMPT.md for detailed instructions.

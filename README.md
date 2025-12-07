@@ -1,6 +1,10 @@
-# Retro Game Site
+# Retro Games List
 
-WIP: A fast, private, and no-nonsense tracker for classic and retro games. A place for retro gamers to get their fix.
+A fast, private, and no-nonsense tracker for classic and retro games. Built for serious collectors, archivists, and retro fans who want control over their library.
+
+**Project Status**: ⭐ **Feature-complete & production-ready** | 🔴 **Architecture refactoring needed**
+
+The application is fully functional with comprehensive features, but the codebase has grown to 5,940 lines in a single file. Before major new features, we need modularization (see [`docs/refactoring-roadmap.md`](docs/refactoring-roadmap.md)).
 
 **Features:**
 
@@ -118,3 +122,26 @@ Keep these commands green locally before pushing to avoid CI failures.
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup tips, coding standards, and the pull-request checklist.
+
+**Important for new contributors**: We're currently in Phase 0 refactoring to modularize the codebase. See [`docs/refactoring-roadmap.md`](docs/refactoring-roadmap.md) for details. Feature development is paused during this period—only bug fixes accepted until refactoring completes (est. 4 weeks).
+
+## Documentation
+
+**New contributors start here**: [`docs/AGENT_QUICKSTART.md`](docs/AGENT_QUICKSTART.md) 🎯
+
+### Core Documentation
+
+- [`README.md`](README.md) - This file (features & quick start)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) - Contributor guide & feature freeze notice
+- [`docs/AGENT_QUICKSTART.md`](docs/AGENT_QUICKSTART.md) - Fast onboarding for AI agents
+- [`docs/refactoring-roadmap.md`](docs/refactoring-roadmap.md) - **Phase 0 architecture refactoring** 🔴
+- [`docs/implementation-plan.md`](docs/implementation-plan.md) - Complete roadmap (Phases 0-4)
+- [`docs/current-state.md`](docs/current-state.md) - Current architecture & status
+
+### Technical Documentation
+
+- [`docs/setup.md`](docs/setup.md) - Detailed setup instructions
+- [`docs/data-pipeline.md`](docs/data-pipeline.md) - Supabase schema & migrations
+- [`docs/image-sourcing.md`](docs/image-sourcing.md) - Cover art guidelines
+- [`docs/recovery-playbook.md`](docs/recovery-playbook.md) - Backup & recovery
+- [`.github/copilot-instructions.md`](.github/copilot-instructions.md) - AI coding guidelines
