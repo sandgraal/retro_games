@@ -2632,3 +2632,178 @@ describe("ui/modal", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ui/filters tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  extractUniquePlatforms,
+  extractUniqueGenres,
+  extractUniqueValues,
+  buildSelectOptions,
+  buildPlatformDropdown,
+  buildGenreDropdown,
+  buildRegionButton,
+  buildRegionToggle,
+  buildFilterSummary,
+  countActiveFilters,
+  buildSortDropdown,
+  hasActiveFilters,
+  REGION_OPTIONS,
+  SORT_OPTIONS as UI_SORT_OPTIONS,
+} from "../app/ui/filters.js";
+
+describe("ui/filters", () => {
+  describe("extractUniquePlatforms", () => {
+    it("extracts unique platforms", () => {
+      const data = [{ platform: "SNES" }, { platform: "NES" }, { platform: "SNES" }];
+      const result = extractUniquePlatforms(data);
+      expect(result).toEqual(["NES", "SNES"]);
+    });
+
+    it("returns empty for invalid data", () => {
+      expect(extractUniquePlatforms(null)).toEqual([]);
+      expect(extractUniquePlatforms([])).toEqual([]);
+    });
+  });
+
+  describe("extractUniqueGenres", () => {
+    it("extracts and splits genres", () => {
+      const data = [{ genre: "RPG, Action" }, { genre: "RPG" }, { genre: "Puzzle" }];
+      const result = extractUniqueGenres(data);
+      expect(result).toEqual(["Action", "Puzzle", "RPG"]);
+    });
+
+    it("handles empty genres", () => {
+      const data = [{ genre: "" }, { genre: null }];
+      expect(extractUniqueGenres(data)).toEqual([]);
+    });
+  });
+
+  describe("extractUniqueValues", () => {
+    it("extracts unique values for any field", () => {
+      const data = [{ year: 1990 }, { year: 1995 }, { year: 1990 }];
+      const result = extractUniqueValues(data, "year");
+      expect(result).toEqual(["1990", "1995"]);
+    });
+  });
+
+  describe("buildSelectOptions", () => {
+    it("builds option HTML", () => {
+      const html = buildSelectOptions(["A", "B"]);
+      expect(html).toContain("<option");
+      expect(html).toContain("A");
+      expect(html).toContain("B");
+    });
+
+    it("includes all option when specified", () => {
+      const html = buildSelectOptions(["A"], { allLabel: "All Items" });
+      expect(html).toContain("All Items");
+      expect(html).toContain('value=""');
+    });
+
+    it("marks selected option", () => {
+      const html = buildSelectOptions(["A", "B"], { selected: "B" });
+      expect(html).toContain('value="B" selected');
+    });
+  });
+
+  describe("buildPlatformDropdown", () => {
+    it("builds platform dropdown with All option", () => {
+      const html = buildPlatformDropdown(["SNES", "NES"]);
+      expect(html).toContain("All Platforms");
+      expect(html).toContain("SNES");
+    });
+  });
+
+  describe("buildGenreDropdown", () => {
+    it("builds genre dropdown with All option", () => {
+      const html = buildGenreDropdown(["RPG", "Action"]);
+      expect(html).toContain("All Genres");
+      expect(html).toContain("RPG");
+    });
+  });
+
+  describe("buildRegionButton", () => {
+    it("builds region button", () => {
+      const html = buildRegionButton("NTSC", "NTSC", false);
+      expect(html).toContain('data-region-option="NTSC"');
+      expect(html).toContain('aria-pressed="false"');
+    });
+
+    it("marks active button", () => {
+      const html = buildRegionButton("PAL", "PAL", true);
+      expect(html).toContain("is-active");
+      expect(html).toContain('aria-pressed="true"');
+    });
+  });
+
+  describe("buildRegionToggle", () => {
+    it("builds all region buttons", () => {
+      const html = buildRegionToggle("NTSC");
+      expect(html).toContain("All Regions");
+      expect(html).toContain("NTSC");
+      expect(html).toContain("PAL");
+      expect(html).toContain("JPN");
+    });
+  });
+
+  describe("buildFilterSummary", () => {
+    it("builds summary from filters", () => {
+      const summary = buildFilterSummary({ platform: "SNES", genre: "RPG" });
+      expect(summary).toContain("Platform: SNES");
+      expect(summary).toContain("Genre: RPG");
+    });
+
+    it("returns default for no filters", () => {
+      expect(buildFilterSummary({})).toBe("No filters applied");
+    });
+  });
+
+  describe("countActiveFilters", () => {
+    it("counts active filters", () => {
+      expect(countActiveFilters({ platform: "SNES" })).toBe(1);
+      expect(countActiveFilters({ platform: "SNES", genre: "RPG" })).toBe(2);
+    });
+
+    it("returns 0 for empty", () => {
+      expect(countActiveFilters({})).toBe(0);
+      expect(countActiveFilters(null)).toBe(0);
+    });
+  });
+
+  describe("buildSortDropdown", () => {
+    it("builds sort options", () => {
+      const html = buildSortDropdown();
+      expect(html).toContain("Name (A–Z)");
+      expect(html).toContain("Rating (High–Low)");
+    });
+
+    it("marks selected sort", () => {
+      const html = buildSortDropdown("rating-desc");
+      expect(html).toContain('value="rating-desc" selected');
+    });
+  });
+
+  describe("hasActiveFilters", () => {
+    it("returns true when filters active", () => {
+      expect(hasActiveFilters({ platform: "SNES" })).toBe(true);
+    });
+
+    it("returns false when no filters", () => {
+      expect(hasActiveFilters({})).toBe(false);
+    });
+  });
+
+  describe("constants", () => {
+    it("has region options", () => {
+      expect(REGION_OPTIONS.length).toBe(4);
+      expect(REGION_OPTIONS[0].value).toBe("");
+    });
+
+    it("has sort options", () => {
+      expect(UI_SORT_OPTIONS.length).toBe(6);
+      expect(UI_SORT_OPTIONS[0].value).toBe("name-asc");
+    });
+  });
+});
