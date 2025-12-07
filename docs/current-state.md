@@ -1,15 +1,16 @@
 # Current State Overview
 
-_Last updated: January 2025_
+_Last updated: December 2025_
 
 ## Architecture
 
 - Single-page application served as static assets with modular ES6 JavaScript.
 - **Museum-quality redesign** (December 2025): Complete visual overhaul from retro arcade to PS2-era sophistication with glassmorphism, masonry grid, and modern design system.
-- **Phase 0 refactoring** (January 2025): Complete modular extraction from 5,940-line `app-legacy.js` into 27 focused modules.
-- Vanilla JavaScript with modular structure: `app/main.js` (456 lines) bootstraps all modules.
-- **27 ES6 modules** across 6 directories: `ui/`, `features/`, `state/`, `data/`, `utils/`, `design/`.
-- **679 tests** covering all extracted modules (76% statement coverage).
+- **Phase 0 refactoring** (January 2025): Complete modular extraction from 5,940-line `app-legacy.js` into 28 focused modules.
+- Vanilla JavaScript with modular structure: `app/main.js` (460 lines) bootstraps all modules.
+- **28 ES6 modules** across 6 directories: `ui/`, `features/`, `state/`, `data/`, `utils/`, `design/`.
+- **721 tests** covering all extracted modules (76%+ statement coverage).
+- **JSON-LD structured data** for schema.org VideoGame SEO (December 2025).
 - Supabase acts as the backing data store with graceful fallback to `data/sample-games.json`.
 - No build tooling or bundler; modular CSS architecture with design tokens in `style/` directory.
 - See [`docs/architecture.md`](./architecture.md) for complete technical documentation.
@@ -96,25 +97,25 @@ _Last updated: January 2025_
 
 See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive roadmap.
 
-## Module Inventory (January 2025)
+## Module Inventory (December 2025)
 
-**27 ES6 modules** totaling 6,670+ lines:
+**28 ES6 modules** totaling 6,900+ lines:
 
-| Directory       | Modules | Lines | Purpose                                                                         |
-| --------------- | ------- | ----- | ------------------------------------------------------------------------------- |
-| `app/ui/`       | 6       | 2,180 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                 |
-| `app/features/` | 6       | 1,646 | Feature logic (virtualization, filtering, sorting, search, pagination, sharing) |
-| `app/state/`    | 4       | 829   | State management (collection, filters, preferences, cache)                      |
-| `app/data/`     | 5       | 721   | Data layer (supabase, loader, aggregates, pricing, storage)                     |
-| `app/utils/`    | 4       | 262   | Pure utilities (dom, format, keys, validation)                                  |
-| `app/design/`   | 1       | 127   | Design tokens                                                                   |
-| `app/main.js`   | 1       | 460   | Bootstrap orchestration                                                         |
+| Directory       | Modules | Lines | Purpose                                                                              |
+| --------------- | ------- | ----- | ------------------------------------------------------------------------------------ |
+| `app/ui/`       | 6       | 2,180 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                      |
+| `app/features/` | 7       | 1,900 | Feature logic (virtualization, filtering, sorting, search, pagination, sharing, seo) |
+| `app/state/`    | 4       | 829   | State management (collection, filters, preferences, cache)                           |
+| `app/data/`     | 5       | 721   | Data layer (supabase, loader, aggregates, pricing, storage)                          |
+| `app/utils/`    | 4       | 262   | Pure utilities (dom, format, keys, validation)                                       |
+| `app/design/`   | 1       | 127   | Design tokens                                                                        |
+| `app/main.js`   | 1       | 460   | Bootstrap orchestration                                                              |
 
 **Test Coverage:**
 
-- `tests/utils.test.js`: 625 tests (covers all extracted helpers)
+- `tests/utils.test.js`: 667 tests (covers all extracted helpers)
 - `tests/app.test.js`: 25 tests (integration tests)
 - `tests/archive-media.test.js`: 3 tests
 - `tests/audit-missing-covers.test.js`: 26 tests
-- **Total: 679 tests passing**
-- **Coverage: 70.48% statements, 77.27% functions**
+- **Total: 721 tests passing**
+- **Coverage: 76%+ statements**
