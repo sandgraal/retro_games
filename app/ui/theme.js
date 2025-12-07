@@ -223,3 +223,37 @@ export function toggleTheme() {
   persistThemeChoice(next);
   return next;
 }
+
+// === Motion Preference ===
+
+/**
+ * Check if user prefers reduced motion.
+ * @returns {boolean} True if user prefers reduced motion
+ */
+export function prefersReducedMotion() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return false;
+  }
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get scroll behavior based on motion preference.
+ * @returns {'auto'|'smooth'} Scroll behavior value
+ */
+export function getScrollBehavior() {
+  return prefersReducedMotion() ? "auto" : "smooth";
+}
+
+/**
+ * Get animation delay based on motion preference.
+ * @param {number} normalDelay - Normal delay in ms
+ * @returns {number} 0 if reduced motion, normalDelay otherwise
+ */
+export function getAnimationDelay(normalDelay) {
+  return prefersReducedMotion() ? 0 : normalDelay;
+}

@@ -2807,3 +2807,329 @@ describe("ui/filters", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ui/carousel tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  calculateScrollStep,
+  calculateMaxScroll,
+  computeButtonStates,
+  calculateNewScrollPosition,
+  rankByRating,
+  rankByYear,
+  selectTrendingPicks,
+  buildTrendingCard,
+  buildEmptyTrendingMessage,
+  buildTrendingList,
+  buildCarouselButtonAttrs,
+  buildCarouselContainerAttrs,
+  DEFAULT_SCROLL_PERCENT,
+  MIN_SCROLL_STEP,
+} from "../app/ui/carousel.js";
+
+describe("ui/carousel", () => {
+  describe("calculateScrollStep", () => {
+    it("calculates step from container width", () => {
+      expect(calculateScrollStep(1000)).toBe(850);
+      expect(calculateScrollStep(500)).toBe(425);
+    });
+
+    it("uses custom step if provided", () => {
+      expect(calculateScrollStep(1000, 300)).toBe(300);
+    });
+
+    it("returns minimum for zero or negative width", () => {
+      expect(calculateScrollStep(0)).toBe(MIN_SCROLL_STEP);
+      expect(calculateScrollStep(-100)).toBe(MIN_SCROLL_STEP);
+    });
+
+    it("uses custom percent", () => {
+      expect(calculateScrollStep(1000, undefined, 0.5)).toBe(500);
+    });
+  });
+
+  describe("calculateMaxScroll", () => {
+    it("calculates max scroll position", () => {
+      expect(calculateMaxScroll(1000, 500)).toBe(500);
+      expect(calculateMaxScroll(500, 500)).toBe(0);
+    });
+
+    it("returns 0 if client is wider", () => {
+      expect(calculateMaxScroll(300, 500)).toBe(0);
+    });
+  });
+
+  describe("computeButtonStates", () => {
+    it("disables prev at start", () => {
+      const result = computeButtonStates(0, 1000, 500);
+      expect(result.prevDisabled).toBe(true);
+      expect(result.nextDisabled).toBe(false);
+    });
+
+    it("disables next at end", () => {
+      const result = computeButtonStates(500, 1000, 500);
+      expect(result.prevDisabled).toBe(false);
+      expect(result.nextDisabled).toBe(true);
+    });
+
+    it("enables both in middle", () => {
+      const result = computeButtonStates(250, 1000, 500);
+      expect(result.prevDisabled).toBe(false);
+      expect(result.nextDisabled).toBe(false);
+    });
+
+    it("handles threshold", () => {
+      const result = computeButtonStates(1, 1000, 500, 2);
+      expect(result.prevDisabled).toBe(true);
+    });
+  });
+
+  describe("calculateNewScrollPosition", () => {
+    it("calculates next position", () => {
+      expect(calculateNewScrollPosition(100, 50, "next")).toBe(150);
+    });
+
+    it("calculates prev position", () => {
+      expect(calculateNewScrollPosition(100, 50, "prev")).toBe(50);
+    });
+  });
+
+  describe("rankByRating", () => {
+    it("ranks by rating descending", () => {
+      const data = [
+        { game_name: "A", rating: 7 },
+        { game_name: "B", rating: 9 },
+        { game_name: "C", rating: 8 },
+      ];
+      const result = rankByRating(data);
+      expect(result[0].row.game_name).toBe("B");
+      expect(result[1].row.game_name).toBe("C");
+      expect(result[2].row.game_name).toBe("A");
+    });
+
+    it("breaks ties by name", () => {
+      const data = [
+        { game_name: "Zelda", rating: 9 },
+        { game_name: "Chrono", rating: 9 },
+      ];
+      const result = rankByRating(data);
+      expect(result[0].row.game_name).toBe("Chrono");
+    });
+
+    it("filters out invalid ratings", () => {
+      const data = [
+        { game_name: "A", rating: "n/a" },
+        { game_name: "B", rating: 8 },
+      ];
+      const result = rankByRating(data);
+      expect(result.length).toBe(1);
+      expect(result[0].row.game_name).toBe("B");
+    });
+
+    it("returns empty for invalid input", () => {
+      expect(rankByRating(null)).toEqual([]);
+      expect(rankByRating(undefined)).toEqual([]);
+    });
+  });
+
+  describe("rankByYear", () => {
+    it("ranks by year descending", () => {
+      const data = [
+        { release_year: 1990 },
+        { release_year: 2020 },
+        { release_year: 2005 },
+      ];
+      const result = rankByYear(data);
+      expect(result[0].row.release_year).toBe(2020);
+      expect(result[1].row.release_year).toBe(2005);
+    });
+
+    it("handles string years", () => {
+      const data = [{ release_year: "1995" }];
+      const result = rankByYear(data);
+      expect(result[0].value).toBe(1995);
+    });
+
+    it("pushes invalid years to end", () => {
+      const data = [{ release_year: null }, { release_year: 2000 }];
+      const result = rankByYear(data);
+      expect(result[0].row.release_year).toBe(2000);
+    });
+  });
+
+  describe("selectTrendingPicks", () => {
+    const games = [
+      { game_name: "TopRated", platform: "SNES", rating: 10, release_year: 1990 },
+      { game_name: "Recent", platform: "PS5", rating: 7, release_year: 2023 },
+      { game_name: "Average", platform: "NES", rating: 5, release_year: 1985 },
+      { game_name: "NoRating", platform: "GB", release_year: 1995 },
+    ];
+
+    it("includes top rated and recent", () => {
+      const picks = selectTrendingPicks(games, {
+        topRated: 1,
+        mostRecent: 1,
+        minPicks: 2,
+      });
+      const names = picks.map((p) => p.game_name);
+      expect(names).toContain("TopRated");
+      expect(names).toContain("Recent");
+    });
+
+    it("deduplicates picks", () => {
+      const picks = selectTrendingPicks(games, {
+        topRated: 4,
+        mostRecent: 4,
+        minPicks: 4,
+      });
+      const keys = picks.map((p) => `${p.game_name}___${p.platform}`);
+      const unique = new Set(keys);
+      expect(unique.size).toBe(keys.length);
+    });
+
+    it("fills to minimum", () => {
+      const picks = selectTrendingPicks(games, {
+        topRated: 1,
+        mostRecent: 1,
+        minPicks: 4,
+      });
+      expect(picks.length).toBe(4);
+    });
+
+    it("returns empty for empty data", () => {
+      expect(selectTrendingPicks([])).toEqual([]);
+      expect(selectTrendingPicks(null)).toEqual([]);
+    });
+  });
+
+  describe("buildTrendingCard", () => {
+    it("builds card HTML", () => {
+      const row = {
+        game_name: "Chrono Trigger",
+        platform: "SNES",
+        rating: 9.5,
+        release_year: 1995,
+        genre: "RPG, Adventure",
+      };
+      const html = buildTrendingCard(row);
+      expect(html).toContain("Chrono Trigger");
+      expect(html).toContain("SNES");
+      expect(html).toContain("9.5");
+      expect(html).toContain("1995");
+      expect(html).toContain("RPG");
+      expect(html).toContain('class="trending-card"');
+    });
+
+    it("handles missing fields", () => {
+      const html = buildTrendingCard({});
+      expect(html).toContain("Untitled");
+      expect(html).toContain("Unknown platform");
+      expect(html).toContain("NR");
+    });
+
+    it("escapes HTML", () => {
+      const row = { game_name: "<script>alert(1)</script>" };
+      const html = buildTrendingCard(row);
+      expect(html).not.toContain("<script>");
+    });
+  });
+
+  describe("buildEmptyTrendingMessage", () => {
+    it("returns empty state HTML", () => {
+      const html = buildEmptyTrendingMessage();
+      expect(html).toContain("trending-empty");
+      expect(html).toContain("Trending picks will appear");
+    });
+  });
+
+  describe("buildTrendingList", () => {
+    it("builds list from picks", () => {
+      const picks = [
+        { game_name: "A", platform: "SNES", rating: 9 },
+        { game_name: "B", platform: "NES", rating: 8 },
+      ];
+      const html = buildTrendingList(picks);
+      expect(html).toContain("A");
+      expect(html).toContain("B");
+    });
+
+    it("returns empty message for empty array", () => {
+      const html = buildTrendingList([]);
+      expect(html).toContain("trending-empty");
+    });
+  });
+
+  describe("buildCarouselButtonAttrs", () => {
+    it("builds prev button attrs", () => {
+      const attrs = buildCarouselButtonAttrs("prev", "myCarousel");
+      expect(attrs["data-direction"]).toBe("prev");
+      expect(attrs["data-carousel-target"]).toBe("myCarousel");
+      expect(attrs["aria-label"]).toBe("Previous items");
+    });
+
+    it("builds next button attrs", () => {
+      const attrs = buildCarouselButtonAttrs("next", "myCarousel");
+      expect(attrs["data-direction"]).toBe("next");
+      expect(attrs["aria-label"]).toBe("Next items");
+    });
+
+    it("sets disabled attribute", () => {
+      const attrs = buildCarouselButtonAttrs("prev", "myCarousel", true);
+      expect(attrs.disabled).toBe("true");
+    });
+  });
+
+  describe("buildCarouselContainerAttrs", () => {
+    it("builds container attrs", () => {
+      const attrs = buildCarouselContainerAttrs("myCarousel", "Featured Games");
+      expect(attrs.id).toBe("myCarousel");
+      expect(attrs.role).toBe("list");
+      expect(attrs["aria-label"]).toBe("Featured Games");
+    });
+  });
+
+  describe("constants", () => {
+    it("has scroll constants", () => {
+      expect(DEFAULT_SCROLL_PERCENT).toBe(0.85);
+      expect(MIN_SCROLL_STEP).toBe(220);
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ui/theme motion preference tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  prefersReducedMotion,
+  getScrollBehavior,
+  getAnimationDelay,
+} from "../app/ui/theme.js";
+
+describe("ui/theme motion preferences", () => {
+  describe("prefersReducedMotion", () => {
+    it("returns boolean", () => {
+      const result = prefersReducedMotion();
+      expect(typeof result).toBe("boolean");
+    });
+  });
+
+  describe("getScrollBehavior", () => {
+    it("returns valid scroll behavior", () => {
+      const result = getScrollBehavior();
+      expect(["auto", "smooth"]).toContain(result);
+    });
+  });
+
+  describe("getAnimationDelay", () => {
+    it("returns number", () => {
+      const result = getAnimationDelay(300);
+      expect(typeof result).toBe("number");
+    });
+
+    it("returns 0 or provided value", () => {
+      const result = getAnimationDelay(500);
+      expect([0, 500]).toContain(result);
+    });
+  });
+});
