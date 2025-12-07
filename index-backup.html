@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sandgraal's Game List</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="preload" href="style.css" as="style" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preload" href="app/main.js" as="script" />
+    <script
+      src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
+      defer
+    ></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <div class="app-shell">
+      <header class="app-hero">
+        <div class="hero-copy">
+          <h1>Sandgraal's Game List</h1>
+          <p class="hero-subtitle">
+            Curate, track, and share your retro collection without losing the weekend to
+            spreadsheets.
+          </p>
+        </div>
+        <details class="actions-panel">
+          <summary class="actions-summary">
+            <span class="summary-icon" aria-hidden="true">🎮</span>
+            <span class="summary-text">
+              Collection Actions
+              <span class="summary-sub">Export, share, import, and backup tools</span>
+            </span>
+            <span class="summary-caret" aria-hidden="true">▾</span>
+          </summary>
+          <div class="actions-toolbar" role="toolbar" aria-label="Collection actions">
+            <div class="toolbar-group toolbar-group-primary">
+              <button id="exportBtn" class="primary-action">
+                <span class="action-icon" aria-hidden="true">📤</span>
+                <span class="action-label">Export Owned Games</span>
+              </button>
+              <button id="shareBtn" class="primary-action">
+                <span class="action-icon" aria-hidden="true">🔗</span>
+                <span class="action-label">Get Shareable Link</span>
+              </button>
+            </div>
+            <div class="toolbar-group toolbar-group-secondary">
+              <button id="showImport">
+                <span class="action-icon" aria-hidden="true">📥</span>
+                <span class="action-label">Import Collection Code</span>
+              </button>
+              <button id="backupBtn">
+                <span class="action-icon" aria-hidden="true">🗃️</span>
+                <span class="action-label">Backup Collection JSON</span>
+              </button>
+              <button id="restoreBtn">
+                <span class="action-icon" aria-hidden="true">↺</span>
+                <span class="action-label">Restore Backup</span>
+              </button>
+              <button id="contributeBtn">
+                <span class="action-icon" aria-hidden="true">📸</span>
+                <span class="action-label">Submit Media</span>
+              </button>
+              <input
+                type="file"
+                id="restoreInput"
+                accept="application/json"
+                style="display: none"
+              />
+            </div>
+          </div>
+        </details>
+      </header>
+      <main id="mainContent" tabindex="-1">
+        <section
+          id="trendingPicks"
+          class="trending-section"
+          aria-label="Trending picks from your library"
+        >
+          <div class="trending-header">
+            <h2>Trending Picks</h2>
+            <p class="trending-subtitle">
+              Highest-rated gems and fresh additions worth another look.
+            </p>
+          </div>
+          <div class="trending-carousel">
+            <button
+              type="button"
+              class="carousel-control prev"
+              data-carousel-target="trendingWindow"
+              data-direction="prev"
+              aria-label="Scroll to previous trending picks"
+            >
+              <span aria-hidden="true">&#10094;</span>
+            </button>
+            <div
+              id="trendingWindow"
+              class="trending-window"
+              data-carousel-window
+              tabindex="0"
+            >
+              <div id="trendingList" class="trending-list" role="list"></div>
+            </div>
+            <button
+              type="button"
+              class="carousel-control next"
+              data-carousel-target="trendingWindow"
+              data-direction="next"
+              aria-label="Scroll to next trending picks"
+            >
+              <span aria-hidden="true">&#10095;</span>
+            </button>
+          </div>
+        </section>
+        <section class="filters-panel" aria-label="Collection filters">
+          <div class="filters primary-filters">
+            <label class="filter-field">
+              <span>Platform</span>
+              <select id="platformFilter">
+                <option value="">All Platforms</option>
+              </select>
+            </label>
+            <label class="filter-field">
+              <span>Genre</span>
+              <select id="genreFilter">
+                <option value="">All Genres</option>
+              </select>
+            </label>
+            <div
+              class="filter-field region-filter"
+              data-region-toggle
+              role="group"
+              aria-label="Region filter"
+            >
+              <span class="region-filter-label">Region</span>
+              <div class="region-filter-buttons">
+                <button
+                  type="button"
+                  class="region-btn"
+                  data-region-option=""
+                  aria-pressed="false"
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  class="region-btn"
+                  data-region-option="NTSC"
+                  aria-pressed="false"
+                >
+                  NTSC
+                </button>
+                <button
+                  type="button"
+                  class="region-btn"
+                  data-region-option="PAL"
+                  aria-pressed="false"
+                >
+                  PAL
+                </button>
+                <button
+                  type="button"
+                  class="region-btn"
+                  data-region-option="JPN"
+                  aria-pressed="false"
+                >
+                  JPN
+                </button>
+              </div>
+            </div>
+            <label class="filter-field search-field">
+              <span>Search</span>
+              <div class="typeahead-field">
+                <input
+                  id="search"
+                  placeholder="Type to filter..."
+                  aria-autocomplete="list"
+                  aria-controls="searchSuggestions"
+                  aria-expanded="false"
+                  autocomplete="off"
+                />
+                <div
+                  id="searchSuggestions"
+                  class="typeahead-panel"
+                  role="listbox"
+                  aria-label="Suggested games"
+                  hidden
+                ></div>
+              </div>
+            </label>
+            <label class="filter-field">
+              <span>Sort</span>
+              <select id="sortControl">
+                <option value="name-asc">Name (A → Z)</option>
+                <option value="name-desc">Name (Z → A)</option>
+                <option value="rating-desc">Rating (High → Low)</option>
+                <option value="rating-asc">Rating (Low → High)</option>
+                <option value="year-desc">Release (New → Old)</option>
+                <option value="year-asc">Release (Old → New)</option>
+              </select>
+            </label>
+          </div>
+          <details class="filters-advanced" open>
+            <summary>Advanced filters</summary>
+            <div class="filters advanced-filters">
+              <label class="filter-field">
+                <span>Status</span>
+                <select id="statusFilter">
+                  <option value="">All Statuses</option>
+                  <option value="owned">Owned</option>
+                  <option value="wishlist">Wishlist</option>
+                  <option value="backlog">Backlog</option>
+                  <option value="trade">Trade</option>
+                </select>
+              </label>
+              <label class="filter-field">
+                <span>Min Rating</span>
+                <input
+                  id="ratingFilter"
+                  type="number"
+                  inputmode="decimal"
+                  min="0"
+                  max="10"
+                  step="0.1"
+                  placeholder="0-10"
+                />
+              </label>
+              <label class="filter-field">
+                <span>Year From</span>
+                <input
+                  id="yearStartFilter"
+                  type="number"
+                  inputmode="numeric"
+                  placeholder="1985"
+                />
+              </label>
+              <label class="filter-field">
+                <span>Year To</span>
+                <input
+                  id="yearEndFilter"
+                  type="number"
+                  inputmode="numeric"
+                  placeholder="2005"
+                />
+              </label>
+              <button id="clearFilters" class="filter-field clear-button">
+                Clear Filters
+              </button>
+            </div>
+          </details>
+        </section>
+
+        <div
+          id="contributeModal"
+          class="modal"
+          aria-hidden="true"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="contributeModalTitle"
+          aria-describedby="contributeModalDescription"
+        >
+          <div class="modal-content contribute-dialog">
+            <button
+              type="button"
+              class="modal-close"
+              data-contribute-close
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <h2 id="contributeModalTitle">Submit Media</h2>
+            <p id="contributeModalDescription" class="modal-subtitle">
+              Upload cover art, manuals, or clips that follow the community guidelines.
+              Approved assets appear after moderator review.
+            </p>
+            <form id="contributeForm" class="contribute-form">
+              <label>
+                <span>Game Title</span>
+                <input type="text" name="title" required placeholder="Chrono Trigger" />
+              </label>
+              <label>
+                <span>Platform</span>
+                <input type="text" name="platform" required placeholder="SNES" />
+              </label>
+              <label>
+                <span>Region</span>
+                <select name="region" required>
+                  <option value="NTSC">NTSC</option>
+                  <option value="PAL">PAL</option>
+                  <option value="JPN">JPN</option>
+                </select>
+              </label>
+              <label>
+                <span>Asset Type</span>
+                <select name="assetType" required>
+                  <option value="image">Cover / Screenshot (PNG or JPG)</option>
+                  <option value="manual">Manual (PDF)</option>
+                  <option value="video">Clip (MP4, &lt;30s)</option>
+                </select>
+              </label>
+              <label>
+                <span>Source URL (for attribution)</span>
+                <input type="url" name="sourceUrl" required placeholder="https://" />
+              </label>
+              <label class="file-field">
+                <span>Upload File</span>
+                <input
+                  type="file"
+                  name="file"
+                  accept="image/png,image/jpeg,application/pdf,video/mp4"
+                  required
+                />
+              </label>
+              <label>
+                <span>Contact (optional)</span>
+                <input type="email" name="contact" placeholder="you@example.com" />
+              </label>
+              <label>
+                <span>Notes (optional)</span>
+                <textarea
+                  name="notes"
+                  rows="3"
+                  placeholder="Tell moderators anything helpful"
+                ></textarea>
+              </label>
+              <div class="contribute-actions">
+                <button type="submit" class="primary-action">Submit</button>
+                <button type="button" data-contribute-close>Cancel</button>
+              </div>
+              <p class="contribute-status" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+        </div>
+        <div id="stats">Loading stats...</div>
+        <section id="dashboard" aria-label="Collection dashboard">
+          <div class="dashboard-card" id="dashboard-statuses">
+            <h2>Status Mix</h2>
+            <div class="status-progress" role="list">
+              <div class="status-row" role="listitem">
+                <div class="status-label">
+                  <span class="status-name">Owned</span>
+                  <span class="status-metric">
+                    <strong id="dash-owned-count">0</strong>
+                    <span id="dash-owned-percent" class="status-percent">0%</span>
+                  </span>
+                </div>
+                <div
+                  class="status-bar"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  aria-label="Owned games in collection"
+                >
+                  <span id="dash-owned-bar" class="status-bar-fill"></span>
+                </div>
+              </div>
+              <div class="status-row" role="listitem">
+                <div class="status-label">
+                  <span class="status-name">Wishlist</span>
+                  <span class="status-metric">
+                    <strong id="dash-wishlist-count">0</strong>
+                    <span id="dash-wishlist-percent" class="status-percent">0%</span>
+                  </span>
+                </div>
+                <div
+                  class="status-bar"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  aria-label="Wishlist games in collection"
+                >
+                  <span id="dash-wishlist-bar" class="status-bar-fill"></span>
+                </div>
+              </div>
+              <div class="status-row" role="listitem">
+                <div class="status-label">
+                  <span class="status-name">Backlog</span>
+                  <span class="status-metric">
+                    <strong id="dash-backlog-count">0</strong>
+                    <span id="dash-backlog-percent" class="status-percent">0%</span>
+                  </span>
+                </div>
+                <div
+                  class="status-bar"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  aria-label="Backlog games in collection"
+                >
+                  <span id="dash-backlog-bar" class="status-bar-fill"></span>
+                </div>
+              </div>
+              <div class="status-row" role="listitem">
+                <div class="status-label">
+                  <span class="status-name">Trade</span>
+                  <span class="status-metric">
+                    <strong id="dash-trade-count">0</strong>
+                    <span id="dash-trade-percent" class="status-percent">0%</span>
+                  </span>
+                </div>
+                <div
+                  class="status-bar"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                  aria-label="Trade-ready games in collection"
+                >
+                  <span id="dash-trade-bar" class="status-bar-fill"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-card" id="dashboard-valuation" aria-live="polite">
+            <div class="valuation-header">
+              <h2>Collection Value</h2>
+              <button id="valuationRefresh" type="button" class="ghost-button">
+                Refresh Prices
+              </button>
+            </div>
+            <p id="valuationStatus" class="valuation-status">
+              Connect a PriceCharting token to see live valuations.
+            </p>
+            <div class="valuation-grid" role="list">
+              <div class="valuation-metric" role="listitem">
+                <span>Owned</span>
+                <strong id="valuation-owned">—</strong>
+              </div>
+              <div class="valuation-metric" role="listitem">
+                <span>Wishlist</span>
+                <strong id="valuation-wishlist">—</strong>
+              </div>
+              <div class="valuation-metric" role="listitem">
+                <span>Backlog</span>
+                <strong id="valuation-backlog">—</strong>
+              </div>
+              <div class="valuation-metric" role="listitem">
+                <span>Trade</span>
+                <strong id="valuation-trade">—</strong>
+              </div>
+              <div class="valuation-metric valuation-total" role="listitem">
+                <span>Total</span>
+                <strong id="valuation-total">—</strong>
+              </div>
+            </div>
+            <div class="valuation-trend" aria-label="Collection value trend">
+              <canvas id="valuationSparkline" width="320" height="100"></canvas>
+            </div>
+          </div>
+          <div
+            class="dashboard-card dashboard-price"
+            id="dashboard-price"
+            data-loaded="false"
+          >
+            <div class="price-summary-header">
+              <h2>Collection Value</h2>
+              <span class="price-summary-updated" data-price-summary-updated>
+                Awaiting price snapshots…
+              </span>
+            </div>
+            <p class="price-summary-empty" data-price-summary-empty>
+              Run the PriceCharting sync script to populate live valuations.
+            </p>
+            <div class="price-summary-grid">
+              <article class="price-summary-block" data-price-status="owned">
+                <header>
+                  <span>Owned</span>
+                  <small
+                    ><span id="price-owned-priced">0</span>/<span id="price-owned-count"
+                      >0</span
+                    >
+                    priced</small
+                  >
+                </header>
+                <dl>
+                  <div>
+                    <dt>Loose</dt>
+                    <dd id="price-owned-loose">—</dd>
+                  </div>
+                  <div>
+                    <dt>CIB</dt>
+                    <dd id="price-owned-cib">—</dd>
+                  </div>
+                  <div>
+                    <dt>New</dt>
+                    <dd id="price-owned-new">—</dd>
+                  </div>
+                </dl>
+              </article>
+              <article class="price-summary-block" data-price-status="wishlist">
+                <header>
+                  <span>Wishlist</span>
+                  <small
+                    ><span id="price-wishlist-priced">0</span>/<span
+                      id="price-wishlist-count"
+                      >0</span
+                    >
+                    priced</small
+                  >
+                </header>
+                <dl>
+                  <div>
+                    <dt>Loose</dt>
+                    <dd id="price-wishlist-loose">—</dd>
+                  </div>
+                  <div>
+                    <dt>CIB</dt>
+                    <dd id="price-wishlist-cib">—</dd>
+                  </div>
+                  <div>
+                    <dt>New</dt>
+                    <dd id="price-wishlist-new">—</dd>
+                  </div>
+                </dl>
+              </article>
+              <article class="price-summary-block" data-price-status="backlog">
+                <header>
+                  <span>Backlog</span>
+                  <small
+                    ><span id="price-backlog-priced">0</span>/<span
+                      id="price-backlog-count"
+                      >0</span
+                    >
+                    priced</small
+                  >
+                </header>
+                <dl>
+                  <div>
+                    <dt>Loose</dt>
+                    <dd id="price-backlog-loose">—</dd>
+                  </div>
+                  <div>
+                    <dt>CIB</dt>
+                    <dd id="price-backlog-cib">—</dd>
+                  </div>
+                  <div>
+                    <dt>New</dt>
+                    <dd id="price-backlog-new">—</dd>
+                  </div>
+                </dl>
+              </article>
+              <article class="price-summary-block" data-price-status="trade">
+                <header>
+                  <span>Trade</span>
+                  <small
+                    ><span id="price-trade-priced">0</span>/<span id="price-trade-count"
+                      >0</span
+                    >
+                    priced</small
+                  >
+                </header>
+                <dl>
+                  <div>
+                    <dt>Loose</dt>
+                    <dd id="price-trade-loose">—</dd>
+                  </div>
+                  <div>
+                    <dt>CIB</dt>
+                    <dd id="price-trade-cib">—</dd>
+                  </div>
+                  <div>
+                    <dt>New</dt>
+                    <dd id="price-trade-new">—</dd>
+                  </div>
+                </dl>
+              </article>
+            </div>
+          </div>
+          <div class="dashboard-card" id="dashboard-top-genres">
+            <h2>Top Genres</h2>
+            <div class="genre-carousel">
+              <button
+                type="button"
+                class="carousel-control prev"
+                data-carousel-target="dash-genres-window"
+                data-direction="prev"
+                aria-label="Scroll to previous top genres"
+              >
+                <span aria-hidden="true">&#10094;</span>
+              </button>
+              <div
+                id="dash-genres-window"
+                class="genre-window"
+                data-carousel-window
+                tabindex="0"
+              >
+                <div id="dash-genres" class="genre-track" role="list"></div>
+              </div>
+              <button
+                type="button"
+                class="carousel-control next"
+                data-carousel-target="dash-genres-window"
+                data-direction="next"
+                aria-label="Scroll to next top genres"
+              >
+                <span aria-hidden="true">&#10095;</span>
+              </button>
+            </div>
+          </div>
+          <div class="dashboard-card" id="dashboard-release">
+            <h2>Release Timeline</h2>
+            <div id="dash-timeline" class="timeline-bars">Loading...</div>
+          </div>
+        </section>
+        <section class="browse-toolbar" aria-label="Browse controls and pagination">
+          <div class="browse-summary" id="browseSummary" aria-live="polite">
+            Preparing collection view...
+          </div>
+          <div class="browse-controls">
+            <label class="browse-control">
+              <span>Browse Mode</span>
+              <select id="browseModeSelect">
+                <option value="stream">Infinite scroll</option>
+                <option value="paged">Paginated</option>
+              </select>
+            </label>
+            <label class="browse-control">
+              <span>Batch Size</span>
+              <select id="pageSizeSelect">
+                <option value="30">30</option>
+                <option value="60">60</option>
+                <option value="120">120</option>
+              </select>
+            </label>
+          </div>
+        </section>
+        <div id="shareSection" style="display: none">
+          <button id="closeShare" title="Close" aria-label="Close share panel">
+            &times;
+          </button>
+          <div>
+            <label for="shareCode">Share Code:</label>
+            <input id="shareCode" readonly />
+            <button id="copyShare">Copy</button>
+          </div>
+          <div>
+            <label for="importCode">Import Code:</label>
+            <input id="importCode" placeholder="Paste code here..." />
+            <button id="importBtn">View</button>
+            <span id="importResult"></span>
+          </div>
+        </div>
+        <div id="result">Loading...</div>
+        <div id="gameGrid" class="game-grid" aria-live="polite"></div>
+        <nav
+          id="paginationControls"
+          class="pagination"
+          aria-label="Game list pagination"
+        ></nav>
+        <button id="loadMoreBtn" class="load-more" type="button">Load more games</button>
+        <div id="gridSentinel" class="grid-sentinel" aria-hidden="true"></div>
+        <div id="modalBg" aria-hidden="true"></div>
+        <div id="gameModal" aria-hidden="true"></div>
+      </main>
+    </div>
+    <script src="config.js" defer></script>
+    <script type="module" src="app/main.js"></script>
+  </body>
+</html>
