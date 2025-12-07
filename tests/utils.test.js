@@ -2472,3 +2472,163 @@ describe("ui/theme", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ui/modal tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  buildMetadataCard,
+  buildFallbackMetadata,
+  markFieldConsumed,
+  calculateGalleryIndex,
+  nextGalleryIndex,
+  prevGalleryIndex,
+  buildGalleryCounter,
+  buildModalAriaAttrs,
+  buildCloseButtonAttrs,
+} from "../app/ui/modal.js";
+
+describe("ui/modal", () => {
+  describe("buildMetadataCard", () => {
+    it("builds card with title and items", () => {
+      const html = buildMetadataCard("Test Title", [
+        { label: "Label 1", value: "Value 1" },
+        { label: "Label 2", value: "Value 2" },
+      ]);
+      expect(html).toContain("Test Title");
+      expect(html).toContain("Label 1");
+      expect(html).toContain("Value 1");
+      expect(html).toContain("modal-section");
+    });
+
+    it("uses grid layout by default", () => {
+      const html = buildMetadataCard("Title", [{ label: "L", value: "V" }]);
+      expect(html).toContain("metadata-grid");
+    });
+
+    it("uses stacked layout when specified", () => {
+      const html = buildMetadataCard("Title", [{ label: "L", value: "V" }], {
+        layout: "stacked",
+      });
+      expect(html).toContain("metadata-list");
+    });
+
+    it("returns empty for no items and no footer", () => {
+      expect(buildMetadataCard("Title", [])).toBe("");
+    });
+
+    it("escapes HTML in values", () => {
+      const html = buildMetadataCard("Title", [{ label: "<script>", value: "&test" }]);
+      expect(html).toContain("&lt;script&gt;");
+      expect(html).toContain("&amp;test");
+    });
+  });
+
+  describe("buildFallbackMetadata", () => {
+    it("builds metadata for unconsumed fields", () => {
+      const game = { field1: "value1", field2: "value2", consumed: "skip" };
+      const consumed = new Set(["consumed"]);
+      const html = buildFallbackMetadata(game, consumed);
+      expect(html).toContain("value1");
+      expect(html).toContain("value2");
+      expect(html).not.toContain("skip");
+    });
+
+    it("skips null and empty values", () => {
+      const game = { field1: "value1", field2: null, field3: "" };
+      const html = buildFallbackMetadata(game, new Set());
+      expect(html).toContain("value1");
+      expect(html).not.toContain("field2");
+    });
+
+    it("returns empty for null game", () => {
+      expect(buildFallbackMetadata(null, new Set())).toBe("");
+    });
+  });
+
+  describe("markFieldConsumed", () => {
+    it("adds field to set", () => {
+      const consumed = new Set();
+      markFieldConsumed(consumed, "test");
+      expect(consumed.has("test")).toBe(true);
+    });
+
+    it("handles non-set input", () => {
+      expect(() => markFieldConsumed(null, "test")).not.toThrow();
+    });
+  });
+
+  describe("calculateGalleryIndex", () => {
+    it("wraps positive overflow", () => {
+      expect(calculateGalleryIndex(5, 3)).toBe(2);
+      expect(calculateGalleryIndex(6, 3)).toBe(0);
+    });
+
+    it("wraps negative indices", () => {
+      expect(calculateGalleryIndex(-1, 3)).toBe(2);
+      expect(calculateGalleryIndex(-4, 3)).toBe(2);
+    });
+
+    it("returns 0 for invalid input", () => {
+      expect(calculateGalleryIndex(0, 0)).toBe(0);
+      expect(calculateGalleryIndex(null, 5)).toBe(0);
+    });
+  });
+
+  describe("nextGalleryIndex", () => {
+    it("increments and wraps", () => {
+      expect(nextGalleryIndex(0, 5)).toBe(1);
+      expect(nextGalleryIndex(4, 5)).toBe(0);
+    });
+  });
+
+  describe("prevGalleryIndex", () => {
+    it("decrements and wraps", () => {
+      expect(prevGalleryIndex(1, 5)).toBe(0);
+      expect(prevGalleryIndex(0, 5)).toBe(4);
+    });
+  });
+
+  describe("buildGalleryCounter", () => {
+    it("builds counter text", () => {
+      expect(buildGalleryCounter(0, 5)).toBe("1 / 5");
+      expect(buildGalleryCounter(4, 5)).toBe("5 / 5");
+    });
+
+    it("handles wrapping", () => {
+      expect(buildGalleryCounter(5, 5)).toBe("1 / 5");
+    });
+
+    it("returns 0/0 for invalid input", () => {
+      expect(buildGalleryCounter(0, 0)).toBe("0 / 0");
+    });
+  });
+
+  describe("buildModalAriaAttrs", () => {
+    it("builds basic modal attrs", () => {
+      const attrs = buildModalAriaAttrs({ isOpen: true });
+      expect(attrs.role).toBe("dialog");
+      expect(attrs["aria-modal"]).toBe("true");
+      expect(attrs["aria-hidden"]).toBe("false");
+    });
+
+    it("includes labelledBy and describedBy", () => {
+      const attrs = buildModalAriaAttrs({ labelledBy: "title", describedBy: "desc" });
+      expect(attrs["aria-labelledby"]).toBe("title");
+      expect(attrs["aria-describedby"]).toBe("desc");
+    });
+  });
+
+  describe("buildCloseButtonAttrs", () => {
+    it("builds close button attrs", () => {
+      const attrs = buildCloseButtonAttrs();
+      expect(attrs.type).toBe("button");
+      expect(attrs["aria-label"]).toBe("Close modal");
+    });
+
+    it("uses custom label", () => {
+      const attrs = buildCloseButtonAttrs("Dismiss");
+      expect(attrs["aria-label"]).toBe("Dismiss");
+    });
+  });
+});
