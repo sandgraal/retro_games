@@ -25,6 +25,7 @@ const fs = require("fs");
 const path = require("path");
 
 const CACHE_PATH = path.resolve(__dirname, "../data/cover-cache.json");
+const MANUAL_COVERS_PATH = path.resolve(__dirname, "../data/manual-covers.json");
 const RATE_LIMIT_MS = 200; // Wikipedia rate limit: 200 req/sec, we go slower
 
 /**
@@ -99,6 +100,22 @@ function saveCache(cache) {
   } catch {
     // Ignore cache errors
   }
+}
+
+/**
+ * Load manual cover mappings from disk.
+ * @returns {Object} Manual mappings object
+ */
+function loadManualCovers() {
+  try {
+    if (fs.existsSync(MANUAL_COVERS_PATH)) {
+      const data = JSON.parse(fs.readFileSync(MANUAL_COVERS_PATH, "utf8"));
+      return data.mappings || {};
+    }
+  } catch {
+    // Ignore errors
+  }
+  return {};
 }
 
 /**
@@ -376,6 +393,10 @@ async function main() {
     `Cache: ${Object.keys(cache.hits).length} hits, ${Object.keys(cache.misses).length} misses`
   );
 
+  // Load manual cover mappings
+  const manualCovers = loadManualCovers();
+  console.log(`Manual covers: ${Object.keys(manualCovers).length} mappings`);
+
   // Load games
   console.log("Loading games from Supabase...");
   let games;
@@ -412,7 +433,39 @@ async function main() {
 
     console.log(`Processing: ${game.game_name} (${game.platform})`);
 
-    // Check cache first
+    // Check manual covers first (highest priority)
+    if (manualCovers[key]) {
+      console.log(`  ✓ Manual mapping: ${manualCovers[key]}`);
+      results.covers.push({
+        id: game.id,
+        game_name: game.game_name,
+        platform: game.platform,
+        cover: manualCovers[key],
+        source: "manual",
+      });
+      results.found += 1;
+
+      // Also update cache for future runs
+      cache.hits[key] = manualCovers[key];
+      // Remove from misses if present
+      delete cache.misses[key];
+
+      if (!options.dryRun) {
+        try {
+          await updateGameCover(fetchImpl, game.id, manualCovers[key]);
+          results.updated += 1;
+          console.log(`  ✓ Updated in Supabase`);
+        } catch (err) {
+          console.log(`  ⚠ Failed to update: ${err.message}`);
+          results.errors += 1;
+        }
+      }
+
+      results.processed += 1;
+      continue;
+    }
+
+    // Check cache
     if (cache.hits[key]) {
       console.log(`  ✓ Cached: ${cache.hits[key]}`);
       results.covers.push({

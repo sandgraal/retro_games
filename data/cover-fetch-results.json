@@ -1,15 +1,15 @@
 {
-  "timestamp": "2025-12-07T22:20:49.815Z",
+  "timestamp": "2025-12-07T22:25:49.411Z",
   "options": {
     "limit": 500,
     "dryRun": false,
     "output": "/Users/christopherennis/Documents/GitHub/retro_games/data/cover-fetch-results.json",
-    "force": false
+    "force": true
   },
   "processed": 218,
-  "found": 164,
-  "notFound": 54,
-  "updated": 164,
+  "found": 212,
+  "notFound": 6,
+  "updated": 212,
   "errors": 0,
   "skipped": 233,
   "covers": [
@@ -105,6 +105,13 @@
       "source": "cache"
     },
     {
+      "id": 232,
+      "game_name": "Castlevania - Symphony Of The Night",
+      "platform": "PS1",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/a/a3/Castlevania_SOTN_PAL.jpg",
+      "source": "manual"
+    },
+    {
       "id": 36,
       "game_name": "Castlevania Bloodlines",
       "platform": "Sega Genesis",
@@ -119,6 +126,13 @@
       "source": "cache"
     },
     {
+      "id": 165,
+      "game_name": "Castlevania Circle Of The Moon",
+      "platform": "Game Boy Advance",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/7/75/Castlevania_-_Circle_of_the_Moon_Coverart.png",
+      "source": "manual"
+    },
+    {
       "id": 164,
       "game_name": "Castlevania Dawn Of Sorrow",
       "platform": "Nintendo DS",
@@ -131,6 +145,34 @@
       "platform": "Nintendo DS",
       "cover": "https://upload.wikimedia.org/wikipedia/en/d/d5/Castlevania_Dawn_of_Sorrow_NA_Cover.jpg",
       "source": "cache"
+    },
+    {
+      "id": 5,
+      "game_name": "Castlevania III - Dracula's Curse",
+      "platform": "NES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/d/d7/Castlevania_III_-_Dracula%27s_Curse_%28gamebox%29.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 158,
+      "game_name": "Castlevania III - Dracula's Curse",
+      "platform": "NES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/d/d7/Castlevania_III_-_Dracula%27s_Curse_%28gamebox%29.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 150,
+      "game_name": "Castlevania Symphony Of The Night",
+      "platform": "PS1",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/a/a3/Castlevania_SOTN_PAL.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 2,
+      "game_name": "Castlevania Symphony Of The Night",
+      "platform": "PS1",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/a/a3/Castlevania_SOTN_PAL.jpg",
+      "source": "manual"
     },
     {
       "id": 6,
@@ -165,21 +207,21 @@
       "game_name": "Comix Zone",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/19/Comix_Zone_Cover.jpeg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 145,
       "game_name": "Contra",
       "platform": "NES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/6/65/Contra_cover.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 174,
       "game_name": "Contra III - The Alien Wars",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/b/b1/Contra_III_game_cover.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 17,
@@ -193,14 +235,21 @@
       "game_name": "Crusader of Centy",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/40/Sega_Genesis_Crusader_of_Centy_cover_art.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 87,
+      "game_name": "Donkey Kong (1994 Game Boy version)",
+      "platform": "Game Boy",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/b/be/Donkey_Kong_94_box_art.jpg",
+      "source": "manual"
     },
     {
       "id": 207,
       "game_name": "Donkey Kong Country",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/1a/Donkey_Kong_Country_SNES_cover.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 32,
@@ -210,11 +259,32 @@
       "source": "cache"
     },
     {
+      "id": 33,
+      "game_name": "Donkey Kong Country 2 - Diddy's Kong Quest",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/a/a4/Donkey_Kong_Country_2_Coverart.png",
+      "source": "manual"
+    },
+    {
+      "id": 210,
+      "game_name": "Donkey Kong Country 2 - Diddy's Kong Quest",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/a/a4/Donkey_Kong_Country_2_Coverart.png",
+      "source": "manual"
+    },
+    {
+      "id": 220,
+      "game_name": "Donkey Kong Country 3 - Dixie Kong's Double Trouble!",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/9/97/Donkey_Kong_Country_3_Coverart.png",
+      "source": "manual"
+    },
+    {
       "id": 48,
       "game_name": "Donkey Kong Country Returns",
       "platform": "Wii",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/1f/Donkeykongcountryreturns.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 244,
@@ -224,18 +294,46 @@
       "source": "cache"
     },
     {
+      "id": 181,
+      "game_name": "Doom",
+      "platform": "PC",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/5/57/Doom_cover_art.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 211,
+      "game_name": "Doom (1995)",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/5/57/Doom_cover_art.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 189,
+      "game_name": "Doom 2 - Hell On Earth",
+      "platform": "PC",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/1/17/Doom_II_-_Hell_on_Earth_Coverart.png",
+      "source": "manual"
+    },
+    {
+      "id": 113,
+      "game_name": "Doom 2 - Hell On Earth",
+      "platform": "PC (DOS)",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/1/17/Doom_II_-_Hell_on_Earth_Coverart.png",
+      "source": "manual"
+    },
+    {
       "id": 114,
       "game_name": "Dragon's Curse",
       "platform": "PC Engine/TurboGrafx-16",
       "cover": "https://upload.wikimedia.org/wikipedia/en/b/be/Wonder_Boy_III_-_The_Dragon%27s_Trap_boxart.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 41,
       "game_name": "Earthbound",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/1f/EarthBound_Box.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 229,
@@ -249,14 +347,14 @@
       "game_name": "Earthworm Jim",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/6/6f/Earthworm_Jim_Neutral_Cover.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 27,
       "game_name": "Earthworm Jim 2",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/8/89/Earthworm_Jim_2_Neutral_Cover.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 188,
@@ -266,11 +364,39 @@
       "source": "cache"
     },
     {
+      "id": 64,
+      "game_name": "F-Zero",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/a/a7/F-Zero_box_art.png",
+      "source": "manual"
+    },
+    {
+      "id": 96,
+      "game_name": "F-Zero Climax",
+      "platform": "Game Boy Advance",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/6/6c/F-Zero_Climax.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 49,
+      "game_name": "Final Fantasy (NES)",
+      "platform": "NES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/d/d8/FF1_USA_boxart.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 245,
+      "game_name": "Final Fantasy (NES)",
+      "platform": "NES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/d/d8/FF1_USA_boxart.jpg",
+      "source": "manual"
+    },
+    {
       "id": 15,
       "game_name": "Final Fantasy IV",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/9/90/Final_Fantasy_IV.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 172,
@@ -284,7 +410,7 @@
       "game_name": "Final Fantasy Tactics",
       "platform": "PS1",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/4b/Fftbox.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 163,
@@ -298,7 +424,7 @@
       "game_name": "Final Fantasy V",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/0/00/Final_Fantasy_V_Box_JAP.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 170,
@@ -312,7 +438,7 @@
       "game_name": "Final Fantasy VI",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/0/05/Final_Fantasy_VI.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 161,
@@ -326,7 +452,7 @@
       "game_name": "Final Fantasy VII",
       "platform": "PS1",
       "cover": "https://upload.wikimedia.org/wikipedia/en/c/c2/Final_Fantasy_VII_Box_Art.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 160,
@@ -340,14 +466,14 @@
       "game_name": "Final Fantasy X",
       "platform": "PS2",
       "cover": "https://upload.wikimedia.org/wikipedia/en/a/a7/Ffxboxart.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 24,
       "game_name": "Final Fight",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/35/Final_Fight_%28flyer%29.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 183,
@@ -361,21 +487,21 @@
       "game_name": "Final Fight 3",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/a/af/Final-fight-tough-box.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 74,
       "game_name": "Garou: Mark of the Wolves",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/3f/Garou_-_Mark_of_the_Wolves_arcade_flyer.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 173,
       "game_name": "Golden Axe",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/a/ab/Golden_Axe_Promo_Flyer.jpeg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 16,
@@ -389,7 +515,7 @@
       "game_name": "Golden Axe II",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/e/e3/Golden_Axe_II_NA_Box_Art.jpeg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 47,
@@ -403,7 +529,7 @@
       "game_name": "Golden Axe III",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/7/73/Golden_Axe_III_Coverart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 50,
@@ -417,42 +543,56 @@
       "game_name": "Golden Sun",
       "platform": "Game Boy Advance",
       "cover": "https://upload.wikimedia.org/wikipedia/en/f/f8/Golden_Sun_video_game_box_art.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 154,
+      "game_name": "Goldeneye 007",
+      "platform": "N64",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/3/36/GoldenEye007box.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 92,
+      "game_name": "Gran Turismo",
+      "platform": "PlayStation",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/c/c8/Gran_Turismo_1_cover.png",
+      "source": "manual"
     },
     {
       "id": 104,
       "game_name": "Gran Turismo 2",
       "platform": "PS2",
       "cover": "https://upload.wikimedia.org/wikipedia/en/6/6b/GranTurismo2.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 105,
       "game_name": "Gran Turismo 3",
       "platform": "PS2",
       "cover": "https://upload.wikimedia.org/wikipedia/en/8/83/Gran_Turismo_3_%28Original%29.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 106,
       "game_name": "Gran Turismo 4",
       "platform": "PS2",
       "cover": "https://upload.wikimedia.org/wikipedia/en/0/06/Gran_Turismo_4.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 99,
       "game_name": "Grand Theft Auto: Vice City",
       "platform": "PS2/Xbox",
       "cover": "https://upload.wikimedia.org/wikipedia/en/c/ce/Vice-city-cover.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 175,
       "game_name": "Gunstar Heroes",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/8/80/Gunstar_Heroes.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 18,
@@ -466,7 +606,7 @@
       "game_name": "Gunstar Super Heroes",
       "platform": "Game Boy Advance",
       "cover": "https://upload.wikimedia.org/wikipedia/en/0/08/Gunstar_Super_Heroes_cover.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 195,
@@ -480,49 +620,49 @@
       "game_name": "Halo: Combat Evolved",
       "platform": "Xbox",
       "cover": "https://upload.wikimedia.org/wikipedia/en/8/80/Halo_-_Combat_Evolved_%28XBox_version_-_box_art%29.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 102,
       "game_name": "Ikaruga",
       "platform": "GameCube/Xbox",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/1a/Ikaruga_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 250,
       "game_name": "International Superstar Soccer Deluxe",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/3a/ISS_Deluxe.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 56,
       "game_name": "International Superstar Soccer Deluxe",
       "platform": null,
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/3a/ISS_Deluxe.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 109,
       "game_name": "Jagged Alliance 2",
       "platform": "PC (DOS)",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/42/Jagged_Alliance_2_Coverart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 101,
       "game_name": "Jet Set Radio Future",
       "platform": "Xbox",
       "cover": "https://upload.wikimedia.org/wikipedia/en/7/7a/JetSetRadioFuturebox.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 19,
       "game_name": "Kirby's Adventure",
       "platform": "NES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/a/ae/Kirby%27s_Adventure_Coverart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 176,
@@ -536,28 +676,28 @@
       "game_name": "Magical Drop 3",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/6/62/MagicalDrop_titlescreen.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 97,
       "game_name": "Mario Kart Super Circuit",
       "platform": "Game Boy Advance",
       "cover": "https://upload.wikimedia.org/wikipedia/en/9/90/Super_Circuit.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 70,
       "game_name": "Mars Matrix",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/5/51/Mars_Matrix_Promotional_Flyer.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 34,
       "game_name": "Mega Man 2",
       "platform": "NES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/b/be/Megaman2_box.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 213,
@@ -571,7 +711,7 @@
       "game_name": "Mega Man 3",
       "platform": "NES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/49/Megaman3_box.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 38,
@@ -585,7 +725,7 @@
       "game_name": "Mega Man X",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/f/f1/Mega_Man_X_Coverart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 153,
@@ -599,7 +739,7 @@
       "game_name": "Mega Man X2",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/c/cb/Mmx2_box.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 216,
@@ -613,7 +753,7 @@
       "game_name": "Mega Man X3",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/17/Mmx3_box.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 249,
@@ -627,7 +767,7 @@
       "game_name": "Metal Gear Solid",
       "platform": "PS1",
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/33/Metal_Gear_Solid_cover_art.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 42,
@@ -641,91 +781,98 @@
       "game_name": "Metal Gear Solid 2",
       "platform": "PS2/Xbox",
       "cover": "https://upload.wikimedia.org/wikipedia/en/6/6a/Metalgear2boxart.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 80,
       "game_name": "Metal Max",
       "platform": "NES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/f/fa/Famicom_Metal_Max_cover_art.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 144,
+      "game_name": "Metal Slug",
+      "platform": "Neo Geo",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/e/ec/Metal_Slug.png",
+      "source": "manual"
     },
     {
       "id": 221,
       "game_name": "Metal Slug 2",
       "platform": "Neo Geo",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/4f/Metal_Slug_2_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 76,
       "game_name": "Metal Slug 2",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/4f/Metal_Slug_2_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 78,
       "game_name": "Metal Slug 3",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/5/50/Metal_Slug_3_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 193,
       "game_name": "Metal Slug 3",
       "platform": "Neo Geo",
       "cover": "https://upload.wikimedia.org/wikipedia/en/5/50/Metal_Slug_3_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 206,
       "game_name": "Metal Slug 4",
       "platform": "Neo Geo",
       "cover": "https://upload.wikimedia.org/wikipedia/en/e/ea/Metal_Slug_4_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 31,
       "game_name": "Metal Slug 4",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/e/ea/Metal_Slug_4_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 79,
       "game_name": "Metal Slug 5",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/15/Metal_Slug_5_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 201,
       "game_name": "Metal Slug 5",
       "platform": "Neo Geo",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/15/Metal_Slug_5_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 196,
       "game_name": "Metal Slug X",
       "platform": "Neo Geo",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/4f/Metal_Slug_2_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 77,
       "game_name": "Metal Slug X",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/4f/Metal_Slug_2_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 162,
       "game_name": "Metroid Fusion",
       "platform": "Game Boy Advance",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/45/Metroid_Fusion_box.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 9,
@@ -739,42 +886,56 @@
       "game_name": "Mike Tyson's Punch-Out!!",
       "platform": "NES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/3d/Punch-out_mrdream_boxart.PNG",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 147,
+      "game_name": "Mortal Kombat",
+      "platform": "Arcade",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/d/d3/Mortal_Kombat_cover.JPG",
+      "source": "manual"
+    },
+    {
+      "id": 237,
+      "game_name": "Mortal Kombat (Arcade)",
+      "platform": "Arcade",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/d/d3/Mortal_Kombat_cover.JPG",
+      "source": "manual"
     },
     {
       "id": 186,
       "game_name": "Mortal Kombat 2",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/d/df/Mortal_Kombat_II_boxart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 209,
       "game_name": "Mortal Kombat 3",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/9/9e/Mortal_Kombat_3_cover.JPG",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 37,
       "game_name": "Mortal Kombat 5",
       "platform": null,
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/32/MK_Deadly_Alliance_Cover_Art.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 95,
       "game_name": "Mother 3",
       "platform": "Game Boy Advance",
       "cover": "https://upload.wikimedia.org/wikipedia/en/e/ee/Deluxe_package.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 115,
       "game_name": "Neutopia",
       "platform": "PC Engine/TurboGrafx-16",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/4d/Neutopia_boxart.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 117,
@@ -788,7 +949,7 @@
       "game_name": "Pokemon Blue",
       "platform": "Game Boy",
       "cover": "https://upload.wikimedia.org/wikipedia/en/thumb/a/af/Pok%C3%A9mon_Red_and_Blue_cover_art.webp/546px-Pok%C3%A9mon_Red_and_Blue_cover_art.webp.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 258,
@@ -802,21 +963,21 @@
       "game_name": "Pokemon Emerald",
       "platform": "Game Boy Advance",
       "cover": "https://upload.wikimedia.org/wikipedia/en/f/f7/PokemonEmeraldBox.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 88,
       "game_name": "Pokemon Pinball",
       "platform": "Game Boy Color",
       "cover": "https://upload.wikimedia.org/wikipedia/en/e/e9/Pok%C3%A9mon_Pinball_Coverart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 57,
       "game_name": "Pokemon Red",
       "platform": "Game Boy",
       "cover": "https://upload.wikimedia.org/wikipedia/en/thumb/a/af/Pok%C3%A9mon_Red_and_Blue_cover_art.webp/546px-Pok%C3%A9mon_Red_and_Blue_cover_art.webp.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 248,
@@ -830,7 +991,7 @@
       "game_name": "Pokemon Yellow",
       "platform": "Game Boy",
       "cover": "https://upload.wikimedia.org/wikipedia/en/thumb/a/af/Pok%C3%A9mon_Red_and_Blue_cover_art.webp/546px-Pok%C3%A9mon_Red_and_Blue_cover_art.webp.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 45,
@@ -844,28 +1005,42 @@
       "game_name": "R-Type",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/8/80/R-Type_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 98,
       "game_name": "Racing Gears Advance",
       "platform": "Game Boy Advance",
       "cover": "https://upload.wikimedia.org/wikipedia/en/e/e6/Racing_Gears_Advance.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 60,
       "game_name": "Radiant Silvergun",
       "platform": "Sega Saturn",
       "cover": "https://upload.wikimedia.org/wikipedia/en/f/ff/Radiant_Silvergun_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 46,
+      "game_name": "Resident Evil (PS1)",
+      "platform": "PS1",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/c/c1/Resident_Evil_1_cover.png",
+      "source": "manual"
+    },
+    {
+      "id": 238,
+      "game_name": "Resident Evil (PS1)",
+      "platform": "PS1",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/c/c1/Resident_Evil_1_cover.png",
+      "source": "manual"
     },
     {
       "id": 43,
       "game_name": "Resident Evil 2",
       "platform": "PS1",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/40/NTSC_Resident_Evil_2_Cover.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 231,
@@ -879,28 +1054,63 @@
       "game_name": "Resident Evil 3",
       "platform": "PlayStation",
       "cover": "https://upload.wikimedia.org/wikipedia/en/a/a5/Resident_Evil_3_Cover.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 103,
+      "game_name": "Resident Evil Code Veronica",
+      "platform": "PS2/GameCube",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/7/70/Resident_Evil_Code_Veronica_cover.png",
+      "source": "manual"
+    },
+    {
+      "id": 169,
+      "game_name": "Secret Of Evermore",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/9/93/Secret_of_Evermore_Box.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 12,
+      "game_name": "Secret Of Evermore",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/9/93/Secret_of_Evermore_Box.jpg",
+      "source": "manual"
     },
     {
       "id": 168,
       "game_name": "Shining Force II",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/2/23/Shining_Force_II.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 171,
+      "game_name": "Shining In The Darkness",
+      "platform": "Sega Genesis",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/0/09/Shining_In_The_Darkness_box.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 14,
+      "game_name": "Shining In The Darkness",
+      "platform": "Sega Genesis",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/0/09/Shining_In_The_Darkness_box.jpg",
+      "source": "manual"
     },
     {
       "id": 71,
       "game_name": "Shock Troopers",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/f/f1/Shock_Troopers_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 116,
       "game_name": "Skies of Arcadia",
       "platform": "Sega Dreamcast",
       "cover": "https://upload.wikimedia.org/wikipedia/en/6/65/ArcadiaDC.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 118,
@@ -914,56 +1124,70 @@
       "game_name": "Skitchin'",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/2/28/Skitchin%27.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 54,
+      "game_name": "Sonic The Hedgehog",
+      "platform": "Sega Genesis",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/b/ba/Sonic_the_Hedgehog_1_Genesis_box_art.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 143,
+      "game_name": "Sonic The Hedgehog",
+      "platform": "Sega Genesis",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/b/ba/Sonic_the_Hedgehog_1_Genesis_box_art.jpg",
+      "source": "manual"
     },
     {
       "id": 91,
       "game_name": "Spyro the Dragon",
       "platform": "PlayStation",
       "cover": "https://upload.wikimedia.org/wikipedia/en/5/53/Spyro_the_Dragon.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 236,
       "game_name": "Street Fighter Alpha",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/c/c3/Street_Fighter_Alpha_flyer.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 228,
       "game_name": "Street Fighter Alpha 2",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/3f/Street_Fighter_Alpha_2_flyer.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 182,
       "game_name": "Street Fighter Alpha 3",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/a/aa/Street_Fighter_Alpha_3_flyer.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 44,
       "game_name": "Street Fighter Alpha 3",
       "platform": "PS1",
       "cover": "https://upload.wikimedia.org/wikipedia/en/a/aa/Street_Fighter_Alpha_3_flyer.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 156,
       "game_name": "Street Fighter II",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/1d/SF2_JPN_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 180,
       "game_name": "Street Fighter II Champion Edition",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/f/f5/Street_Fighter_II_Dash_%28flyer%29.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 23,
@@ -973,32 +1197,74 @@
       "source": "cache"
     },
     {
+      "id": 222,
+      "game_name": "Street Fighter II The World Warrior",
+      "platform": "Arcade",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/3/3f/Street_Fighter_II_%28arcade_flyer%29.png",
+      "source": "manual"
+    },
+    {
       "id": 140,
       "game_name": "Street Fighter II Turbo",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/8/81/Street_Fighter_II_Hyper_Fighting_cover.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 40,
+      "game_name": "Streets Of Rage",
+      "platform": "Sega Genesis",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/1/1d/StreetsofRage.png",
+      "source": "manual"
+    },
+    {
+      "id": 226,
+      "game_name": "Streets Of Rage",
+      "platform": "Sega Genesis",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/1/1d/StreetsofRage.png",
+      "source": "manual"
+    },
+    {
+      "id": 194,
+      "game_name": "Streets Of Rage 2",
+      "platform": "Sega Genesis",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/1/15/Streets_of_Rage_2_cover.png",
+      "source": "manual"
+    },
+    {
+      "id": 28,
+      "game_name": "Streets Of Rage 2",
+      "platform": "Sega Genesis",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/1/15/Streets_of_Rage_2_cover.png",
+      "source": "manual"
+    },
+    {
+      "id": 235,
+      "game_name": "Streets Of Rage 3",
+      "platform": "Sega Genesis",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/0/09/Streets_of_Rage_3.jpg",
+      "source": "manual"
     },
     {
       "id": 212,
       "game_name": "Super Bomberman 2",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/41/SNES_Super_Bomberman_2_cover_art.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 62,
       "game_name": "Super Castlevania IV",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/c/c2/Super_Castlevania_IV_North_American_SNES_box_art.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 3,
       "game_name": "Super Mario 64",
       "platform": "N64",
       "cover": "https://upload.wikimedia.org/wikipedia/en/e/e9/Super_Mario_64.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 151,
@@ -1012,21 +1278,21 @@
       "game_name": "Super Mario Bros 3",
       "platform": "NES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/a/a5/Super_Mario_Bros._3_coverart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 266,
       "game_name": "Super Mario Bros. 3",
       "platform": "NES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/a/a5/Super_Mario_Bros._3_coverart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 51,
       "game_name": "Super Mario Bros. Deluxe",
       "platform": "Game Boy Color",
       "cover": "https://upload.wikimedia.org/wikipedia/en/2/2e/Super_Mario_Bros._Deluxe_Cover.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 247,
@@ -1040,7 +1306,7 @@
       "game_name": "Super Mario Kart",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/38/Supermariokart_box.JPG",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 157,
@@ -1054,42 +1320,42 @@
       "game_name": "Super Mario Land",
       "platform": "Game Boy",
       "cover": "https://upload.wikimedia.org/wikipedia/en/2/22/Super-mario-land-gameboy-boxart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 63,
       "game_name": "Super Mario RPG",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/8/89/SuperMarioRPGSNESCoverArtUS.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 138,
       "game_name": "Super Mario World",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/32/Super_Mario_World_Coverart.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 208,
       "game_name": "Super Mario World 2 Yoshi's Island",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/9/9a/Yoshi%27s_Island_%28Super_Mario_World_2%29_box_art.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 139,
       "game_name": "Super Metroid",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/e/e4/Smetroidbox.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 25,
       "game_name": "Super Street Fighter II",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/7/7c/SSF2_US_flyer.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 184,
@@ -1099,18 +1365,32 @@
       "source": "cache"
     },
     {
+      "id": 21,
+      "game_name": "Teenage Mutant Ninja Turtles IV - Turtles In Time",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/4/43/Turtles_in_Time_%28SNES_cover%29.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 178,
+      "game_name": "Teenage Mutant Ninja Turtles IV - Turtles In Time",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/4/43/Turtles_in_Time_%28SNES_cover%29.jpg",
+      "source": "manual"
+    },
+    {
       "id": 191,
       "game_name": "Teenage Mutant Ninja Turtles Tournament Fighters",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/3/3b/TMNT_Tournament_Fighters_print_ad.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 179,
       "game_name": "Terranigma",
       "platform": "SNES",
       "cover": "https://upload.wikimedia.org/wikipedia/en/4/4b/SNES_Terranigma_cover_art.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 22,
@@ -1124,42 +1404,98 @@
       "game_name": "The King of Fighters '98",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/18/The_King_of_Fighters_%2798_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 197,
+      "game_name": "The Legend Of Zelda",
+      "platform": "NES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/4/41/Legend_of_zelda_cover_%28with_samples%29_gold.png",
+      "source": "manual"
+    },
+    {
+      "id": 29,
+      "game_name": "The Legend Of Zelda",
+      "platform": "NES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/4/41/Legend_of_zelda_cover_%28with_samples%29_gold.png",
+      "source": "manual"
+    },
+    {
+      "id": 137,
+      "game_name": "The Legend Of Zelda A Link To The Past",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/2/21/The_Legend_of_Zelda_A_Link_to_the_Past_SNES_Game_Cover.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 141,
+      "game_name": "The Legend Of Zelda Link's Awakening",
+      "platform": "Game Boy",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/a/a0/Link%27s_Awakening.png",
+      "source": "manual"
+    },
+    {
+      "id": 205,
+      "game_name": "The Legend Of Zelda Ocarina Of Time",
+      "platform": "N64",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/5/57/The_Legend_of_Zelda_Ocarina_of_Time.jpg",
+      "source": "manual"
+    },
+    {
+      "id": 166,
+      "game_name": "The Legend Of Zelda The Minish Cap",
+      "platform": "Game Boy Advance",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/a/a5/The_Legend_of_Zelda_The_Minish_Cap_Game_Cover.JPG",
+      "source": "manual"
     },
     {
       "id": 190,
       "game_name": "The Lion King",
       "platform": "Sega Genesis",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/16/The_Lion_King_Coverart.png",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 149,
+      "game_name": "The Secret Of Mana",
+      "platform": "SNES",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/e/ed/Secret_of_Mana_Box.jpg",
+      "source": "manual"
     },
     {
       "id": 90,
       "game_name": "Tony Hawk's Pro Skater",
       "platform": "PlayStation",
       "cover": "https://upload.wikimedia.org/wikipedia/en/5/58/TonyHawksProSkaterPlayStation1.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 85,
       "game_name": "Virtua Fighter",
       "platform": "Sega 32X",
       "cover": "https://upload.wikimedia.org/wikipedia/en/b/bb/VirtuaFighter_arcadeflyer.png",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 86,
       "game_name": "Virtua Racing",
       "platform": "Sega 32X",
       "cover": "https://upload.wikimedia.org/wikipedia/en/1/12/Virtua_Racing_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
     },
     {
       "id": 72,
       "game_name": "Windjammers",
       "platform": "Arcade",
       "cover": "https://upload.wikimedia.org/wikipedia/en/5/53/Windjammers_arcade_flyer.jpg",
-      "source": "wikipedia"
+      "source": "cache"
+    },
+    {
+      "id": 110,
+      "game_name": "X-Com UFO Defense",
+      "platform": "PC (DOS)",
+      "cover": "https://upload.wikimedia.org/wikipedia/en/9/95/X-COM_-_UFO_Defense_Coverart.png",
+      "source": "manual"
     }
   ]
 }
