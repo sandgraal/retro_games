@@ -2394,3 +2394,81 @@ describe("features/virtualization", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ui/theme tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  THEME_LIGHT,
+  THEME_DARK,
+  isValidTheme as isValidThemeUI,
+  getPreferredTheme,
+  getActiveTheme,
+  getOppositeTheme,
+  buildThemeToggleAttrs,
+} from "../app/ui/theme.js";
+
+describe("ui/theme", () => {
+  describe("constants", () => {
+    it("exports theme values", () => {
+      expect(THEME_LIGHT).toBe("light");
+      expect(THEME_DARK).toBe("dark");
+    });
+  });
+
+  describe("isValidTheme", () => {
+    it("validates light and dark", () => {
+      expect(isValidThemeUI("light")).toBe(true);
+      expect(isValidThemeUI("dark")).toBe(true);
+    });
+
+    it("rejects invalid themes", () => {
+      expect(isValidThemeUI("auto")).toBe(false);
+      expect(isValidThemeUI(null)).toBe(false);
+      expect(isValidThemeUI("")).toBe(false);
+    });
+  });
+
+  describe("getPreferredTheme", () => {
+    it("returns a valid theme", () => {
+      const theme = getPreferredTheme();
+      expect([THEME_LIGHT, THEME_DARK]).toContain(theme);
+    });
+  });
+
+  describe("getActiveTheme", () => {
+    it("returns a valid theme", () => {
+      const theme = getActiveTheme();
+      expect([THEME_LIGHT, THEME_DARK]).toContain(theme);
+    });
+  });
+
+  describe("getOppositeTheme", () => {
+    it("returns opposite theme", () => {
+      expect(getOppositeTheme(THEME_LIGHT)).toBe(THEME_DARK);
+      expect(getOppositeTheme(THEME_DARK)).toBe(THEME_LIGHT);
+    });
+  });
+
+  describe("buildThemeToggleAttrs", () => {
+    it("builds attrs for light theme", () => {
+      const attrs = buildThemeToggleAttrs(THEME_LIGHT);
+      expect(attrs.nextTheme).toBe(THEME_DARK);
+      expect(attrs.text).toContain("Dark");
+      expect(attrs.ariaPressed).toBe("true");
+    });
+
+    it("builds attrs for dark theme", () => {
+      const attrs = buildThemeToggleAttrs(THEME_DARK);
+      expect(attrs.nextTheme).toBe(THEME_LIGHT);
+      expect(attrs.text).toContain("Light");
+      expect(attrs.ariaPressed).toBe("false");
+    });
+
+    it("handles invalid theme", () => {
+      const attrs = buildThemeToggleAttrs("invalid");
+      // Should fall back to preferred theme logic
+      expect([THEME_LIGHT, THEME_DARK]).toContain(attrs.nextTheme);
+    });
+  });
+});
