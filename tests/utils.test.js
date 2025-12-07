@@ -431,3 +431,259 @@ describe("cache state", () => {
     expect(getCacheSize()).toBe(0);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// data/aggregates tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  normalizeAggregatePayload,
+  computeLocalGenreAggregates,
+  getReleaseYear,
+  computeLocalTimelineSeries,
+  parseGenreRpcResponse,
+  parseTimelineRpcResponse,
+  aggregateGenreQueryResults,
+  parseTimelineQueryResults,
+} from "../app/data/aggregates.js";
+
+describe("data/aggregates", () => {
+  describe("normalizeAggregatePayload", () => {
+    it("returns nulls for empty payload", () => {
+      const result = normalizeAggregatePayload();
+      expect(result).toEqual({
+        search: null,
+        platform: null,
+        genre: null,
+        ratingMin: null,
+        yearStart: null,
+        yearEnd: null,
+        region: null,
+      });
+    });
+
+    it("preserves valid values", () => {
+      const result = normalizeAggregatePayload({
+        search: "mario",
+        platform: "SNES",
+        genre: "RPG",
+        ratingMin: 4.0,
+        yearStart: 1990,
+        yearEnd: 2000,
+        region: "NTSC-U",
+      });
+      expect(result.search).toBe("mario");
+      expect(result.platform).toBe("SNES");
+      expect(result.genre).toBe("RPG");
+      expect(result.ratingMin).toBe(4.0);
+      expect(result.yearStart).toBe(1990);
+      expect(result.yearEnd).toBe(2000);
+      expect(result.region).toBe("NTSC-U");
+    });
+
+    it("converts empty strings to null", () => {
+      const result = normalizeAggregatePayload({
+        search: "",
+        platform: "",
+        genre: "",
+        region: "",
+      });
+      expect(result.search).toBe(null);
+      expect(result.platform).toBe(null);
+      expect(result.genre).toBe(null);
+      expect(result.region).toBe(null);
+    });
+  });
+
+  describe("computeLocalGenreAggregates", () => {
+    it("returns empty array for empty rows", () => {
+      expect(computeLocalGenreAggregates([])).toEqual([]);
+      expect(computeLocalGenreAggregates(null)).toEqual([]);
+    });
+
+    it("counts single-value genres", () => {
+      const rows = [{ genre: "RPG" }, { genre: "RPG" }, { genre: "Action" }];
+      const result = computeLocalGenreAggregates(rows);
+      expect(result).toEqual([
+        { name: "RPG", count: 2 },
+        { name: "Action", count: 1 },
+      ]);
+    });
+
+    it("splits comma-separated genres", () => {
+      const rows = [
+        { genre: "RPG, Action" },
+        { genre: "RPG" },
+        { genre: "Puzzle, Action" },
+      ];
+      const result = computeLocalGenreAggregates(rows);
+      expect(result).toEqual([
+        { name: "RPG", count: 2 },
+        { name: "Action", count: 2 },
+        { name: "Puzzle", count: 1 },
+      ]);
+    });
+
+    it("handles rows with no genre", () => {
+      const rows = [{ genre: "RPG" }, { genre: null }, { genre: "" }];
+      const result = computeLocalGenreAggregates(rows);
+      expect(result).toEqual([{ name: "RPG", count: 1 }]);
+    });
+  });
+
+  describe("getReleaseYear", () => {
+    it("extracts year from release_year field", () => {
+      expect(getReleaseYear({ release_year: 1995 })).toBe(1995);
+      expect(getReleaseYear({ release_year: "1995" })).toBe(1995);
+    });
+
+    it("falls back to year field", () => {
+      expect(getReleaseYear({ year: 2000 })).toBe(2000);
+    });
+
+    it("returns null for invalid values", () => {
+      expect(getReleaseYear(null)).toBe(null);
+      expect(getReleaseYear({})).toBe(null);
+      expect(getReleaseYear({ release_year: "invalid" })).toBe(null);
+      expect(getReleaseYear({ release_year: 1800 })).toBe(null);
+      expect(getReleaseYear({ release_year: 2200 })).toBe(null);
+    });
+  });
+
+  describe("computeLocalTimelineSeries", () => {
+    it("returns empty array for empty rows", () => {
+      expect(computeLocalTimelineSeries([])).toEqual([]);
+      expect(computeLocalTimelineSeries(null)).toEqual([]);
+    });
+
+    it("groups games by year and sorts ascending", () => {
+      const rows = [
+        { release_year: 1995 },
+        { release_year: 1990 },
+        { release_year: 1995 },
+        { release_year: 2000 },
+      ];
+      const result = computeLocalTimelineSeries(rows);
+      expect(result).toEqual([
+        { year: 1990, count: 1 },
+        { year: 1995, count: 2 },
+        { year: 2000, count: 1 },
+      ]);
+    });
+
+    it("skips invalid years", () => {
+      const rows = [
+        { release_year: 1995 },
+        { release_year: null },
+        { release_year: "invalid" },
+      ];
+      const result = computeLocalTimelineSeries(rows);
+      expect(result).toEqual([{ year: 1995, count: 1 }]);
+    });
+  });
+
+  describe("parseGenreRpcResponse", () => {
+    it("handles various field name conventions", () => {
+      const rpcData = [
+        { genre: "RPG", count: 10 },
+        { name: "Action", count: 5 },
+        { genres: ["Puzzle", "Strategy"], count: 3 },
+      ];
+      const result = parseGenreRpcResponse(rpcData);
+      expect(result).toEqual([
+        { name: "RPG", count: 10 },
+        { name: "Action", count: 5 },
+        { name: "Puzzle, Strategy", count: 3 },
+      ]);
+    });
+
+    it("filters out zero-count entries", () => {
+      const rpcData = [
+        { genre: "RPG", count: 10 },
+        { genre: "Empty", count: 0 },
+      ];
+      const result = parseGenreRpcResponse(rpcData);
+      expect(result).toEqual([{ name: "RPG", count: 10 }]);
+    });
+
+    it("handles non-array input", () => {
+      expect(parseGenreRpcResponse(null)).toEqual([]);
+      expect(parseGenreRpcResponse(undefined)).toEqual([]);
+    });
+  });
+
+  describe("parseTimelineRpcResponse", () => {
+    it("handles various field name conventions", () => {
+      const rpcData = [
+        { year: 1995, count: 5 },
+        { release_year: 2000, count: 3 },
+        { y: 2010, count: 2 },
+      ];
+      const result = parseTimelineRpcResponse(rpcData);
+      expect(result).toEqual([
+        { year: 1995, count: 5 },
+        { year: 2000, count: 3 },
+        { year: 2010, count: 2 },
+      ]);
+    });
+
+    it("filters out invalid entries", () => {
+      const rpcData = [
+        { year: 1995, count: 5 },
+        { year: "invalid", count: 3 },
+        { year: 2000, count: 0 },
+      ];
+      const result = parseTimelineRpcResponse(rpcData);
+      expect(result).toEqual([{ year: 1995, count: 5 }]);
+    });
+  });
+
+  describe("aggregateGenreQueryResults", () => {
+    it("aggregates comma-separated genres from query", () => {
+      const queryData = [
+        { genre: "RPG, Action", count: 5 },
+        { genre: "RPG", count: 3 },
+        { genre: "Action, Puzzle", count: 2 },
+      ];
+      const result = aggregateGenreQueryResults(queryData);
+      expect(result).toEqual([
+        { name: "RPG", count: 8 },
+        { name: "Action", count: 7 },
+        { name: "Puzzle", count: 2 },
+      ]);
+    });
+
+    it("handles empty or null values", () => {
+      const queryData = [
+        { genre: "RPG", count: 5 },
+        { genre: null, count: 3 },
+        { genre: "", count: 2 },
+      ];
+      const result = aggregateGenreQueryResults(queryData);
+      expect(result).toEqual([{ name: "RPG", count: 5 }]);
+    });
+  });
+
+  describe("parseTimelineQueryResults", () => {
+    it("parses timeline query data", () => {
+      const queryData = [
+        { release_year: 1995, count: 5 },
+        { release_year: 2000, count: 3 },
+      ];
+      const result = parseTimelineQueryResults(queryData);
+      expect(result).toEqual([
+        { year: 1995, count: 5 },
+        { year: 2000, count: 3 },
+      ]);
+    });
+
+    it("filters invalid entries", () => {
+      const queryData = [
+        { release_year: 1995, count: 5 },
+        { release_year: "bad", count: 3 },
+        { release_year: 2000, count: 0 },
+      ];
+      const result = parseTimelineQueryResults(queryData);
+      expect(result).toEqual([{ year: 1995, count: 5 }]);
+    });
+  });
+});
