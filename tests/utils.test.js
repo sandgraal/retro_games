@@ -3133,3 +3133,326 @@ describe("ui/theme motion preferences", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ui/grid tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  normalizeCoverUrl,
+  resolveScreenshotCover,
+  resolveCoverUrl,
+  getGameStatusFromMaps,
+  getStatusClass,
+  getStatusLabel,
+  generatePlaceholderText,
+  buildPlaceholderMarkup,
+  buildCoverMarkup,
+  buildStatusBadge,
+  buildEmptyGridMarkup,
+  buildSkeletonCards,
+  calculateStaggerDelay,
+  shouldBeFeatured,
+  buildQuickActionButton,
+  buildQuickActionsMarkup,
+  STATUS_CLASSES,
+  STATUS_DISPLAY_LABELS,
+} from "../app/ui/grid.js";
+
+describe("ui/grid", () => {
+  describe("normalizeCoverUrl", () => {
+    it("normalizes string URLs", () => {
+      expect(normalizeCoverUrl("https://example.com/cover.jpg")).toBe(
+        "https://example.com/cover.jpg"
+      );
+      expect(normalizeCoverUrl("http://example.com/cover.jpg")).toBe(
+        "http://example.com/cover.jpg"
+      );
+    });
+
+    it("trims whitespace", () => {
+      expect(normalizeCoverUrl("  https://example.com/cover.jpg  ")).toBe(
+        "https://example.com/cover.jpg"
+      );
+    });
+
+    it("returns empty for invalid URLs", () => {
+      expect(normalizeCoverUrl("not-a-url")).toBe("");
+      expect(normalizeCoverUrl("")).toBe("");
+      expect(normalizeCoverUrl(null)).toBe("");
+    });
+
+    it("extracts URL from objects", () => {
+      expect(normalizeCoverUrl({ url: "https://example.com/a.jpg" })).toBe(
+        "https://example.com/a.jpg"
+      );
+      expect(normalizeCoverUrl({ href: "https://example.com/b.jpg" })).toBe(
+        "https://example.com/b.jpg"
+      );
+      expect(normalizeCoverUrl({ source: "https://example.com/c.jpg" })).toBe(
+        "https://example.com/c.jpg"
+      );
+    });
+  });
+
+  describe("resolveScreenshotCover", () => {
+    it("returns first valid screenshot", () => {
+      const row = { screenshots: ["https://example.com/ss1.jpg"] };
+      expect(resolveScreenshotCover(row)).toBe("https://example.com/ss1.jpg");
+    });
+
+    it("skips invalid screenshots", () => {
+      const row = { screenshots: ["invalid", "https://example.com/ss2.jpg"] };
+      expect(resolveScreenshotCover(row)).toBe("https://example.com/ss2.jpg");
+    });
+
+    it("returns empty for no screenshots", () => {
+      expect(resolveScreenshotCover({})).toBe("");
+      expect(resolveScreenshotCover(null)).toBe("");
+    });
+  });
+
+  describe("resolveCoverUrl", () => {
+    it("uses cover field first", () => {
+      const row = {
+        cover: "https://example.com/cover.jpg",
+        screenshots: ["https://example.com/ss.jpg"],
+      };
+      expect(resolveCoverUrl(row)).toBe("https://example.com/cover.jpg");
+    });
+
+    it("falls back to screenshot", () => {
+      const row = { screenshots: ["https://example.com/ss.jpg"] };
+      expect(resolveCoverUrl(row)).toBe("https://example.com/ss.jpg");
+    });
+
+    it("returns empty if no cover source", () => {
+      expect(resolveCoverUrl({})).toBe("");
+    });
+  });
+
+  describe("getGameStatusFromMaps", () => {
+    it("detects owned status", () => {
+      const owned = { key1: true };
+      expect(getGameStatusFromMaps("key1", owned)).toBe("owned");
+    });
+
+    it("detects wishlist status", () => {
+      const statuses = { wishlist: { key2: true } };
+      expect(getGameStatusFromMaps("key2", {}, statuses)).toBe("wishlist");
+    });
+
+    it("detects backlog status", () => {
+      const statuses = { backlog: { key3: true } };
+      expect(getGameStatusFromMaps("key3", {}, statuses)).toBe("backlog");
+    });
+
+    it("detects trade status", () => {
+      const statuses = { trade: { key4: true } };
+      expect(getGameStatusFromMaps("key4", {}, statuses)).toBe("trade");
+    });
+
+    it("returns null for no status", () => {
+      expect(getGameStatusFromMaps("unknown", {}, {})).toBe(null);
+    });
+
+    it("returns null for empty key", () => {
+      expect(getGameStatusFromMaps("", { "": true })).toBe(null);
+    });
+  });
+
+  describe("getStatusClass", () => {
+    it("returns class for valid status", () => {
+      expect(getStatusClass("owned")).toBe(STATUS_CLASSES.owned);
+      expect(getStatusClass("wishlist")).toBe(STATUS_CLASSES.wishlist);
+    });
+
+    it("returns empty for invalid status", () => {
+      expect(getStatusClass(null)).toBe("");
+      expect(getStatusClass("unknown")).toBe("");
+    });
+  });
+
+  describe("getStatusLabel", () => {
+    it("returns label for valid status", () => {
+      expect(getStatusLabel("owned")).toBe("Owned");
+      expect(getStatusLabel("wishlist")).toBe("Wishlist");
+      expect(getStatusLabel("trade")).toBe("For Trade");
+    });
+
+    it("returns empty for invalid status", () => {
+      expect(getStatusLabel(null)).toBe("");
+    });
+  });
+
+  describe("generatePlaceholderText", () => {
+    it("extracts first 2 chars", () => {
+      expect(generatePlaceholderText("Chrono Trigger")).toBe("CH");
+      expect(generatePlaceholderText("A")).toBe("A");
+    });
+
+    it("handles empty name", () => {
+      expect(generatePlaceholderText("")).toBe("?");
+      expect(generatePlaceholderText(null)).toBe("?");
+    });
+  });
+
+  describe("buildPlaceholderMarkup", () => {
+    it("builds placeholder HTML", () => {
+      const html = buildPlaceholderMarkup("Zelda");
+      expect(html).toContain("card-placeholder");
+      expect(html).toContain("ZE");
+    });
+
+    it("escapes HTML", () => {
+      const html = buildPlaceholderMarkup("<script>");
+      expect(html).not.toContain("<script>");
+    });
+  });
+
+  describe("buildCoverMarkup", () => {
+    it("builds img tag", () => {
+      const html = buildCoverMarkup("https://example.com/cover.jpg", "Game cover");
+      expect(html).toContain('src="https://example.com/cover.jpg"');
+      expect(html).toContain('alt="Game cover"');
+      expect(html).toContain('loading="lazy"');
+    });
+
+    it("escapes HTML in URL and alt", () => {
+      const html = buildCoverMarkup(
+        "https://x.com/a.jpg?a=1&b=2",
+        "<script>alert</script>"
+      );
+      expect(html).not.toContain("<script>");
+    });
+  });
+
+  describe("buildStatusBadge", () => {
+    it("builds badge for valid status", () => {
+      const html = buildStatusBadge("owned");
+      expect(html).toContain("game-card-status");
+      expect(html).toContain("Owned");
+    });
+
+    it("returns empty for null status", () => {
+      expect(buildStatusBadge(null)).toBe("");
+    });
+
+    it("returns empty for unknown status", () => {
+      expect(buildStatusBadge("unknown")).toBe("");
+    });
+  });
+
+  describe("buildEmptyGridMarkup", () => {
+    it("builds empty state HTML", () => {
+      const html = buildEmptyGridMarkup();
+      expect(html).toContain("game-grid-empty");
+      expect(html).toContain("No Games Found");
+    });
+
+    it("uses custom options", () => {
+      const html = buildEmptyGridMarkup({ title: "Custom Title", icon: "🕹️" });
+      expect(html).toContain("Custom Title");
+      expect(html).toContain("🕹️");
+    });
+  });
+
+  describe("buildSkeletonCards", () => {
+    it("builds skeleton HTML", () => {
+      const html = buildSkeletonCards(3);
+      const matches = html.match(/game-card-skeleton/g);
+      expect(matches).toHaveLength(3);
+    });
+
+    it("defaults to 1", () => {
+      const html = buildSkeletonCards();
+      const matches = html.match(/game-card-skeleton/g);
+      expect(matches).toHaveLength(1);
+    });
+  });
+
+  describe("calculateStaggerDelay", () => {
+    it("calculates delay based on index", () => {
+      expect(calculateStaggerDelay(0)).toBe(0);
+      expect(calculateStaggerDelay(5)).toBe(250);
+    });
+
+    it("respects max delay", () => {
+      expect(calculateStaggerDelay(20, 50, 500)).toBe(500);
+    });
+
+    it("uses custom base delay", () => {
+      expect(calculateStaggerDelay(2, 100)).toBe(200);
+    });
+  });
+
+  describe("shouldBeFeatured", () => {
+    it("features high-rated games at modulo index", () => {
+      const game = { rating: 9.5 };
+      expect(shouldBeFeatured(game, 0, null)).toBe(true);
+      expect(shouldBeFeatured(game, 7, null)).toBe(true);
+      expect(shouldBeFeatured(game, 3, null)).toBe(false);
+    });
+
+    it("features owned games at modulo index", () => {
+      const game = { rating: 5 };
+      expect(shouldBeFeatured(game, 0, "owned")).toBe(true);
+      expect(shouldBeFeatured(game, 14, "owned")).toBe(true);
+    });
+
+    it("does not feature low-rated non-owned games", () => {
+      const game = { rating: 5 };
+      expect(shouldBeFeatured(game, 0, null)).toBe(false);
+    });
+
+    it("uses custom thresholds", () => {
+      const game = { rating: 8.5 };
+      expect(shouldBeFeatured(game, 0, null, { ratingThreshold: 8.0 })).toBe(true);
+    });
+  });
+
+  describe("buildQuickActionButton", () => {
+    it("builds button HTML", () => {
+      const html = buildQuickActionButton("own", "game___SNES", "Own It");
+      expect(html).toContain('data-action="own"');
+      expect(html).toContain('data-game-key="game___SNES"');
+      expect(html).toContain("Own It");
+    });
+
+    it("escapes HTML", () => {
+      const html = buildQuickActionButton("<script>", "key", "label");
+      expect(html).not.toContain("<script>");
+    });
+  });
+
+  describe("buildQuickActionsMarkup", () => {
+    it("includes Own for non-owned", () => {
+      const html = buildQuickActionsMarkup("key", null);
+      expect(html).toContain('data-action="own"');
+      expect(html).toContain('data-action="wishlist"');
+    });
+
+    it("excludes Own for owned", () => {
+      const html = buildQuickActionsMarkup("key", "owned");
+      expect(html).not.toContain('data-action="own"');
+      expect(html).toContain('data-action="wishlist"');
+    });
+
+    it("excludes Want for wishlist", () => {
+      const html = buildQuickActionsMarkup("key", "wishlist");
+      expect(html).toContain('data-action="own"');
+      expect(html).not.toContain('data-action="wishlist"');
+    });
+  });
+
+  describe("constants", () => {
+    it("has status classes", () => {
+      expect(STATUS_CLASSES.owned).toBeDefined();
+      expect(STATUS_CLASSES.wishlist).toBeDefined();
+    });
+
+    it("has status labels", () => {
+      expect(STATUS_DISPLAY_LABELS.owned).toBe("Owned");
+      expect(STATUS_DISPLAY_LABELS.trade).toBe("For Trade");
+    });
+  });
+});
