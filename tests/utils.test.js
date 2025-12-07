@@ -1160,3 +1160,167 @@ describe("features/sharing", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// features/sorting tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  compareRows,
+  createSortComparator,
+  sortRows,
+  getSortControlValue,
+  parseSortSelection,
+  isValidSortConfig,
+  getDefaultSortConfig,
+  getReleaseYear as getSortReleaseYear,
+  COL_GAME,
+  COL_RATING,
+  COL_RELEASE_YEAR,
+  SORT_OPTIONS,
+} from "../app/features/sorting.js";
+
+describe("features/sorting", () => {
+  describe("getReleaseYear", () => {
+    it("extracts year from release_year field", () => {
+      expect(getSortReleaseYear({ release_year: 1995 })).toBe(1995);
+      expect(getSortReleaseYear({ release_year: "1995" })).toBe(1995);
+    });
+
+    it("returns null for invalid years", () => {
+      expect(getSortReleaseYear(null)).toBe(null);
+      expect(getSortReleaseYear({})).toBe(null);
+      expect(getSortReleaseYear({ release_year: 1800 })).toBe(null);
+    });
+  });
+
+  describe("compareRows", () => {
+    it("compares game names ascending", () => {
+      const rowA = { game_name: "Chrono Trigger" };
+      const rowB = { game_name: "Zelda" };
+      expect(compareRows(rowA, rowB, COL_GAME, "asc")).toBeLessThan(0);
+      expect(compareRows(rowB, rowA, COL_GAME, "asc")).toBeGreaterThan(0);
+    });
+
+    it("compares game names descending", () => {
+      const rowA = { game_name: "Chrono Trigger" };
+      const rowB = { game_name: "Zelda" };
+      expect(compareRows(rowA, rowB, COL_GAME, "desc")).toBeGreaterThan(0);
+    });
+
+    it("compares ratings numerically", () => {
+      const rowA = { rating: 4.5 };
+      const rowB = { rating: 3.2 };
+      expect(compareRows(rowA, rowB, COL_RATING, "asc")).toBeGreaterThan(0);
+      expect(compareRows(rowA, rowB, COL_RATING, "desc")).toBeLessThan(0);
+    });
+
+    it("pushes null ratings to end", () => {
+      const rowA = { rating: null };
+      const rowB = { rating: 4.0 };
+      // Ascending: null goes to end (infinity)
+      expect(compareRows(rowA, rowB, COL_RATING, "asc")).toBeGreaterThan(0);
+      // Descending: null goes to end (-infinity compared to 4.0)
+      expect(compareRows(rowA, rowB, COL_RATING, "desc")).toBeGreaterThan(0);
+    });
+
+    it("compares release years", () => {
+      const rowA = { release_year: 1990 };
+      const rowB = { release_year: 1995 };
+      expect(compareRows(rowA, rowB, COL_RELEASE_YEAR, "asc")).toBeLessThan(0);
+      expect(compareRows(rowA, rowB, COL_RELEASE_YEAR, "desc")).toBeGreaterThan(0);
+    });
+
+    it("returns 0 for equal values", () => {
+      const rowA = { game_name: "Same" };
+      const rowB = { game_name: "Same" };
+      expect(compareRows(rowA, rowB, COL_GAME, "asc")).toBe(0);
+    });
+  });
+
+  describe("createSortComparator", () => {
+    it("creates a reusable comparator", () => {
+      const comparator = createSortComparator(COL_GAME, "asc");
+      const rows = [{ game_name: "Zelda" }, { game_name: "Chrono Trigger" }];
+      rows.sort(comparator);
+      expect(rows[0].game_name).toBe("Chrono Trigger");
+    });
+  });
+
+  describe("sortRows", () => {
+    it("sorts without mutating original", () => {
+      const original = [
+        { game_name: "Zelda" },
+        { game_name: "Chrono Trigger" },
+        { game_name: "Mario" },
+      ];
+      const sorted = sortRows(original, COL_GAME, "asc");
+      expect(sorted[0].game_name).toBe("Chrono Trigger");
+      expect(original[0].game_name).toBe("Zelda"); // unchanged
+    });
+
+    it("handles empty array", () => {
+      expect(sortRows([], COL_GAME, "asc")).toEqual([]);
+    });
+
+    it("handles non-array", () => {
+      expect(sortRows(null, COL_GAME, "asc")).toEqual([]);
+    });
+  });
+
+  describe("getSortControlValue", () => {
+    it("maps column/direction to UI value", () => {
+      expect(getSortControlValue(COL_GAME, "asc")).toBe(SORT_OPTIONS.NAME_ASC);
+      expect(getSortControlValue(COL_GAME, "desc")).toBe(SORT_OPTIONS.NAME_DESC);
+      expect(getSortControlValue(COL_RATING, "desc")).toBe(SORT_OPTIONS.RATING_DESC);
+      expect(getSortControlValue(COL_RELEASE_YEAR, "asc")).toBe(SORT_OPTIONS.YEAR_ASC);
+    });
+  });
+
+  describe("parseSortSelection", () => {
+    it("parses UI value to column/direction", () => {
+      expect(parseSortSelection(SORT_OPTIONS.NAME_ASC)).toEqual({
+        column: COL_GAME,
+        direction: "asc",
+      });
+      expect(parseSortSelection(SORT_OPTIONS.RATING_DESC)).toEqual({
+        column: COL_RATING,
+        direction: "desc",
+      });
+      expect(parseSortSelection(SORT_OPTIONS.YEAR_DESC)).toEqual({
+        column: COL_RELEASE_YEAR,
+        direction: "desc",
+      });
+    });
+
+    it("defaults to name-asc for unknown value", () => {
+      expect(parseSortSelection("unknown")).toEqual({
+        column: COL_GAME,
+        direction: "asc",
+      });
+    });
+  });
+
+  describe("isValidSortConfig", () => {
+    it("validates correct configs", () => {
+      expect(isValidSortConfig(COL_GAME, "asc")).toBe(true);
+      expect(isValidSortConfig(COL_RATING, "desc")).toBe(true);
+    });
+
+    it("rejects invalid column", () => {
+      expect(isValidSortConfig("invalid_column", "asc")).toBe(false);
+    });
+
+    it("rejects invalid direction", () => {
+      expect(isValidSortConfig(COL_GAME, "sideways")).toBe(false);
+    });
+  });
+
+  describe("getDefaultSortConfig", () => {
+    it("returns name ascending", () => {
+      expect(getDefaultSortConfig()).toEqual({
+        column: COL_GAME,
+        direction: "asc",
+      });
+    });
+  });
+});
