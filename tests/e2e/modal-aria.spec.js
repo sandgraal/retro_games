@@ -1,5 +1,11 @@
 const { test, expect } = require("@playwright/test");
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__SANDGRAAL_FORCE_SAMPLE__ = true;
+  });
+});
+
 test("gameModalBackdrop aria-hidden state changes correctly", async ({ page }) => {
   // Navigate to the app
   await page.goto("/");
