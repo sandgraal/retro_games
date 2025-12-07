@@ -1844,3 +1844,264 @@ describe("features/pagination", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// features/search tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  normalizeSearchQuery,
+  isQueryLongEnough,
+  escapeRegexChars,
+  buildPrefixRegex,
+  buildContainsRegex,
+  buildLocalSuggestions,
+  scoreSuggestion,
+  sortSuggestionsByRelevance,
+  resolvePlatformSearchTerms,
+  highlightMatch,
+  splitByMatch,
+  createDebouncer,
+  buildTypeaheadSelectColumns,
+  TYPEAHEAD_MIN_CHARS,
+  TYPEAHEAD_DEBOUNCE_MS,
+  TYPEAHEAD_LIMIT,
+  TYPEAHEAD_SELECT_COLUMNS,
+} from "../app/features/search.js";
+
+describe("features/search", () => {
+  describe("normalizeSearchQuery", () => {
+    it("trims and lowercases query", () => {
+      expect(normalizeSearchQuery("  Final Fantasy  ")).toBe("final fantasy");
+      expect(normalizeSearchQuery("CHRONO TRIGGER")).toBe("chrono trigger");
+    });
+
+    it("returns empty for invalid input", () => {
+      expect(normalizeSearchQuery(null)).toBe("");
+      expect(normalizeSearchQuery(undefined)).toBe("");
+      expect(normalizeSearchQuery(123)).toBe("");
+    });
+  });
+
+  describe("isQueryLongEnough", () => {
+    it("checks against minimum chars", () => {
+      expect(isQueryLongEnough("ab")).toBe(true);
+      expect(isQueryLongEnough("a")).toBe(false);
+      expect(isQueryLongEnough("")).toBe(false);
+    });
+
+    it("uses custom minimum", () => {
+      expect(isQueryLongEnough("abc", 3)).toBe(true);
+      expect(isQueryLongEnough("ab", 3)).toBe(false);
+    });
+  });
+
+  describe("escapeRegexChars", () => {
+    it("escapes special characters", () => {
+      expect(escapeRegexChars("test.*")).toBe("test\\.\\*");
+      expect(escapeRegexChars("(foo)")).toBe("\\(foo\\)");
+      expect(escapeRegexChars("[bar]")).toBe("\\[bar\\]");
+    });
+
+    it("returns empty for invalid", () => {
+      expect(escapeRegexChars(null)).toBe("");
+      expect(escapeRegexChars(123)).toBe("");
+    });
+  });
+
+  describe("buildPrefixRegex", () => {
+    it("creates case-insensitive prefix matcher", () => {
+      const regex = buildPrefixRegex("final");
+      expect(regex.test("Final Fantasy")).toBe(true);
+      expect(regex.test("FINAL DESTINATION")).toBe(true);
+      expect(regex.test("The Final")).toBe(false);
+    });
+
+    it("returns null for empty query", () => {
+      expect(buildPrefixRegex("")).toBe(null);
+      expect(buildPrefixRegex(null)).toBe(null);
+    });
+  });
+
+  describe("buildContainsRegex", () => {
+    it("creates case-insensitive substring matcher", () => {
+      const regex = buildContainsRegex("fantasy");
+      expect(regex.test("Final Fantasy VII")).toBe(true);
+      expect(regex.test("FANTASY")).toBe(true);
+    });
+
+    it("returns null for empty query", () => {
+      expect(buildContainsRegex("")).toBe(null);
+    });
+  });
+
+  describe("buildLocalSuggestions", () => {
+    const testData = [
+      { game_name: "Final Fantasy VII" },
+      { game_name: "Final Fantasy X" },
+      { game_name: "Chrono Trigger" },
+      { game_name: "The Final Stand" },
+    ];
+
+    it("finds prefix matches", () => {
+      const results = buildLocalSuggestions(testData, "Final");
+      expect(results).toHaveLength(2);
+      expect(results[0].game_name).toBe("Final Fantasy VII");
+    });
+
+    it("is case-insensitive", () => {
+      const results = buildLocalSuggestions(testData, "CHRONO");
+      expect(results).toHaveLength(1);
+    });
+
+    it("respects limit", () => {
+      const results = buildLocalSuggestions(testData, "Final", { limit: 1 });
+      expect(results).toHaveLength(1);
+    });
+
+    it("returns empty for invalid input", () => {
+      expect(buildLocalSuggestions(null, "test")).toEqual([]);
+      expect(buildLocalSuggestions(testData, "")).toEqual([]);
+    });
+  });
+
+  describe("scoreSuggestion", () => {
+    it("scores exact match highest", () => {
+      const row = { game_name: "chrono trigger" };
+      expect(scoreSuggestion(row, "chrono trigger")).toBe(100);
+    });
+
+    it("scores prefix match well", () => {
+      const row = { game_name: "Final Fantasy VII" };
+      const score = scoreSuggestion(row, "Final");
+      expect(score).toBeGreaterThan(80);
+      expect(score).toBeLessThan(100);
+    });
+
+    it("scores contains match lower", () => {
+      const row = { game_name: "The Final Fantasy" };
+      const score = scoreSuggestion(row, "Final");
+      expect(score).toBeGreaterThan(50);
+      expect(score).toBeLessThan(80);
+    });
+
+    it("returns 0 for no match", () => {
+      const row = { game_name: "Chrono Trigger" };
+      expect(scoreSuggestion(row, "Zelda")).toBe(0);
+    });
+  });
+
+  describe("sortSuggestionsByRelevance", () => {
+    const suggestions = [
+      { game_name: "The Final Stand" },
+      { game_name: "Final Fantasy VII" },
+      { game_name: "Final" },
+    ];
+
+    it("sorts by match quality", () => {
+      const sorted = sortSuggestionsByRelevance(suggestions, "Final");
+      expect(sorted[0].game_name).toBe("Final"); // exact
+      expect(sorted[1].game_name).toBe("Final Fantasy VII"); // prefix
+      expect(sorted[2].game_name).toBe("The Final Stand"); // contains
+    });
+
+    it("handles empty input", () => {
+      expect(sortSuggestionsByRelevance(null, "test")).toEqual([]);
+      expect(sortSuggestionsByRelevance([], "test")).toEqual([]);
+    });
+  });
+
+  describe("resolvePlatformSearchTerms", () => {
+    it("returns original platform", () => {
+      const terms = resolvePlatformSearchTerms("NES");
+      expect(terms).toContain("NES");
+    });
+
+    it("includes aliases if available", () => {
+      const terms = resolvePlatformSearchTerms("SNES");
+      expect(terms).toContain("SNES");
+      // Aliases depend on PLATFORM_NAME_ALIASES from pricing.js
+    });
+
+    it("returns empty for invalid input", () => {
+      expect(resolvePlatformSearchTerms(null)).toEqual([]);
+      expect(resolvePlatformSearchTerms("")).toEqual([]);
+    });
+  });
+
+  describe("highlightMatch", () => {
+    it("wraps matching text with mark tag", () => {
+      const result = highlightMatch("Final Fantasy VII", "Fantasy");
+      expect(result).toBe("Final <mark>Fantasy</mark> VII");
+    });
+
+    it("uses custom tag", () => {
+      const result = highlightMatch("Chrono Trigger", "Trigger", { tag: "strong" });
+      expect(result).toBe("Chrono <strong>Trigger</strong>");
+    });
+
+    it("adds class when provided", () => {
+      const result = highlightMatch("Test", "Test", { className: "highlight" });
+      expect(result).toBe('<mark class="highlight">Test</mark>');
+    });
+
+    it("returns original for no match", () => {
+      expect(highlightMatch("Chrono", "xyz")).toBe("Chrono");
+    });
+  });
+
+  describe("splitByMatch", () => {
+    it("splits text into match and non-match parts", () => {
+      const parts = splitByMatch("Final Fantasy VII", "Fantasy");
+      expect(parts).toEqual([
+        { text: "Final ", isMatch: false },
+        { text: "Fantasy", isMatch: true },
+        { text: " VII", isMatch: false },
+      ]);
+    });
+
+    it("handles no match", () => {
+      const parts = splitByMatch("Chrono", "xyz");
+      expect(parts).toEqual([{ text: "Chrono", isMatch: false }]);
+    });
+
+    it("handles multiple matches", () => {
+      const parts = splitByMatch("aXbXc", "X");
+      expect(parts).toEqual([
+        { text: "a", isMatch: false },
+        { text: "X", isMatch: true },
+        { text: "b", isMatch: false },
+        { text: "X", isMatch: true },
+        { text: "c", isMatch: false },
+      ]);
+    });
+  });
+
+  describe("createDebouncer", () => {
+    it("creates debouncer with call and cancel", () => {
+      const debouncer = createDebouncer(() => {}, 100);
+      expect(typeof debouncer.call).toBe("function");
+      expect(typeof debouncer.cancel).toBe("function");
+    });
+  });
+
+  describe("buildTypeaheadSelectColumns", () => {
+    it("joins columns with comma", () => {
+      const result = buildTypeaheadSelectColumns(["a", "b", "c"]);
+      expect(result).toBe("a,b,c");
+    });
+
+    it("uses defaults when no args", () => {
+      const result = buildTypeaheadSelectColumns();
+      expect(result).toBe("game_name,platform,genre,release_year");
+    });
+  });
+
+  describe("constants", () => {
+    it("has expected values", () => {
+      expect(TYPEAHEAD_MIN_CHARS).toBe(2);
+      expect(TYPEAHEAD_DEBOUNCE_MS).toBe(180);
+      expect(TYPEAHEAD_LIMIT).toBe(8);
+      expect(TYPEAHEAD_SELECT_COLUMNS).toContain("game_name");
+    });
+  });
+});
