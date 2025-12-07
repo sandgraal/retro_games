@@ -2406,6 +2406,13 @@ import {
   getActiveTheme,
   getOppositeTheme,
   buildThemeToggleAttrs,
+  applyThemeChoice,
+  persistThemeChoice,
+  clearPersistedTheme,
+  getCSSVariable,
+  setCSSVariable,
+  updateThemeToggleButton,
+  THEME_STORAGE_KEY,
 } from "../app/ui/theme.js";
 
 describe("ui/theme", () => {
@@ -2469,6 +2476,76 @@ describe("ui/theme", () => {
       const attrs = buildThemeToggleAttrs("invalid");
       // Should fall back to preferred theme logic
       expect([THEME_LIGHT, THEME_DARK]).toContain(attrs.nextTheme);
+    });
+  });
+
+  describe("applyThemeChoice", () => {
+    it("sets theme on documentElement", () => {
+      applyThemeChoice(THEME_DARK);
+      expect(document.documentElement.dataset.theme).toBe(THEME_DARK);
+      applyThemeChoice(THEME_LIGHT);
+      expect(document.documentElement.dataset.theme).toBe(THEME_LIGHT);
+    });
+
+    it("removes theme for invalid value", () => {
+      applyThemeChoice(THEME_LIGHT);
+      applyThemeChoice("invalid");
+      expect(document.documentElement.dataset.theme).toBeUndefined();
+    });
+  });
+
+  describe("persistThemeChoice", () => {
+    it("stores theme in localStorage", () => {
+      persistThemeChoice(THEME_DARK);
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe(THEME_DARK);
+    });
+  });
+
+  describe("clearPersistedTheme", () => {
+    it("removes theme from localStorage", () => {
+      localStorage.setItem(THEME_STORAGE_KEY, THEME_LIGHT);
+      clearPersistedTheme();
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
+    });
+  });
+
+  describe("getCSSVariable", () => {
+    it("returns empty string for missing variable", () => {
+      const result = getCSSVariable("--nonexistent-var");
+      expect(result).toBe("");
+    });
+
+    it("adds -- prefix if missing", () => {
+      // Should not throw
+      expect(() => getCSSVariable("test-var")).not.toThrow();
+    });
+  });
+
+  describe("setCSSVariable", () => {
+    it("sets CSS variable on element", () => {
+      const el = document.createElement("div");
+      setCSSVariable("--test-color", "red", el);
+      expect(el.style.getPropertyValue("--test-color")).toBe("red");
+    });
+
+    it("adds -- prefix if missing", () => {
+      const el = document.createElement("div");
+      setCSSVariable("test-spacing", "10px", el);
+      expect(el.style.getPropertyValue("--test-spacing")).toBe("10px");
+    });
+  });
+
+  describe("updateThemeToggleButton", () => {
+    it("updates button attributes", () => {
+      const button = document.createElement("button");
+      updateThemeToggleButton(button, THEME_LIGHT);
+      expect(button.textContent).toContain("Dark");
+      expect(button.getAttribute("aria-pressed")).toBe("true");
+      expect(button.dataset.nextTheme).toBe(THEME_DARK);
+    });
+
+    it("handles null button gracefully", () => {
+      expect(() => updateThemeToggleButton(null, THEME_LIGHT)).not.toThrow();
     });
   });
 });
