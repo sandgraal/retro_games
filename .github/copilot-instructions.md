@@ -64,16 +64,17 @@ Game records use these columns (track these constants in `app/main.js`):
 | `app/ui/grid.js`      | 453   | Game grid rendering helpers    | `normalizeCoverUrl()`, `resolveCoverUrl()`, `STATUS_CLASSES`, `STATUS_DISPLAY_LABELS`, placeholders |
 | `app/ui/carousel.js`  | 313   | Carousel scroll calculations   | `calculateScrollStep()`, `computeButtonStates()`, trending pick helpers, ARIA helpers               |
 | `app/ui/theme.js`     | 259   | Theme & motion preferences     | `getPreferredTheme()`, `applyThemeChoice()`, `prefersReducedMotion()`, motion preference helpers    |
-| `app/ui/modal.js`     | 240   | Modal metadata helpers         | `buildMetadataCard()`, `calculateGalleryIndex()`, focus trap helpers (TODO: wire to grid)           |
+| `app/ui/modal.js`     | 551   | Modal metadata & rendering     | `buildMetadataCard()`, `openModal()`, `closeModal()`, `setupModalHandlers()`, focus trap helpers    |
 | `app/ui/filters.js`   | 232   | Filter UI builders             | `extractUniquePlatforms()`, `extractUniqueGenres()`, `buildSelectOptions()`, dropdown builders      |
 
-### Feature Modules (`app/features/` - 6 modules, 1,646 lines)
+### Feature Modules (`app/features/` - 7 modules, 1,900 lines)
 
 | File                             | Lines | Purpose                   | Key Exports                                                                                    |
 | -------------------------------- | ----- | ------------------------- | ---------------------------------------------------------------------------------------------- |
 | `app/features/virtualization.js` | 371   | Virtual scrolling helpers | `computeVirtualWindow()`, `updateVirtualScrollState()`, `VIRTUALIZE_MIN_ITEMS`, scroll helpers |
 | `app/features/filtering.js`      | 342   | Filter predicates         | `rowMatchesPlatform()`, `rowMatchesGenre()`, `rowMatchesStatus()`, `detectRegion()`            |
 | `app/features/search.js`         | 282   | Search & typeahead        | `normalizeSearchQuery()`, `scoreSearchMatch()`, `buildSearchPredicate()`, typeahead constants  |
+| `app/features/seo.js`            | 265   | JSON-LD structured data   | `updateStructuredData()`, `mapGameToVideoGameSchema()`, `buildStructuredDataPayload()`         |
 | `app/features/pagination.js`     | 220   | Pagination calculations   | `computePageRange()`, `computePageWindowRange()`, `PAGE_SIZE_CHOICES`, page size constants     |
 | `app/features/sharing.js`        | 219   | Share codes & export      | `encodeSharePayload()`, `decodeSharePayload()`, `buildBackupPayload()`, CSV export helpers     |
 | `app/features/sorting.js`        | 212   | Sort comparators          | `buildSortComparator()`, `parseSortConfig()`, `SORT_OPTIONS`, column constants                 |
@@ -179,7 +180,7 @@ Filter changes trigger `applyFilters()` → `renderGrid()` for full re-render. S
 - Status badge overlay (if applicable)
 - Hover overlay with title, platform, rating, genre
 - Quick action buttons (Add to Collection, Wishlist, etc.)
-- Click card → `openGameModal(game, gameKey)` (TODO: wire modal)
+- Click card → `openGameModal(game, gameKey)` dispatches event, `openModal()` handles it
 - Quick actions → dispatch `gameStatusChange` event → update localStorage
 
 ### Dashboard Stats (app/ui/dashboard.js)
