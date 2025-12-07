@@ -1,8 +1,8 @@
 // @ts-check
 
 /*
-  Sandgraal's Game List
-  Author: Chris Sandgraal
+  Dragon's Hoard Atlas
+  Author: Retro Games Team
   Github: https://github.com/sandgraal/retro_games
   Description: Retro ROM tracker and game explorer.
   2024-06
@@ -3905,7 +3905,7 @@ function updateStructuredData(data) {
   const payload = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Sandgraal's Game List – Collector Spotlight",
+    name: "Dragon's Hoard Atlas – Collector Spotlight",
     description:
       "Curated retro highlights with platform, genre, and community rating data.",
     itemListElement: listItems,
@@ -3994,7 +3994,7 @@ function mapRowToVideoGameSchema(entry, origin) {
     url: url || origin || "",
     gamePlatform: platform || undefined,
     genre: genreList && genreList.length ? genreList : undefined,
-    description: `${name} on ${platform} tracked in Sandgraal's retro collection.`,
+    description: `${name} on ${platform} tracked in the Dragon's Hoard Atlas.`,
   };
   if (releaseYear) {
     videoGame.datePublished = `${releaseYear}-01-01`;
@@ -4015,7 +4015,7 @@ function mapRowToVideoGameSchema(entry, origin) {
       name: `${name} community rating`,
       author: {
         "@type": "Organization",
-        name: "Sandgraal's Game List",
+        name: "Dragon's Hoard Atlas",
       },
       datePublished: new Date().toISOString().split("T")[0],
       reviewBody: `${name} on ${platform} earns a ${rating}/10 score from collectors.`,
