@@ -52,8 +52,8 @@ _Last updated: January 2025_
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
 - **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 496 tests passing
 - **Price data integration**: Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: ✅ 496 tests passing; @vitest/coverage-v8 installed (62.56% statements)
-- **Feature completion**: Virtualization helpers extracted; needs DOM wiring for 10k+ games
+- **Test coverage**: ✅ 614 tests passing; @vitest/coverage-v8 installed (72.85% statements)
+- **Feature completion**: ✅ Virtualization wired to grid, renders only visible cards for 80+ games
 
 ### Technical Debt
 
@@ -81,13 +81,13 @@ _Last updated: January 2025_
 
 1. ~~**Complete Modal Integration** - Wire modal component to game card clicks~~ ✅ Done
 2. ~~**Install Coverage Tooling** - Add @vitest/coverage-v8 to track test coverage metrics~~ ✅ Done
-3. **Wire Virtualization** - Connect extracted `features/virtualization.js` to grid rendering
+3. ~~**Wire Virtualization** - Connect extracted `features/virtualization.js` to grid rendering~~ ✅ Done
 
 **Medium Priority**:
 
 4. **Price Data Integration** - Complete PriceCharting integration for dashboard and modal
 5. **Performance Testing** - Test with 10k+ game datasets to validate virtualization
-6. **Media Workflow** - Automated cover import and archival tooling (scripts/audit-missing-covers.js)
+6. **Media Workflow** - Automated cover import and archival tooling (scripts/audit-missing-covers.js ✅)
 
 **Lower Priority**:
 
