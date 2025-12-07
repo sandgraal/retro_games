@@ -7,6 +7,20 @@
 import { escapeHtml } from "../utils/dom.js";
 import { formatRating } from "../utils/format.js";
 import { generateGameKey } from "../utils/keys.js";
+import {
+  shouldVirtualize,
+  computeVirtualRange,
+  buildVirtualMetrics,
+  estimateColumnCount,
+  calculateRowHeight,
+  createVirtualizationState,
+  VIRTUAL_DEFAULT_CARD_HEIGHT,
+  VIRTUAL_DEFAULT_CARD_WIDTH,
+  VIRTUAL_SCROLL_THROTTLE_MS,
+} from "../features/virtualization.js";
+
+// === Virtualization State ===
+let virtualState = createVirtualizationState();
 
 // === Cover URL Helpers ===
 
@@ -270,6 +284,7 @@ export function buildQuickActionsMarkup(gameKey, currentStatus) {
 
 /**
  * Render game grid with masonry layout
+ * Uses virtualization for large datasets (80+ games)
  * @param {Array} games - Games to display
  * @param {Object} owned - Owned games object
  * @param {Object} statuses - Game statuses
@@ -277,6 +292,9 @@ export function buildQuickActionsMarkup(gameKey, currentStatus) {
 export function renderGrid(games, owned = {}, statuses = {}) {
   const gridElement = document.getElementById("gameGrid");
   if (!gridElement) return;
+
+  // Clean up previous virtualization handlers
+  cleanupVirtualization();
 
   // Clear loading state
   gridElement.innerHTML = "";
@@ -286,15 +304,183 @@ export function renderGrid(games, owned = {}, statuses = {}) {
     return;
   }
 
-  // Render game cards
-  games.forEach((game, index) => {
-    const gameKey = generateGameKey(game.game_name, game.platform);
-    const card = createGameCard(game, gameKey, owned, statuses, index);
-    gridElement.appendChild(card);
+  // Check if virtualization should be used
+  if (shouldVirtualize(games.length)) {
+    renderVirtualGrid(gridElement, games, owned, statuses);
+  } else {
+    // Standard rendering for small datasets
+    games.forEach((game, index) => {
+      const gameKey = generateGameKey(game.game_name, game.platform);
+      const card = createGameCard(game, gameKey, owned, statuses, index);
+      gridElement.appendChild(card);
+    });
+    animateCards();
+  }
+}
+
+/**
+ * Render virtualized grid for large datasets
+ * @param {HTMLElement} gridElement - Grid container
+ * @param {Array} games - Games to display
+ * @param {Object} owned - Owned games object
+ * @param {Object} statuses - Game statuses
+ */
+function renderVirtualGrid(gridElement, games, owned, statuses) {
+  // Store source data for re-renders
+  virtualState.sourceData = games;
+  virtualState.active = true;
+
+  // Get grid dimensions
+  const containerWidth = gridElement.clientWidth;
+  const gap = parseFloat(getComputedStyle(gridElement).gap) || 16;
+
+  // Calculate metrics
+  const columns = estimateColumnCount(containerWidth, VIRTUAL_DEFAULT_CARD_WIDTH, gap);
+  const rowHeight = calculateRowHeight(VIRTUAL_DEFAULT_CARD_HEIGHT, gap);
+
+  virtualState.columns = columns;
+  virtualState.rowHeight = rowHeight;
+  virtualState.gridGap = gap;
+
+  // Calculate total content height
+  const totalRows = Math.ceil(games.length / columns);
+  const totalHeight = totalRows * rowHeight;
+
+  // Set container height to enable scrolling
+  gridElement.style.height = `${totalHeight}px`;
+  gridElement.style.position = "relative";
+
+  // Create wrapper for actual cards
+  let wrapper = gridElement.querySelector(".virtual-grid-wrapper");
+  if (!wrapper) {
+    wrapper = document.createElement("div");
+    wrapper.className = "virtual-grid-wrapper";
+    wrapper.style.cssText =
+      "display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; position: absolute; left: 0; right: 0;";
+    gridElement.appendChild(wrapper);
+  }
+
+  // Initial render
+  updateVirtualGridItems(wrapper, games, owned, statuses, 0);
+
+  // Set up scroll handler
+  const scrollHandler = throttle(() => {
+    if (!virtualState.active) return;
+
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const viewportHeight = window.innerHeight;
+    const containerTop = gridElement.getBoundingClientRect().top + scrollTop;
+
+    updateVirtualGridItems(wrapper, games, owned, statuses, scrollTop, {
+      containerTop,
+      viewportHeight,
+    });
+  }, VIRTUAL_SCROLL_THROTTLE_MS);
+
+  // Set up resize handler
+  const resizeHandler = throttle(() => {
+    if (!virtualState.active) return;
+
+    const newWidth = gridElement.clientWidth;
+    const newColumns = estimateColumnCount(newWidth, VIRTUAL_DEFAULT_CARD_WIDTH, gap);
+
+    if (newColumns !== virtualState.columns) {
+      virtualState.columns = newColumns;
+      const newTotalRows = Math.ceil(games.length / newColumns);
+      gridElement.style.height = `${newTotalRows * rowHeight}px`;
+      scrollHandler();
+    }
+  }, 200);
+
+  window.addEventListener("scroll", scrollHandler, { passive: true });
+  window.addEventListener("resize", resizeHandler, { passive: true });
+
+  virtualState.scrollHandler = scrollHandler;
+  virtualState.resizeHandler = resizeHandler;
+
+  // Trigger initial scroll update
+  scrollHandler();
+}
+
+/**
+ * Update visible items in virtual grid
+ */
+function updateVirtualGridItems(
+  wrapper,
+  games,
+  owned,
+  statuses,
+  scrollTop,
+  options = {}
+) {
+  const {
+    containerTop = wrapper.parentElement?.getBoundingClientRect().top + scrollTop || 0,
+    viewportHeight = window.innerHeight,
+  } = options;
+
+  const metrics = buildVirtualMetrics({
+    rowHeight: virtualState.rowHeight,
+    columns: virtualState.columns,
+    gap: virtualState.gridGap,
   });
 
-  // Add stagger animation
-  animateCards();
+  const range = computeVirtualRange({
+    dataLength: games.length,
+    scrollTop,
+    containerTop,
+    viewportHeight,
+    metrics,
+  });
+
+  // Position wrapper
+  wrapper.style.top = `${range.topPadding}px`;
+
+  // Only re-render if range changed
+  if (
+    range.start !== virtualState.visibleStart ||
+    range.end !== virtualState.visibleEnd
+  ) {
+    virtualState.visibleStart = range.start;
+    virtualState.visibleEnd = range.end;
+
+    // Clear and render visible items
+    wrapper.innerHTML = "";
+    const visibleGames = games.slice(range.start, range.end);
+
+    visibleGames.forEach((game, i) => {
+      const actualIndex = range.start + i;
+      const gameKey = generateGameKey(game.game_name, game.platform);
+      const card = createGameCard(game, gameKey, owned, statuses, actualIndex);
+      wrapper.appendChild(card);
+    });
+  }
+}
+
+/**
+ * Clean up virtualization handlers
+ */
+function cleanupVirtualization() {
+  if (virtualState.scrollHandler) {
+    window.removeEventListener("scroll", virtualState.scrollHandler);
+  }
+  if (virtualState.resizeHandler) {
+    window.removeEventListener("resize", virtualState.resizeHandler);
+  }
+  virtualState = createVirtualizationState();
+}
+
+/**
+ * Throttle function for scroll/resize handlers
+ */
+function throttle(fn, wait) {
+  let lastTime = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - lastTime >= wait) {
+      lastTime = now;
+      fn.apply(this, args);
+    }
+  };
 }
 
 /**
