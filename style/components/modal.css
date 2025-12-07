@@ -20,6 +20,11 @@
   animation: fadeIn var(--duration-medium) var(--easing-default) forwards;
 }
 
+/* Ensure hidden attribute works with display:flex */
+.modal-backdrop[hidden] {
+  display: none !important;
+}
+
 @keyframes fadeIn {
   to {
     opacity: 1;
