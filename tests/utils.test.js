@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, beforeEach } from "vitest";
 
 import { escapeHtml } from "../app/utils/dom.js";
 import {
@@ -18,6 +18,19 @@ import {
   sanitizeForId,
   isValidTheme,
 } from "../app/utils/validation.js";
+import {
+  STATUS_NONE,
+  STATUS_OWNED,
+  STATUS_WISHLIST,
+  getStatusForKey,
+  setStatusForKey,
+  getNoteForKey,
+  setNoteForKey,
+  getActiveStatusMap,
+  setImportedCollection,
+  hasImportedCollection,
+  resetState,
+} from "../app/state/collection.js";
 
 describe("dom utilities", () => {
   it("escapes HTML special characters", () => {
@@ -153,5 +166,63 @@ describe("validation utilities", () => {
     expect(isValidTheme("auto")).toBe(false);
     expect(isValidTheme(null)).toBe(false);
     expect(isValidTheme("")).toBe(false);
+  });
+});
+
+describe("collection state", () => {
+  beforeEach(() => {
+    resetState();
+  });
+
+  it("getStatusForKey returns STATUS_NONE for unknown keys", () => {
+    expect(getStatusForKey("unknown___key")).toBe(STATUS_NONE);
+  });
+
+  it("setStatusForKey and getStatusForKey work together", () => {
+    setStatusForKey("Chrono Trigger___SNES", STATUS_OWNED);
+    expect(getStatusForKey("Chrono Trigger___SNES")).toBe(STATUS_OWNED);
+
+    setStatusForKey("Chrono Trigger___SNES", STATUS_WISHLIST);
+    expect(getStatusForKey("Chrono Trigger___SNES")).toBe(STATUS_WISHLIST);
+  });
+
+  it("setStatusForKey removes when set to STATUS_NONE", () => {
+    setStatusForKey("Game___Platform", STATUS_OWNED);
+    expect(getStatusForKey("Game___Platform")).toBe(STATUS_OWNED);
+
+    setStatusForKey("Game___Platform", STATUS_NONE);
+    expect(getStatusForKey("Game___Platform")).toBe(STATUS_NONE);
+  });
+
+  it("getNoteForKey returns empty string for unknown keys", () => {
+    expect(getNoteForKey("unknown___key")).toBe("");
+  });
+
+  it("setNoteForKey and getNoteForKey work together", () => {
+    setNoteForKey("Game___Platform", "My note");
+    expect(getNoteForKey("Game___Platform")).toBe("My note");
+
+    setNoteForKey("Game___Platform", "   Updated note   ");
+    expect(getNoteForKey("Game___Platform")).toBe("Updated note");
+  });
+
+  it("setNoteForKey removes when set to empty", () => {
+    setNoteForKey("Game___Platform", "A note");
+    setNoteForKey("Game___Platform", "");
+    expect(getNoteForKey("Game___Platform")).toBe("");
+  });
+
+  it("imported collection overrides active status map", () => {
+    setStatusForKey("Game___Platform", STATUS_OWNED);
+    expect(hasImportedCollection()).toBe(false);
+    expect(getActiveStatusMap()["Game___Platform"]).toBe(STATUS_OWNED);
+
+    const imported = { Other___Game: STATUS_WISHLIST };
+    setImportedCollection(imported);
+    expect(hasImportedCollection()).toBe(true);
+    expect(getActiveStatusMap()).toBe(imported);
+
+    setImportedCollection(null);
+    expect(hasImportedCollection()).toBe(false);
   });
 });
