@@ -12,11 +12,18 @@
 - Vanilla JS/CSS/HTML; no build step or frameworks
 - Optional Supabase backend for cloud data; gracefully falls back to sample JSON
 
+**Design System (December 2025):**
+
+- Color Palette: Museum darks (#0a0e14, #14181f, #1a1f29), PS2 cyan (#00d4ff)
+- Typography: Rajdhani (display), Inter (body), Space Mono (monospace)
+- Layout: Hero dashboard → Masonry grid → Filters sidebar → Mobile nav
+- Effects: Glassmorphism, smooth animations, micro-interactions
+
 ## Data Architecture
 
 ### Column Model (from games.csv and Supabase)
 
-Game records use these columns (track these constants in `app.js`):
+Game records use these columns (track these constants in `app/main.js`):
 
 - `game_name`, `platform`, `genre`, `cover` (image URL), `rating`, plus flexible metadata (release year, region, player mode, etc.)
 - Genre field stores comma-separated values for filtering (e.g., "RPG, Tactical RPG")
@@ -24,8 +31,8 @@ Game records use these columns (track these constants in `app.js`):
 
 ### Data Flow
 
-1. **Load Phase**: `fetchGames()` attempts Supabase; if credentials missing, falls back to CSV
-2. **Memory**: All games cached in `rawData` array (never re-fetched during session)
+1. **Load Phase**: `bootstrapNewUI()` in `app/main.js` attempts Supabase; if credentials missing, falls back to `data/sample-games.json`
+2. **Memory**: All games cached in `window.__GAMES_DATA__` array (never re-fetched during session)
 3. **Filters Applied**: `applyFilters()` chains platform/genre/search predicates, then applies owned-collection filter
 4. **State Persistence**: User's owned games saved to `localStorage[STORAGE_KEY]` (JSON of `{gameKey: true, ...}`)
    - Game key format: `gameName___platformName` (compound key prevents duplicates across platforms)
@@ -37,68 +44,123 @@ Game records use these columns (track these constants in `app.js`):
 
 ## File Responsibilities
 
-| File                     | Purpose                          | Patterns                                                                                     |
-| ------------------------ | -------------------------------- | -------------------------------------------------------------------------------------------- |
-| `index.html`             | DOM scaffold, semantic structure | Hero dashboard, masonry grid, filters sidebar, mobile nav; Supabase JS loaded via CDN        |
-| `app/main.js`            | Application bootstrap            | Loads data (Supabase → sample JSON fallback), initializes UI modules, sets up event handlers |
-| `app/ui/dashboard.js`    | Dashboard stats & rendering      | `calculateStats()`, `updateDashboard()`, `animateNumber()` - 6 stat cards with animations    |
-| `app/ui/grid.js`         | Game grid rendering              | `renderGrid()`, `createGameCard()`, masonry layout, quick actions, loading skeletons         |
-| `app/utils/*.js`         | Utility functions                | DOM helpers, formatting, game key generation (`gameName___platformName`)                     |
-| `style.css`              | Master stylesheet                | Imports modular CSS from `style/` directory                                                  |
-| `style/tokens.css`       | Design system tokens             | CSS custom properties: colors, typography, spacing, shadows, animations                      |
-| `style/components/*.css` | Component styles                 | Dashboard, grid, filters, modal, cards - all glassmorphism & PS2 aesthetic                   |
-| `config.js`              | Supabase credentials             | Generated from `.env` via `npm run build:config`; `.gitignore` protects it                   |
-| `data/sample-games.json` | Fallback offline data            | Full JSON dataset when Supabase unavailable                                                  |
+| File                      | Purpose                          | Patterns                                                                                     |
+| ------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `index.html`              | DOM scaffold, semantic structure | Hero dashboard, masonry grid, filters sidebar, mobile nav; Supabase JS loaded via CDN        |
+| `app/main.js`             | Application bootstrap            | Loads data (Supabase → sample JSON fallback), initializes UI modules, sets up event handlers |
+| `app/ui/dashboard.js`     | Dashboard stats & rendering      | `calculateStats()`, `updateDashboard()`, `animateNumber()` - 6 stat cards with animations    |
+| `app/ui/grid.js`          | Game grid rendering              | `renderGrid()`, `createGameCard()`, masonry layout, quick actions, loading skeletons         |
+| `app/ui/carousel.js`      | Featured games carousel          | Recent additions display on dashboard                                                        |
+| `app/ui/filters.js`       | Filter UI interactions           | Platform/genre/search filter handlers                                                        |
+| `app/ui/modal.js`         | Game detail modal                | Modal interactions, metadata display (TODO: wire to grid clicks)                             |
+| `app/ui/theme.js`         | Theme switching                  | Light/dark/auto theme management                                                             |
+| `app/utils/dom.js`        | DOM utilities                    | Element creation, event delegation helpers                                                   |
+| `app/utils/format.js`     | Formatting helpers               | `formatCurrency()`, `formatRating()`, `formatNumber()`                                       |
+| `app/utils/keys.js`       | Game key generation              | `generateGameKey()` creates compound keys (`gameName___platformName`)                        |
+| `app/utils/validation.js` | Input validation                 | Data validation helpers                                                                      |
+| `app/design/tokens.js`    | Design tokens in JavaScript      | JS constants matching CSS custom properties                                                  |
+| `style.css`               | Master stylesheet                | Imports modular CSS from `style/` directory                                                  |
+| `style/tokens.css`        | Design system tokens             | CSS custom properties: colors, typography, spacing, shadows, animations                      |
+| `style/base.css`          | Base styles                      | Typography, reset, global element styles                                                     |
+| `style/utilities.css`     | Utility classes                  | Layout helpers, spacing, typography utilities                                                |
+| `style/components/*.css`  | Component styles                 | Dashboard, grid, filters, modal, cards - all glassmorphism & PS2 aesthetic                   |
+| `config.js`               | Supabase credentials             | Generated from `.env` via `npm run build:config`; `.gitignore` protects it                   |
+| `data/sample-games.json`  | Fallback offline data            | Full JSON dataset when Supabase unavailable                                                  |
+| `archive/app-legacy.js`   | Legacy monolithic code           | 5,940-line original app.js - archived for test reference only                                |
 
 ## Critical Patterns
 
 ### Data Loading & Bootstrap (app/main.js)
 
-1. Load localStorage state (`roms_owned`, `rom_notes`, `roms_wishlist`, etc.)
-2. Try Supabase connection with `window.__SUPABASE_CONFIG__`
-3. Fallback to `data/sample-games.json` if Supabase unavailable
-4. Store data in `window.__GAMES_DATA__` for filter operations
-5. Calculate stats and render dashboard
-6. Setup filters with platform/genre options
-7. Render grid with masonry layout
-8. Setup event handlers
+The `bootstrapNewUI()` function coordinates application startup:
 
-### Filtering Logic (app/main.js ~line 180)
+1. Show loading skeletons immediately (`showLoadingSkeletons()`)
+2. Load localStorage state (`roms_owned`, `rom_notes`, `roms_wishlist`, `roms_backlog`, `roms_trade`)
+3. Try Supabase connection with `window.__SUPABASE_CONFIG__`
+   - Create Supabase client if credentials available
+   - Query `games` table with `select("*").order("game_name", { ascending: true })`
+4. Fallback to `data/sample-games.json` if Supabase unavailable or errors
+5. Store data in global variables:
+   - `window.__GAMES_DATA__` - All games array
+   - `window.__OWNED_DATA__` - Owned games object
+   - `window.__STATUSES_DATA__` - Wishlist/backlog/trade objects
+   - `window.__NOTES_DATA__` - Game notes object
+6. Calculate stats with `calculateStats(games, owned, statuses)`
+7. Render dashboard with `updateDashboard(stats)`
+8. Setup filters with `setupFilters(games)` - populate platform/genre options
+9. Render grid with `renderGrid(games, owned, statuses)`
+10. Setup event handlers:
+    - `setupQuickActions()` - Quick action buttons on cards
+    - `setupFilterHandlers()` - Filter change listeners
+    - `setupMobileNavigation()` - Mobile nav toggle
+11. Show status message if using sample data
 
-All filters compose with AND logic:
+### Filtering Logic (app/main.js)
 
-- Platform filter (checkbox selection, exact match)
-- Genre filter (checkbox selection, checks comma-separated genre field)
-- Search filter (case-insensitive substring across all game fields)
-- Status filter (owned/wishlist/backlog/trade from localStorage)
-- Sort options (name, rating, year, value)
+The `applyFilters()` function chains predicates with AND logic:
 
-Updates trigger full grid re-render. Debounced search (300ms).
+1. **Platform filter**: Checkbox selection, exact match on `game.platform`
+2. **Genre filter**: Checkbox selection, checks comma-separated `game.genre` field
+3. **Search filter**: Case-insensitive substring match across `game_name`, `platform`, `genre`, and other fields
+4. **Status filter**: Matches owned/wishlist/backlog/trade from localStorage
+5. **Sort options**: Name (alphabetical), rating (numeric), year, value
+
+Filter changes trigger `applyFilters()` → `renderGrid()` for full re-render. Search input is debounced (300ms).
+
+**Key functions:**
+
+- `setupFilters(games)` - Populate filter options from game data
+- `setupFilterHandlers()` - Attach event listeners to filter inputs
+- `applyFilters()` - Chain filter predicates and return filtered array
+- `renderGrid(filteredGames, owned, statuses)` - Re-render grid with filtered data
 
 ### Grid Rendering (app/ui/grid.js)
 
-- `renderGrid(games, owned, statuses)` - Main rendering function
-- `createGameCard(game, gameKey, owned, statuses)` - Individual card creation
-- Cards show cover art, title, platform, hover overlay with quick actions
-- Status badges (Owned, Wishlist, etc.) shown on cards
-- Click card → dispatch `openGameModal` event (to be wired)
-- Quick action buttons → dispatch `gameStatusChange` event → update localStorage
+- `renderGrid(games, owned, statuses)` - Main rendering function, clears grid and renders all cards
+- `createGameCard(game, gameKey, owned, statuses, index)` - Individual card creation with proper ARIA
+- `showLoadingSkeletons()` - Display skeleton cards during data load
+- `renderEmptyState(gridElement)` - Show message when no games match filters
+- `animateCards()` - Stagger animation for card entrance
+- `getGameStatus(gameKey, owned, statuses)` - Determine status badge (owned/wishlist/backlog/trade)
+- `renderQuickActions(gameKey, status)` - Generate quick action buttons based on status
+
+**Card Structure:**
+
+- Cover image with lazy loading
+- Status badge overlay (if applicable)
+- Hover overlay with title, platform, rating, genre
+- Quick action buttons (Add to Collection, Wishlist, etc.)
+- Click card → `openGameModal(game, gameKey)` (TODO: wire modal)
+- Quick actions → dispatch `gameStatusChange` event → update localStorage
 
 ### Dashboard Stats (app/ui/dashboard.js)
 
-- `calculateStats(games, owned, statuses)` - Compute metrics from game data
+- `calculateStats(games, owned, statuses)` - Compute metrics from game data (total, owned, wishlist, backlog, trade counts, platform breakdown, collection value, recent additions)
 - `updateDashboard(stats)` - Render 6 stat cards with animated numbers
-- `animateNumber(element, start, end, duration)` - Count-up animation
-- Stats: Total Games, Owned, Wishlist, Backlog, Trade, Completion %
-- Progress bars for Owned and Backlog cards
+- `updateOwnedCard(stats)` - Owned games count with platform breakdown and progress bar
+- `updateValueCard(stats)` - Collection value with trend indicator
+- `updateRecentAdditionsCard(stats)` - Recent additions count with carousel
+- `updateWishlistCard(stats)` - Wishlist count and details
+- `updateBacklogCard(stats)` - Backlog count with progress bar
+- `animateNumber(element, start, end, duration)` - Count-up animation with easing
+
+**Dashboard Cards:**
+
+1. **Total Games** - Database total count
+2. **Owned** - User's collection with platform breakdown and % of total
+3. **Collection Value** - Estimated value with trend indicator
+4. **Recent Additions** - Latest 5 games with cover carousel
+5. **Wishlist** - Games to acquire
+6. **Backlog** - Games to play with progress tracking
 
 ### State Persistence
 
 - `localStorage[STORAGE_KEY]` - `roms_owned` JSON object `{gameKey: true}`
-- Game key format: `gameName___platformName` (triple underscore)
+- Game key format: `gameName___platformName` (triple underscore) - generated by `generateGameKey()` in `app/utils/keys.js`
 - Other keys: `rom_notes`, `roms_wishlist`, `roms_backlog`, `roms_trade`
 - Events dispatch `gameStatusChange` with `{gameKey, action}` details
 - Listeners update localStorage and refresh UI
+- Compound keys prevent collisions across platforms (e.g., "Final Fantasy VII**_PS1" vs "Final Fantasy VII_**PC")
 
 ## Build, Test, and Development Commands
 
@@ -160,9 +222,9 @@ python -m http.server 8080
 **Offline Development:**
 To test without Supabase:
 
-1. Comment out `fetchGames()` call in app.js tail
-2. Manually populate `rawData` with parsed CSV or mock data
-3. Supabase fallback warning will appear but app loads from CSV
+1. Remove or leave empty `.env` file (Supabase credentials missing)
+2. App automatically falls back to `data/sample-games.json`
+3. Status message appears: "Showing sample dataset. Configure Supabase for cloud sync."
 
 **Debugging Checklist:**
 
