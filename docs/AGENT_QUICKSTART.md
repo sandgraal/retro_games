@@ -64,11 +64,11 @@ retro_games/
 ├── index.html                      # Main entry point
 ├── style.css                       # Master stylesheet (imports)
 ├── app/
-│   ├── main-redesign.js           # Bootstrap
+│   ├── main.js                    # Bootstrap
 │   ├── design/tokens.js           # Design tokens
 │   ├── ui/                        # UI modules
-│   │   ├── dashboard-new.js
-│   │   └── grid-new.js
+│   │   ├── dashboard.js
+│   │   └── grid.js
 │   └── utils/                     # Utilities
 │       ├── dom.js
 │       ├── format.js

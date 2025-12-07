@@ -23,3 +23,17 @@ test-results/
 
 # Price data cache
 data/pricecharting-cache.json
+
+# Temporary/backup files from development
+*-new.*
+*-backup.*
+*-old.*
+*-temp.*
+*.bak
+*.tmp
+
+# Python virtual environment
+.venv/
+__pycache__/
+*.pyc
+

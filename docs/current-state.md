@@ -6,7 +6,7 @@ _Last updated: December 7, 2025_
 
 - Single-page application served as static assets with modular ES6 JavaScript.
 - **Museum-quality redesign** (December 2025): Complete visual overhaul from retro arcade to PS2-era sophistication with glassmorphism, masonry grid, and modern design system.
-- Vanilla JavaScript with modular structure: `app/main-redesign.js` bootstraps UI modules (`ui/dashboard-new.js`, `ui/grid-new.js`, etc.).
+- Vanilla JavaScript with modular structure: `app/main.js` bootstraps UI modules (`ui/dashboard.js`, `ui/grid.js`, etc.).
 - Supabase acts as the backing data store with graceful fallback to `data/sample-games.json`.
 - No build tooling or bundler; modular CSS architecture with design tokens in `style/` directory.
 - See [`docs/architecture.md`](./architecture.md) for complete technical documentation.
@@ -46,7 +46,7 @@ _Last updated: December 7, 2025_
 ### Current Focus Areas
 
 - **Modal integration**: Wire new modal component to game card clicks
-- **Legacy cleanup**: Old `app.js` (5,940 lines) still exists but unused - can be archived
+- **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
 - **Price data integration**: Complete PriceCharting API integration for modal and dashboard
 - **Test coverage**: Increase from ~12% to 60%+ target
 - **Feature completion**: Virtualization for very large datasets (10k+ games)

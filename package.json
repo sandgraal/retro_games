@@ -2,14 +2,14 @@
   "name": "retro_games",
   "version": "1.0.0",
   "description": "WIP: A fast, private, and no-nonsense tracker for classic and retro games. A place for retro gamers to get their fix.",
-  "main": "app.js",
+  "main": "app/main.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
     "build:config": "node scripts/generate-config.js",
-    "lint": "eslint app.js app scripts",
-    "lint:fix": "eslint app.js app scripts --fix",
+    "lint": "eslint app scripts",
+    "lint:fix": "eslint app scripts --fix",
     "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
     "format:check": "prettier --check \"**/*.{js,json,md,css,html}\"",
     "test": "vitest run",

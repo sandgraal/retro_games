@@ -33,8 +33,8 @@ Work is organized into five build phases plus operational cadences. Each phase i
 
 - Complete visual redesign from retro arcade to museum-quality gallery aesthetic
 - Modular CSS architecture with design tokens in `style/` directory
-- ES6 module structure with `app/main-redesign.js` bootstrap
-- New UI modules: `ui/dashboard-new.js`, `ui/grid-new.js`
+- ES6 module structure with `app/main.js` bootstrap
+- New UI modules: `ui/dashboard.js`, `ui/grid.js`
 - Glassmorphism design system with PS2 cyan accents
 - Masonry grid layout for game showcase
 - 6-card hero dashboard with animated stats

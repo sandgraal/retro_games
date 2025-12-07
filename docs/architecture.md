@@ -25,12 +25,12 @@ retro_games/
 ├── config.js                       # Supabase config (generated from .env)
 │
 ├── app/
-│   ├── main-redesign.js           # Application bootstrap
+│   ├── main.js                    # Application bootstrap
 │   ├── design/
 │   │   └── tokens.js              # Design tokens in JavaScript
 │   ├── ui/
-│   │   ├── dashboard-new.js       # Dashboard stats & rendering
-│   │   ├── grid-new.js            # Game grid rendering
+│   │   ├── dashboard.js           # Dashboard stats & rendering
+│   │   ├── grid.js                # Game grid rendering
 │   │   ├── carousel.js            # Featured games carousel
 │   │   ├── modal.js               # Game detail modal
 │   │   └── theme.js               # Theme switching

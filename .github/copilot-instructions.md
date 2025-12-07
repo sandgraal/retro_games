@@ -37,22 +37,22 @@ Game records use these columns (track these constants in `app.js`):
 
 ## File Responsibilities
 
-| File                      | Purpose                          | Patterns                                                                                     |
-| ------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
-| `index.html`              | DOM scaffold, semantic structure | Hero dashboard, masonry grid, filters sidebar, mobile nav; Supabase JS loaded via CDN        |
-| `app/main-redesign.js`    | Application bootstrap            | Loads data (Supabase → sample JSON fallback), initializes UI modules, sets up event handlers |
-| `app/ui/dashboard-new.js` | Dashboard stats & rendering      | `calculateStats()`, `updateDashboard()`, `animateNumber()` - 6 stat cards with animations    |
-| `app/ui/grid-new.js`      | Game grid rendering              | `renderGrid()`, `createGameCard()`, masonry layout, quick actions, loading skeletons         |
-| `app/utils/*.js`          | Utility functions                | DOM helpers, formatting, game key generation (`gameName___platformName`)                     |
-| `style.css`               | Master stylesheet                | Imports modular CSS from `style/` directory                                                  |
-| `style/tokens.css`        | Design system tokens             | CSS custom properties: colors, typography, spacing, shadows, animations                      |
-| `style/components/*.css`  | Component styles                 | Dashboard, grid, filters, modal, cards - all glassmorphism & PS2 aesthetic                   |
-| `config.js`               | Supabase credentials             | Generated from `.env` via `npm run build:config`; `.gitignore` protects it                   |
-| `data/sample-games.json`  | Fallback offline data            | Full JSON dataset when Supabase unavailable                                                  |
+| File                     | Purpose                          | Patterns                                                                                     |
+| ------------------------ | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `index.html`             | DOM scaffold, semantic structure | Hero dashboard, masonry grid, filters sidebar, mobile nav; Supabase JS loaded via CDN        |
+| `app/main.js`            | Application bootstrap            | Loads data (Supabase → sample JSON fallback), initializes UI modules, sets up event handlers |
+| `app/ui/dashboard.js`    | Dashboard stats & rendering      | `calculateStats()`, `updateDashboard()`, `animateNumber()` - 6 stat cards with animations    |
+| `app/ui/grid.js`         | Game grid rendering              | `renderGrid()`, `createGameCard()`, masonry layout, quick actions, loading skeletons         |
+| `app/utils/*.js`         | Utility functions                | DOM helpers, formatting, game key generation (`gameName___platformName`)                     |
+| `style.css`              | Master stylesheet                | Imports modular CSS from `style/` directory                                                  |
+| `style/tokens.css`       | Design system tokens             | CSS custom properties: colors, typography, spacing, shadows, animations                      |
+| `style/components/*.css` | Component styles                 | Dashboard, grid, filters, modal, cards - all glassmorphism & PS2 aesthetic                   |
+| `config.js`              | Supabase credentials             | Generated from `.env` via `npm run build:config`; `.gitignore` protects it                   |
+| `data/sample-games.json` | Fallback offline data            | Full JSON dataset when Supabase unavailable                                                  |
 
 ## Critical Patterns
 
-### Data Loading & Bootstrap (app/main-redesign.js)
+### Data Loading & Bootstrap (app/main.js)
 
 1. Load localStorage state (`roms_owned`, `rom_notes`, `roms_wishlist`, etc.)
 2. Try Supabase connection with `window.__SUPABASE_CONFIG__`
@@ -63,7 +63,7 @@ Game records use these columns (track these constants in `app.js`):
 7. Render grid with masonry layout
 8. Setup event handlers
 
-### Filtering Logic (app/main-redesign.js ~line 180)
+### Filtering Logic (app/main.js ~line 180)
 
 All filters compose with AND logic:
 
@@ -75,7 +75,7 @@ All filters compose with AND logic:
 
 Updates trigger full grid re-render. Debounced search (300ms).
 
-### Grid Rendering (app/ui/grid-new.js)
+### Grid Rendering (app/ui/grid.js)
 
 - `renderGrid(games, owned, statuses)` - Main rendering function
 - `createGameCard(game, gameKey, owned, statuses)` - Individual card creation
@@ -84,7 +84,7 @@ Updates trigger full grid re-render. Debounced search (300ms).
 - Click card → dispatch `openGameModal` event (to be wired)
 - Quick action buttons → dispatch `gameStatusChange` event → update localStorage
 
-### Dashboard Stats (app/ui/dashboard-new.js)
+### Dashboard Stats (app/ui/dashboard.js)
 
 - `calculateStats(games, owned, statuses)` - Compute metrics from game data
 - `updateDashboard(stats)` - Render 6 stat cards with animated numbers

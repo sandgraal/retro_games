@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import app from "../app.js";
+// NOTE: Tests currently use legacy app from archive/
+// TODO: Rewrite tests for new modular architecture (app/main.js, app/ui/*, app/utils/*)
+import app from "../archive/app-legacy.js";
 const getBackupPayload = app.__getBackupPayload || (() => ({}));
 
 const SAMPLE_DATA = [
