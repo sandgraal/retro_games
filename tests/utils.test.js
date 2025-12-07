@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { escapeHtml } from "../app/utils/dom.js";
-import { formatCurrency, formatNumber, formatRating } from "../app/utils/format.js";
+import {
+  formatCurrency,
+  formatNumber,
+  formatRating,
+  formatPercent,
+  formatFieldLabel,
+  timeAgo,
+  formatAbsoluteDate,
+  formatRelativeDate,
+} from "../app/utils/format.js";
 import { generateGameKey, parseGameKey } from "../app/utils/keys.js";
 import {
   parseYear,
@@ -43,6 +52,46 @@ describe("format utilities", () => {
   it("formats ratings to one decimal place", () => {
     expect(formatRating("9.432")).toBe("9.4");
     expect(formatRating(null)).toBe("N/A");
+  });
+
+  it("formatPercent handles various values", () => {
+    expect(formatPercent(50, 100)).toBe("50%");
+    expect(formatPercent(0.5, 100)).toBe("<1%");
+    expect(formatPercent(5.5, 100)).toBe("5.5%");
+    expect(formatPercent(0, 0)).toBe("0%");
+    expect(formatPercent(null, 100)).toBe("0%");
+  });
+
+  it("formatFieldLabel converts various formats", () => {
+    expect(formatFieldLabel("game_name")).toBe("Game Name");
+    expect(formatFieldLabel("releaseYear")).toBe("Release Year");
+    expect(formatFieldLabel("cover-url")).toBe("Cover Url");
+    expect(formatFieldLabel("")).toBe("");
+  });
+
+  it("timeAgo produces short relative labels", () => {
+    const now = Date.now();
+    expect(timeAgo(now - 30000)).toBe("just now");
+    expect(timeAgo(now - 120000)).toBe("2m");
+    expect(timeAgo(now - 7200000)).toBe("2h");
+    expect(timeAgo(now - 172800000)).toBe("2d");
+    expect(timeAgo(null)).toBe("");
+  });
+
+  it("formatAbsoluteDate formats dates", () => {
+    const date = new Date("2024-12-25");
+    const result = formatAbsoluteDate(date);
+    expect(result).toContain("2024");
+    expect(result).toContain("Dec");
+    expect(formatAbsoluteDate(null)).toBe("");
+    expect(formatAbsoluteDate("invalid")).toBe("");
+  });
+
+  it("formatRelativeDate produces relative labels", () => {
+    const now = Date.now();
+    expect(formatRelativeDate(now - 30000)).toBe("just now");
+    expect(formatRelativeDate(new Date(now - 120000))).toBe("2m");
+    expect(formatRelativeDate(null)).toBe("");
   });
 });
 
