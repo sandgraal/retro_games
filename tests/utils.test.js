@@ -69,7 +69,12 @@ import {
   getCacheSize,
   clearCoverCache,
   resetCacheState,
+  loadFallbackCoverCache,
+  persistFallbackCoverCache,
+  getCoverCacheStorage,
   FALLBACK_COVER_RETRY_MS,
+  FALLBACK_COVER_CACHE_KEY,
+  FALLBACK_COVER_CACHE_LIMIT,
 } from "../app/state/cache.js";
 import {
   normalizeImageUrl,
@@ -450,6 +455,101 @@ describe("cache state", () => {
 
     clearCoverCache();
     expect(getCacheSize()).toBe(0);
+  });
+
+  it("getCoverCacheStorage returns localStorage in jsdom", () => {
+    const storage = getCoverCacheStorage();
+    // In jsdom test environment, should return localStorage
+    expect(storage).toBeTruthy();
+    expect(typeof storage.getItem).toBe("function");
+    expect(typeof storage.setItem).toBe("function");
+  });
+
+  it("loadFallbackCoverCache initializes empty cache when storage empty", () => {
+    const storage = getCoverCacheStorage();
+    if (storage) {
+      storage.removeItem(FALLBACK_COVER_CACHE_KEY);
+    }
+    resetCacheState();
+    loadFallbackCoverCache();
+    expect(getCacheSize()).toBe(0);
+  });
+
+  it("loadFallbackCoverCache restores cached entries from storage", () => {
+    const storage = getCoverCacheStorage();
+    if (!storage) return; // Skip if no storage
+
+    const testData = {
+      game1___NES: { url: "http://example.com/1.jpg", timestamp: 1000 },
+      game2___SNES: { url: "http://example.com/2.jpg", timestamp: 2000 },
+    };
+    storage.setItem(FALLBACK_COVER_CACHE_KEY, JSON.stringify(testData));
+
+    resetCacheState();
+    loadFallbackCoverCache();
+
+    expect(getCacheSize()).toBe(2);
+    expect(getCachedCover("game1___NES")).toEqual({
+      url: "http://example.com/1.jpg",
+      timestamp: 1000,
+    });
+    expect(getCachedCover("game2___SNES")).toEqual({
+      url: "http://example.com/2.jpg",
+      timestamp: 2000,
+    });
+
+    // Cleanup
+    storage.removeItem(FALLBACK_COVER_CACHE_KEY);
+  });
+
+  it("loadFallbackCoverCache handles invalid JSON gracefully", () => {
+    const storage = getCoverCacheStorage();
+    if (!storage) return;
+
+    storage.setItem(FALLBACK_COVER_CACHE_KEY, "not valid json");
+    resetCacheState();
+    loadFallbackCoverCache();
+    expect(getCacheSize()).toBe(0);
+
+    storage.removeItem(FALLBACK_COVER_CACHE_KEY);
+  });
+
+  it("loadFallbackCoverCache handles non-object JSON gracefully", () => {
+    const storage = getCoverCacheStorage();
+    if (!storage) return;
+
+    storage.setItem(FALLBACK_COVER_CACHE_KEY, '"just a string"');
+    resetCacheState();
+    loadFallbackCoverCache();
+    expect(getCacheSize()).toBe(0);
+
+    storage.removeItem(FALLBACK_COVER_CACHE_KEY);
+  });
+
+  it("persistFallbackCoverCache saves entries to storage", () => {
+    const storage = getCoverCacheStorage();
+    if (!storage) return;
+
+    resetCacheState();
+    setCachedCover("test___game", { url: "http://example.com/test.jpg", timestamp: 999 });
+
+    persistFallbackCoverCache();
+
+    const stored = storage.getItem(FALLBACK_COVER_CACHE_KEY);
+    expect(stored).toBeTruthy();
+    const parsed = JSON.parse(stored);
+    expect(parsed["test___game"]).toEqual({
+      url: "http://example.com/test.jpg",
+      timestamp: 999,
+    });
+
+    storage.removeItem(FALLBACK_COVER_CACHE_KEY);
+  });
+
+  it("constants have expected values", () => {
+    expect(FALLBACK_COVER_CACHE_KEY).toBe("rom_cover_cache_v1");
+    expect(FALLBACK_COVER_CACHE_LIMIT).toBe(400);
+    expect(FALLBACK_COVER_RETRY_MS).toBe(1000 * 60 * 60 * 24 * 7);
   });
 });
 
