@@ -7,7 +7,10 @@ export default defineConfig({
     include: ["tests/**/*.test.js"],
     exclude: ["tests/e2e/**"],
     coverage: {
+      provider: "v8",
       reporter: ["text", "html"],
+      include: ["app/**/*.js"],
+      exclude: ["app/main.js"],
     },
   },
 });
