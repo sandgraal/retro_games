@@ -48,11 +48,11 @@ _Last updated: January 2025_
 
 ### Current Focus Areas
 
-- **Modal integration**: Wire modal component to game card clicks (placeholder at `app/main.js:447`)
+- **Modal integration**: ✅ Modal component wired to game card clicks with full functionality
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
-- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 488 tests passing
+- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 496 tests passing
 - **Price data integration**: Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: ✅ 488 tests passing; coverage tooling not installed (@vitest/coverage-v8)
+- **Test coverage**: ✅ 496 tests passing; @vitest/coverage-v8 installed (62.56% statements)
 - **Feature completion**: Virtualization helpers extracted; needs DOM wiring for 10k+ games
 
 ### Technical Debt
@@ -79,15 +79,15 @@ _Last updated: January 2025_
 
 **Highest Priority**:
 
-1. **Complete Modal Integration** - Wire modal component to game card clicks (currently placeholder)
-2. **Install Coverage Tooling** - Add @vitest/coverage-v8 to track test coverage metrics
+1. ~~**Complete Modal Integration** - Wire modal component to game card clicks~~ ✅ Done
+2. ~~**Install Coverage Tooling** - Add @vitest/coverage-v8 to track test coverage metrics~~ ✅ Done
 3. **Wire Virtualization** - Connect extracted `features/virtualization.js` to grid rendering
 
 **Medium Priority**:
 
 4. **Price Data Integration** - Complete PriceCharting integration for dashboard and modal
 5. **Performance Testing** - Test with 10k+ game datasets to validate virtualization
-6. **Media Workflow** - Automated cover import and archival tooling
+6. **Media Workflow** - Automated cover import and archival tooling (scripts/audit-missing-covers.js)
 
 **Lower Priority**:
 
@@ -98,21 +98,22 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 
 ## Module Inventory (January 2025)
 
-**27 ES6 modules** totaling 6,670 lines:
+**27 ES6 modules** totaling 6,670+ lines:
 
 | Directory       | Modules | Lines | Purpose                                                                         |
 | --------------- | ------- | ----- | ------------------------------------------------------------------------------- |
-| `app/ui/`       | 6       | 1,989 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                 |
+| `app/ui/`       | 6       | 2,180 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                 |
 | `app/features/` | 6       | 1,646 | Feature logic (virtualization, filtering, sorting, search, pagination, sharing) |
 | `app/state/`    | 4       | 829   | State management (collection, filters, preferences, cache)                      |
 | `app/data/`     | 5       | 721   | Data layer (supabase, loader, aggregates, pricing, storage)                     |
 | `app/utils/`    | 4       | 262   | Pure utilities (dom, format, keys, validation)                                  |
 | `app/design/`   | 1       | 127   | Design tokens                                                                   |
-| `app/main.js`   | 1       | 456   | Bootstrap orchestration                                                         |
+| `app/main.js`   | 1       | 460   | Bootstrap orchestration                                                         |
 
 **Test Coverage:**
 
-- `tests/utils.test.js`: 460 tests (covers all extracted helpers)
+- `tests/utils.test.js`: 468 tests (covers all extracted helpers)
 - `tests/app.test.js`: 25 tests (integration tests)
 - `tests/archive-media.test.js`: 3 tests
-- **Total: 488 tests passing**
+- **Total: 496 tests passing**
+- **Coverage: 62.56% statements, 70.83% functions**
