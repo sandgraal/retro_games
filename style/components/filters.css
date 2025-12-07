@@ -202,6 +202,103 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* Year Range Filter */
+.filter-range {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.filter-range-input {
+  flex: 1;
+  padding: var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-accent);
+  min-width: 0;
+  text-align: center;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.filter-range-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+}
+
+.filter-range-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Hide spinner buttons on number inputs */
+.filter-range-input::-webkit-outer-spin-button,
+.filter-range-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.filter-range-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.filter-range-separator {
+  color: var(--text-muted);
+  font-family: var(--font-accent);
+}
+
+/* Rating Slider Filter */
+.filter-slider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.filter-range-slider {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  appearance: none;
+  cursor: pointer;
+}
+
+.filter-range-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.4);
+  transition: transform var(--duration-fast) var(--easing-default);
+}
+
+.filter-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.filter-range-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.4);
+}
+
+.filter-range-value {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--accent-primary);
+  min-width: 2ch;
+  text-align: right;
+}
+
 /* Mobile: Bottom Sheet */
 @media (max-width: 768px) {
   .filters-sidebar {

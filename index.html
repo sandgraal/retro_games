@@ -279,6 +279,54 @@
               </div>
             </div>
 
+            <!-- Year Range Filter -->
+            <div class="filter-group">
+              <div class="filter-group-label">
+                <span>Release Year</span>
+              </div>
+              <div class="filter-range" id="yearRange">
+                <input
+                  type="number"
+                  id="yearStart"
+                  class="filter-range-input"
+                  placeholder="From"
+                  min="1970"
+                  max="2025"
+                  aria-label="Year from"
+                />
+                <span class="filter-range-separator">–</span>
+                <input
+                  type="number"
+                  id="yearEnd"
+                  class="filter-range-input"
+                  placeholder="To"
+                  min="1970"
+                  max="2025"
+                  aria-label="Year to"
+                />
+              </div>
+            </div>
+
+            <!-- Minimum Rating Filter -->
+            <div class="filter-group">
+              <div class="filter-group-label">
+                <span>Minimum Rating</span>
+              </div>
+              <div class="filter-slider" id="ratingFilter">
+                <input
+                  type="range"
+                  id="ratingMin"
+                  class="filter-range-slider"
+                  min="0"
+                  max="10"
+                  step="0.5"
+                  value="0"
+                  aria-label="Minimum rating"
+                />
+                <span class="filter-range-value" id="ratingMinValue">0</span>
+              </div>
+            </div>
+
             <!-- Sort Options -->
             <div class="filter-group">
               <div class="filter-group-label">

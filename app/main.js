@@ -169,6 +169,25 @@ function setupFilterHandlers() {
     }
   });
 
+  // Year range filters
+  const yearStart = document.getElementById("yearStart");
+  const yearEnd = document.getElementById("yearEnd");
+  [yearStart, yearEnd].forEach((input) => {
+    if (input) {
+      input.addEventListener("input", debounce(applyFilters, 300));
+    }
+  });
+
+  // Rating slider filter
+  const ratingMin = document.getElementById("ratingMin");
+  const ratingMinValue = document.getElementById("ratingMinValue");
+  if (ratingMin && ratingMinValue) {
+    ratingMin.addEventListener("input", () => {
+      ratingMinValue.textContent = ratingMin.value;
+      applyFilters();
+    });
+  }
+
   // Sort options
   document.getElementById("sortOptions")?.addEventListener("click", (e) => {
     const sortBtn = e.target.closest(".sort-option");
@@ -188,6 +207,12 @@ function setupFilterHandlers() {
       .forEach((input) => (input.checked = false));
     if (filterSearch) filterSearch.value = "";
     if (headerSearch) headerSearch.value = "";
+    if (yearStart) yearStart.value = "";
+    if (yearEnd) yearEnd.value = "";
+    if (ratingMin) {
+      ratingMin.value = "0";
+      if (ratingMinValue) ratingMinValue.textContent = "0";
+    }
     applyFilters();
   });
 }
@@ -257,6 +282,31 @@ function applyFilters() {
     );
   }
 
+  // Apply year range filter
+  const yearStartVal = parseInt(document.getElementById("yearStart")?.value, 10);
+  const yearEndVal = parseInt(document.getElementById("yearEnd")?.value, 10);
+  if (Number.isFinite(yearStartVal)) {
+    filtered = filtered.filter((game) => {
+      const year = parseInt(game.release_year, 10);
+      return Number.isFinite(year) && year >= yearStartVal;
+    });
+  }
+  if (Number.isFinite(yearEndVal)) {
+    filtered = filtered.filter((game) => {
+      const year = parseInt(game.release_year, 10);
+      return Number.isFinite(year) && year <= yearEndVal;
+    });
+  }
+
+  // Apply minimum rating filter
+  const ratingMinVal = parseFloat(document.getElementById("ratingMin")?.value || "0");
+  if (ratingMinVal > 0) {
+    filtered = filtered.filter((game) => {
+      const rating = parseFloat(game.rating);
+      return Number.isFinite(rating) && rating >= ratingMinVal;
+    });
+  }
+
   // Apply status filter
   if (statusFilters.length > 0) {
     const owned = window.__OWNED_DATA__ || {};
@@ -289,7 +339,10 @@ function applyFilters() {
     genreFilters.length > 0 ||
     regionFilters.length > 0 ||
     searchTerm ||
-    statusFilters.length > 0;
+    statusFilters.length > 0 ||
+    Number.isFinite(yearStartVal) ||
+    Number.isFinite(yearEndVal) ||
+    ratingMinVal > 0;
   const clearBtn = document.getElementById("clearFilters");
   if (clearBtn) {
     clearBtn.disabled = !hasActiveFilters;
