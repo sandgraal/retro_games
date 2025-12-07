@@ -46,6 +46,20 @@ import {
   COL_GAME,
   COL_RATING,
 } from "../app/state/filters.js";
+import {
+  normalizePageSize,
+  isValidTheme as isValidThemePrefs,
+  getBrowseMode,
+  setBrowseMode,
+  getPageSize,
+  setPageSize,
+  getCurrentPage,
+  setCurrentPage,
+  resetPreferencesState,
+  BROWSE_MODE_INFINITE,
+  BROWSE_MODE_PAGED,
+  DEFAULT_PAGE_SIZE,
+} from "../app/state/preferences.js";
 
 describe("dom utilities", () => {
   it("escapes HTML special characters", () => {
@@ -289,5 +303,70 @@ describe("filter state", () => {
     expect(getSearchValue()).toBe("");
     expect(getSortColumn()).toBe(COL_GAME);
     expect(getSortDirection()).toBe("asc");
+  });
+});
+
+describe("preferences state", () => {
+  beforeEach(() => {
+    resetPreferencesState();
+  });
+
+  it("normalizePageSize returns valid page sizes", () => {
+    expect(normalizePageSize(30)).toBe(30);
+    expect(normalizePageSize(60)).toBe(60);
+    expect(normalizePageSize(120)).toBe(120);
+    expect(normalizePageSize(45)).toBe(30); // closest
+    expect(normalizePageSize(90)).toBe(60); // closest
+    expect(normalizePageSize(null)).toBe(DEFAULT_PAGE_SIZE);
+    expect(normalizePageSize(-1)).toBe(DEFAULT_PAGE_SIZE);
+  });
+
+  it("isValidTheme validates theme strings", () => {
+    expect(isValidThemePrefs("light")).toBe(true);
+    expect(isValidThemePrefs("dark")).toBe(true);
+    expect(isValidThemePrefs("auto")).toBe(false);
+    expect(isValidThemePrefs(null)).toBe(false);
+  });
+
+  it("browse mode getters/setters work", () => {
+    expect(getBrowseMode()).toBe(BROWSE_MODE_INFINITE);
+
+    setBrowseMode(BROWSE_MODE_PAGED);
+    expect(getBrowseMode()).toBe(BROWSE_MODE_PAGED);
+
+    setBrowseMode(BROWSE_MODE_INFINITE);
+    expect(getBrowseMode()).toBe(BROWSE_MODE_INFINITE);
+  });
+
+  it("page size getters/setters work", () => {
+    expect(getPageSize()).toBe(DEFAULT_PAGE_SIZE);
+
+    setPageSize(30);
+    expect(getPageSize()).toBe(30);
+
+    setPageSize(100); // should normalize to closest
+    expect(getPageSize()).toBe(120);
+  });
+
+  it("current page getters/setters work", () => {
+    expect(getCurrentPage()).toBe(1);
+
+    setCurrentPage(5);
+    expect(getCurrentPage()).toBe(5);
+
+    setCurrentPage(0); // should be at least 1
+    expect(getCurrentPage()).toBe(1);
+  });
+
+  it("resetPreferencesState resets all", () => {
+    setBrowseMode(BROWSE_MODE_PAGED);
+    setPageSize(120);
+    setCurrentPage(10);
+
+    resetPreferencesState();
+
+    expect(getBrowseMode()).toBe(BROWSE_MODE_INFINITE);
+    expect(getPageSize()).toBe(DEFAULT_PAGE_SIZE);
+    expect(getCurrentPage()).toBe(1);
   });
 });
