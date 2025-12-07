@@ -1324,3 +1324,288 @@ describe("features/sorting", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// features/filtering tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  detectRegionCodesFromString,
+  computeRegionCodes,
+  rowMatchesRegion,
+  rowMatchesPlatform,
+  rowMatchesGenre,
+  rowMatchesSearch,
+  rowMatchesRating,
+  rowMatchesYearRange,
+  buildRowKey as buildFilterRowKey,
+  doesRowMatchFilters,
+  applyFilters as applyFiltersFn,
+  extractFilterOptions,
+  REGION_CODES,
+  REGION_PATTERNS,
+} from "../app/features/filtering.js";
+
+describe("features/filtering", () => {
+  describe("detectRegionCodesFromString", () => {
+    it("detects NTSC codes", () => {
+      expect(detectRegionCodesFromString("USA")).toContain("NTSC");
+      expect(detectRegionCodesFromString("North America")).toContain("NTSC");
+      expect(detectRegionCodesFromString("NTSC")).toContain("NTSC");
+    });
+
+    it("detects PAL codes", () => {
+      expect(detectRegionCodesFromString("Europe")).toContain("PAL");
+      expect(detectRegionCodesFromString("PAL")).toContain("PAL");
+      expect(detectRegionCodesFromString("UK")).toContain("PAL");
+    });
+
+    it("detects JPN codes", () => {
+      expect(detectRegionCodesFromString("Japan")).toContain("JPN");
+      expect(detectRegionCodesFromString("JPN")).toContain("JPN");
+    });
+
+    it("handles comma-separated values", () => {
+      const codes = detectRegionCodesFromString("USA, Japan");
+      expect(codes).toContain("NTSC");
+      expect(codes).toContain("JPN");
+    });
+
+    it("returns empty for unrecognized", () => {
+      expect(detectRegionCodesFromString("Unknown")).toEqual([]);
+      expect(detectRegionCodesFromString(null)).toEqual([]);
+    });
+  });
+
+  describe("computeRegionCodes", () => {
+    it("extracts from explicit region_code", () => {
+      expect(computeRegionCodes({ region_code: "NTSC" })).toContain("NTSC");
+    });
+
+    it("extracts from region_codes array", () => {
+      const codes = computeRegionCodes({ region_codes: ["NTSC", "PAL"] });
+      expect(codes).toContain("NTSC");
+      expect(codes).toContain("PAL");
+    });
+
+    it("detects from region text", () => {
+      expect(computeRegionCodes({ region: "USA" })).toContain("NTSC");
+    });
+
+    it("returns empty for invalid input", () => {
+      expect(computeRegionCodes(null)).toEqual([]);
+      expect(computeRegionCodes({})).toEqual([]);
+    });
+  });
+
+  describe("rowMatchesRegion", () => {
+    it("matches when row has matching region", () => {
+      const row = { region: "USA" };
+      expect(rowMatchesRegion(row, "NTSC")).toBe(true);
+    });
+
+    it("defaults to NTSC when no region info", () => {
+      expect(rowMatchesRegion({}, "NTSC")).toBe(true);
+      expect(rowMatchesRegion({}, "PAL")).toBe(false);
+    });
+
+    it("matches any when no filter", () => {
+      expect(rowMatchesRegion({ region: "Japan" }, "")).toBe(true);
+      expect(rowMatchesRegion({ region: "Japan" }, null)).toBe(true);
+    });
+  });
+
+  describe("rowMatchesPlatform", () => {
+    it("matches exact platform", () => {
+      expect(rowMatchesPlatform({ platform: "SNES" }, "SNES")).toBe(true);
+      expect(rowMatchesPlatform({ platform: "SNES" }, "NES")).toBe(false);
+    });
+
+    it("matches any when no filter", () => {
+      expect(rowMatchesPlatform({ platform: "SNES" }, "")).toBe(true);
+    });
+  });
+
+  describe("rowMatchesGenre", () => {
+    it("matches single genre", () => {
+      expect(rowMatchesGenre({ genre: "RPG" }, "RPG")).toBe(true);
+    });
+
+    it("matches in comma-separated list", () => {
+      expect(rowMatchesGenre({ genre: "RPG, Action" }, "RPG")).toBe(true);
+      expect(rowMatchesGenre({ genre: "RPG, Action" }, "Action")).toBe(true);
+    });
+
+    it("returns false when genre not found", () => {
+      expect(rowMatchesGenre({ genre: "RPG" }, "Action")).toBe(false);
+    });
+
+    it("matches any when no filter", () => {
+      expect(rowMatchesGenre({ genre: "RPG" }, "")).toBe(true);
+    });
+  });
+
+  describe("rowMatchesSearch", () => {
+    it("matches in game name", () => {
+      expect(rowMatchesSearch({ game_name: "Chrono Trigger" }, "chrono")).toBe(true);
+    });
+
+    it("matches in any field", () => {
+      expect(rowMatchesSearch({ platform: "SNES", genre: "RPG" }, "snes")).toBe(true);
+    });
+
+    it("is case insensitive", () => {
+      expect(rowMatchesSearch({ game_name: "Zelda" }, "ZELDA")).toBe(true);
+    });
+
+    it("matches any when no search", () => {
+      expect(rowMatchesSearch({ game_name: "Test" }, "")).toBe(true);
+    });
+  });
+
+  describe("rowMatchesRating", () => {
+    it("matches when rating >= min", () => {
+      expect(rowMatchesRating({ rating: 4.5 }, 4.0)).toBe(true);
+      expect(rowMatchesRating({ rating: 4.0 }, 4.0)).toBe(true);
+    });
+
+    it("fails when rating < min", () => {
+      expect(rowMatchesRating({ rating: 3.5 }, 4.0)).toBe(false);
+    });
+
+    it("matches any when no filter", () => {
+      expect(rowMatchesRating({ rating: 2.0 }, "")).toBe(true);
+      expect(rowMatchesRating({ rating: 2.0 }, null)).toBe(true);
+    });
+  });
+
+  describe("rowMatchesYearRange", () => {
+    it("matches within range", () => {
+      expect(rowMatchesYearRange({ release_year: 1995 }, 1990, 2000)).toBe(true);
+    });
+
+    it("fails outside range", () => {
+      expect(rowMatchesYearRange({ release_year: 1985 }, 1990, 2000)).toBe(false);
+      expect(rowMatchesYearRange({ release_year: 2005 }, 1990, 2000)).toBe(false);
+    });
+
+    it("handles open-ended ranges", () => {
+      expect(rowMatchesYearRange({ release_year: 1995 }, 1990, null)).toBe(true);
+      expect(rowMatchesYearRange({ release_year: 1995 }, null, 2000)).toBe(true);
+    });
+  });
+
+  describe("buildRowKey", () => {
+    it("builds key from game_name and platform", () => {
+      expect(buildFilterRowKey({ game_name: "Zelda", platform: "NES" })).toBe(
+        "Zelda___NES"
+      );
+    });
+
+    it("returns empty for null", () => {
+      expect(buildFilterRowKey(null)).toBe("");
+    });
+  });
+
+  describe("doesRowMatchFilters", () => {
+    const row = {
+      game_name: "Chrono Trigger",
+      platform: "SNES",
+      genre: "RPG",
+      rating: 4.8,
+      release_year: 1995,
+      region: "USA",
+    };
+
+    it("matches with empty filters", () => {
+      expect(doesRowMatchFilters(row, {})).toBe(true);
+    });
+
+    it("matches with matching filters", () => {
+      expect(
+        doesRowMatchFilters(row, {
+          platform: "SNES",
+          genre: "RPG",
+          search: "chrono",
+        })
+      ).toBe(true);
+    });
+
+    it("fails with non-matching filter", () => {
+      expect(doesRowMatchFilters(row, { platform: "NES" })).toBe(false);
+    });
+
+    it("respects imported collection filter", () => {
+      expect(
+        doesRowMatchFilters(
+          row,
+          {},
+          { importedCollection: { "Chrono Trigger___SNES": true } }
+        )
+      ).toBe(true);
+      expect(
+        doesRowMatchFilters(row, {}, { importedCollection: { Other___NES: true } })
+      ).toBe(false);
+    });
+  });
+
+  describe("applyFilters", () => {
+    const rows = [
+      { game_name: "Zelda", platform: "NES", genre: "Action" },
+      { game_name: "Mario", platform: "SNES", genre: "Platformer" },
+      { game_name: "Chrono Trigger", platform: "SNES", genre: "RPG" },
+    ];
+
+    it("filters by platform", () => {
+      const result = applyFiltersFn(rows, { platform: "SNES" });
+      expect(result).toHaveLength(2);
+    });
+
+    it("filters by genre", () => {
+      const result = applyFiltersFn(rows, { genre: "RPG" });
+      expect(result).toHaveLength(1);
+      expect(result[0].game_name).toBe("Chrono Trigger");
+    });
+
+    it("filters by search", () => {
+      const result = applyFiltersFn(rows, { search: "mario" });
+      expect(result).toHaveLength(1);
+    });
+
+    it("returns empty array for non-array input", () => {
+      expect(applyFiltersFn(null, {})).toEqual([]);
+    });
+  });
+
+  describe("extractFilterOptions", () => {
+    it("extracts unique platforms and genres", () => {
+      const rows = [
+        { platform: "SNES", genre: "RPG, Action" },
+        { platform: "NES", genre: "RPG" },
+        { platform: "SNES", genre: "Puzzle" },
+      ];
+      const options = extractFilterOptions(rows);
+      expect(options.platforms).toEqual(["NES", "SNES"]);
+      expect(options.genres).toContain("RPG");
+      expect(options.genres).toContain("Action");
+      expect(options.genres).toContain("Puzzle");
+    });
+
+    it("returns empty for non-array", () => {
+      expect(extractFilterOptions(null)).toEqual({ platforms: [], genres: [] });
+    });
+  });
+
+  describe("REGION constants", () => {
+    it("has expected region codes", () => {
+      expect(REGION_CODES).toContain("NTSC");
+      expect(REGION_CODES).toContain("PAL");
+      expect(REGION_CODES).toContain("JPN");
+    });
+
+    it("has patterns for each code", () => {
+      expect(REGION_PATTERNS.NTSC).toContain("usa");
+      expect(REGION_PATTERNS.PAL).toContain("europe");
+      expect(REGION_PATTERNS.JPN).toContain("japan");
+    });
+  });
+});
