@@ -4,9 +4,45 @@
  */
 
 .hero-dashboard {
-  padding: var(--spacing-xl) var(--spacing-lg);
-  background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-primary) 100%);
+  position: relative;
+  padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-xxl);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(6, 8, 12, 0.92) 0%,
+      rgba(10, 12, 18, 0.88) 36%,
+      rgba(10, 12, 18, 0.6) 60%,
+      rgba(10, 12, 18, 0.7) 100%
+    ),
+    url("../images/ledger-dragon.png");
+  background-size: cover;
+  background-position: center;
   margin-bottom: var(--spacing-xl);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero-dashboard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 72% 55%,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(6, 8, 12, 0.4) 48%,
+    rgba(6, 8, 12, 0.75) 80%
+  );
+  z-index: 0;
+}
+
+.dashboard-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
 }
 
 .dashboard-title {
@@ -34,6 +70,37 @@
   gap: var(--spacing-lg);
   max-width: 1400px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 960px) {
+  .dashboard-hero-content {
+    padding-left: clamp(260px, 24vw, 520px);
+    align-items: flex-end;
+  }
+
+  .dashboard-title,
+  .dashboard-subtitle {
+    text-align: right;
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .dashboard-grid {
+    max-width: 980px;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 959px) {
+  .hero-dashboard {
+    background-position: 28% center;
+  }
+
+  .dashboard-grid {
+    backdrop-filter: none;
+  }
 }
 
 /* Stat Cards */
