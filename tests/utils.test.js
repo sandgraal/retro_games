@@ -1609,3 +1609,238 @@ describe("features/filtering", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// features/pagination tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  normalizePageSize as normalizePageSizePagination,
+  calculateTotalPages,
+  calculatePageIndices,
+  getPageItems,
+  calculatePageWindow,
+  buildPaginationMarkup,
+  parsePaginationClick,
+  calculateLoadMoreState,
+  getLoadMoreText,
+  createPaginationState,
+  buildPaginationSummary,
+  DEFAULT_PAGE_SIZE as DEFAULT_PAGE_SIZE_PAGINATION,
+  PAGE_SIZE_CHOICES as PAGE_SIZE_CHOICES_PAGINATION,
+} from "../app/features/pagination.js";
+
+describe("features/pagination", () => {
+  describe("normalizePageSize", () => {
+    it("returns valid page size choices", () => {
+      expect(normalizePageSizePagination(24)).toBe(24);
+      expect(normalizePageSizePagination(48)).toBe(48);
+    });
+
+    it("returns default for invalid values", () => {
+      expect(normalizePageSizePagination(25)).toBe(DEFAULT_PAGE_SIZE_PAGINATION);
+      expect(normalizePageSizePagination(null)).toBe(DEFAULT_PAGE_SIZE_PAGINATION);
+      expect(normalizePageSizePagination(NaN)).toBe(DEFAULT_PAGE_SIZE_PAGINATION);
+    });
+  });
+
+  describe("calculateTotalPages", () => {
+    it("calculates pages correctly", () => {
+      expect(calculateTotalPages(100, 24)).toBe(5);
+      expect(calculateTotalPages(24, 24)).toBe(1);
+      expect(calculateTotalPages(25, 24)).toBe(2);
+    });
+
+    it("returns 1 for invalid inputs", () => {
+      expect(calculateTotalPages(0, 24)).toBe(1);
+      expect(calculateTotalPages(-10, 24)).toBe(1);
+      expect(calculateTotalPages(100, 0)).toBe(1);
+    });
+  });
+
+  describe("calculatePageIndices", () => {
+    it("calculates correct indices", () => {
+      expect(calculatePageIndices(1, 24)).toEqual({ start: 0, end: 24 });
+      expect(calculatePageIndices(2, 24)).toEqual({ start: 24, end: 48 });
+      expect(calculatePageIndices(3, 24)).toEqual({ start: 48, end: 72 });
+    });
+
+    it("handles edge cases", () => {
+      expect(calculatePageIndices(0, 24)).toEqual({ start: 0, end: 24 }); // min page 1
+      expect(calculatePageIndices(null, 24)).toEqual({ start: 0, end: 24 });
+    });
+  });
+
+  describe("getPageItems", () => {
+    const items = Array.from({ length: 50 }, (_, i) => `item${i}`);
+
+    it("returns correct page slice", () => {
+      expect(getPageItems(items, 1, 24)).toHaveLength(24);
+      expect(getPageItems(items, 1, 24)[0]).toBe("item0");
+      expect(getPageItems(items, 2, 24)).toHaveLength(24);
+      expect(getPageItems(items, 2, 24)[0]).toBe("item24");
+    });
+
+    it("handles partial last page", () => {
+      expect(getPageItems(items, 3, 24)).toHaveLength(2);
+    });
+
+    it("returns empty for invalid input", () => {
+      expect(getPageItems(null, 1, 24)).toEqual([]);
+    });
+  });
+
+  describe("calculatePageWindow", () => {
+    it("calculates window around current page", () => {
+      expect(calculatePageWindow(5, 10, 5)).toEqual({ startPage: 3, endPage: 7 });
+    });
+
+    it("adjusts at start", () => {
+      expect(calculatePageWindow(1, 10, 5)).toEqual({ startPage: 1, endPage: 5 });
+      expect(calculatePageWindow(2, 10, 5)).toEqual({ startPage: 1, endPage: 5 });
+    });
+
+    it("adjusts at end", () => {
+      expect(calculatePageWindow(10, 10, 5)).toEqual({ startPage: 6, endPage: 10 });
+      expect(calculatePageWindow(9, 10, 5)).toEqual({ startPage: 6, endPage: 10 });
+    });
+
+    it("handles small total pages", () => {
+      expect(calculatePageWindow(1, 3, 5)).toEqual({ startPage: 1, endPage: 3 });
+    });
+  });
+
+  describe("buildPaginationMarkup", () => {
+    it("returns empty for single page", () => {
+      expect(buildPaginationMarkup(1, 1)).toBe("");
+    });
+
+    it("includes prev/next buttons", () => {
+      const markup = buildPaginationMarkup(2, 5);
+      expect(markup).toContain('data-page="prev"');
+      expect(markup).toContain('data-page="next"');
+    });
+
+    it("disables prev on first page", () => {
+      const markup = buildPaginationMarkup(1, 5);
+      expect(markup).toContain('data-page="prev" disabled');
+    });
+
+    it("disables next on last page", () => {
+      const markup = buildPaginationMarkup(5, 5);
+      expect(markup).toContain('data-page="next" disabled');
+    });
+
+    it("marks current page active", () => {
+      const markup = buildPaginationMarkup(3, 5);
+      expect(markup).toContain('data-page="3" class="is-active"');
+    });
+  });
+
+  describe("parsePaginationClick", () => {
+    it("handles prev", () => {
+      expect(parsePaginationClick("prev", 3, 10)).toBe(2);
+      expect(parsePaginationClick("prev", 1, 10)).toBe(null);
+    });
+
+    it("handles next", () => {
+      expect(parsePaginationClick("next", 3, 10)).toBe(4);
+      expect(parsePaginationClick("next", 10, 10)).toBe(null);
+    });
+
+    it("handles page numbers", () => {
+      expect(parsePaginationClick("5", 3, 10)).toBe(5);
+      expect(parsePaginationClick("3", 3, 10)).toBe(null); // same page
+      expect(parsePaginationClick("15", 3, 10)).toBe(null); // out of range
+    });
+
+    it("returns null for invalid", () => {
+      expect(parsePaginationClick(null, 3, 10)).toBe(null);
+      expect(parsePaginationClick("", 3, 10)).toBe(null);
+    });
+  });
+
+  describe("calculateLoadMoreState", () => {
+    it("calculates more available", () => {
+      const result = calculateLoadMoreState(24, 100, 24, false);
+      expect(result.moreAvailable).toBe(true);
+      expect(result.batchSize).toBe(24);
+    });
+
+    it("calculates partial remaining", () => {
+      const result = calculateLoadMoreState(90, 100, 24, false);
+      expect(result.moreAvailable).toBe(true);
+      expect(result.batchSize).toBe(10);
+    });
+
+    it("handles server has more", () => {
+      const result = calculateLoadMoreState(24, 24, 24, true);
+      expect(result.moreAvailable).toBe(true);
+      expect(result.batchSize).toBe(24);
+    });
+
+    it("handles none remaining", () => {
+      const result = calculateLoadMoreState(100, 100, 24, false);
+      expect(result.moreAvailable).toBe(false);
+    });
+  });
+
+  describe("getLoadMoreText", () => {
+    it("shows loading state", () => {
+      expect(getLoadMoreText(24, true)).toBe("Loading more games…");
+    });
+
+    it("shows batch size", () => {
+      expect(getLoadMoreText(24, false)).toBe("Load 24 more games");
+    });
+  });
+
+  describe("createPaginationState", () => {
+    it("creates complete state", () => {
+      const state = createPaginationState({
+        pageSize: 24,
+        currentPage: 2,
+        totalItems: 100,
+        renderedCount: 48,
+      });
+      expect(state.pageSize).toBe(24);
+      expect(state.currentPage).toBe(2);
+      expect(state.totalPages).toBe(5);
+      expect(state.totalItems).toBe(100);
+    });
+
+    it("normalizes page size", () => {
+      const state = createPaginationState({ pageSize: 25 });
+      expect(state.pageSize).toBe(DEFAULT_PAGE_SIZE_PAGINATION);
+    });
+
+    it("clamps current page", () => {
+      const state = createPaginationState({
+        currentPage: 10,
+        totalItems: 50,
+        pageSize: 24,
+      });
+      expect(state.currentPage).toBe(3); // clamped to max pages
+    });
+  });
+
+  describe("buildPaginationSummary", () => {
+    it("builds basic summary", () => {
+      expect(buildPaginationSummary(24, 100)).toBe("Showing 24 of 100");
+    });
+
+    it("adds loading indicator", () => {
+      expect(buildPaginationSummary(24, 100, true)).toBe(
+        "Showing 24 of 100 • Fetching more…"
+      );
+    });
+  });
+
+  describe("PAGE_SIZE_CHOICES", () => {
+    it("has expected choices", () => {
+      expect(PAGE_SIZE_CHOICES_PAGINATION).toContain(12);
+      expect(PAGE_SIZE_CHOICES_PAGINATION).toContain(24);
+      expect(PAGE_SIZE_CHOICES_PAGINATION).toContain(48);
+      expect(PAGE_SIZE_CHOICES_PAGINATION).toContain(96);
+    });
+  });
+});
