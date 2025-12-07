@@ -3347,7 +3347,48 @@ describe("ui/modal", () => {
       const html = buildGameDetailsHtml(game);
       expect(html).toContain("Square");
       expect(html).toContain("Nintendo");
-      expect(html).toContain("Release Info");
+      expect(html).toContain("Release &amp; Rating");
+    });
+
+    it("includes rating category", () => {
+      const game = { game_name: "Test", rating_category: "Top 10" };
+      const html = buildGameDetailsHtml(game);
+      expect(html).toContain("Rating Tier");
+      expect(html).toContain("Top 10");
+    });
+
+    it("includes gameplay section with player mode and count", () => {
+      const game = {
+        game_name: "Test",
+        player_mode: "Single-player",
+        player_count: "1-2",
+      };
+      const html = buildGameDetailsHtml(game);
+      expect(html).toContain("Gameplay");
+      expect(html).toContain("Single-player");
+      expect(html).toContain("1-2");
+    });
+
+    it("includes regions and versions section", () => {
+      const game = { game_name: "Test", region: "Japan, USA", version: "1.0" };
+      const html = buildGameDetailsHtml(game);
+      expect(html).toContain("Regions &amp; Versions");
+      expect(html).toContain("Japan, USA");
+      expect(html).toContain("1.0");
+    });
+
+    it("includes notes section", () => {
+      const game = { game_name: "Test", notes: "Part of a series, Re-released" };
+      const html = buildGameDetailsHtml(game);
+      expect(html).toContain("Notes");
+      expect(html).toContain("Part of a series, Re-released");
+    });
+
+    it("includes Wikipedia link when Details field is present", () => {
+      const game = { game_name: "Test", Details: "https://en.wikipedia.org/wiki/Test" };
+      const html = buildGameDetailsHtml(game);
+      expect(html).toContain("Wikipedia");
+      expect(html).toContain("https://en.wikipedia.org/wiki/Test");
     });
 
     it("returns empty for null game", () => {

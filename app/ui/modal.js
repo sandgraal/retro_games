@@ -318,6 +318,10 @@ export function buildGameDetailsHtml(game) {
 
   // Release & Rating section
   const releaseItems = [];
+  if (game.rating_category) {
+    releaseItems.push({ label: "Rating Tier", value: game.rating_category });
+    consumed.add("rating_category");
+  }
   if (game.developer) {
     releaseItems.push({ label: "Developer", value: game.developer });
     consumed.add("developer");
@@ -326,42 +330,94 @@ export function buildGameDetailsHtml(game) {
     releaseItems.push({ label: "Publisher", value: game.publisher });
     consumed.add("publisher");
   }
-  if (game.region) {
-    releaseItems.push({ label: "Region", value: game.region });
-    consumed.add("region");
-  }
   if (releaseItems.length) {
-    sections.push(buildMetadataCard("Release Info", releaseItems, { layout: "grid" }));
+    sections.push(
+      buildMetadataCard("Release & Rating", releaseItems, { layout: "grid" })
+    );
   }
 
   // Gameplay section
   const gameplayItems = [];
-  if (game.players) {
-    gameplayItems.push({ label: "Players", value: game.players });
-    consumed.add("players");
-  }
   if (game.player_mode) {
     gameplayItems.push({ label: "Mode", value: game.player_mode });
     consumed.add("player_mode");
+  }
+  if (game.player_count) {
+    gameplayItems.push({ label: "Players", value: game.player_count });
+    consumed.add("player_count");
+  }
+  if (game.players) {
+    gameplayItems.push({ label: "Players", value: game.players });
+    consumed.add("players");
   }
   if (gameplayItems.length) {
     sections.push(buildMetadataCard("Gameplay", gameplayItems, { layout: "grid" }));
   }
 
+  // Regions & Versions section
+  const regionItems = [];
+  if (game.region) {
+    regionItems.push({ label: "Region", value: game.region });
+    consumed.add("region");
+  }
+  if (game.version) {
+    regionItems.push({ label: "Version", value: game.version });
+    consumed.add("version");
+  }
+  if (regionItems.length) {
+    sections.push(
+      buildMetadataCard("Regions & Versions", regionItems, { layout: "grid" })
+    );
+  }
+
+  // Notes section
+  if (game.notes) {
+    const notesHtml = `
+      <div class="modal-section">
+        <h3 class="modal-section-title">Notes</h3>
+        <div class="modal-section-content modal-notes">
+          ${escapeHtml(game.notes)}
+        </div>
+      </div>
+    `;
+    sections.push(notesHtml);
+    consumed.add("notes");
+  }
+
   // External links section
   const gameName = encodeURIComponent(game.game_name || "");
   const platform = encodeURIComponent(game.platform || "");
+  const detailsLink = game.Details || game.details;
+  const linksItems = [];
+  if (detailsLink) {
+    linksItems.push(
+      `<a href="${escapeHtml(detailsLink)}" target="_blank" rel="noopener noreferrer">Wikipedia</a>`
+    );
+    consumed.add("Details");
+    consumed.add("details");
+  }
+  linksItems.push(
+    `<a href="https://www.google.com/search?q=${gameName}+${platform}" target="_blank" rel="noopener noreferrer">Google</a>`
+  );
+  linksItems.push(
+    `<a href="https://www.youtube.com/results?search_query=${gameName}+${platform}+gameplay" target="_blank" rel="noopener noreferrer">YouTube</a>`
+  );
+  linksItems.push(
+    `<a href="https://gamefaqs.gamespot.com/search?game=${gameName}" target="_blank" rel="noopener noreferrer">GameFAQs</a>`
+  );
+
   const linksHtml = `
     <div class="modal-section">
       <h3 class="modal-section-title">External Links</h3>
-      <div class="modal-section-content">
-        <a href="https://www.google.com/search?q=${gameName}+${platform}" target="_blank" rel="noopener noreferrer">Search on Google</a> •
-        <a href="https://www.youtube.com/results?search_query=${gameName}+${platform}+gameplay" target="_blank" rel="noopener noreferrer">YouTube Gameplay</a> •
-        <a href="https://gamefaqs.gamespot.com/search?game=${gameName}" target="_blank" rel="noopener noreferrer">GameFAQs</a>
+      <div class="modal-section-content modal-links">
+        ${linksItems.join(" • ")}
       </div>
     </div>
   `;
   sections.push(linksHtml);
+
+  // Mark screenshots as consumed (handled separately in gallery)
+  consumed.add("screenshots");
 
   // Fallback for remaining fields
   sections.push(buildFallbackMetadata(game, consumed));
