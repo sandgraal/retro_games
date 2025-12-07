@@ -71,6 +71,26 @@ import {
   resetCacheState,
   FALLBACK_COVER_RETRY_MS,
 } from "../app/state/cache.js";
+import {
+  normalizeImageUrl,
+  encodeStoragePath,
+  buildStoragePublicUrl,
+  resolveStorageCover,
+  normalizeCoverUrl,
+  setRowCover,
+  resolveScreenshotCover,
+} from "../app/data/storage.js";
+import {
+  resolveStreamPageSize,
+  checkForceSampleMode,
+  getTableCandidates,
+  getSupabaseClient,
+  isSupabaseAvailable,
+  getSupabaseConfig,
+  resetSupabaseClient,
+  DEFAULT_STREAM_PAGE_SIZE,
+  DEFAULT_SUPABASE_TABLES,
+} from "../app/data/supabase.js";
 
 describe("dom utilities", () => {
   it("escapes HTML special characters", () => {
@@ -3967,6 +3987,271 @@ describe("data/loader", () => {
     it("returns null for row without platform", () => {
       const result = buildRowKey({ game_name: "Test" });
       expect(result).toBeNull();
+    });
+  });
+});
+
+// === data/storage.js Tests ===
+describe("data/storage.js", () => {
+  describe("normalizeImageUrl", () => {
+    it("returns undefined for falsy values", () => {
+      expect(normalizeImageUrl(null, "https://example.com")).toBeUndefined();
+      expect(normalizeImageUrl("", "https://example.com")).toBeUndefined();
+      expect(normalizeImageUrl(undefined, "https://example.com")).toBeUndefined();
+    });
+
+    it("returns absolute URLs unchanged", () => {
+      expect(normalizeImageUrl("https://example.com/img.jpg", "")).toBe(
+        "https://example.com/img.jpg"
+      );
+      expect(normalizeImageUrl("http://example.com/img.jpg", "")).toBe(
+        "http://example.com/img.jpg"
+      );
+    });
+
+    it("handles protocol-relative URLs", () => {
+      const result = normalizeImageUrl("//cdn.example.com/img.jpg", "");
+      expect(result).toMatch(/^https?:\/\/cdn\.example\.com\/img\.jpg$/);
+    });
+
+    it("prepends origin to absolute paths", () => {
+      expect(normalizeImageUrl("/images/cover.jpg", "https://example.com")).toBe(
+        "https://example.com/images/cover.jpg"
+      );
+    });
+
+    it("prepends origin with slash to relative paths", () => {
+      expect(normalizeImageUrl("images/cover.jpg", "https://example.com")).toBe(
+        "https://example.com/images/cover.jpg"
+      );
+    });
+
+    it("returns undefined when no origin provided for relative paths", () => {
+      expect(normalizeImageUrl("/images/cover.jpg", "")).toBeUndefined();
+      expect(normalizeImageUrl("images/cover.jpg", "")).toBeUndefined();
+    });
+  });
+
+  describe("encodeStoragePath", () => {
+    it("encodes path segments", () => {
+      expect(encodeStoragePath("folder/file name.jpg")).toBe("folder/file%20name.jpg");
+    });
+
+    it("handles special characters", () => {
+      expect(encodeStoragePath("folder/file#1.jpg")).toBe("folder/file%231.jpg");
+    });
+
+    it("preserves slashes", () => {
+      expect(encodeStoragePath("a/b/c")).toBe("a/b/c");
+    });
+  });
+
+  describe("buildStoragePublicUrl", () => {
+    it("returns null for missing bucket or path", () => {
+      expect(buildStoragePublicUrl("", "path")).toBeNull();
+      expect(buildStoragePublicUrl("bucket", "")).toBeNull();
+      expect(buildStoragePublicUrl(null, "path")).toBeNull();
+    });
+
+    it("returns null when STORAGE_PUBLIC_BASE is empty", () => {
+      // Without configured Supabase, STORAGE_PUBLIC_BASE is empty
+      const result = buildStoragePublicUrl("game-covers", "test.jpg");
+      // If STORAGE_PUBLIC_BASE is empty, should return null
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("resolveStorageCover", () => {
+    it("returns null for non-object input", () => {
+      expect(resolveStorageCover(null)).toBeNull();
+      expect(resolveStorageCover("string")).toBeNull();
+      expect(resolveStorageCover(123)).toBeNull();
+    });
+
+    it("returns cover_public_url if available", () => {
+      const row = { cover_public_url: "https://example.com/cover.jpg" };
+      expect(resolveStorageCover(row)).toBe("https://example.com/cover.jpg");
+    });
+
+    it("returns null for row without storage info", () => {
+      const row = { game_name: "Test" };
+      expect(resolveStorageCover(row)).toBeNull();
+    });
+  });
+
+  describe("normalizeCoverUrl", () => {
+    it("returns empty string for falsy values", () => {
+      expect(normalizeCoverUrl(null)).toBe("");
+      expect(normalizeCoverUrl(undefined)).toBe("");
+      expect(normalizeCoverUrl("")).toBe("");
+    });
+
+    it("returns valid HTTPS URLs", () => {
+      expect(normalizeCoverUrl("https://example.com/img.jpg")).toBe(
+        "https://example.com/img.jpg"
+      );
+      expect(normalizeCoverUrl("http://example.com/img.jpg")).toBe(
+        "http://example.com/img.jpg"
+      );
+    });
+
+    it("returns empty string for invalid URLs", () => {
+      expect(normalizeCoverUrl("just text")).toBe("");
+      expect(normalizeCoverUrl("ftp://example.com")).toBe("");
+    });
+
+    it("extracts URL from object with url property", () => {
+      expect(normalizeCoverUrl({ url: "https://example.com/img.jpg" })).toBe(
+        "https://example.com/img.jpg"
+      );
+    });
+
+    it("extracts URL from object with href property", () => {
+      expect(normalizeCoverUrl({ href: "https://example.com/img.jpg" })).toBe(
+        "https://example.com/img.jpg"
+      );
+    });
+
+    it("extracts URL from object with source property", () => {
+      expect(normalizeCoverUrl({ source: "https://example.com/img.jpg" })).toBe(
+        "https://example.com/img.jpg"
+      );
+    });
+
+    it("returns empty string for object without valid URL properties", () => {
+      expect(normalizeCoverUrl({ name: "test" })).toBe("");
+    });
+  });
+
+  describe("setRowCover", () => {
+    it("returns false for non-object input", () => {
+      expect(setRowCover(null, "https://example.com/img.jpg")).toBe(false);
+      expect(setRowCover("string", "https://example.com/img.jpg")).toBe(false);
+    });
+
+    it("returns false for invalid cover URL", () => {
+      const row = {};
+      expect(setRowCover(row, "not a url")).toBe(false);
+      expect(row.cover).toBeUndefined();
+    });
+
+    it("sets cover on row and returns true", () => {
+      const row = {};
+      expect(setRowCover(row, "https://example.com/img.jpg")).toBe(true);
+      expect(row.cover).toBe("https://example.com/img.jpg");
+    });
+
+    it("sets provisional flag when requested", () => {
+      const row = {};
+      setRowCover(row, "https://example.com/img.jpg", { provisional: true });
+      expect(row.__provisionalCover).toBe(true);
+    });
+
+    it("removes provisional flag when not requested", () => {
+      const row = { __provisionalCover: true };
+      setRowCover(row, "https://example.com/img.jpg");
+      expect(row.__provisionalCover).toBeUndefined();
+    });
+  });
+
+  describe("resolveScreenshotCover", () => {
+    it("returns empty string for non-object input", () => {
+      expect(resolveScreenshotCover(null)).toBe("");
+      expect(resolveScreenshotCover("string")).toBe("");
+    });
+
+    it("returns empty string when no screenshots", () => {
+      expect(resolveScreenshotCover({})).toBe("");
+      expect(resolveScreenshotCover({ screenshots: [] })).toBe("");
+    });
+
+    it("returns first valid screenshot URL", () => {
+      const row = {
+        screenshots: [
+          "invalid",
+          "https://example.com/screen1.jpg",
+          "https://example.com/screen2.jpg",
+        ],
+      };
+      expect(resolveScreenshotCover(row)).toBe("https://example.com/screen1.jpg");
+    });
+
+    it("skips invalid screenshot URLs", () => {
+      const row = {
+        screenshots: ["not-a-url", { url: "https://example.com/screen.jpg" }],
+      };
+      expect(resolveScreenshotCover(row)).toBe("https://example.com/screen.jpg");
+    });
+  });
+});
+
+// === data/supabase.js Tests ===
+describe("data/supabase.js", () => {
+  beforeEach(() => {
+    resetSupabaseClient();
+  });
+
+  describe("resolveStreamPageSize", () => {
+    it("returns default when no config", () => {
+      expect(resolveStreamPageSize()).toBe(DEFAULT_STREAM_PAGE_SIZE);
+    });
+  });
+
+  describe("checkForceSampleMode", () => {
+    it("returns boolean", () => {
+      expect(typeof checkForceSampleMode()).toBe("boolean");
+    });
+  });
+
+  describe("getTableCandidates", () => {
+    it("returns array with default tables", () => {
+      const candidates = getTableCandidates();
+      expect(Array.isArray(candidates)).toBe(true);
+      expect(candidates.length).toBeGreaterThan(0);
+      // Should include default tables
+      for (const table of DEFAULT_SUPABASE_TABLES) {
+        expect(candidates).toContain(table);
+      }
+    });
+  });
+
+  describe("getSupabaseClient", () => {
+    it("returns null when credentials missing", () => {
+      resetSupabaseClient();
+      const client = getSupabaseClient();
+      expect(client).toBeNull();
+    });
+  });
+
+  describe("isSupabaseAvailable", () => {
+    it("returns false when credentials missing", () => {
+      resetSupabaseClient();
+      expect(isSupabaseAvailable()).toBe(false);
+    });
+  });
+
+  describe("getSupabaseConfig", () => {
+    it("returns config object", () => {
+      const config = getSupabaseConfig();
+      expect(typeof config).toBe("object");
+    });
+  });
+
+  describe("resetSupabaseClient", () => {
+    it("resets client state", () => {
+      resetSupabaseClient();
+      expect(getSupabaseClient()).toBeNull();
+    });
+  });
+
+  describe("constants", () => {
+    it("DEFAULT_STREAM_PAGE_SIZE is positive number", () => {
+      expect(DEFAULT_STREAM_PAGE_SIZE).toBeGreaterThan(0);
+    });
+
+    it("DEFAULT_SUPABASE_TABLES is non-empty array", () => {
+      expect(Array.isArray(DEFAULT_SUPABASE_TABLES)).toBe(true);
+      expect(DEFAULT_SUPABASE_TABLES.length).toBeGreaterThan(0);
     });
   });
 });
