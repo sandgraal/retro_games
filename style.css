@@ -21,8 +21,7 @@
 /* Import Utilities */
 @import url("style/utilities.css");
 
-/* Google Fonts - New Typography */
-@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap");
+/* Note: Google Fonts are now loaded in index.html for faster rendering */
 
 /* App Shell */
 .app-shell {
