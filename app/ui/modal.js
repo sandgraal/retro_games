@@ -238,3 +238,257 @@ export function buildCloseButtonAttrs(label = "Close modal") {
     "aria-label": label,
   };
 }
+
+// === Modal DOM Operations ===
+
+/**
+ * Build status action buttons for the modal.
+ * @param {string} gameKey - Game key
+ * @param {string|null} currentStatus - Current status (owned/wishlist/backlog/trade)
+ * @returns {string} HTML string
+ */
+export function buildModalStatusButtons(gameKey, currentStatus) {
+  const safeKey = escapeHtml(gameKey);
+  const statuses = ["owned", "wishlist", "backlog", "trade"];
+  const labels = {
+    owned: "Own It",
+    wishlist: "Wishlist",
+    backlog: "Backlog",
+    trade: "For Trade",
+  };
+  const icons = { owned: "✓", wishlist: "⭐", backlog: "📚", trade: "🔄" };
+
+  return statuses
+    .map((status) => {
+      const isActive = currentStatus === status;
+      const activeClass = isActive ? status : "";
+      return `<button type="button" class="modal-status-btn ${activeClass}" data-action="${status}" data-game-key="${safeKey}">
+        <span aria-hidden="true">${icons[status]}</span>
+        ${labels[status]}
+      </button>`;
+    })
+    .join("");
+}
+
+/**
+ * Build game details HTML for the modal.
+ * @param {Object} game - Game data object
+ * @returns {string} HTML string
+ */
+export function buildGameDetailsHtml(game) {
+  if (!game) return "";
+
+  const consumed = new Set();
+  const sections = [];
+
+  // Meta bar with platform, rating, year
+  const metaItems = [];
+  if (game.platform) {
+    metaItems.push(`<span class="modal-meta-item">${escapeHtml(game.platform)}</span>`);
+    consumed.add("platform");
+  }
+  if (game.release_year) {
+    metaItems.push(
+      `<span class="modal-meta-item">${escapeHtml(String(game.release_year))}</span>`
+    );
+    consumed.add("release_year");
+  }
+  if (game.rating) {
+    const rating = parseFloat(game.rating);
+    if (Number.isFinite(rating)) {
+      metaItems.push(`<span class="modal-rating">★ ${rating.toFixed(1)}</span>`);
+    }
+    consumed.add("rating");
+  }
+  consumed.add("game_name");
+  consumed.add("cover");
+
+  if (metaItems.length) {
+    sections.push(
+      `<div class="modal-meta">${metaItems.join('<span class="modal-meta-separator">•</span>')}</div>`
+    );
+  }
+
+  // Genre section
+  if (game.genre) {
+    const genreItems = [{ label: "Genre", value: game.genre }];
+    sections.push(buildMetadataCard("Genre", genreItems, { layout: "stacked" }));
+    consumed.add("genre");
+  }
+
+  // Release & Rating section
+  const releaseItems = [];
+  if (game.developer) {
+    releaseItems.push({ label: "Developer", value: game.developer });
+    consumed.add("developer");
+  }
+  if (game.publisher) {
+    releaseItems.push({ label: "Publisher", value: game.publisher });
+    consumed.add("publisher");
+  }
+  if (game.region) {
+    releaseItems.push({ label: "Region", value: game.region });
+    consumed.add("region");
+  }
+  if (releaseItems.length) {
+    sections.push(buildMetadataCard("Release Info", releaseItems, { layout: "grid" }));
+  }
+
+  // Gameplay section
+  const gameplayItems = [];
+  if (game.players) {
+    gameplayItems.push({ label: "Players", value: game.players });
+    consumed.add("players");
+  }
+  if (game.player_mode) {
+    gameplayItems.push({ label: "Mode", value: game.player_mode });
+    consumed.add("player_mode");
+  }
+  if (gameplayItems.length) {
+    sections.push(buildMetadataCard("Gameplay", gameplayItems, { layout: "grid" }));
+  }
+
+  // External links section
+  const gameName = encodeURIComponent(game.game_name || "");
+  const platform = encodeURIComponent(game.platform || "");
+  const linksHtml = `
+    <div class="modal-section">
+      <h3 class="modal-section-title">External Links</h3>
+      <div class="modal-section-content">
+        <a href="https://www.google.com/search?q=${gameName}+${platform}" target="_blank" rel="noopener noreferrer">Search on Google</a> •
+        <a href="https://www.youtube.com/results?search_query=${gameName}+${platform}+gameplay" target="_blank" rel="noopener noreferrer">YouTube Gameplay</a> •
+        <a href="https://gamefaqs.gamespot.com/search?game=${gameName}" target="_blank" rel="noopener noreferrer">GameFAQs</a>
+      </div>
+    </div>
+  `;
+  sections.push(linksHtml);
+
+  // Fallback for remaining fields
+  sections.push(buildFallbackMetadata(game, consumed));
+
+  return sections.join("");
+}
+
+/**
+ * Open the game detail modal.
+ * @param {Object} game - Game data object
+ * @param {string} gameKey - Game key
+ * @param {Object} owned - Owned games map
+ * @param {Object} [statuses={}] - Status maps
+ */
+export function openModal(game, gameKey, owned, statuses = {}) {
+  const backdrop = document.getElementById("gameModalBackdrop");
+  const titleEl = document.getElementById("gameModalTitle");
+  const coverImg = document.getElementById("gameModalCoverImage");
+  const actionsEl = document.getElementById("gameModalActions");
+  const detailsEl = document.getElementById("gameModalDetails");
+
+  if (!backdrop || !titleEl || !detailsEl) return;
+
+  // Determine current status
+  let currentStatus = null;
+  if (owned?.[gameKey]) currentStatus = "owned";
+  else if (statuses?.wishlist?.[gameKey]) currentStatus = "wishlist";
+  else if (statuses?.backlog?.[gameKey]) currentStatus = "backlog";
+  else if (statuses?.trade?.[gameKey]) currentStatus = "trade";
+
+  // Set title
+  titleEl.textContent = game?.game_name || "Game Details";
+
+  // Set cover image
+  if (coverImg) {
+    const coverUrl = game?.cover || "";
+    coverImg.src = coverUrl;
+    coverImg.alt = coverUrl ? `${game.game_name} cover art` : "";
+    coverImg.style.display = coverUrl ? "block" : "none";
+  }
+
+  // Set status buttons
+  if (actionsEl) {
+    actionsEl.innerHTML = buildModalStatusButtons(gameKey, currentStatus);
+  }
+
+  // Set details
+  detailsEl.innerHTML = buildGameDetailsHtml(game);
+
+  // Store game key on modal for status button handlers
+  backdrop.dataset.gameKey = gameKey;
+
+  // Show modal
+  backdrop.hidden = false;
+  backdrop.setAttribute("aria-hidden", "false");
+
+  // Trap focus
+  const closeBtn = document.getElementById("gameModalClose");
+  if (closeBtn) closeBtn.focus();
+
+  // Add keyboard handler for escape
+  backdrop._escapeHandler = (e) => {
+    if (e.key === "Escape") closeModal();
+  };
+  document.addEventListener("keydown", backdrop._escapeHandler);
+}
+
+/**
+ * Close the game detail modal.
+ */
+export function closeModal() {
+  const backdrop = document.getElementById("gameModalBackdrop");
+  if (!backdrop) return;
+
+  backdrop.hidden = true;
+  backdrop.setAttribute("aria-hidden", "true");
+
+  // Remove escape handler
+  if (backdrop._escapeHandler) {
+    document.removeEventListener("keydown", backdrop._escapeHandler);
+    backdrop._escapeHandler = null;
+  }
+}
+
+/**
+ * Setup modal event handlers.
+ * Should be called once on app initialization.
+ */
+export function setupModalHandlers() {
+  const backdrop = document.getElementById("gameModalBackdrop");
+  const closeBtn = document.getElementById("gameModalClose");
+  const actionsEl = document.getElementById("gameModalActions");
+
+  // Close on button click
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closeModal);
+  }
+
+  // Close on backdrop click
+  if (backdrop) {
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) closeModal();
+    });
+  }
+
+  // Handle status button clicks
+  if (actionsEl) {
+    actionsEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".modal-status-btn");
+      if (!btn) return;
+
+      const action = btn.dataset.action;
+      const gameKey = btn.dataset.gameKey;
+      if (!action || !gameKey) return;
+
+      // Dispatch status change event
+      window.dispatchEvent(
+        new CustomEvent("gameStatusChange", {
+          detail: { gameKey, action },
+        })
+      );
+
+      // Update button states
+      actionsEl.querySelectorAll(".modal-status-btn").forEach((b) => {
+        b.classList.remove("owned", "wishlist", "backlog", "trade");
+      });
+      btn.classList.add(action);
+    });
+  }
+}

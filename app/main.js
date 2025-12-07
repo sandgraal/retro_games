@@ -5,6 +5,7 @@
 
 import { updateDashboard, calculateStats } from "./ui/dashboard.js";
 import { renderGrid, setupQuickActions, showLoadingSkeletons } from "./ui/grid.js";
+import { openModal, setupModalHandlers } from "./ui/modal.js";
 import { generateGameKey } from "./utils/keys.js";
 
 // Show loading state immediately
@@ -84,6 +85,7 @@ async function bootstrapNewUI() {
     setupQuickActions();
     setupFilterHandlers();
     setupMobileNavigation();
+    setupModalHandlers();
 
     // Show status message if using sample data
     if (dataSource === "sample") {
@@ -444,8 +446,9 @@ window.addEventListener("gameStatusChange", (e) => {
 // Listen for modal open requests
 window.addEventListener("openGameModal", (e) => {
   const { game, gameKey } = e.detail;
-  // Modal implementation placeholder - will be added in Phase 2
-  showStatus(`Selected: ${game?.game_name || gameKey}`, "info");
+  const owned = window.__OWNED_DATA__ || {};
+  const statuses = window.__STATUSES_DATA__ || {};
+  openModal(game, gameKey, owned, statuses);
 });
 
 // Start initialization when DOM is ready

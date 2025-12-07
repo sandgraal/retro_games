@@ -309,6 +309,43 @@
       <div class="filters-backdrop" id="filtersBackdrop"></div>
     </div>
 
+    <!-- Game Detail Modal -->
+    <div
+      class="modal-backdrop"
+      id="gameModalBackdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="gameModalTitle"
+      hidden
+    >
+      <div class="modal" id="gameModal">
+        <header class="modal-header">
+          <h2 class="modal-title" id="gameModalTitle">Game Details</h2>
+          <button
+            type="button"
+            class="modal-close"
+            id="gameModalClose"
+            aria-label="Close modal"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </header>
+        <div class="modal-content">
+          <div class="modal-cover" id="gameModalCover">
+            <div class="modal-cover-image">
+              <img src="" alt="" id="gameModalCoverImage" />
+            </div>
+            <div class="modal-cover-actions" id="gameModalActions">
+              <!-- Status buttons populated by JS -->
+            </div>
+          </div>
+          <div class="modal-details" id="gameModalDetails">
+            <!-- Game details populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Load Config -->
     <script src="config.js"></script>
 

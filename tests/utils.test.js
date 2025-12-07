@@ -2486,6 +2486,8 @@ import {
   buildGalleryCounter,
   buildModalAriaAttrs,
   buildCloseButtonAttrs,
+  buildModalStatusButtons,
+  buildGameDetailsHtml,
 } from "../app/ui/modal.js";
 
 describe("ui/modal", () => {
@@ -2629,6 +2631,72 @@ describe("ui/modal", () => {
     it("uses custom label", () => {
       const attrs = buildCloseButtonAttrs("Dismiss");
       expect(attrs["aria-label"]).toBe("Dismiss");
+    });
+  });
+
+  describe("buildModalStatusButtons", () => {
+    it("builds all four status buttons", () => {
+      const html = buildModalStatusButtons("Game___Platform", null);
+      expect(html).toContain("Own It");
+      expect(html).toContain("Wishlist");
+      expect(html).toContain("Backlog");
+      expect(html).toContain("For Trade");
+      expect(html).toContain('data-action="owned"');
+      expect(html).toContain('data-action="wishlist"');
+      expect(html).toContain('data-action="backlog"');
+      expect(html).toContain('data-action="trade"');
+    });
+
+    it("marks current status as active", () => {
+      const html = buildModalStatusButtons("Game___Platform", "owned");
+      expect(html).toContain('class="modal-status-btn owned"');
+    });
+
+    it("escapes game key", () => {
+      const html = buildModalStatusButtons("Game<script>___Platform", null);
+      expect(html).toContain("&lt;script&gt;");
+    });
+  });
+
+  describe("buildGameDetailsHtml", () => {
+    it("builds details with platform, rating, year", () => {
+      const game = {
+        game_name: "Test Game",
+        platform: "SNES",
+        release_year: 1995,
+        rating: "9.5",
+      };
+      const html = buildGameDetailsHtml(game);
+      expect(html).toContain("SNES");
+      expect(html).toContain("1995");
+      expect(html).toContain("9.5");
+    });
+
+    it("includes genre section", () => {
+      const game = { game_name: "Test", genre: "RPG, Action" };
+      const html = buildGameDetailsHtml(game);
+      expect(html).toContain("RPG, Action");
+      expect(html).toContain("Genre");
+    });
+
+    it("includes external links", () => {
+      const game = { game_name: "Chrono Trigger", platform: "SNES" };
+      const html = buildGameDetailsHtml(game);
+      expect(html).toContain("Google");
+      expect(html).toContain("YouTube");
+      expect(html).toContain("GameFAQs");
+    });
+
+    it("includes developer and publisher", () => {
+      const game = { game_name: "Test", developer: "Square", publisher: "Nintendo" };
+      const html = buildGameDetailsHtml(game);
+      expect(html).toContain("Square");
+      expect(html).toContain("Nintendo");
+      expect(html).toContain("Release Info");
+    });
+
+    it("returns empty for null game", () => {
+      expect(buildGameDetailsHtml(null)).toBe("");
     });
   });
 });
