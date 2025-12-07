@@ -3,10 +3,10 @@ const globals = require("globals");
 const prettier = require("eslint-config-prettier");
 
 const browserConfig = {
-  files: ["app.js"],
+  files: ["app.js", "app/**/*.js"],
   languageOptions: {
     ecmaVersion: "latest",
-    sourceType: "script",
+    sourceType: "module",
     globals: {
       ...globals.browser,
     },

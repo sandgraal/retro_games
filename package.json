@@ -8,8 +8,8 @@
   },
   "scripts": {
     "build:config": "node scripts/generate-config.js",
-    "lint": "eslint app.js scripts",
-    "lint:fix": "eslint app.js scripts --fix",
+    "lint": "eslint app.js app scripts",
+    "lint:fix": "eslint app.js app scripts --fix",
     "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
     "format:check": "prettier --check \"**/*.{js,json,md,css,html}\"",
     "test": "vitest run",

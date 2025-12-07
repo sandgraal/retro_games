@@ -159,11 +159,11 @@ export function formatPrice(cents) { ... }
 
 #### Day 1: Foundation
 
-- [ ] Create `app/` directory structure
-- [ ] Create empty module files with TODO comments
-- [ ] Update `index.html` to load `<script type="module" src="app/main.js">`
-- [ ] Create minimal `app/main.js` that imports old `app.js`
-- [ ] Test: Everything still works
+- [x] Create `app/` directory structure
+- [x] Create empty module files with TODO comments
+- [x] Update `index.html` to load `<script type="module" src="app/main.js">`
+- [x] Create minimal `app/main.js` that imports old `app.js`
+- [x] Test: Everything still works
 - [ ] Commit: "Phase 0A: Create module structure"
 
 #### Day 2: Documentation
