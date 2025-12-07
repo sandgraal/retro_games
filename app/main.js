@@ -10,11 +10,13 @@ import { generateGameKey } from "./utils/keys.js";
 // Show loading state immediately
 showLoadingSkeletons();
 
-// Bootstrap the new UI with fresh data load
+/**
+ * Bootstrap the new UI with fresh data load
+ * Loads data from Supabase or falls back to sample JSON, then initializes all UI components
+ * @returns {Promise<void>}
+ */
 async function bootstrapNewUI() {
   try {
-    console.log("🎮 Bootstrapping new UI...");
-
     // Load owned games and other statuses from localStorage
     const owned = JSON.parse(localStorage.getItem("roms_owned") || "{}");
     const notes = JSON.parse(localStorage.getItem("rom_notes") || "{}");
@@ -42,7 +44,6 @@ async function bootstrapNewUI() {
         if (data && data.length > 0) {
           games = data;
           dataSource = "supabase";
-          console.log(`✅ Loaded ${games.length} games from Supabase`);
         }
       } catch (err) {
         console.warn(
@@ -57,7 +58,6 @@ async function bootstrapNewUI() {
       const response = await fetch("./data/sample-games.json");
       const json = await response.json();
       games = json.games || json || [];
-      console.log(`✅ Loaded ${games.length} games from sample data`);
     }
 
     if (!games.length) {
@@ -89,8 +89,6 @@ async function bootstrapNewUI() {
     if (dataSource === "sample") {
       showStatus("Showing sample dataset. Configure Supabase for cloud sync.", "info");
     }
-
-    console.log("✅ New UI initialized successfully");
   } catch (error) {
     console.error("❌ Error initializing new UI:", error);
     showError(`Failed to load game data: ${error.message}`);
@@ -99,6 +97,8 @@ async function bootstrapNewUI() {
 
 /**
  * Setup filters with platform and genre data from games
+ * Populates filter sidebar with platform and genre checkboxes
+ * @param {Array} games - Array of game objects
  */
 function setupFilters(games) {
   // Platform filter
@@ -191,6 +191,8 @@ function setupFilterHandlers() {
 
 /**
  * Apply filters and re-render grid
+ * Chains platform, genre, search, and status filters with AND logic
+ * Updates filter counts and re-renders the game grid with filtered results
  */
 function applyFilters() {
   const games = window.__GAMES_DATA__ || [];
@@ -279,6 +281,9 @@ function applyFilters() {
 
 /**
  * Sort games array
+ * @param {Array} games - Array of game objects to sort
+ * @param {string} sortBy - Sort key: 'name', 'rating', 'year', or 'value'
+ * @returns {Array} Sorted games array
  */
 function sortGames(games, sortBy) {
   const sorted = [...games];
@@ -299,6 +304,8 @@ function sortGames(games, sortBy) {
 
 /**
  * Update filter counts
+ * Updates the count badges next to each filter option based on filtered games
+ * @param {Array} filteredGames - Currently filtered games array
  */
 function updateFilterCounts(filteredGames) {
   // Update platform counts
@@ -363,6 +370,8 @@ function setupMobileNavigation() {
 
 /**
  * Show status message
+ * @param {string} message - Message to display
+ * @param {string} type - Message type: 'info', 'success', 'warning', or 'error'
  */
 function showStatus(message, type = "info") {
   const statusEl = document.getElementById("status");
@@ -375,6 +384,8 @@ function showStatus(message, type = "info") {
 
 /**
  * Show error message
+ * Displays error in the game grid area
+ * @param {string} message - Error message to display
  */
 function showError(message) {
   const gridElement = document.getElementById("gameGrid");
@@ -391,6 +402,10 @@ function showError(message) {
 
 /**
  * Debounce helper
+ * Delays function execution until after wait time has elapsed since last call
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Wait time in milliseconds
+ * @returns {Function} Debounced function
  */
 function debounce(func, wait) {
   let timeout;
@@ -429,8 +444,8 @@ window.addEventListener("gameStatusChange", (e) => {
 // Listen for modal open requests
 window.addEventListener("openGameModal", (e) => {
   const { game, gameKey } = e.detail;
-  console.log("Open modal for:", game?.game_name || gameKey);
-  // TODO: Implement modal using existing modal.js or create new modal
+  // Modal implementation placeholder - will be added in Phase 2
+  showStatus(`Selected: ${game?.game_name || gameKey}`, "info");
 });
 
 // Start initialization when DOM is ready
@@ -439,5 +454,3 @@ if (document.readyState === "loading") {
 } else {
   bootstrapNewUI();
 }
-
-console.log("🎮 Redesign integration module loaded");
