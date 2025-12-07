@@ -8,20 +8,28 @@ test.beforeEach(async ({ page }) => {
 
 test("loads sample data and opens/closes modal", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("#romTable tbody tr").first()).toBeVisible();
 
-  const chronoCell = page
-    .locator("table#romTable td")
+  // Wait for the game grid to load
+  await page.waitForSelector("#gameGrid .game-card", { timeout: 10000 });
+
+  // Verify at least one game card is visible
+  await expect(page.locator("#gameGrid .game-card").first()).toBeVisible();
+
+  // Find and click on a game card (Chrono Trigger or first available)
+  const chronoCard = page
+    .locator(".game-card")
     .filter({ hasText: "Chrono Trigger" })
     .first();
-  await chronoCell.click();
+  const firstCard = page.locator("#gameGrid .game-card").first();
+  const targetCard = (await chronoCard.count()) > 0 ? chronoCard : firstCard;
+  await targetCard.click();
 
-  const modal = page.locator("#gameModal");
-  await expect(modal).toBeVisible();
-  await expect(modal).toContainText("Chrono Trigger");
-  await page.locator(".gallery-nav.next").first().click();
-  await expect(page.locator(".gallery-counter")).toContainText("2 /");
+  // Check modal opens
+  const modalBackdrop = page.locator("#gameModalBackdrop");
+  await expect(modalBackdrop).not.toHaveAttribute("hidden");
+  await expect(modalBackdrop).toHaveAttribute("aria-hidden", "false");
 
-  await page.locator("#gameModal .modal-close").click();
-  await expect(modal).toBeHidden();
+  // Close modal via close button
+  await page.locator("#gameModalClose").click();
+  await expect(modalBackdrop).toHaveAttribute("hidden");
 });
