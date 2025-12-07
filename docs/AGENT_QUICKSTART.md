@@ -8,7 +8,7 @@ _Last updated: January 2025_
 
 - **Application**: ⭐ Feature-complete & production-ready
 - **Architecture**: ✅ **REFACTORED** (January 2025) - 27 ES6 modules extracted
-- **Tests**: ✅ **488 tests passing** (up from ~120)
+- **Tests**: ✅ **614 tests passing** (70.48% coverage)
 - **CI/CD**: ✅ Automated (lint, test, security, Lighthouse)
 - **Documentation**: ✅ Comprehensive & current
 
@@ -27,7 +27,7 @@ _Last updated: January 2025_
 
 - ✅ **27 ES6 modules** extracted from 5,940-line `app-legacy.js`
 - ✅ **6,670 total lines** across all modules
-- ✅ **488 tests passing** with full module coverage
+- ✅ **614 tests passing** with 70.48% coverage
 - ✅ **6 UI modules**: dashboard, grid, modal, filters, carousel, theme
 - ✅ **6 feature modules**: virtualization, filtering, sorting, search, pagination, sharing
 - ✅ **4 state modules**: collection, filters, preferences, cache
@@ -131,8 +131,9 @@ npm run lint              # Check code quality
 npm run lint:fix          # Auto-fix issues
 npm run format            # Format code
 npm run format:check      # Check formatting
-npm test                  # Unit tests (Vitest) - 488 tests
+npm test                  # Unit tests (Vitest) - 614 tests
 npm run test:watch        # Watch mode
+npm run test:coverage     # Coverage report (70.48%)
 npm run test:e2e          # E2E tests (Playwright)
 npm run lighthouse        # Performance audit
 
@@ -142,9 +143,9 @@ npm run lint && npm run format:check && npm test
 
 ## 🧪 Testing Strategy
 
-- **Unit tests** (`tests/*.test.js`): Filter logic, data transformations, helpers - **488 tests**
+- **Unit tests** (`tests/*.test.js`): Filter logic, data transformations, helpers - **614 tests**
 - **E2E tests** (`tests/e2e/*.spec.js`): User workflows, modal interactions
-- **Coverage**: Coverage tooling not yet installed (TODO: add @vitest/coverage-v8)
+- **Coverage**: 70.48% statement coverage via @vitest/coverage-v8 (`npm run test:coverage`)
 - **All module helpers have test coverage**
 
 ## 📋 Task Workflow
@@ -252,7 +253,7 @@ All metrics achieved:
 - ✅ No file exceeds 500 lines (largest: 493 lines)
 - ✅ No function exceeds 50 lines
 - ✅ ESLint completes in <10 seconds
-- ✅ 488 tests passing with full module coverage
+- ✅ 614 tests passing with 70.48% coverage
 - ✅ All existing tests passing
 - ✅ Zero functional regressions
 - ✅ Documentation complete
@@ -309,9 +310,9 @@ A: Check that you're using the correct imports. Many constants are duplicated ac
 Phase 0 refactoring is **complete**. All module extraction is done. The codebase is now:
 
 - **27 focused modules** instead of 1 monolithic file
-- **488 tests** providing comprehensive coverage
+- **614 tests** providing 70.48% statement coverage
 - **Well-documented** with updated architecture docs
-- **Ready for feature work** on modal wiring and virtualization
+- **Ready for Phase 2 feature work** (price data, media workflows)
 
 ---
 

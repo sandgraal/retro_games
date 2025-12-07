@@ -9,7 +9,7 @@ _Last updated: January 2025_
 - **Phase 0 refactoring** (January 2025): Complete modular extraction from 5,940-line `app-legacy.js` into 27 focused modules.
 - Vanilla JavaScript with modular structure: `app/main.js` (456 lines) bootstraps all modules.
 - **27 ES6 modules** across 6 directories: `ui/`, `features/`, `state/`, `data/`, `utils/`, `design/`.
-- **488 tests** covering all extracted modules (up from ~120 pre-refactoring).
+- **614 tests** covering all extracted modules (70.48% statement coverage).
 - Supabase acts as the backing data store with graceful fallback to `data/sample-games.json`.
 - No build tooling or bundler; modular CSS architecture with design tokens in `style/` directory.
 - See [`docs/architecture.md`](./architecture.md) for complete technical documentation.
@@ -50,9 +50,9 @@ _Last updated: January 2025_
 
 - **Modal integration**: ✅ Modal component wired to game card clicks with full functionality
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
-- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 496 tests passing
+- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 614 tests passing
 - **Price data integration**: Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: ✅ 614 tests passing; @vitest/coverage-v8 installed (72.85% statements)
+- **Test coverage**: ✅ 614 tests passing; @vitest/coverage-v8 installed (70.48% statements)
 - **Feature completion**: ✅ Virtualization wired to grid, renders only visible cards for 80+ games
 
 ### Technical Debt
@@ -112,8 +112,9 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 
 **Test Coverage:**
 
-- `tests/utils.test.js`: 468 tests (covers all extracted helpers)
+- `tests/utils.test.js`: 560 tests (covers all extracted helpers)
 - `tests/app.test.js`: 25 tests (integration tests)
 - `tests/archive-media.test.js`: 3 tests
-- **Total: 496 tests passing**
-- **Coverage: 62.56% statements, 70.83% functions**
+- `tests/audit-missing-covers.test.js`: 26 tests
+- **Total: 614 tests passing**
+- **Coverage: 70.48% statements, 77.27% functions**
