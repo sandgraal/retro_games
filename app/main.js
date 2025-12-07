@@ -7,6 +7,7 @@ import { updateDashboard, calculateStats } from "./ui/dashboard.js";
 import { renderGrid, setupQuickActions, showLoadingSkeletons } from "./ui/grid.js";
 import { openModal, setupModalHandlers } from "./ui/modal.js";
 import { generateGameKey } from "./utils/keys.js";
+import { getRegionCodesForRow } from "./features/filtering.js";
 
 // Show loading state immediately
 showLoadingSkeletons();
@@ -209,6 +210,9 @@ function applyFilters() {
   const genreFilters = Array.from(
     document.querySelectorAll('input[data-filter="genre"]:checked')
   ).map((cb) => cb.value);
+  const regionFilters = Array.from(
+    document.querySelectorAll('input[data-filter="region"]:checked')
+  ).map((cb) => cb.value);
   const statusFilters = Array.from(
     document.querySelectorAll("#statusFilters input:checked")
   ).map((cb) => cb.value);
@@ -223,6 +227,16 @@ function applyFilters() {
     filtered = filtered.filter((game) =>
       genreFilters.some((genre) => game.genre?.includes(genre))
     );
+  }
+
+  // Apply region filter
+  if (regionFilters.length > 0) {
+    filtered = filtered.filter((game) => {
+      const gameCodes = getRegionCodesForRow(game);
+      // If no region detected, default to NTSC
+      const codes = gameCodes.length ? gameCodes : ["NTSC"];
+      return regionFilters.some((region) => codes.includes(region));
+    });
   }
 
   // Apply search filter
@@ -273,6 +287,7 @@ function applyFilters() {
   const hasActiveFilters =
     platformFilters.length > 0 ||
     genreFilters.length > 0 ||
+    regionFilters.length > 0 ||
     searchTerm ||
     statusFilters.length > 0;
   const clearBtn = document.getElementById("clearFilters");
@@ -333,6 +348,24 @@ function updateFilterCounts(filteredGames) {
   });
   document.querySelectorAll('input[data-filter="genre"]').forEach((input) => {
     const count = genreCounts[input.value] || 0;
+    const label = input.parentElement?.querySelector(".filter-option-count");
+    if (label) label.textContent = count;
+  });
+
+  // Update region counts
+  const regionCounts = { NTSC: 0, PAL: 0, JPN: 0 };
+  filteredGames.forEach((game) => {
+    const codes = getRegionCodesForRow(game);
+    // Default to NTSC if no region detected
+    const regions = codes.length ? codes : ["NTSC"];
+    regions.forEach((region) => {
+      if (regionCounts[region] !== undefined) {
+        regionCounts[region]++;
+      }
+    });
+  });
+  document.querySelectorAll('input[data-filter="region"]').forEach((input) => {
+    const count = regionCounts[input.value] || 0;
     const label = input.parentElement?.querySelector(".filter-option-count");
     if (label) label.textContent = count;
   });
