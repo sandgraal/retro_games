@@ -9,7 +9,7 @@ _Last updated: January 2025_
 - **Phase 0 refactoring** (January 2025): Complete modular extraction from 5,940-line `app-legacy.js` into 27 focused modules.
 - Vanilla JavaScript with modular structure: `app/main.js` (456 lines) bootstraps all modules.
 - **27 ES6 modules** across 6 directories: `ui/`, `features/`, `state/`, `data/`, `utils/`, `design/`.
-- **674 tests** covering all extracted modules (76% statement coverage).
+- **679 tests** covering all extracted modules (76% statement coverage).
 - Supabase acts as the backing data store with graceful fallback to `data/sample-games.json`.
 - No build tooling or bundler; modular CSS architecture with design tokens in `style/` directory.
 - See [`docs/architecture.md`](./architecture.md) for complete technical documentation.
@@ -29,7 +29,7 @@ _Last updated: January 2025_
 
 - Retro-inspired theme built around the "Press Start 2P" Google Font, neon gradients, and glowing accents (`style.css`).
 - Responsive adjustments for screens below 800px and 700px adjust layout and modal sizes.
-- Filter toolbar now exposes platform, genre, search, status, minimum rating, and release-year range inputs for precise slicing.
+- Filter toolbar now exposes platform, genre, region (NTSC/PAL/JPN), search, status, minimum rating, and release-year range inputs for precise slicing.
 - A browse toolbar surfaces batch-size controls, an infinite-scroll vs. paginated toggle, and a live summary (`browseSummary`) so collectors (or crawlers) can load long lists in manageable chunks or deep-link to `?page=X` routes.
 - Card rendering is virtualized: only the rows within (or near) the viewport mount, with spacer elements maintaining scroll height for buttery navigation through thousands of entries.
 - Accessibility helpers include focus trapping in the modal and keyboard shortcuts (Escape closes modal, Enter triggers import field).
@@ -50,9 +50,9 @@ _Last updated: January 2025_
 
 - **Modal integration**: ✅ Modal component wired to game card clicks with full functionality
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
-- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 674 tests passing
+- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 679 tests passing
 - **Price data integration**: Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: ✅ 674 tests passing; @vitest/coverage-v8 installed (76% statements)
+- **Test coverage**: ✅ 679 tests passing; @vitest/coverage-v8 installed (76% statements)
 - **Feature completion**: ✅ Virtualization wired to grid, renders only visible cards for 80+ games
 
 ### Technical Debt
@@ -112,9 +112,9 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 
 **Test Coverage:**
 
-- `tests/utils.test.js`: 560 tests (covers all extracted helpers)
+- `tests/utils.test.js`: 625 tests (covers all extracted helpers)
 - `tests/app.test.js`: 25 tests (integration tests)
 - `tests/archive-media.test.js`: 3 tests
 - `tests/audit-missing-covers.test.js`: 26 tests
-- **Total: 674 tests passing**
+- **Total: 679 tests passing**
 - **Coverage: 70.48% statements, 77.27% functions**
