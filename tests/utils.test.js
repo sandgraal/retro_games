@@ -3866,3 +3866,107 @@ describe("ui/dashboard", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// data/loader tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  SAMPLE_DATA_URL,
+  REGION_CODES,
+  REGION_PATTERNS,
+  computeRegionCodes,
+  normalizeIncomingRows,
+  buildRowKey,
+} from "../app/data/loader.js";
+
+describe("data/loader", () => {
+  describe("constants", () => {
+    it("exports sample data URL", () => {
+      expect(SAMPLE_DATA_URL).toBe("./data/sample-games.json");
+    });
+
+    it("exports region codes", () => {
+      expect(REGION_CODES).toContain("NTSC");
+      expect(REGION_CODES).toContain("PAL");
+      expect(REGION_CODES).toContain("JPN");
+    });
+
+    it("exports region patterns", () => {
+      expect(REGION_PATTERNS.NTSC).toContain("usa");
+      expect(REGION_PATTERNS.PAL).toContain("europe");
+      expect(REGION_PATTERNS.JPN).toContain("japan");
+    });
+  });
+
+  describe("computeRegionCodes", () => {
+    it("returns empty array for null row", () => {
+      expect(computeRegionCodes(null)).toEqual([]);
+    });
+
+    it("returns empty array for row without region", () => {
+      expect(computeRegionCodes({ game_name: "Test" })).toEqual([]);
+    });
+
+    it("detects NTSC from USA region", () => {
+      const result = computeRegionCodes({ region: "USA" });
+      expect(result).toContain("NTSC");
+    });
+
+    it("detects PAL from Europe region", () => {
+      const result = computeRegionCodes({ region: "Europe" });
+      expect(result).toContain("PAL");
+    });
+
+    it("detects JPN from Japan region", () => {
+      const result = computeRegionCodes({ region: "Japan" });
+      expect(result).toContain("JPN");
+    });
+
+    it("returns existing region_codes array", () => {
+      const result = computeRegionCodes({ region_codes: ["NTSC", "PAL"] });
+      expect(result).toEqual(["NTSC", "PAL"]);
+    });
+
+    it("handles multiple regions", () => {
+      const result = computeRegionCodes({ region: "USA, Europe, Japan" });
+      expect(result).toContain("NTSC");
+      expect(result).toContain("PAL");
+      expect(result).toContain("JPN");
+    });
+  });
+
+  describe("normalizeIncomingRows", () => {
+    it("returns input unchanged for non-array", () => {
+      expect(normalizeIncomingRows(null)).toBeNull();
+      expect(normalizeIncomingRows(undefined)).toBeUndefined();
+      expect(normalizeIncomingRows("not array")).toBe("not array");
+    });
+
+    it("returns array unchanged structure", () => {
+      const rows = [{ game_name: "Test" }];
+      const result = normalizeIncomingRows(rows);
+      expect(result).toHaveLength(1);
+      expect(result[0].game_name).toBe("Test");
+    });
+  });
+
+  describe("buildRowKey", () => {
+    it("builds key from game_name and platform", () => {
+      const result = buildRowKey({ game_name: "Zelda", platform: "NES" });
+      expect(result).toBe("Zelda___NES");
+    });
+
+    it("returns null for null row", () => {
+      expect(buildRowKey(null)).toBeNull();
+    });
+
+    it("returns null for row without game_name", () => {
+      expect(buildRowKey({ platform: "SNES" })).toBeNull();
+    });
+
+    it("returns null for row without platform", () => {
+      const result = buildRowKey({ game_name: "Test" });
+      expect(result).toBeNull();
+    });
+  });
+});
