@@ -31,6 +31,21 @@ import {
   hasImportedCollection,
   resetState,
 } from "../app/state/collection.js";
+import {
+  getFilterPlatform,
+  setFilterPlatform,
+  getSearchValue,
+  setSearchValue,
+  getSortColumn,
+  setSortColumn,
+  getSortDirection,
+  setSortDirection,
+  getAllFilters,
+  clearAllFilters,
+  resetFilterState,
+  COL_GAME,
+  COL_RATING,
+} from "../app/state/filters.js";
 
 describe("dom utilities", () => {
   it("escapes HTML special characters", () => {
@@ -224,5 +239,55 @@ describe("collection state", () => {
 
     setImportedCollection(null);
     expect(hasImportedCollection()).toBe(false);
+  });
+});
+
+describe("filter state", () => {
+  beforeEach(() => {
+    resetFilterState();
+  });
+
+  it("filter getters return defaults initially", () => {
+    expect(getFilterPlatform()).toBe("");
+    expect(getSearchValue()).toBe("");
+    expect(getSortColumn()).toBe(COL_GAME);
+    expect(getSortDirection()).toBe("asc");
+  });
+
+  it("filter setters update values", () => {
+    setFilterPlatform("SNES");
+    expect(getFilterPlatform()).toBe("SNES");
+
+    setSearchValue("Mario");
+    expect(getSearchValue()).toBe("Mario");
+
+    setSortColumn(COL_RATING);
+    expect(getSortColumn()).toBe(COL_RATING);
+
+    setSortDirection("desc");
+    expect(getSortDirection()).toBe("desc");
+  });
+
+  it("getAllFilters returns complete state", () => {
+    setFilterPlatform("NES");
+    setSearchValue("Zelda");
+    const filters = getAllFilters();
+    expect(filters.filterPlatform).toBe("NES");
+    expect(filters.searchValue).toBe("Zelda");
+    expect(filters.sortColumn).toBe(COL_GAME);
+  });
+
+  it("clearAllFilters resets state", () => {
+    setFilterPlatform("SNES");
+    setSearchValue("test");
+    setSortColumn(COL_RATING);
+    setSortDirection("desc");
+
+    clearAllFilters();
+
+    expect(getFilterPlatform()).toBe("");
+    expect(getSearchValue()).toBe("");
+    expect(getSortColumn()).toBe(COL_GAME);
+    expect(getSortDirection()).toBe("asc");
   });
 });
