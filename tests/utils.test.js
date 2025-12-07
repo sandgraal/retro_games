@@ -91,6 +91,7 @@ import {
   DEFAULT_STREAM_PAGE_SIZE,
   DEFAULT_SUPABASE_TABLES,
 } from "../app/data/supabase.js";
+import { tokens, generateCSSVariables } from "../app/design/tokens.js";
 
 describe("dom utilities", () => {
   it("escapes HTML special characters", () => {
@@ -4252,6 +4253,155 @@ describe("data/supabase.js", () => {
     it("DEFAULT_SUPABASE_TABLES is non-empty array", () => {
       expect(Array.isArray(DEFAULT_SUPABASE_TABLES)).toBe(true);
       expect(DEFAULT_SUPABASE_TABLES.length).toBeGreaterThan(0);
+    });
+  });
+});
+
+// === design/tokens.js Tests ===
+describe("design/tokens.js", () => {
+  describe("tokens object", () => {
+    it("has colors.bg properties", () => {
+      expect(tokens.colors.bg.primary).toBe("#0a0e14");
+      expect(tokens.colors.bg.elevated).toBe("#14181f");
+      expect(tokens.colors.bg.glass).toMatch(/^rgba/);
+    });
+
+    it("has colors.accent properties", () => {
+      expect(tokens.colors.accent.primary).toBe("#00d4ff");
+      expect(tokens.colors.accent.secondary).toBe("#6366f1");
+      expect(tokens.colors.accent.warm).toBe("#f59e0b");
+    });
+
+    it("has colors.text properties", () => {
+      expect(tokens.colors.text.primary).toBe("#ffffff");
+      expect(tokens.colors.text.secondary).toBe("#a1a8b8");
+      expect(tokens.colors.text.muted).toBe("#6b7280");
+    });
+
+    it("has colors.status properties", () => {
+      expect(tokens.colors.status.owned).toBe("#10b981");
+      expect(tokens.colors.status.wishlist).toBe("#f59e0b");
+      expect(tokens.colors.status.backlog).toBe("#6366f1");
+      expect(tokens.colors.status.trade).toBe("#8b5cf6");
+    });
+
+    it("has spacing properties", () => {
+      expect(tokens.spacing.xs).toBe("4px");
+      expect(tokens.spacing.sm).toBe("8px");
+      expect(tokens.spacing.md).toBe("16px");
+      expect(tokens.spacing.lg).toBe("24px");
+      expect(tokens.spacing.xl).toBe("48px");
+      expect(tokens.spacing.xxl).toBe("64px");
+    });
+
+    it("has typography properties", () => {
+      expect(tokens.typography.display.family).toContain("Rajdhani");
+      expect(tokens.typography.display.size).toBe("32px");
+      expect(tokens.typography.display.weight).toBe(700);
+      expect(tokens.typography.body.family).toContain("Inter");
+      expect(tokens.typography.accent.family).toContain("Space Mono");
+    });
+
+    it("has shadows properties", () => {
+      expect(tokens.shadows.sm).toMatch(/^0 \d+px/);
+      expect(tokens.shadows.md).toMatch(/^0 \d+px/);
+      expect(tokens.shadows.lg).toMatch(/^0 \d+px/);
+      expect(tokens.shadows.xl).toMatch(/^0 \d+px/);
+      expect(tokens.shadows.glow).toMatch(/rgba.*212.*255/);
+    });
+
+    it("has animation properties", () => {
+      expect(tokens.animation.duration.fast).toBe("0.2s");
+      expect(tokens.animation.duration.medium).toBe("0.4s");
+      expect(tokens.animation.duration.slow).toBe("0.6s");
+      expect(tokens.animation.easing.default).toMatch(/^cubic-bezier/);
+      expect(tokens.animation.easing.bounce).toMatch(/^cubic-bezier/);
+    });
+
+    it("has breakpoints properties", () => {
+      expect(tokens.breakpoints.mobile).toBe("320px");
+      expect(tokens.breakpoints.tablet).toBe("768px");
+      expect(tokens.breakpoints.desktop).toBe("1024px");
+      expect(tokens.breakpoints.wide).toBe("1440px");
+    });
+
+    it("has borderRadius properties", () => {
+      expect(tokens.borderRadius.sm).toBe("4px");
+      expect(tokens.borderRadius.md).toBe("8px");
+      expect(tokens.borderRadius.lg).toBe("12px");
+      expect(tokens.borderRadius.xl).toBe("16px");
+      expect(tokens.borderRadius.full).toBe("9999px");
+    });
+  });
+
+  describe("generateCSSVariables", () => {
+    it("returns a string", () => {
+      const css = generateCSSVariables();
+      expect(typeof css).toBe("string");
+    });
+
+    it("includes background color variables", () => {
+      const css = generateCSSVariables();
+      expect(css).toContain("--bg-primary:");
+      expect(css).toContain("--bg-elevated:");
+      expect(css).toContain("--bg-glass:");
+    });
+
+    it("includes accent color variables", () => {
+      const css = generateCSSVariables();
+      expect(css).toContain("--accent-primary:");
+      expect(css).toContain("--accent-secondary:");
+      expect(css).toContain("--accent-warm:");
+    });
+
+    it("includes text color variables", () => {
+      const css = generateCSSVariables();
+      expect(css).toContain("--text-primary:");
+      expect(css).toContain("--text-secondary:");
+      expect(css).toContain("--text-muted:");
+    });
+
+    it("includes status color variables", () => {
+      const css = generateCSSVariables();
+      expect(css).toContain("--status-owned:");
+      expect(css).toContain("--status-wishlist:");
+      expect(css).toContain("--status-backlog:");
+      expect(css).toContain("--status-trade:");
+    });
+
+    it("includes spacing variables", () => {
+      const css = generateCSSVariables();
+      expect(css).toContain("--spacing-xs:");
+      expect(css).toContain("--spacing-md:");
+      expect(css).toContain("--spacing-xl:");
+    });
+
+    it("includes typography variables", () => {
+      const css = generateCSSVariables();
+      expect(css).toContain("--font-display:");
+      expect(css).toContain("--font-body:");
+      expect(css).toContain("--font-accent:");
+    });
+
+    it("includes shadow variables", () => {
+      const css = generateCSSVariables();
+      expect(css).toContain("--shadow-sm:");
+      expect(css).toContain("--shadow-lg:");
+      expect(css).toContain("--shadow-glow:");
+    });
+
+    it("includes animation variables", () => {
+      const css = generateCSSVariables();
+      expect(css).toContain("--duration-fast:");
+      expect(css).toContain("--duration-medium:");
+      expect(css).toContain("--easing-default:");
+    });
+
+    it("includes border radius variables", () => {
+      const css = generateCSSVariables();
+      expect(css).toContain("--radius-sm:");
+      expect(css).toContain("--radius-lg:");
+      expect(css).toContain("--radius-full:");
     });
   });
 });
