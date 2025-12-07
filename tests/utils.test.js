@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
 
+import { escapeHtml } from "../app/utils/dom.js";
 import { formatCurrency, formatNumber, formatRating } from "../app/utils/format.js";
 import { generateGameKey, parseGameKey } from "../app/utils/keys.js";
+
+describe("dom utilities", () => {
+  it("escapes HTML special characters", () => {
+    expect(escapeHtml(`<div class="hero">& 'text'</div>`)).toBe(
+      "&lt;div class=&quot;hero&quot;&gt;&amp; &#39;text&#39;&lt;/div&gt;"
+    );
+  });
+
+  it("falls back to an empty string for falsy input", () => {
+    expect(escapeHtml(null)).toBe("");
+    expect(escapeHtml("")).toBe("");
+  });
+});
 
 describe("format utilities", () => {
   it("formats currency with sensible defaults", () => {
