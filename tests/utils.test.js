@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 
 import { escapeHtml } from "../app/utils/dom.js";
 import {
@@ -22,6 +22,8 @@ import {
   STATUS_NONE,
   STATUS_OWNED,
   STATUS_WISHLIST,
+  STORAGE_KEY,
+  NOTES_STORAGE_KEY,
   getStatusForKey,
   setStatusForKey,
   getNoteForKey,
@@ -29,19 +31,41 @@ import {
   getActiveStatusMap,
   setImportedCollection,
   hasImportedCollection,
+  loadStatuses,
+  saveStatuses,
+  loadNotes,
+  saveNotes,
+  getAllStatuses,
+  getAllNotes,
   resetState,
 } from "../app/state/collection.js";
 import {
+  FILTER_STORAGE_KEY,
   getFilterPlatform,
   setFilterPlatform,
+  getFilterGenre,
+  setFilterGenre,
   getSearchValue,
   setSearchValue,
+  getFilterStatus,
+  setFilterStatus,
+  getFilterRatingMin,
+  setFilterRatingMin,
+  getFilterYearStart,
+  setFilterYearStart,
+  getFilterYearEnd,
+  setFilterYearEnd,
+  getFilterRegion,
+  setFilterRegion,
   getSortColumn,
   setSortColumn,
   getSortDirection,
   setSortDirection,
   getAllFilters,
   clearAllFilters,
+  loadPersistedFilters,
+  savePersistedFilters,
+  clearPersistedFilters,
   resetFilterState,
   COL_GAME,
   COL_RATING,
@@ -302,6 +326,92 @@ describe("collection state", () => {
   });
 });
 
+describe("collection persistence", () => {
+  beforeEach(() => {
+    resetState();
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it("saveStatuses writes to localStorage", () => {
+    setStatusForKey("Game___Platform", STATUS_OWNED);
+    saveStatuses();
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(raw["Game___Platform"]).toBe(STATUS_OWNED);
+  });
+
+  it("loadStatuses reads from localStorage", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ Test___Game: STATUS_WISHLIST }));
+    loadStatuses();
+    expect(getStatusForKey("Test___Game")).toBe(STATUS_WISHLIST);
+  });
+
+  it("loadStatuses migrates legacy boolean format", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ Legacy___Game: true }));
+    loadStatuses();
+    expect(getStatusForKey("Legacy___Game")).toBe(STATUS_OWNED);
+  });
+
+  it("loadStatuses handles invalid JSON gracefully", () => {
+    localStorage.setItem(STORAGE_KEY, "not valid json");
+    loadStatuses();
+    expect(getStatusForKey("Any___Key")).toBe(STATUS_NONE);
+  });
+
+  it("loadStatuses handles non-object JSON", () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify("string value"));
+    loadStatuses();
+    expect(getStatusForKey("Any___Key")).toBe(STATUS_NONE);
+  });
+
+  it("saveNotes writes to localStorage", () => {
+    setNoteForKey("Game___Platform", "My note");
+    saveNotes();
+    const raw = JSON.parse(localStorage.getItem(NOTES_STORAGE_KEY));
+    expect(raw["Game___Platform"]).toBe("My note");
+  });
+
+  it("loadNotes reads from localStorage", () => {
+    localStorage.setItem(
+      NOTES_STORAGE_KEY,
+      JSON.stringify({ Test___Game: "Saved note" })
+    );
+    loadNotes();
+    expect(getNoteForKey("Test___Game")).toBe("Saved note");
+  });
+
+  it("loadNotes handles invalid JSON gracefully", () => {
+    localStorage.setItem(NOTES_STORAGE_KEY, "not valid json");
+    loadNotes();
+    expect(getNoteForKey("Any___Key")).toBe("");
+  });
+
+  it("getAllStatuses returns copy of state", () => {
+    setStatusForKey("Game1___Platform", STATUS_OWNED);
+    setStatusForKey("Game2___Platform", STATUS_WISHLIST);
+    const all = getAllStatuses();
+    expect(all["Game1___Platform"]).toBe(STATUS_OWNED);
+    expect(all["Game2___Platform"]).toBe(STATUS_WISHLIST);
+    // Verify it's a copy (modifying doesn't affect original)
+    all["Game3___Platform"] = STATUS_OWNED;
+    expect(getStatusForKey("Game3___Platform")).toBe(STATUS_NONE);
+  });
+
+  it("getAllNotes returns copy of state", () => {
+    setNoteForKey("Game1___Platform", "Note 1");
+    setNoteForKey("Game2___Platform", "Note 2");
+    const all = getAllNotes();
+    expect(all["Game1___Platform"]).toBe("Note 1");
+    expect(all["Game2___Platform"]).toBe("Note 2");
+    // Verify it's a copy
+    all["Game3___Platform"] = "New note";
+    expect(getNoteForKey("Game3___Platform")).toBe("");
+  });
+});
+
 describe("filter state", () => {
   beforeEach(() => {
     resetFilterState();
@@ -349,6 +459,143 @@ describe("filter state", () => {
     expect(getSearchValue()).toBe("");
     expect(getSortColumn()).toBe(COL_GAME);
     expect(getSortDirection()).toBe("asc");
+  });
+
+  it("genre filter getter/setter works", () => {
+    expect(getFilterGenre()).toBe("");
+    setFilterGenre("RPG");
+    expect(getFilterGenre()).toBe("RPG");
+    setFilterGenre(null);
+    expect(getFilterGenre()).toBe("");
+  });
+
+  it("status filter getter/setter works", () => {
+    expect(getFilterStatus()).toBe("");
+    setFilterStatus("owned");
+    expect(getFilterStatus()).toBe("owned");
+    setFilterStatus("");
+    expect(getFilterStatus()).toBe("");
+  });
+
+  it("rating min filter getter/setter works", () => {
+    expect(getFilterRatingMin()).toBe("");
+    setFilterRatingMin("8.5");
+    expect(getFilterRatingMin()).toBe("8.5");
+    setFilterRatingMin(null);
+    expect(getFilterRatingMin()).toBe("");
+  });
+
+  it("year start filter getter/setter works", () => {
+    expect(getFilterYearStart()).toBe("");
+    setFilterYearStart("1990");
+    expect(getFilterYearStart()).toBe("1990");
+    setFilterYearStart("");
+    expect(getFilterYearStart()).toBe("");
+  });
+
+  it("year end filter getter/setter works", () => {
+    expect(getFilterYearEnd()).toBe("");
+    setFilterYearEnd("1999");
+    expect(getFilterYearEnd()).toBe("1999");
+    setFilterYearEnd(null);
+    expect(getFilterYearEnd()).toBe("");
+  });
+
+  it("region filter getter/setter works", () => {
+    expect(getFilterRegion()).toBe("");
+    setFilterRegion("NTSC-U");
+    expect(getFilterRegion()).toBe("NTSC-U");
+    setFilterRegion("");
+    expect(getFilterRegion()).toBe("");
+  });
+
+  it("setSortDirection normalizes invalid values to asc", () => {
+    setSortDirection("desc");
+    expect(getSortDirection()).toBe("desc");
+    setSortDirection("invalid");
+    expect(getSortDirection()).toBe("asc");
+    setSortDirection(null);
+    expect(getSortDirection()).toBe("asc");
+  });
+
+  it("setSortColumn defaults to COL_GAME for falsy values", () => {
+    setSortColumn(COL_RATING);
+    expect(getSortColumn()).toBe(COL_RATING);
+    setSortColumn("");
+    expect(getSortColumn()).toBe(COL_GAME);
+    setSortColumn(null);
+    expect(getSortColumn()).toBe(COL_GAME);
+  });
+});
+
+describe("filter persistence", () => {
+  beforeEach(() => {
+    resetFilterState();
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it("savePersistedFilters writes to localStorage", () => {
+    setFilterStatus("owned");
+    setFilterRatingMin("8.0");
+    setFilterYearStart("1990");
+    setFilterYearEnd("2000");
+    setFilterRegion("NTSC-J");
+    savePersistedFilters();
+
+    const raw = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY));
+    expect(raw.filterStatus).toBe("owned");
+    expect(raw.filterRatingMin).toBe("8.0");
+    expect(raw.filterYearStart).toBe("1990");
+    expect(raw.filterYearEnd).toBe("2000");
+    expect(raw.filterRegion).toBe("NTSC-J");
+  });
+
+  it("loadPersistedFilters reads from localStorage", () => {
+    localStorage.setItem(
+      FILTER_STORAGE_KEY,
+      JSON.stringify({
+        filterStatus: "wishlist",
+        filterRatingMin: "7.5",
+        filterYearStart: "1985",
+        filterYearEnd: "1995",
+        filterRegion: "PAL",
+      })
+    );
+    loadPersistedFilters();
+
+    expect(getFilterStatus()).toBe("wishlist");
+    expect(getFilterRatingMin()).toBe("7.5");
+    expect(getFilterYearStart()).toBe("1985");
+    expect(getFilterYearEnd()).toBe("1995");
+    expect(getFilterRegion()).toBe("PAL");
+  });
+
+  it("loadPersistedFilters handles invalid JSON gracefully", () => {
+    localStorage.setItem(FILTER_STORAGE_KEY, "not valid json");
+    loadPersistedFilters();
+
+    expect(getFilterStatus()).toBe("");
+    expect(getFilterRatingMin()).toBe("");
+  });
+
+  it("loadPersistedFilters handles missing properties", () => {
+    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({ filterStatus: "backlog" }));
+    loadPersistedFilters();
+
+    expect(getFilterStatus()).toBe("backlog");
+    expect(getFilterRatingMin()).toBe("");
+    expect(getFilterRegion()).toBe("");
+  });
+
+  it("clearPersistedFilters removes from localStorage", () => {
+    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({ filterStatus: "owned" }));
+    clearPersistedFilters();
+
+    expect(localStorage.getItem(FILTER_STORAGE_KEY)).toBeNull();
   });
 });
 
