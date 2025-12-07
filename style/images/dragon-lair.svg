@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Dragon breathing fire inside a cavern">
+  <defs>
+    <linearGradient id="bgGlow" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#050814" />
+      <stop offset="35%" stop-color="#0c1124" />
+      <stop offset="65%" stop-color="#0f162d" />
+      <stop offset="100%" stop-color="#0c0f1f" />
+    </linearGradient>
+    <radialGradient id="lairLight" cx="70%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#1b2a4a" stop-opacity="0.85" />
+      <stop offset="60%" stop-color="#0c1022" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#050814" stop-opacity="0.1" />
+    </radialGradient>
+    <linearGradient id="fire" x1="0%" y1="0%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#ffcf6b" />
+      <stop offset="40%" stop-color="#ff8243" />
+      <stop offset="90%" stop-color="#ff3a2f" />
+    </linearGradient>
+    <linearGradient id="dragon" x1="0%" y1="0%" x2="80%" y2="30%">
+      <stop offset="0%" stop-color="#4dd1ff" stop-opacity="0.35" />
+      <stop offset="60%" stop-color="#7ce7ff" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#a8f1ff" stop-opacity="0.95" />
+    </linearGradient>
+    <filter id="softGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bgGlow)" />
+  <rect width="1600" height="900" fill="url(#lairLight)" />
+  <path d="M0 720 Q240 620 520 690 T1100 650 T1600 620 L1600 900 L0 900 Z" fill="#060913" opacity="0.95" />
+  <path d="M120 720 Q420 540 760 610 T1340 520" stroke="#0f1f38" stroke-width="8" fill="none" opacity="0.5" />
+  <path d="M240 760 Q520 560 840 620 T1360 580" stroke="#0f1f38" stroke-width="6" fill="none" opacity="0.35" />
+  <path d="M980 440 q60 -40 140 -10 q40 14 72 6 q80 -18 130 -72 q12 44 -14 74 q28 10 64 8 q-32 50 -118 82 q-22 8 -28 22 q-10 24 -6 46 q-18 -14 -44 -18 q-40 -8 -82 0 q-42 10 -80 32 q-26 16 -44 42 q-10 16 -26 22 q-64 26 -148 -16 q-64 -32 -104 -78 q-16 -18 -14 -34 q2 -14 18 -20 q20 -8 52 -2 q16 4 28 -8 l40 -40 q14 -14 28 -20 q16 -8 34 -4 q24 6 46 22 z" fill="url(#dragon)" filter="url(#softGlow)" />
+  <path d="M1206 438 q64 -18 118 -44 q22 -10 42 -26 q18 -14 40 -18 q12 -2 26 0 q-20 38 -10 78 q8 32 32 60 q-64 -18 -108 -6 q-28 8 -56 30 q-24 18 -50 22 q-22 2 -42 -10 q-10 -6 -10 -16 q0 -14 18 -24 q16 -8 40 -22 q16 -10 16 -20 q0 -10 -16 -4 q-22 8 -42 6 q-16 -2 -28 -12 q-18 -16 -10 -34 q6 -12 20 -16 z" fill="url(#fire)" opacity="0.92" />
+  <path d="M1020 538 q36 -10 70 4 q28 12 52 40 q12 16 8 30 q-6 20 -32 24 q-30 6 -80 -12 q-40 -14 -70 -40 q-14 -12 -12 -22 q2 -12 20 -18 q18 -6 44 -6 z" fill="#111c30" opacity="0.65" />
+  <path d="M900 596 q22 -14 48 -12 q26 2 52 14 q36 16 54 42 q10 14 6 26 q-4 12 -22 16 q-28 6 -80 -18 q-40 -18 -64 -42 q-10 -12 -10 -20 q0 -8 16 -12 z" fill="#0c1628" opacity="0.55" />
+  <path d="M1120 352 q-12 -20 8 -44 q18 -22 56 -36 q18 -6 34 0 q20 6 18 22 q-2 14 -18 26 q-22 18 -56 26 q-28 8 -34 -8 q-4 -8 -8 -16 z" fill="#5de1ff" opacity="0.75" />
+  <g fill="#ffb347" opacity="0.9">
+    <circle cx="1280" cy="460" r="6" />
+    <circle cx="1304" cy="452" r="4" />
+    <circle cx="1322" cy="444" r="8" />
+    <circle cx="1348" cy="436" r="5" />
+    <circle cx="1370" cy="430" r="7" />
+  </g>
+  <g fill="#5de1ff" opacity="0.4">
+    <circle cx="240" cy="280" r="6" />
+    <circle cx="340" cy="220" r="4" />
+    <circle cx="480" cy="260" r="6" />
+    <circle cx="600" cy="200" r="5" />
+    <circle cx="780" cy="180" r="7" />
+  </g>
+  <g fill="#86f7ff" opacity="0.35">
+    <circle cx="1080" cy="780" r="22" />
+    <circle cx="1240" cy="760" r="12" />
+    <circle cx="1380" cy="720" r="18" />
+  </g>
+</svg>

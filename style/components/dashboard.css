@@ -4,9 +4,48 @@
  */
 
 .hero-dashboard {
+  position: relative;
+  overflow: hidden;
   padding: var(--spacing-xl) var(--spacing-lg);
   background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-primary) 100%);
   margin-bottom: var(--spacing-xl);
+}
+
+.hero-dashboard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(4, 7, 16, 0.25) 0%,
+      rgba(4, 7, 16, 0.15) 35%,
+      rgba(4, 7, 16, 0.25) 55%,
+      rgba(4, 7, 16, 0.65) 100%
+    ),
+    url("../images/dragon-lair.svg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.9;
+  mask-image: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.45) 45%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.45) 45%,
+    rgba(0, 0, 0, 0.9) 100%
+  );
+  z-index: 0;
+}
+
+.hero-dashboard > * {
+  position: relative;
+  z-index: 1;
 }
 
 .dashboard-title {
@@ -34,6 +73,7 @@
   gap: var(--spacing-lg);
   max-width: 1400px;
   margin: 0 auto;
+  transform: translateX(clamp(12px, 4vw, 42px));
 }
 
 /* Stat Cards */
@@ -212,6 +252,7 @@
   .dashboard-grid {
     grid-template-columns: 1fr;
     gap: var(--spacing-md);
+    transform: none;
   }
 
   .stat-card-value {
