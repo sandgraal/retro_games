@@ -3,6 +3,12 @@ import { describe, expect, it } from "vitest";
 import { escapeHtml } from "../app/utils/dom.js";
 import { formatCurrency, formatNumber, formatRating } from "../app/utils/format.js";
 import { generateGameKey, parseGameKey } from "../app/utils/keys.js";
+import {
+  parseYear,
+  parseRating as parseRatingValidation,
+  sanitizeForId,
+  isValidTheme,
+} from "../app/utils/validation.js";
 
 describe("dom utilities", () => {
   it("escapes HTML special characters", () => {
@@ -57,5 +63,46 @@ describe("key utilities", () => {
       game: "Chrono Trigger",
       platform: "SNES",
     });
+  });
+});
+
+describe("validation utilities", () => {
+  it("parseYear parses valid years", () => {
+    expect(parseYear("1995")).toBe(1995);
+    expect(parseYear(2020)).toBe(2020);
+    expect(parseYear("1985")).toBe(1985);
+  });
+
+  it("parseYear returns null for invalid values", () => {
+    expect(parseYear(null)).toBe(null);
+    expect(parseYear("not a year")).toBe(null);
+    expect(parseYear(undefined)).toBe(null);
+  });
+
+  it("parseRating parses valid ratings", () => {
+    expect(parseRatingValidation("9.5")).toBe(9.5);
+    expect(parseRatingValidation(8.0)).toBe(8);
+    expect(parseRatingValidation("7.25")).toBe(7.25);
+  });
+
+  it("parseRating returns null for invalid values", () => {
+    expect(parseRatingValidation(null)).toBe(null);
+    expect(parseRatingValidation("N/A")).toBe(null);
+    expect(parseRatingValidation(Infinity)).toBe(null);
+  });
+
+  it("sanitizeForId creates safe HTML ids", () => {
+    expect(sanitizeForId("Game Name!")).toBe("game-name");
+    expect(sanitizeForId("Mario__Bros")).toBe("mario__bros");
+    expect(sanitizeForId("--test--")).toBe("test");
+    expect(sanitizeForId("")).toBe("");
+  });
+
+  it("isValidTheme validates theme strings", () => {
+    expect(isValidTheme("light")).toBe(true);
+    expect(isValidTheme("dark")).toBe(true);
+    expect(isValidTheme("auto")).toBe(false);
+    expect(isValidTheme(null)).toBe(false);
+    expect(isValidTheme("")).toBe(false);
   });
 });
