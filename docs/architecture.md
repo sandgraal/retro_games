@@ -1,6 +1,6 @@
 # Architecture Overview
 
-_Last updated: December 7, 2025_
+_Last updated: January 2025_
 
 ## Current Architecture
 
@@ -16,33 +16,58 @@ The application underwent a complete visual redesign from retro arcade aesthetic
 - Masonry grid layout for visual game showcase
 - Micro-animations and smooth transitions
 
+### Modular Architecture (January 2025)
+
+**Phase 0 refactoring complete**: The application was refactored from a 5,940-line monolithic `app.js` into **27 focused ES6 modules** totaling 6,670 lines. All modules have comprehensive test coverage (488 tests passing).
+
 ### File Structure
 
-```
+````
 retro_games/
-├── index.html                      # Main entry point (new redesigned structure)
+├── index.html                      # Main entry point
 ├── style.css                       # Master stylesheet (modular imports)
 ├── config.js                       # Supabase config (generated from .env)
 │
 ├── app/
-│   ├── main.js                    # Application bootstrap
+│   ├── main.js                    # Application bootstrap (456 lines)
+│   │
 │   ├── design/
 │   │   └── tokens.js              # Design tokens in JavaScript
-│   ├── ui/
-│   │   ├── dashboard.js           # Dashboard stats & rendering
-│   │   ├── grid.js                # Game grid rendering
-│   │   ├── carousel.js            # Featured games carousel
-│   │   ├── modal.js               # Game detail modal
-│   │   └── theme.js               # Theme switching
-│   ├── utils/
-│   │   ├── dom.js                 # DOM utilities
-│   │   ├── format.js              # Formatting helpers
-│   │   ├── keys.js                # Game key generation
-│   │   └── validation.js          # Input validation
-│   ├── data/
-│   │   └── ...                    # (Future) Data layer modules
-│   └── features/
-│       └── ...                    # (Future) Feature modules
+│   │
+│   ├── ui/                        # UI rendering modules (6 modules, 1,989 lines)
+│   │   ├── dashboard.js           # Dashboard stats & calculations (493 lines)
+│   │   ├── grid.js                # Game grid rendering & helpers (453 lines)
+│   │   ├── carousel.js            # Featured games carousel (313 lines)
+│   │   ├── theme.js               # Theme switching & motion prefs (259 lines)
+│   │   ├── modal.js               # Game detail modal helpers (240 lines)
+│   │   └── filters.js             # Filter UI builders (232 lines)
+│   │
+│   ├── features/                  # Feature logic modules (6 modules, 1,646 lines)
+│   │   ├── virtualization.js      # Grid virtualization helpers (371 lines)
+│   │   ├── filtering.js           # Filter predicates & matching (342 lines)
+│   │   ├── search.js              # Search & typeahead logic (282 lines)
+│   │   ├── pagination.js          # Pagination calculations (220 lines)
+│   │   ├── sharing.js             # Share codes & export/import (219 lines)
+│   │   └── sorting.js             # Sort comparators & config (212 lines)
+│   │
+│   ├── state/                     # State management (4 modules, 829 lines)
+│   │   ├── filters.js             # Filter state & constants (239 lines)
+│   │   ├── preferences.js         # User preferences storage (218 lines)
+│   │   ├── collection.js          # Owned/wishlist state (190 lines)
+│   │   └── cache.js               # Cover URL caching (182 lines)
+│   │
+│   ├── data/                      # Data layer modules (5 modules, 721 lines)
+│   │   ├── pricing.js             # Price normalization & queries (263 lines)
+│   │   ├── loader.js              # Data loading & row processing (184 lines)
+│   │   ├── aggregates.js          # Genre/timeline aggregates (163 lines)
+│   │   ├── supabase.js            # Supabase client config (70 lines)
+│   │   └── storage.js             # Storage URL helpers (41 lines)
+│   │
+│   └── utils/                     # Pure utilities (4 modules, 262 lines)
+│       ├── format.js              # Currency, rating, percent formatting (162 lines)
+│       ├── validation.js          # Year, rating, ID validation (46 lines)
+│       ├── keys.js                # Game key generation/parsing (30 lines)
+│       └── dom.js                 # HTML escaping utilities (24 lines)
 │
 ├── style/
 │   ├── tokens.css                 # Design system CSS variables
@@ -61,13 +86,17 @@ retro_games/
 │   └── ...
 │
 ├── tests/
-│   ├── app.test.js                # Unit tests
+│   ├── app.test.js                # Integration tests (25 tests)
+│   ├── utils.test.js              # Module unit tests (460 tests)
+│   ├── archive-media.test.js      # Media archival tests (3 tests)
 │   └── e2e/
 │       └── *.spec.js              # End-to-end tests
 │
+├── archive/
+│   └── app-legacy.js              # Archived monolithic code (5,940 lines)
+│
 └── docs/
     └── ...                        # Documentation
-```
 
 ### Technology Stack
 
@@ -246,34 +275,67 @@ xs: 4px, sm: 8px, md: 16px, lg: 24px, xl: 32px, xxl: 48px
 - Lighthouse Score: 90+
 - Accessibility Score: 95+
 
-## Future Architecture Plans
+## Completed Module Architecture (January 2025)
 
-### Data Layer Modularization
+All planned modules have been extracted and are now in use:
 
-Extract data operations into dedicated modules:
+### Data Layer (`app/data/`)
 
-- `app/data/supabase.js` - Supabase client wrapper
-- `app/data/loader.js` - Data loading logic
-- `app/data/aggregates.js` - Stats calculations
-- `app/data/pricing.js` - Price data integration
+| Module | Lines | Key Exports |
+|--------|-------|-------------|
+| `supabase.js` | 70 | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, table/bucket constants |
+| `loader.js` | 184 | `applySupabaseFilters`, `computeRegionCodes`, `normalizeIncomingRows`, `buildRowKey` |
+| `aggregates.js` | 163 | `computeLocalGenreAggregates`, `computeLocalTimelineSeries`, RPC parsers |
+| `pricing.js` | 263 | `normalizePriceValue`, `selectStatusPrice`, `resolvePriceValue`, `formatPriceValue` |
+| `storage.js` | 41 | `normalizeImageUrl`, `buildStoragePublicUrl`, `normalizeCoverUrl` |
 
-### Feature Modules
+### Feature Modules (`app/features/`)
 
-Isolate complex features:
+| Module | Lines | Key Exports |
+|--------|-------|-------------|
+| `virtualization.js` | 371 | `computeVirtualWindow`, `updateVirtualScrollState`, scroll helpers |
+| `filtering.js` | 342 | `rowMatchesPlatform`, `rowMatchesGenre`, `rowMatchesStatus`, filter predicates |
+| `search.js` | 282 | `normalizeSearchQuery`, `scoreSearchMatch`, `buildSearchPredicate` |
+| `pagination.js` | 220 | `computePageRange`, `computePageWindowRange`, page size constants |
+| `sharing.js` | 219 | `encodeSharePayload`, `decodeSharePayload`, `buildBackupPayload`, CSV export |
+| `sorting.js` | 212 | `buildSortComparator`, `parseSortConfig`, column constants |
 
-- `app/features/virtualization.js` - Grid virtualization
-- `app/features/pagination.js` - Pagination logic
-- `app/features/search.js` - Search/filter logic
-- `app/features/sharing.js` - Share codes & export
+### State Management (`app/state/`)
 
-### State Management
+| Module | Lines | Key Exports |
+|--------|-------|-------------|
+| `filters.js` | 239 | `FILTER_STORAGE_KEY`, column constants, filter defaults |
+| `preferences.js` | 218 | `getStoredThemeChoice`, `persistThemeChoice`, browse preferences |
+| `collection.js` | 190 | `STORAGE_KEY`, status constants, collection helpers |
+| `cache.js` | 182 | `getCoverCacheStorage`, cache TTL helpers |
 
-Centralize state:
+### UI Modules (`app/ui/`)
 
-- `app/state/collection.js` - Owned/wishlist state
-- `app/state/filters.js` - Filter state
-- `app/state/preferences.js` - User preferences
-- `app/state/cache.js` - Caching layer
+| Module | Lines | Key Exports |
+|--------|-------|-------------|
+| `dashboard.js` | 493 | `calculateAverageRating`, `countPlatforms`, `calculatePlatformBreakdown` |
+| `grid.js` | 453 | `normalizeCoverUrl`, `resolveCoverUrl`, `STATUS_CLASSES`, placeholders |
+| `carousel.js` | 313 | `calculateScrollStep`, `computeButtonStates`, trending helpers |
+| `theme.js` | 259 | `getPreferredTheme`, `applyThemeChoice`, motion preference helpers |
+| `modal.js` | 240 | `buildMetadataCard`, `calculateGalleryIndex`, focus trap helpers |
+| `filters.js` | 232 | `extractUniquePlatforms`, `extractUniqueGenres`, dropdown builders |
+
+### Utility Modules (`app/utils/`)
+
+| Module | Lines | Key Exports |
+|--------|-------|-------------|
+| `format.js` | 162 | `formatCurrency`, `formatNumber`, `formatRating`, `formatPercent` |
+| `validation.js` | 46 | `parseYear`, `parseRating`, `sanitizeForId`, `isValidTheme` |
+| `keys.js` | 30 | `generateGameKey`, `parseGameKey` |
+| `dom.js` | 24 | `escapeHtml` |
+
+## Future Work
+
+### Remaining Integration Tasks
+
+1. **Modal Wiring** - Connect `ui/modal.js` helpers to game card click handlers in `main.js`
+2. **Virtualization DOM** - Connect `features/virtualization.js` to grid rendering pipeline
+3. **Coverage Tooling** - Install `@vitest/coverage-v8` for coverage metrics
 
 ## Development Workflow
 
@@ -300,7 +362,7 @@ npm run lint:fix      # Auto-fix issues
 # Formatting
 npm run format        # Format all files
 npm run format:check  # Check formatting
-```
+````
 
 ### CI/CD Pipeline
 

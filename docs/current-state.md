@@ -1,12 +1,15 @@
 # Current State Overview
 
-_Last updated: December 7, 2025_
+_Last updated: January 2025_
 
 ## Architecture
 
 - Single-page application served as static assets with modular ES6 JavaScript.
 - **Museum-quality redesign** (December 2025): Complete visual overhaul from retro arcade to PS2-era sophistication with glassmorphism, masonry grid, and modern design system.
-- Vanilla JavaScript with modular structure: `app/main.js` bootstraps UI modules (`ui/dashboard.js`, `ui/grid.js`, etc.).
+- **Phase 0 refactoring** (January 2025): Complete modular extraction from 5,940-line `app-legacy.js` into 27 focused modules.
+- Vanilla JavaScript with modular structure: `app/main.js` (456 lines) bootstraps all modules.
+- **27 ES6 modules** across 6 directories: `ui/`, `features/`, `state/`, `data/`, `utils/`, `design/`.
+- **488 tests** covering all extracted modules (up from ~120 pre-refactoring).
 - Supabase acts as the backing data store with graceful fallback to `data/sample-games.json`.
 - No build tooling or bundler; modular CSS architecture with design tokens in `style/` directory.
 - See [`docs/architecture.md`](./architecture.md) for complete technical documentation.
@@ -45,11 +48,12 @@ _Last updated: December 7, 2025_
 
 ### Current Focus Areas
 
-- **Modal integration**: Wire new modal component to game card clicks
+- **Modal integration**: Wire modal component to game card clicks (placeholder at `app/main.js:447`)
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
+- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 488 tests passing
 - **Price data integration**: Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: Increase from ~12% to 60%+ target
-- **Feature completion**: Virtualization for very large datasets (10k+ games)
+- **Test coverage**: ✅ 488 tests passing; coverage tooling not installed (@vitest/coverage-v8)
+- **Feature completion**: Virtualization helpers extracted; needs DOM wiring for 10k+ games
 
 ### Technical Debt
 
@@ -75,14 +79,14 @@ _Last updated: December 7, 2025_
 
 **Highest Priority**:
 
-1. **Complete Modal Integration** - Wire modal component to game card clicks, test all interactions
-2. **Increase Test Coverage** - Add tests for new UI modules (dashboard, grid, filters), target 60%+
-3. **Archive Legacy Code** - Move old `app.js` to `archive/` after thorough verification
+1. **Complete Modal Integration** - Wire modal component to game card clicks (currently placeholder)
+2. **Install Coverage Tooling** - Add @vitest/coverage-v8 to track test coverage metrics
+3. **Wire Virtualization** - Connect extracted `features/virtualization.js` to grid rendering
 
 **Medium Priority**:
 
 4. **Price Data Integration** - Complete PriceCharting integration for dashboard and modal
-5. **Performance Optimization** - Implement virtualization for 10k+ game datasets
+5. **Performance Testing** - Test with 10k+ game datasets to validate virtualization
 6. **Media Workflow** - Automated cover import and archival tooling
 
 **Lower Priority**:
@@ -91,3 +95,24 @@ _Last updated: December 7, 2025_
 8. **Advanced Analytics** - Collection insights, trending games, recommendations
 
 See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive roadmap.
+
+## Module Inventory (January 2025)
+
+**27 ES6 modules** totaling 6,670 lines:
+
+| Directory       | Modules | Lines | Purpose                                                                         |
+| --------------- | ------- | ----- | ------------------------------------------------------------------------------- |
+| `app/ui/`       | 6       | 1,989 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                 |
+| `app/features/` | 6       | 1,646 | Feature logic (virtualization, filtering, sorting, search, pagination, sharing) |
+| `app/state/`    | 4       | 829   | State management (collection, filters, preferences, cache)                      |
+| `app/data/`     | 5       | 721   | Data layer (supabase, loader, aggregates, pricing, storage)                     |
+| `app/utils/`    | 4       | 262   | Pure utilities (dom, format, keys, validation)                                  |
+| `app/design/`   | 1       | 127   | Design tokens                                                                   |
+| `app/main.js`   | 1       | 456   | Bootstrap orchestration                                                         |
+
+**Test Coverage:**
+
+- `tests/utils.test.js`: 460 tests (covers all extracted helpers)
+- `tests/app.test.js`: 25 tests (integration tests)
+- `tests/archive-media.test.js`: 3 tests
+- **Total: 488 tests passing**

@@ -44,29 +44,78 @@ Game records use these columns (track these constants in `app/main.js`):
 
 ## File Responsibilities
 
-| File                      | Purpose                          | Patterns                                                                                     |
-| ------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
-| `index.html`              | DOM scaffold, semantic structure | Hero dashboard, masonry grid, filters sidebar, mobile nav; Supabase JS loaded via CDN        |
-| `app/main.js`             | Application bootstrap            | Loads data (Supabase → sample JSON fallback), initializes UI modules, sets up event handlers |
-| `app/ui/dashboard.js`     | Dashboard stats & rendering      | `calculateStats()`, `updateDashboard()`, `animateNumber()` - 6 stat cards with animations    |
-| `app/ui/grid.js`          | Game grid rendering              | `renderGrid()`, `createGameCard()`, masonry layout, quick actions, loading skeletons         |
-| `app/ui/carousel.js`      | Featured games carousel          | Recent additions display on dashboard                                                        |
-| `app/ui/filters.js`       | Filter UI interactions           | Platform/genre/search filter handlers                                                        |
-| `app/ui/modal.js`         | Game detail modal                | Modal interactions, metadata display (TODO: wire to grid clicks)                             |
-| `app/ui/theme.js`         | Theme switching                  | Light/dark/auto theme management                                                             |
-| `app/utils/dom.js`        | DOM utilities                    | Element creation, event delegation helpers                                                   |
-| `app/utils/format.js`     | Formatting helpers               | `formatCurrency()`, `formatRating()`, `formatNumber()`                                       |
-| `app/utils/keys.js`       | Game key generation              | `generateGameKey()` creates compound keys (`gameName___platformName`)                        |
-| `app/utils/validation.js` | Input validation                 | Data validation helpers                                                                      |
-| `app/design/tokens.js`    | Design tokens in JavaScript      | JS constants matching CSS custom properties                                                  |
-| `style.css`               | Master stylesheet                | Imports modular CSS from `style/` directory                                                  |
-| `style/tokens.css`        | Design system tokens             | CSS custom properties: colors, typography, spacing, shadows, animations                      |
-| `style/base.css`          | Base styles                      | Typography, reset, global element styles                                                     |
-| `style/utilities.css`     | Utility classes                  | Layout helpers, spacing, typography utilities                                                |
-| `style/components/*.css`  | Component styles                 | Dashboard, grid, filters, modal, cards - all glassmorphism & PS2 aesthetic                   |
-| `config.js`               | Supabase credentials             | Generated from `.env` via `npm run build:config`; `.gitignore` protects it                   |
-| `data/sample-games.json`  | Fallback offline data            | Full JSON dataset when Supabase unavailable                                                  |
-| `archive/app-legacy.js`   | Legacy monolithic code           | 5,940-line original app.js - archived for test reference only                                |
+**Module Architecture (January 2025):** 27 ES6 modules across 6 directories with 488 tests.
+
+### Core Files
+
+| File                     | Purpose                           | Patterns                                                                                      |
+| ------------------------ | --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `index.html`             | DOM scaffold, semantic structure  | Hero dashboard, masonry grid, filters sidebar, mobile nav; Supabase JS loaded via CDN         |
+| `app/main.js`            | Application bootstrap (456 lines) | Loads data, initializes UI modules, sets up event handlers. Modal at line 447 is placeholder. |
+| `config.js`              | Supabase credentials              | Generated from `.env` via `npm run build:config`; `.gitignore` protects it                    |
+| `data/sample-games.json` | Fallback offline data             | Full JSON dataset when Supabase unavailable                                                   |
+| `archive/app-legacy.js`  | Legacy monolithic code            | 5,940-line original app.js - archived for reference only                                      |
+
+### UI Modules (`app/ui/` - 6 modules, 1,989 lines)
+
+| File                  | Lines | Purpose                        | Key Exports                                                                                         |
+| --------------------- | ----- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `app/ui/dashboard.js` | 493   | Dashboard stats & calculations | `calculateAverageRating()`, `countPlatforms()`, `calculatePlatformBreakdown()`, `getTopPlatforms()` |
+| `app/ui/grid.js`      | 453   | Game grid rendering helpers    | `normalizeCoverUrl()`, `resolveCoverUrl()`, `STATUS_CLASSES`, `STATUS_DISPLAY_LABELS`, placeholders |
+| `app/ui/carousel.js`  | 313   | Carousel scroll calculations   | `calculateScrollStep()`, `computeButtonStates()`, trending pick helpers, ARIA helpers               |
+| `app/ui/theme.js`     | 259   | Theme & motion preferences     | `getPreferredTheme()`, `applyThemeChoice()`, `prefersReducedMotion()`, motion preference helpers    |
+| `app/ui/modal.js`     | 240   | Modal metadata helpers         | `buildMetadataCard()`, `calculateGalleryIndex()`, focus trap helpers (TODO: wire to grid)           |
+| `app/ui/filters.js`   | 232   | Filter UI builders             | `extractUniquePlatforms()`, `extractUniqueGenres()`, `buildSelectOptions()`, dropdown builders      |
+
+### Feature Modules (`app/features/` - 6 modules, 1,646 lines)
+
+| File                             | Lines | Purpose                   | Key Exports                                                                                    |
+| -------------------------------- | ----- | ------------------------- | ---------------------------------------------------------------------------------------------- |
+| `app/features/virtualization.js` | 371   | Virtual scrolling helpers | `computeVirtualWindow()`, `updateVirtualScrollState()`, `VIRTUALIZE_MIN_ITEMS`, scroll helpers |
+| `app/features/filtering.js`      | 342   | Filter predicates         | `rowMatchesPlatform()`, `rowMatchesGenre()`, `rowMatchesStatus()`, `detectRegion()`            |
+| `app/features/search.js`         | 282   | Search & typeahead        | `normalizeSearchQuery()`, `scoreSearchMatch()`, `buildSearchPredicate()`, typeahead constants  |
+| `app/features/pagination.js`     | 220   | Pagination calculations   | `computePageRange()`, `computePageWindowRange()`, `PAGE_SIZE_CHOICES`, page size constants     |
+| `app/features/sharing.js`        | 219   | Share codes & export      | `encodeSharePayload()`, `decodeSharePayload()`, `buildBackupPayload()`, CSV export helpers     |
+| `app/features/sorting.js`        | 212   | Sort comparators          | `buildSortComparator()`, `parseSortConfig()`, `SORT_OPTIONS`, column constants                 |
+
+### State Modules (`app/state/` - 4 modules, 829 lines)
+
+| File                       | Lines | Purpose                 | Key Exports                                                                                   |
+| -------------------------- | ----- | ----------------------- | --------------------------------------------------------------------------------------------- |
+| `app/state/filters.js`     | 239   | Filter state & defaults | `FILTER_STORAGE_KEY`, column constants (`COL_GAME`, `COL_PLATFORM`, etc.), filter defaults    |
+| `app/state/preferences.js` | 218   | User preferences        | `getStoredThemeChoice()`, `persistThemeChoice()`, browse preference helpers                   |
+| `app/state/collection.js`  | 190   | Owned/wishlist state    | `STORAGE_KEY`, status constants (`STATUS_OWNED`, `STATUS_WISHLIST`, etc.), collection helpers |
+| `app/state/cache.js`       | 182   | Cover URL caching       | `getCoverCacheStorage()`, `FALLBACK_COVER_CACHE_KEY`, cache TTL helpers                       |
+
+### Data Modules (`app/data/` - 5 modules, 721 lines)
+
+| File                     | Lines | Purpose                   | Key Exports                                                                                  |
+| ------------------------ | ----- | ------------------------- | -------------------------------------------------------------------------------------------- |
+| `app/data/pricing.js`    | 263   | Price normalization       | `normalizePriceValue()`, `selectStatusPrice()`, `resolvePriceValue()`, `formatPriceValue()`  |
+| `app/data/loader.js`     | 184   | Data loading & processing | `applySupabaseFilters()`, `computeRegionCodes()`, `normalizeIncomingRows()`, `buildRowKey()` |
+| `app/data/aggregates.js` | 163   | Stats aggregates          | `computeLocalGenreAggregates()`, `computeLocalTimelineSeries()`, RPC response parsers        |
+| `app/data/supabase.js`   | 70    | Supabase client config    | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, table/bucket constants                                  |
+| `app/data/storage.js`    | 41    | Storage URL helpers       | `normalizeImageUrl()`, `buildStoragePublicUrl()`, `normalizeCoverUrl()`                      |
+
+### Utility Modules (`app/utils/` - 4 modules, 262 lines)
+
+| File                      | Lines | Purpose             | Key Exports                                                                                     |
+| ------------------------- | ----- | ------------------- | ----------------------------------------------------------------------------------------------- |
+| `app/utils/format.js`     | 162   | Formatting helpers  | `formatCurrency()`, `formatNumber()`, `formatRating()`, `formatPercent()`, `formatFieldLabel()` |
+| `app/utils/validation.js` | 46    | Input validation    | `parseYear()`, `parseRating()`, `sanitizeForId()`, `isValidTheme()`                             |
+| `app/utils/keys.js`       | 30    | Game key generation | `generateGameKey()`, `parseGameKey()`                                                           |
+| `app/utils/dom.js`        | 24    | DOM utilities       | `escapeHtml()`                                                                                  |
+
+### Design & Style Files
+
+| File                     | Purpose                     | Patterns                                                                   |
+| ------------------------ | --------------------------- | -------------------------------------------------------------------------- |
+| `app/design/tokens.js`   | Design tokens in JavaScript | JS constants matching CSS custom properties (127 lines)                    |
+| `style.css`              | Master stylesheet           | Imports modular CSS from `style/` directory                                |
+| `style/tokens.css`       | Design system tokens        | CSS custom properties: colors, typography, spacing, shadows, animations    |
+| `style/base.css`         | Base styles                 | Typography, reset, global element styles                                   |
+| `style/utilities.css`    | Utility classes             | Layout helpers, spacing, typography utilities                              |
+| `style/components/*.css` | Component styles            | Dashboard, grid, filters, modal, cards - all glassmorphism & PS2 aesthetic |
 
 ## Critical Patterns
 

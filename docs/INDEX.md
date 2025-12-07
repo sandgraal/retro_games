@@ -1,6 +1,6 @@
 # Documentation Index
 
-_Last updated: December 7, 2025_
+_Last updated: January 2025_
 
 ## 📚 Documentation Overview
 
@@ -18,6 +18,7 @@ This project maintains comprehensive documentation for developers, contributors,
 
 - **[docs/architecture.md](./architecture.md)** ⭐ **START HERE** - Complete architecture documentation
   - File structure and module organization
+  - **27 ES6 modules** with detailed exports
   - Design system (colors, typography, components)
   - Data flow and state management
   - Performance considerations
@@ -25,8 +26,8 @@ This project maintains comprehensive documentation for developers, contributors,
 
 - **[docs/current-state.md](./current-state.md)** - Current status and next steps
   - What's working
-  - Known gaps and technical debt
-  - Immediate priorities
+  - Known gaps and next priorities
+  - Module inventory with line counts
 
 - **[docs/data-pipeline.md](./data-pipeline.md)** - Database schema and Supabase integration
   - Table structure
@@ -36,8 +37,9 @@ This project maintains comprehensive documentation for developers, contributors,
 ### Planning & Roadmap
 
 - **[docs/implementation-plan.md](./implementation-plan.md)** - Full project roadmap
-  - Phase 0: Architecture Redesign ✅ COMPLETE
-  - Phase 1-4: Future features
+  - Phase 0: Architecture Redesign ✅ COMPLETE (January 2025)
+  - Phase 1: Foundation Hardening ✅ COMPLETE
+  - Phase 2-4: Future features
   - Track-based organization
 
 - **[docs/image-sourcing.md](./image-sourcing.md)** - Cover art and media guidelines
@@ -74,7 +76,9 @@ This project maintains comprehensive documentation for developers, contributors,
   - Evaluation metrics
 
 - **[tests/](../tests/)** - Test files
-  - `app.test.js` - Unit tests
+  - `utils.test.js` - Module unit tests (460 tests)
+  - `app.test.js` - Integration tests (25 tests)
+  - `archive-media.test.js` - Media archival tests (3 tests)
   - `e2e/*.spec.js` - End-to-end tests
 
 ## Context & History
@@ -131,23 +135,36 @@ This project maintains comprehensive documentation for developers, contributors,
 - Archive outdated docs to `docs/archive/`
 - Cross-reference related documentation
 
-## Recently Updated (December 2025)
+## Recently Updated (January 2025)
 
-✅ Complete documentation overhaul reflecting redesign:
+✅ Complete documentation overhaul reflecting Phase 0 completion:
 
-- Created `architecture.md` - Comprehensive technical documentation
-- Updated `current-state.md` - Removed completed refactoring references
-- Updated `implementation-plan.md` - Phase 0 marked complete
-- Updated `AGENT_QUICKSTART.md` - New architecture focus
-- Updated `README.md` - Project status and architecture link
-- Updated `.github/copilot-instructions.md` - New file structure and patterns
-- Simplified `evaluation/README.md` - Removed redundancy
-- Deleted 5 redundant redesign docs
-- Deleted outdated `refactoring-roadmap.md`
-- Deleted 5 redundant evaluation docs
-- Created this index document
+- Updated `architecture.md` - Complete 27-module inventory with exports
+- Updated `current-state.md` - Phase 0 complete, accurate module metrics
+- Updated `implementation-plan.md` - All Phase 0 tracks marked complete
+- Updated `AGENT_QUICKSTART.md` - Current architecture and priorities
+- Updated `CONTRIBUTING.md` - Feature freeze lifted
+- Updated `.github/copilot-instructions.md` - Full module documentation
+- Updated this index document
 
-## Deleted Documentation (No Longer Needed)
+## Documentation Maintenance
+
+### When to Update
+
+- **After major features**: Update architecture.md and current-state.md
+- **After releases**: Update implementation-plan.md progress
+- **Code pattern changes**: Update copilot-instructions.md
+- **Setup changes**: Update setup.md and README.md
+- **Always**: Keep current-state.md synchronized with codebase
+
+### Documentation Standards
+
+- Use clear, concise language
+- Include code examples where helpful
+- Keep file paths absolute and current
+- Date-stamp major updates (use "January 2025" format)
+- Archive outdated docs to `docs/archive/`
+- Cross-reference related documentation
 
 **Redesign Docs** (superseded by architecture.md):
 

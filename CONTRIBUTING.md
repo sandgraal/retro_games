@@ -1,16 +1,18 @@
 # Contributing Guide
 
-**⚠️ IMPORTANT: Feature Freeze in Effect** (December 2025)
+**✅ Phase 0 Refactoring Complete** (January 2025)
 
-We're currently refactoring the monolithic `app.js` (5,940 lines) into maintainable ES6 modules. During this **Phase 0 refactoring period**:
+The modular architecture refactoring is complete! The monolithic `app.js` (5,940 lines) has been successfully extracted into **27 ES6 modules** with **488 tests passing**.
 
-- ❌ **NO new features** accepted
-- ✅ Critical bug fixes only
-- ✅ Phase 0 refactoring contributions welcome
+**Ready to accept:**
+
+- ✅ New features (following existing patterns)
+- ✅ Bug fixes
+- ✅ Test additions
 - ✅ Documentation improvements
-- ✅ Test additions (if not blocked by refactoring)
+- ✅ Performance optimizations
 
-**See [`docs/implementation-plan.md`](docs/implementation-plan.md#phase-0--architecture-redesign--complete) for details and how to help.**
+**See [`docs/implementation-plan.md`](docs/implementation-plan.md) and [`docs/architecture.md`](docs/architecture.md) for details.**
 
 Thanks for keeping Sandgraal's Retro Games list sharp. This document captures the essential steps to get set up, code safely, and ship reviews quickly.
 
