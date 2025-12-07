@@ -14,7 +14,7 @@ The modular architecture refactoring is complete! The monolithic `app.js` (5,940
 
 **See [`docs/implementation-plan.md`](docs/implementation-plan.md) and [`docs/architecture.md`](docs/architecture.md) for details.**
 
-Thanks for keeping Sandgraal's Retro Games list sharp. This document captures the essential steps to get set up, code safely, and ship reviews quickly.
+Thanks for keeping the Dragon's Hoard Atlas sharp. This document captures the essential steps to get set up, code safely, and ship reviews quickly.
 
 ## 1. Prerequisites
 
