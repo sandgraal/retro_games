@@ -945,3 +945,218 @@ describe("data/pricing", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// features/sharing tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  encodeSharePayload,
+  decodeSharePayload,
+  buildSharePayload,
+  buildBackupPayload,
+  parseBackupPayload,
+  generateBackupFilename,
+  buildCsvRow,
+  buildCsvExport,
+  countCollectionItems,
+} from "../app/features/sharing.js";
+
+describe("features/sharing", () => {
+  describe("encodeSharePayload / decodeSharePayload", () => {
+    it("round-trips a payload", () => {
+      const payload = {
+        statuses: { game1___platform1: "owned", game2___platform2: "wishlist" },
+        notes: { game1___platform1: "Great game!" },
+      };
+      const encoded = encodeSharePayload(payload);
+      const decoded = decodeSharePayload(encoded);
+      expect(decoded.statuses).toEqual(payload.statuses);
+      expect(decoded.notes).toEqual(payload.notes);
+    });
+
+    it("handles unicode characters", () => {
+      const payload = {
+        statuses: { ゲーム___プラットフォーム: "owned" },
+        notes: { ゲーム___プラットフォーム: "日本語ノート" },
+      };
+      const encoded = encodeSharePayload(payload);
+      const decoded = decodeSharePayload(encoded);
+      expect(decoded.statuses["ゲーム___プラットフォーム"]).toBe("owned");
+      expect(decoded.notes["ゲーム___プラットフォーム"]).toBe("日本語ノート");
+    });
+
+    it("returns null for invalid input", () => {
+      expect(decodeSharePayload(null)).toBe(null);
+      expect(decodeSharePayload("")).toBe(null);
+      expect(decodeSharePayload("not-valid-base64!!!")).toBe(null);
+    });
+
+    it("handles legacy pipe-delimited format", () => {
+      // Legacy format: key::status|key::status
+      const legacy = "game1___p1::owned|game2___p2::wishlist";
+      const encoded = btoa(legacy);
+      const decoded = decodeSharePayload(encoded);
+      expect(decoded.statuses["game1___p1"]).toBe("owned");
+      expect(decoded.statuses["game2___p2"]).toBe("wishlist");
+    });
+
+    it("returns empty string for invalid payload in encode", () => {
+      expect(encodeSharePayload(null)).toBe("");
+      expect(encodeSharePayload(undefined)).toBe("");
+    });
+  });
+
+  describe("buildSharePayload", () => {
+    it("filters out none statuses and empty notes", () => {
+      const statuses = {
+        game1: "owned",
+        game2: "none",
+        game3: "wishlist",
+      };
+      const notes = {
+        game1: "Good game",
+        game2: "",
+        game3: "   ",
+      };
+      const result = buildSharePayload(statuses, notes);
+      expect(Object.keys(result.statuses)).toEqual(["game1", "game3"]);
+      expect(Object.keys(result.notes)).toEqual(["game1"]);
+    });
+
+    it("handles null inputs", () => {
+      const result = buildSharePayload(null, null);
+      expect(result).toEqual({ statuses: {}, notes: {} });
+    });
+  });
+
+  describe("buildBackupPayload", () => {
+    it("combines statuses, notes, and filters", () => {
+      const result = buildBackupPayload(
+        { game1: "owned" },
+        { game1: "note" },
+        { filterPlatform: "SNES" }
+      );
+      expect(result.statuses).toEqual({ game1: "owned" });
+      expect(result.notes).toEqual({ game1: "note" });
+      expect(result.filters).toEqual({ filterPlatform: "SNES" });
+    });
+
+    it("handles missing inputs", () => {
+      const result = buildBackupPayload(null, null, null);
+      expect(result).toEqual({ statuses: {}, notes: {}, filters: {} });
+    });
+  });
+
+  describe("parseBackupPayload", () => {
+    it("parses valid backup JSON", () => {
+      const json = JSON.stringify({
+        statuses: { game1: "owned" },
+        notes: { game1: "note" },
+        filters: { platform: "SNES" },
+      });
+      const result = parseBackupPayload(json);
+      expect(result.statuses).toEqual({ game1: "owned" });
+      expect(result.notes).toEqual({ game1: "note" });
+      expect(result.filters).toEqual({ platform: "SNES" });
+    });
+
+    it("returns null for invalid JSON", () => {
+      expect(parseBackupPayload("not json")).toBe(null);
+      expect(parseBackupPayload(null)).toBe(null);
+      expect(parseBackupPayload("")).toBe(null);
+    });
+
+    it("returns null for empty object", () => {
+      expect(parseBackupPayload("{}")).toBe(null);
+    });
+  });
+
+  describe("generateBackupFilename", () => {
+    it("generates filename with date", () => {
+      const filename = generateBackupFilename();
+      expect(filename).toMatch(/^collection-backup-\d{4}-\d{2}-\d{2}\.json$/);
+    });
+
+    it("uses custom prefix", () => {
+      const filename = generateBackupFilename("my-games");
+      expect(filename).toMatch(/^my-games-\d{4}-\d{2}-\d{2}\.json$/);
+    });
+  });
+
+  describe("buildCsvRow", () => {
+    it("builds CSV row from game data", () => {
+      const game = {
+        game_name: "Chrono Trigger",
+        platform: "SNES",
+        genre: "RPG",
+        release_year: 1995,
+      };
+      const row = buildCsvRow(game, "owned", "Best game ever");
+      expect(row).toBe("Chrono Trigger,SNES,RPG,1995,owned,Best game ever");
+    });
+
+    it("escapes commas and quotes", () => {
+      const game = {
+        game_name: 'Game "With" Quotes',
+        platform: "Platform, With, Commas",
+        genre: "Action",
+        release_year: 2000,
+      };
+      const row = buildCsvRow(game, "owned", "");
+      expect(row).toContain('"Game ""With"" Quotes"');
+      expect(row).toContain('"Platform, With, Commas"');
+    });
+
+    it("handles missing fields", () => {
+      const game = { game_name: "Test" };
+      const row = buildCsvRow(game, "owned", "");
+      expect(row).toBe("Test,,,,owned,");
+    });
+  });
+
+  describe("buildCsvExport", () => {
+    it("builds complete CSV with header", () => {
+      const games = [
+        { game_name: "Game 1", platform: "SNES" },
+        { game_name: "Game 2", platform: "NES" },
+      ];
+      const statuses = {
+        "Game 1___SNES": "owned",
+        "Game 2___NES": "wishlist",
+      };
+      const notes = { "Game 1___SNES": "Note 1" };
+      const keyGen = (g) => `${g.game_name}___${g.platform}`;
+      const csv = buildCsvExport(games, statuses, notes, keyGen);
+      const lines = csv.split("\n");
+      expect(lines[0]).toBe("Game Name,Platform,Genre,Release Year,Status,Notes");
+      expect(lines).toHaveLength(3);
+    });
+
+    it("excludes games with no status", () => {
+      const games = [{ game_name: "Game 1", platform: "SNES" }];
+      const statuses = {};
+      const keyGen = (g) => `${g.game_name}___${g.platform}`;
+      const csv = buildCsvExport(games, statuses, {}, keyGen);
+      const lines = csv.split("\n");
+      expect(lines).toHaveLength(1); // Header only
+    });
+  });
+
+  describe("countCollectionItems", () => {
+    it("counts statuses and notes", () => {
+      const payload = {
+        statuses: { a: "owned", b: "wishlist", c: "none" },
+        notes: { a: "note", b: "" },
+      };
+      const result = countCollectionItems(payload);
+      expect(result.totalStatuses).toBe(3);
+      expect(result.nonNoneStatuses).toBe(2);
+      expect(result.totalNotes).toBe(1);
+    });
+
+    it("handles null payload", () => {
+      const result = countCollectionItems(null);
+      expect(result).toEqual({ totalStatuses: 0, nonNoneStatuses: 0, totalNotes: 0 });
+    });
+  });
+});
