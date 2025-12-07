@@ -1,15 +1,15 @@
 # Current State Overview
 
-_Last updated: December 2025_
+_Last updated: December 7, 2025_
 
 ## Architecture
 
-- Single-page application served as static assets (`index.html`, `style.css`, `app.js`).
-- Vanilla JavaScript (5,940 lines) orchestrates DOM rendering, Supabase queries, and browser `localStorage` for owned-game tracking.
-- **⚠️ CRITICAL**: Monolithic structure (`app.js`) needs refactoring—see [`docs/refactoring-roadmap.md`](./refactoring-roadmap.md) for detailed plan.
-- Supabase acts as the backing data store. The frontend expects a `games` table whose columns match the CSV header (`Game Name`, `Platform`, `Rating`, etc.).
-- No build tooling or bundler; assets are edited by hand and delivered directly to the browser via ES6 module syntax support in modern browsers.
-- Supabase requests now stream in 400-row pages (configurable) using `.range()`; the UI renders the first chunk immediately and hydrates additional chunks only when the virtualized grid/pagination controls need more data.
+- Single-page application served as static assets with modular ES6 JavaScript.
+- **Museum-quality redesign** (December 2025): Complete visual overhaul from retro arcade to PS2-era sophistication with glassmorphism, masonry grid, and modern design system.
+- Vanilla JavaScript with modular structure: `app/main-redesign.js` bootstraps UI modules (`ui/dashboard-new.js`, `ui/grid-new.js`, etc.).
+- Supabase acts as the backing data store with graceful fallback to `data/sample-games.json`.
+- No build tooling or bundler; modular CSS architecture with design tokens in `style/` directory.
+- See [`docs/architecture.md`](./architecture.md) for complete technical documentation.
 
 ## Data Flow
 
@@ -43,22 +43,20 @@ _Last updated: December 2025_
 
 ## Gaps & Risks
 
-### Code Organization (CRITICAL 🔴)
+### Current Focus Areas
 
-- **Monolithic structure**: 5,940-line `app.js` with 218 functions creates unsustainable maintenance burden
-- **ESLint timeouts**: File too large for efficient linting
-- **High cognitive load**: Impossible to understand entire codebase at once
-- **Difficult testing**: Monolithic structure hampers unit testing
-- **Contributor friction**: New developers overwhelmed by file size
-- **Merge conflicts**: Multiple developers risk conflicts editing same giant file
-- **Solution**: See [`docs/refactoring-roadmap.md`](./refactoring-roadmap.md) for 4-week modularization plan
+- **Modal integration**: Wire new modal component to game card clicks
+- **Legacy cleanup**: Old `app.js` (5,940 lines) still exists but unused - can be archived
+- **Price data integration**: Complete PriceCharting API integration for modal and dashboard
+- **Test coverage**: Increase from ~12% to 60%+ target
+- **Feature completion**: Virtualization for very large datasets (10k+ games)
 
 ### Technical Debt
 
-- Test coverage only ~12% (22KB tests for 5,940 lines code) - need 60%+ target
-- CSS has duplication in theme variables (2,808 lines) - needs DRY refactoring
-- Some functions exceed 200 lines (`refreshFilteredView`) - need decomposition
-- 50+ global variables scattered - need state management centralization
+- Modular CSS architecture complete, but could further optimize bundle size
+- Some utility functions could be extracted to dedicated modules
+- Need comprehensive E2E test coverage for new UI flows
+- Documentation for new architecture patterns
 
 ### Data & Security
 
@@ -77,12 +75,19 @@ _Last updated: December 2025_
 
 **Highest Priority**:
 
-1. **Complete Phase 0 Refactoring** (4 weeks) - Modularize `app.js` into maintainable ES6 modules. See [`docs/refactoring-roadmap.md`](./refactoring-roadmap.md).
-2. **Increase Test Coverage** - Target 60% minimum after refactoring makes testing easier.
-3. **CSS Refactoring** - DRY up theme variables, consider CSS architecture patterns.
+1. **Complete Modal Integration** - Wire modal component to game card clicks, test all interactions
+2. **Increase Test Coverage** - Add tests for new UI modules (dashboard, grid, filters), target 60%+
+3. **Archive Legacy Code** - Move old `app.js` to `archive/` after thorough verification
 
-**Medium Priority**: 4. **Media Workflow Completion** - Finish automated cover import, archival tooling per [`docs/implementation-plan.md`](./implementation-plan.md) Phase 2. 5. **Performance Profiling** - Systematic performance monitoring with large datasets (10k+ games). 6. **Type Safety** - Consistent JSDoc or TypeScript integration.
+**Medium Priority**:
 
-**Lower Priority**: 7. **Community Features** - Per implementation plan Phase 3-4. 8. **Monitoring & Analytics** - User behavior insights respecting privacy.
+4. **Price Data Integration** - Complete PriceCharting integration for dashboard and modal
+5. **Performance Optimization** - Implement virtualization for 10k+ game datasets
+6. **Media Workflow** - Automated cover import and archival tooling
+
+**Lower Priority**:
+
+7. **Community Features** - User profiles, collection sharing, discussions
+8. **Advanced Analytics** - Collection insights, trending games, recommendations
 
 See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive roadmap.

@@ -1,10 +1,10 @@
 # Retro Games List
 
-A fast, private, and no-nonsense tracker for classic and retro games. Built for serious collectors, archivists, and retro fans who want control over their library.
+A fast, private, and beautifully designed tracker for classic and retro games. Built for serious collectors, archivists, and retro fans who want control over their library.
 
-**Project Status**: ⭐ **Feature-complete & production-ready** | 🔴 **Architecture refactoring needed**
+**Project Status**: ⭐ **Feature-complete & production-ready** | ✅ **Redesigned December 2025**
 
-The application is fully functional with comprehensive features, but the codebase has grown to 5,940 lines in a single file. Before major new features, we need modularization (see [`docs/refactoring-roadmap.md`](docs/refactoring-roadmap.md)).
+The application features a museum-quality interface with modular architecture, glassmorphism design system, and PS2-era aesthetic sophistication (see [`docs/architecture.md`](docs/architecture.md)).
 
 **Features:**
 

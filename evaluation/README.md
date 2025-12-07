@@ -1,33 +1,19 @@
-# Retro Game List - Evaluation Framework
+# Evaluation Framework
 
 ## Overview
 
-This evaluation framework provides automated testing and metrics collection for the Retro Game List application. It measures three key aspects:
+Automated testing and metrics collection for the Retro Game List application.
 
-1. **Search & Filter Accuracy** - Verifies search queries, platform filters, and genre filters return correct results
-2. **Data Integrity** - Validates owned games persist to localStorage and collection import/export functions correctly
-3. **UI/UX Functionality** - Ensures core interactions (modals, sorting, CSV export, share codes) work as expected
+**Test Coverage:**
+1. Search & filter accuracy
+2. Data integrity (localStorage persistence)
+3. UI/UX functionality (modals, sorting, exports)
 
-## Framework Structure
-
-```
-evaluation/
-├── queries.json                 # 25 test queries covering all features
-├── responses.json              # Test responses from running queries
-├── evaluation_data.jsonl       # Data formatted for evaluation (JSONL)
-├── evaluators.py               # Custom evaluator implementations
-├── run_evaluation.py           # Main evaluation execution script
-├── evaluation_results.json     # Detailed row-level results
-├── evaluation_summary.json     # Aggregate metrics and statistics
-├── test-runner.js              # Node.js test harness
-├── run-tests.js                # Test execution script
-├── convert-to-jsonl.js         # Data format converter
-└── README.md                   # This file
-```
+**Note**: Tests may need updating for the new redesigned UI (December 2025). See [`../docs/architecture.md`](../docs/architecture.md) for current architecture.
 
 ## Quick Start
 
-### 1. Run Tests (Generate Responses)
+### 1. Run Tests
 
 ```bash
 cd evaluation

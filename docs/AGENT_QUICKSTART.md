@@ -7,7 +7,7 @@ _Last updated: December 2025_
 ## 🎯 Project Status at a Glance
 
 - **Application**: ⭐ Feature-complete & production-ready
-- **Architecture**: 🔴 **CRITICAL REFACTORING NEEDED** (Phase 0 priority)
+- **Architecture**: ✅ **REDESIGNED** (December 2025) - Modular structure with museum-quality UI
 - **Tests**: 🟡 Working but coverage low (~12%)
 - **CI/CD**: ✅ Automated (lint, test, security, Lighthouse)
 - **Documentation**: ✅ Comprehensive
@@ -15,68 +15,78 @@ _Last updated: December 2025_
 ## 📚 Required Reading (Priority Order)
 
 1. **This document** - Project overview & quick start (5 min)
-2. **[refactoring-roadmap.md](./refactoring-roadmap.md)** - 🔴 **CRITICAL** - Phase 0 architecture refactoring (15 min)
-3. **[current-state.md](./current-state.md)** - Current architecture & known issues (10 min)
-4. **[implementation-plan.md](./implementation-plan.md)** - Full roadmap Phases 0-4 (20 min)
+2. **[architecture.md](./architecture.md)** - ✅ **NEW** - Complete architecture documentation (15 min)
+3. **[current-state.md](./current-state.md)** - Current status & next steps (10 min)
+4. **[implementation-plan.md](./implementation-plan.md)** - Full roadmap Phases 1-4 (20 min)
 5. **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Coding standards & workflow (10 min)
 6. **[.github/copilot-instructions.md](../.github/copilot-instructions.md)** - Detailed coding patterns (20 min)
 
-## 🚨 CRITICAL: Feature Freeze
+## 🎨 Recent Changes (December 2025)
 
-**NO NEW FEATURES until Phase 0 refactoring completes** (est. 4 weeks)
+**Complete Redesign**: Museum-quality visual overhaul with modular architecture
 
-The codebase is a 5,940-line monolithic file that must be modularized before new work:
-
-- ❌ No new features
-- ✅ Critical bug fixes only
-- ✅ Phase 0 refactoring work
-- ✅ Documentation improvements
-- ✅ Test additions (if not blocked by refactoring)
+- ✅ New design system with design tokens and glassmorphism
+- ✅ Modular CSS architecture (`style/` directory)
+- ✅ ES6 modules (`app/main-redesign.js`, `ui/`, `utils/`)
+- ✅ Hero dashboard with 6 animated stat cards
+- ✅ Masonry grid layout for game showcase
+- ✅ Collapsible filters sidebar/drawer
+- ✅ Mobile-first responsive design
 
 ## 🎯 What to Work On
 
-### Highest Priority: Phase 0 Refactoring
+### Highest Priority: Integration & Testing
 
-See [`refactoring-roadmap.md`](./refactoring-roadmap.md) for complete details.
+1. **Complete Modal Integration** - Wire new modal to game card clicks
+2. **Add Test Coverage** - Tests for new UI modules (dashboard, grid, filters)
+3. **Verify Functionality** - All features working with new architecture
+4. **Archive Legacy Code** - Clean up old `app.js` after verification
 
-**Current Phase 0 tracks** (in order):
+### Medium Priority: Feature Completion
 
-1. **Module Structure Setup** - Create `app/` directory, ES6 module loading
-2. **Extract Utilities** - Pure functions (`utils/dom.js`, `utils/format.js`, etc.)
-3. **Extract State** - State management (`state/collection.js`, `state/filters.js`, etc.)
-4. **Extract Data Layer** - API/Supabase (`data/supabase.js`, `data/loader.js`, etc.)
-5. **Extract UI** - Rendering (`ui/grid.js`, `ui/modal.js`, etc.)
-6. **Extract Features** - Complex logic (`features/virtualization.js`, etc.)
-7. **Update Tests** - Module-specific tests, 60%+ coverage
-8. **Documentation** - Architecture docs, migration guide
+1. **Price Data Integration** - Complete PriceCharting integration
+2. **Performance Optimization** - Virtualization for 10k+ game datasets
+3. **Media Workflows** - Automated cover import and archival
+4. **Documentation Updates** - Keep docs in sync with code
 
-### Medium Priority: Post-Refactoring
+### Lower Priority: Future Features
 
-Once Phase 0 completes:
-
-- Complete Phase 2 media workflows (cover automation, archival)
-- Increase test coverage to 80%
-- CSS refactoring (DRY theme variables)
-- Performance profiling with large datasets
-
-### Lower Priority: Future Phases
-
+- Phase 2: Advanced media workflows, content preservation
 - Phase 3: Community features, SEO, content marketing
-- Phase 4: Monetization, marketplace
+- Phase 4: Monetization, marketplace integration
 
 ## 🏗️ Architecture Overview
 
-### Current (Before Refactoring)
+### Current Architecture (December 2025)
 
 ```
 retro_games/
-├── index.html
-├── style.css (2,808 lines)
-├── app.js (5,940 lines, 218 functions) ← MONOLITH
+├── index.html                      # Main entry point
+├── style.css                       # Master stylesheet (imports)
+├── app/
+│   ├── main-redesign.js           # Bootstrap
+│   ├── design/tokens.js           # Design tokens
+│   ├── ui/                        # UI modules
+│   │   ├── dashboard-new.js
+│   │   └── grid-new.js
+│   └── utils/                     # Utilities
+│       ├── dom.js
+│       ├── format.js
+│       └── keys.js
+├── style/
+│   ├── tokens.css                 # Design system
+│   ├── base.css                   # Base styles
+│   ├── utilities.css              # Utilities
+│   └── components/                # Components
+│       ├── dashboard.css
+│       ├── grid.css
+│       ├── filters.css
+│       ├── modal.css
+│       └── cards.css
 └── tests/
 ```
 
-### Target (After Refactoring)
+### Legacy Code (To Archive)
 
 ```
 retro_games/

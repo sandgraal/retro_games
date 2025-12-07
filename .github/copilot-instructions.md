@@ -2,13 +2,15 @@
 
 ## Project Overview
 
-**Retro Games List** is a privacy-first, single-page static web app for tracking classic and retro games. Key traits:
+**Retro Games List** is a privacy-first, single-page static web app for tracking classic and retro games with a museum-quality interface. Key traits:
 
 - No user registration; all data stays local by default
+- Museum-quality design with glassmorphism, masonry grid, PS2-era aesthetic
+- Modular ES6 architecture with design tokens and component system
 - Instant search/filter across thousands of games
-- Collections are shareable via base64-encoded codes (not URLs or accounts)
+- Collections shareable via base64-encoded codes (not URLs or accounts)
 - Vanilla JS/CSS/HTML; no build step or frameworks
-- Optional Supabase backend for cloud data; gracefully falls back to local CSV
+- Optional Supabase backend for cloud data; gracefully falls back to sample JSON
 
 ## Data Architecture
 
@@ -35,47 +37,68 @@ Game records use these columns (track these constants in `app.js`):
 
 ## File Responsibilities
 
-| File                | Purpose                                          | Patterns                                                                                                                   |
-| ------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `index.html`        | DOM scaffold, script/style loading               | Supabase JS loaded via CDN; `config.js` injected as `window.__SUPABASE_CONFIG__`                                           |
-| `app.js`            | All logic: fetch, filter, render, modal, sharing | Long procedural file (~422 lines); global state (`rawData`, `owned`, `importedCollection`); event delegation on table rows |
-| `config.example.js` | Supabase credentials template                    | Must be copied to `config.js` locally; `.gitignore` protects `config.js`                                                   |
-| `games.csv`         | Fallback offline data                            | RFC 4180 CSV; quoted fields for commas in data                                                                             |
-| `style.css`         | Retro arcade aesthetic                           | CSS variables for themes; responsive grid/table layouts                                                                    |
+| File                      | Purpose                          | Patterns                                                                                     |
+| ------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `index.html`              | DOM scaffold, semantic structure | Hero dashboard, masonry grid, filters sidebar, mobile nav; Supabase JS loaded via CDN        |
+| `app/main-redesign.js`    | Application bootstrap            | Loads data (Supabase → sample JSON fallback), initializes UI modules, sets up event handlers |
+| `app/ui/dashboard-new.js` | Dashboard stats & rendering      | `calculateStats()`, `updateDashboard()`, `animateNumber()` - 6 stat cards with animations    |
+| `app/ui/grid-new.js`      | Game grid rendering              | `renderGrid()`, `createGameCard()`, masonry layout, quick actions, loading skeletons         |
+| `app/utils/*.js`          | Utility functions                | DOM helpers, formatting, game key generation (`gameName___platformName`)                     |
+| `style.css`               | Master stylesheet                | Imports modular CSS from `style/` directory                                                  |
+| `style/tokens.css`        | Design system tokens             | CSS custom properties: colors, typography, spacing, shadows, animations                      |
+| `style/components/*.css`  | Component styles                 | Dashboard, grid, filters, modal, cards - all glassmorphism & PS2 aesthetic                   |
+| `config.js`               | Supabase credentials             | Generated from `.env` via `npm run build:config`; `.gitignore` protects it                   |
+| `data/sample-games.json`  | Fallback offline data            | Full JSON dataset when Supabase unavailable                                                  |
 
 ## Critical Patterns
 
-### Filtering Logic (app.js ~line 100)
+### Data Loading & Bootstrap (app/main-redesign.js)
 
-All three filters compose with AND logic:
+1. Load localStorage state (`roms_owned`, `rom_notes`, `roms_wishlist`, etc.)
+2. Try Supabase connection with `window.__SUPABASE_CONFIG__`
+3. Fallback to `data/sample-games.json` if Supabase unavailable
+4. Store data in `window.__GAMES_DATA__` for filter operations
+5. Calculate stats and render dashboard
+6. Setup filters with platform/genre options
+7. Render grid with masonry layout
+8. Setup event handlers
 
-- Platform filter (exact match on `COL_PLATFORM`)
-- Genre filter (parses comma-separated genre field, checks inclusion)
-- Search filter (case-insensitive substring across all object values)
-- Owned filter (applied only if `importedCollection` or `owned` state exists)
+### Filtering Logic (app/main-redesign.js ~line 180)
 
-Updates trigger full re-render + stats recalculation. No incremental updates.
+All filters compose with AND logic:
 
-### Table Rendering & Interaction (app.js ~line 130)
+- Platform filter (checkbox selection, exact match)
+- Genre filter (checkbox selection, checks comma-separated genre field)
+- Search filter (case-insensitive substring across all game fields)
+- Status filter (owned/wishlist/backlog/trade from localStorage)
+- Sort options (name, rating, year, value)
 
-- Owned checkbox tied to `localStorage` save via `saveOwned()`
-- Row click (except on checkbox/link) opens modal
-- Row highlighting via CSS class `owned-row` for rows in current collection
-- Modal built server-side (no innerHTML injection risk from data fields)
+Updates trigger full grid re-render. Debounced search (300ms).
 
-### Collection Sharing (app.js ~line 280)
+### Grid Rendering (app/ui/grid-new.js)
 
-- Export: Filtered `owned` games → CSV download with escaped quotes
-- Share Code: `btoa(encodeURIComponent(ownedKeyArray.join("|")))`
-- Import Code: Reverse: `atob()` → decode → split → populate `importedCollection` object
-- **Note**: Codes grow large for big collections; no URL shortening implemented
+- `renderGrid(games, owned, statuses)` - Main rendering function
+- `createGameCard(game, gameKey, owned, statuses)` - Individual card creation
+- Cards show cover art, title, platform, hover overlay with quick actions
+- Status badges (Owned, Wishlist, etc.) shown on cards
+- Click card → dispatch `openGameModal` event (to be wired)
+- Quick action buttons → dispatch `gameStatusChange` event → update localStorage
 
-### Modal & Accessibility (app.js ~line 340)
+### Dashboard Stats (app/ui/dashboard-new.js)
 
-- External links constructed from game data (Google, YouTube, GameFAQs searches)
-- Focus trap inside modal; ESC key closes
-- Image alt text auto-generated from cover field
-- Close button and background click both dismiss
+- `calculateStats(games, owned, statuses)` - Compute metrics from game data
+- `updateDashboard(stats)` - Render 6 stat cards with animated numbers
+- `animateNumber(element, start, end, duration)` - Count-up animation
+- Stats: Total Games, Owned, Wishlist, Backlog, Trade, Completion %
+- Progress bars for Owned and Backlog cards
+
+### State Persistence
+
+- `localStorage[STORAGE_KEY]` - `roms_owned` JSON object `{gameKey: true}`
+- Game key format: `gameName___platformName` (triple underscore)
+- Other keys: `rom_notes`, `roms_wishlist`, `roms_backlog`, `roms_trade`
+- Events dispatch `gameStatusChange` with `{gameKey, action}` details
+- Listeners update localStorage and refresh UI
 
 ## Build, Test, and Development Commands
 
