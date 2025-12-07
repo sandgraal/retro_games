@@ -2105,3 +2105,292 @@ describe("features/search", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// features/virtualization tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  createVirtualizationState,
+  resetVirtualizationState,
+  shouldVirtualize,
+  estimateColumnCount,
+  buildVirtualMetrics,
+  computeVirtualRange,
+  hasRangeChanged,
+  buildSpacerHtml,
+  buildSpacers,
+  calculateScrollToItem,
+  shouldPrefetch,
+  calculatePrefetchCount,
+  calculateRowHeight,
+  calculateTotalHeight,
+  VIRTUALIZE_MIN_ITEMS,
+  VIRTUAL_DEFAULT_CARD_HEIGHT,
+  VIRTUAL_OVERSCAN_ROWS,
+  VIRTUAL_SCROLL_THROTTLE_MS,
+  VIRTUAL_DEFAULT_CARD_WIDTH,
+} from "../app/features/virtualization.js";
+
+describe("features/virtualization", () => {
+  describe("createVirtualizationState", () => {
+    it("creates fresh state object", () => {
+      const state = createVirtualizationState();
+      expect(state.enabled).toBe(true);
+      expect(state.active).toBe(false);
+      expect(state.sourceData).toEqual([]);
+      expect(state.visibleStart).toBe(0);
+      expect(state.visibleEnd).toBe(0);
+      expect(state.columns).toBe(1);
+    });
+  });
+
+  describe("resetVirtualizationState", () => {
+    it("resets state in place", () => {
+      const state = createVirtualizationState();
+      state.active = true;
+      state.visibleStart = 10;
+      state.visibleEnd = 50;
+
+      const result = resetVirtualizationState(state);
+      expect(result).toBe(state);
+      expect(state.active).toBe(false);
+      expect(state.visibleStart).toBe(0);
+      expect(state.visibleEnd).toBe(0);
+    });
+
+    it("creates new state for invalid input", () => {
+      const result = resetVirtualizationState(null);
+      expect(result.enabled).toBe(true);
+    });
+  });
+
+  describe("shouldVirtualize", () => {
+    it("returns true for large datasets", () => {
+      expect(shouldVirtualize(100)).toBe(true);
+      expect(shouldVirtualize(VIRTUALIZE_MIN_ITEMS)).toBe(true);
+    });
+
+    it("returns false for small datasets", () => {
+      expect(shouldVirtualize(50)).toBe(false);
+      expect(shouldVirtualize(VIRTUALIZE_MIN_ITEMS - 1)).toBe(false);
+    });
+
+    it("respects enabled option", () => {
+      expect(shouldVirtualize(100, { enabled: false })).toBe(false);
+    });
+
+    it("respects custom minItems", () => {
+      expect(shouldVirtualize(50, { minItems: 40 })).toBe(true);
+      expect(shouldVirtualize(30, { minItems: 40 })).toBe(false);
+    });
+
+    it("returns false for invalid input", () => {
+      expect(shouldVirtualize(null)).toBe(false);
+      expect(shouldVirtualize(-10)).toBe(false);
+    });
+  });
+
+  describe("estimateColumnCount", () => {
+    it("calculates columns from width", () => {
+      expect(estimateColumnCount(800, 260, 16)).toBe(2);
+      expect(estimateColumnCount(1200, 260, 16)).toBe(4);
+    });
+
+    it("returns minimum of 1", () => {
+      expect(estimateColumnCount(100, 260, 0)).toBe(1);
+      expect(estimateColumnCount(0, 260, 0)).toBe(1);
+    });
+
+    it("handles invalid input", () => {
+      expect(estimateColumnCount(null, 260, 0)).toBe(1);
+      expect(estimateColumnCount(800, null, 0)).toBe(1);
+    });
+  });
+
+  describe("buildVirtualMetrics", () => {
+    it("uses provided values", () => {
+      const metrics = buildVirtualMetrics({ rowHeight: 400, columns: 3, gap: 20 });
+      expect(metrics.rowHeight).toBe(400);
+      expect(metrics.columns).toBe(3);
+      expect(metrics.gap).toBe(20);
+    });
+
+    it("uses defaults for missing values", () => {
+      const metrics = buildVirtualMetrics({});
+      expect(metrics.rowHeight).toBe(VIRTUAL_DEFAULT_CARD_HEIGHT);
+      expect(metrics.columns).toBe(1);
+      expect(metrics.gap).toBe(0);
+    });
+
+    it("estimates columns from container width", () => {
+      const metrics = buildVirtualMetrics({ containerWidth: 1200 });
+      expect(metrics.columns).toBeGreaterThan(1);
+    });
+  });
+
+  describe("computeVirtualRange", () => {
+    const metrics = { rowHeight: 100, columns: 3, gap: 0 };
+
+    it("computes range for start of list", () => {
+      const range = computeVirtualRange({
+        dataLength: 100,
+        scrollTop: 0,
+        containerTop: 0,
+        viewportHeight: 500,
+        metrics,
+      });
+      expect(range.start).toBe(0);
+      expect(range.end).toBeGreaterThan(0);
+      expect(range.topPadding).toBe(0);
+    });
+
+    it("computes range for middle of list", () => {
+      const range = computeVirtualRange({
+        dataLength: 100,
+        scrollTop: 1000,
+        containerTop: 0,
+        viewportHeight: 500,
+        metrics,
+      });
+      expect(range.start).toBeGreaterThan(0);
+      expect(range.topPadding).toBeGreaterThan(0);
+    });
+
+    it("returns empty range for empty data", () => {
+      const range = computeVirtualRange({
+        dataLength: 0,
+        scrollTop: 0,
+        containerTop: 0,
+        viewportHeight: 500,
+        metrics,
+      });
+      expect(range.start).toBe(0);
+      expect(range.end).toBe(0);
+    });
+  });
+
+  describe("hasRangeChanged", () => {
+    it("detects changes in start", () => {
+      expect(hasRangeChanged({ start: 10, end: 50 }, { start: 0, end: 50 })).toBe(true);
+    });
+
+    it("detects changes in end", () => {
+      expect(hasRangeChanged({ start: 0, end: 60 }, { start: 0, end: 50 })).toBe(true);
+    });
+
+    it("returns false for same range", () => {
+      expect(hasRangeChanged({ start: 10, end: 50 }, { start: 10, end: 50 })).toBe(false);
+    });
+
+    it("returns true for null input", () => {
+      expect(hasRangeChanged(null, { start: 0, end: 50 })).toBe(true);
+      expect(hasRangeChanged({ start: 0, end: 50 }, null)).toBe(true);
+    });
+  });
+
+  describe("buildSpacerHtml", () => {
+    it("creates spacer div with height", () => {
+      const html = buildSpacerHtml(100);
+      expect(html).toBe('<div class="virtual-spacer" style="height:100px"></div>');
+    });
+
+    it("uses custom class", () => {
+      const html = buildSpacerHtml(50, "custom-spacer");
+      expect(html).toContain('class="custom-spacer"');
+    });
+
+    it("handles zero and negative", () => {
+      expect(buildSpacerHtml(0)).toContain("height:0px");
+      expect(buildSpacerHtml(-10)).toContain("height:0px");
+    });
+  });
+
+  describe("buildSpacers", () => {
+    it("returns top and bottom spacers", () => {
+      const spacers = buildSpacers(100, 200);
+      expect(spacers.top).toContain("height:100px");
+      expect(spacers.bottom).toContain("height:200px");
+    });
+  });
+
+  describe("calculateScrollToItem", () => {
+    it("returns null if already in view", () => {
+      const result = calculateScrollToItem(5, 3, 100, 100, 0, 500);
+      expect(result).toBe(null);
+    });
+
+    it("calculates scroll for item above viewport", () => {
+      const result = calculateScrollToItem(0, 3, 100, 500, 0, 300);
+      expect(result).toBeLessThan(500);
+    });
+
+    it("returns null for invalid input", () => {
+      expect(calculateScrollToItem(-1, 3, 100, 0, 0, 500)).toBe(null);
+      expect(calculateScrollToItem(5, 0, 100, 0, 0, 500)).toBe(null);
+    });
+  });
+
+  describe("shouldPrefetch", () => {
+    it("returns true when near end of loaded data", () => {
+      expect(shouldPrefetch(85, 100, null)).toBe(true);
+    });
+
+    it("returns false when far from end", () => {
+      expect(shouldPrefetch(50, 100, null)).toBe(false);
+    });
+
+    it("returns false when all data loaded", () => {
+      expect(shouldPrefetch(90, 100, 100)).toBe(false);
+    });
+
+    it("respects custom threshold", () => {
+      expect(shouldPrefetch(50, 100, null, { threshold: 0.5 })).toBe(true);
+    });
+  });
+
+  describe("calculatePrefetchCount", () => {
+    it("returns page size normally", () => {
+      expect(calculatePrefetchCount(100, 50)).toBe(50);
+    });
+
+    it("limits to remaining when max known", () => {
+      expect(calculatePrefetchCount(90, 50, 100)).toBe(10);
+    });
+
+    it("returns 0 when at max", () => {
+      expect(calculatePrefetchCount(100, 50, 100)).toBe(0);
+    });
+  });
+
+  describe("calculateRowHeight", () => {
+    it("adds card height and gap", () => {
+      expect(calculateRowHeight(300, 20)).toBe(320);
+    });
+
+    it("uses defaults for invalid input", () => {
+      expect(calculateRowHeight(null, 0)).toBe(VIRTUAL_DEFAULT_CARD_HEIGHT);
+    });
+  });
+
+  describe("calculateTotalHeight", () => {
+    it("calculates height for grid", () => {
+      expect(calculateTotalHeight(12, 3, 100)).toBe(400); // 4 rows * 100
+      expect(calculateTotalHeight(10, 3, 100)).toBe(400); // ceil(10/3) = 4 rows
+    });
+
+    it("returns 0 for invalid input", () => {
+      expect(calculateTotalHeight(0, 3, 100)).toBe(0);
+      expect(calculateTotalHeight(10, 0, 100)).toBe(0);
+    });
+  });
+
+  describe("constants", () => {
+    it("has expected values", () => {
+      expect(VIRTUALIZE_MIN_ITEMS).toBe(80);
+      expect(VIRTUAL_DEFAULT_CARD_HEIGHT).toBe(360);
+      expect(VIRTUAL_OVERSCAN_ROWS).toBe(2);
+      expect(VIRTUAL_SCROLL_THROTTLE_MS).toBe(80);
+      expect(VIRTUAL_DEFAULT_CARD_WIDTH).toBe(260);
+    });
+  });
+});
