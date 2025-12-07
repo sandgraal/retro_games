@@ -2926,6 +2926,9 @@ import {
   getCSSVariable,
   setCSSVariable,
   updateThemeToggleButton,
+  initializeTheme,
+  toggleTheme,
+  onSystemThemeChange,
   THEME_STORAGE_KEY,
 } from "../app/ui/theme.js";
 
@@ -3060,6 +3063,67 @@ describe("ui/theme", () => {
 
     it("handles null button gracefully", () => {
       expect(() => updateThemeToggleButton(null, THEME_LIGHT)).not.toThrow();
+    });
+  });
+
+  describe("initializeTheme", () => {
+    beforeEach(() => {
+      localStorage.clear();
+      delete document.documentElement.dataset.theme;
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+      delete document.documentElement.dataset.theme;
+    });
+
+    it("applies stored theme", () => {
+      localStorage.setItem(THEME_STORAGE_KEY, THEME_LIGHT);
+      const applied = initializeTheme();
+      expect(applied).toBe(THEME_LIGHT);
+      expect(document.documentElement.dataset.theme).toBe(THEME_LIGHT);
+    });
+
+    it("falls back to system preference when no stored theme", () => {
+      const applied = initializeTheme();
+      // Should return either light or dark based on system
+      expect([THEME_LIGHT, THEME_DARK]).toContain(applied);
+    });
+  });
+
+  describe("toggleTheme", () => {
+    beforeEach(() => {
+      localStorage.clear();
+      delete document.documentElement.dataset.theme;
+    });
+
+    afterEach(() => {
+      localStorage.clear();
+      delete document.documentElement.dataset.theme;
+    });
+
+    it("toggles from light to dark", () => {
+      localStorage.setItem(THEME_STORAGE_KEY, THEME_LIGHT);
+      const newTheme = toggleTheme();
+      expect(newTheme).toBe(THEME_DARK);
+      expect(document.documentElement.dataset.theme).toBe(THEME_DARK);
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe(THEME_DARK);
+    });
+
+    it("toggles from dark to light", () => {
+      localStorage.setItem(THEME_STORAGE_KEY, THEME_DARK);
+      const newTheme = toggleTheme();
+      expect(newTheme).toBe(THEME_LIGHT);
+      expect(document.documentElement.dataset.theme).toBe(THEME_LIGHT);
+      expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe(THEME_LIGHT);
+    });
+  });
+
+  describe("onSystemThemeChange", () => {
+    it("returns null or cleanup function", () => {
+      const result = onSystemThemeChange(() => {});
+      // In jsdom, matchMedia may return a mock or work
+      expect(result === null || typeof result === "function").toBe(true);
     });
   });
 });
