@@ -687,3 +687,261 @@ describe("data/aggregates", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// data/pricing tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  normalizePriceValue,
+  normalizeCents,
+  selectStatusPrice,
+  resolvePriceValue,
+  computePriceDelta,
+  normalizeHistoryEntries,
+  resolveConsoleHint,
+  buildPriceQuery,
+  indexLatestPrices,
+  formatCurrencyFromCents,
+  createCurrencyFormatter,
+  PLATFORM_NAME_ALIASES,
+} from "../app/data/pricing.js";
+
+describe("data/pricing", () => {
+  describe("normalizePriceValue", () => {
+    it("converts cents to dollars with 2 decimals", () => {
+      expect(normalizePriceValue(1999)).toBe(19.99);
+      expect(normalizePriceValue(100)).toBe(1.0);
+      expect(normalizePriceValue(50)).toBe(0.5);
+    });
+
+    it("returns null for invalid values", () => {
+      expect(normalizePriceValue(null)).toBe(null);
+      expect(normalizePriceValue(undefined)).toBe(null);
+      expect(normalizePriceValue("")).toBe(null);
+      expect(normalizePriceValue("invalid")).toBe(null);
+    });
+  });
+
+  describe("normalizeCents", () => {
+    it("passes through valid numbers", () => {
+      expect(normalizeCents(1000)).toBe(1000);
+      expect(normalizeCents(0)).toBe(0);
+    });
+
+    it("parses string values", () => {
+      expect(normalizeCents("1500")).toBe(1500);
+    });
+
+    it("returns null for invalid values", () => {
+      expect(normalizeCents("invalid")).toBe(null);
+      expect(normalizeCents(NaN)).toBe(null);
+    });
+  });
+
+  describe("selectStatusPrice", () => {
+    const prices = { loose: 10, cib: 20, new: 30 };
+
+    it("prefers new for wishlist", () => {
+      expect(selectStatusPrice("wishlist", prices)).toBe(30);
+    });
+
+    it("prefers loose for trade", () => {
+      expect(selectStatusPrice("trade", prices)).toBe(10);
+    });
+
+    it("prefers cib for owned/backlog", () => {
+      expect(selectStatusPrice("owned", prices)).toBe(20);
+      expect(selectStatusPrice("backlog", prices)).toBe(20);
+    });
+
+    it("falls back when preferred not available", () => {
+      expect(selectStatusPrice("wishlist", { loose: 10 })).toBe(10);
+      expect(selectStatusPrice("trade", { cib: 20 })).toBe(20);
+    });
+
+    it("returns null for null prices", () => {
+      expect(selectStatusPrice("owned", null)).toBe(null);
+    });
+  });
+
+  describe("resolvePriceValue", () => {
+    it("prefers cib_price_cents", () => {
+      expect(
+        resolvePriceValue({
+          cib_price_cents: 2000,
+          loose_price_cents: 1000,
+          new_price_cents: 3000,
+        })
+      ).toBe(2000);
+    });
+
+    it("falls back to loose_price_cents", () => {
+      expect(resolvePriceValue({ loose_price_cents: 1000 })).toBe(1000);
+    });
+
+    it("falls back to new_price_cents", () => {
+      expect(resolvePriceValue({ new_price_cents: 3000 })).toBe(3000);
+    });
+
+    it("returns null for invalid entry", () => {
+      expect(resolvePriceValue(null)).toBe(null);
+      expect(resolvePriceValue({})).toBe(null);
+    });
+  });
+
+  describe("computePriceDelta", () => {
+    it("computes percentage change", () => {
+      const history = [{ cib_price_cents: 1000 }, { cib_price_cents: 1500 }];
+      expect(computePriceDelta(history)).toBe(50);
+    });
+
+    it("handles negative change", () => {
+      const history = [{ cib_price_cents: 2000 }, { cib_price_cents: 1000 }];
+      expect(computePriceDelta(history)).toBe(-50);
+    });
+
+    it("returns null for insufficient data", () => {
+      expect(computePriceDelta([])).toBe(null);
+      expect(computePriceDelta([{ cib_price_cents: 1000 }])).toBe(null);
+    });
+
+    it("returns null when first price is zero", () => {
+      const history = [{ cib_price_cents: 0 }, { cib_price_cents: 1000 }];
+      expect(computePriceDelta(history)).toBe(null);
+    });
+  });
+
+  describe("normalizeHistoryEntries", () => {
+    it("normalizes and sorts entries", () => {
+      const entries = [
+        {
+          snapshot_date: "2024-02-01",
+          loose_price_cents: 1000,
+          cib_price_cents: 2000,
+          new_price_cents: 3000,
+        },
+        {
+          snapshot_date: "2024-01-01",
+          loose_price_cents: 900,
+          cib_price_cents: 1800,
+          new_price_cents: 2700,
+        },
+      ];
+      const result = normalizeHistoryEntries(entries);
+      expect(result).toHaveLength(2);
+      expect(result[0].snapshot_date).toBe("2024-01-01");
+      expect(result[1].snapshot_date).toBe("2024-02-01");
+    });
+
+    it("filters entries without snapshot_date", () => {
+      const entries = [{ cib_price_cents: 2000 }];
+      expect(normalizeHistoryEntries(entries)).toEqual([]);
+    });
+
+    it("returns empty for non-array", () => {
+      expect(normalizeHistoryEntries(null)).toEqual([]);
+      expect(normalizeHistoryEntries(undefined)).toEqual([]);
+    });
+  });
+
+  describe("resolveConsoleHint", () => {
+    it("uses config hints first", () => {
+      expect(resolveConsoleHint("SNES", { SNES: "Super Nintendo" })).toBe(
+        "Super Nintendo"
+      );
+    });
+
+    it("falls back to platform aliases", () => {
+      expect(resolveConsoleHint("SNES")).toBe("Super Nintendo Entertainment System");
+    });
+
+    it("returns original if no mapping", () => {
+      expect(resolveConsoleHint("Unknown Platform")).toBe("Unknown Platform");
+    });
+
+    it("returns empty for empty input", () => {
+      expect(resolveConsoleHint("")).toBe("");
+      expect(resolveConsoleHint(null)).toBe("");
+    });
+  });
+
+  describe("buildPriceQuery", () => {
+    it("combines title and platform", () => {
+      expect(buildPriceQuery({ game_name: "Chrono Trigger", platform: "SNES" })).toBe(
+        "Chrono Trigger Super Nintendo Entertainment System"
+      );
+    });
+
+    it("handles game field alias", () => {
+      expect(
+        buildPriceQuery({ game: "Final Fantasy VII", platform: "PlayStation" })
+      ).toBe("Final Fantasy VII PlayStation");
+    });
+
+    it("returns empty for missing title", () => {
+      expect(buildPriceQuery({ platform: "SNES" })).toBe("");
+      expect(buildPriceQuery(null)).toBe("");
+    });
+  });
+
+  describe("indexLatestPrices", () => {
+    it("indexes records by game_key", () => {
+      const records = [
+        { game_key: "game1___platform1", cib_price_cents: 2000 },
+        { game_key: "game2___platform2", cib_price_cents: 3000 },
+      ];
+      const { map } = indexLatestPrices(records);
+      expect(map.size).toBe(2);
+      expect(map.get("game1___platform1").cib_price_cents).toBe(2000);
+    });
+
+    it("tracks newest snapshot date", () => {
+      const records = [
+        { game_key: "game1___p1", snapshot_date: "2024-01-01" },
+        { game_key: "game2___p2", snapshot_date: "2024-02-15" },
+      ];
+      const { lastUpdated } = indexLatestPrices(records);
+      expect(lastUpdated).toEqual(new Date("2024-02-15"));
+    });
+
+    it("skips records without game_key", () => {
+      const records = [{ cib_price_cents: 2000 }];
+      const { map } = indexLatestPrices(records);
+      expect(map.size).toBe(0);
+    });
+  });
+
+  describe("formatCurrencyFromCents", () => {
+    it("formats whole dollars", () => {
+      expect(formatCurrencyFromCents(1999)).toBe("$20");
+      expect(formatCurrencyFromCents(100)).toBe("$1");
+    });
+
+    it("formats precise values", () => {
+      expect(formatCurrencyFromCents(1999, { precise: true })).toBe("$19.99");
+    });
+
+    it("returns em-dash for invalid values", () => {
+      expect(formatCurrencyFromCents(null)).toBe("—");
+      expect(formatCurrencyFromCents(undefined)).toBe("—");
+      expect(formatCurrencyFromCents("")).toBe("—");
+    });
+  });
+
+  describe("createCurrencyFormatter", () => {
+    it("creates a formatter for USD", () => {
+      const formatter = createCurrencyFormatter("USD");
+      if (formatter) {
+        expect(formatter.format(100)).toContain("100");
+      }
+    });
+  });
+
+  describe("PLATFORM_NAME_ALIASES", () => {
+    it("has common platform mappings", () => {
+      expect(PLATFORM_NAME_ALIASES.SNES).toContain("Super Nintendo Entertainment System");
+      expect(PLATFORM_NAME_ALIASES.NES).toContain("Nintendo Entertainment System");
+      expect(PLATFORM_NAME_ALIASES.GENESIS).toContain("Sega Genesis");
+    });
+  });
+});
