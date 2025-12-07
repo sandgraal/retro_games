@@ -44,7 +44,7 @@ Game records use these columns (track these constants in `app/main.js`):
 
 ## File Responsibilities
 
-**Module Architecture (January 2025):** 27 ES6 modules across 6 directories with 614 tests.
+**Module Architecture (January 2025):** 27 ES6 modules across 6 directories with 674 tests.
 
 ### Core Files
 
