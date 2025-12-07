@@ -130,6 +130,18 @@ import {
   DEFAULT_SUPABASE_TABLES,
 } from "../app/data/supabase.js";
 import { tokens, generateCSSVariables } from "../app/design/tokens.js";
+import {
+  slugifyStructuredDataId,
+  normalizeImageUrlForSeo,
+  extractReleaseYear,
+  getStructuredDataCandidates,
+  mapGameToVideoGameSchema,
+  buildStructuredDataPayload,
+  updateStructuredData,
+  removeStructuredData,
+  STRUCTURED_DATA_LIMIT,
+  STRUCTURED_DATA_ID,
+} from "../app/features/seo.js";
 
 describe("dom utilities", () => {
   it("escapes HTML special characters", () => {
@@ -5165,6 +5177,319 @@ describe("design/tokens.js", () => {
       expect(css).toContain("--radius-sm:");
       expect(css).toContain("--radius-lg:");
       expect(css).toContain("--radius-full:");
+    });
+  });
+});
+
+describe("features/seo", () => {
+  describe("slugifyStructuredDataId", () => {
+    it("generates URL-safe slug from name and platform", () => {
+      expect(slugifyStructuredDataId("Super Mario World", "SNES")).toBe(
+        "super-mario-world-snes"
+      );
+    });
+
+    it("handles special characters", () => {
+      expect(slugifyStructuredDataId("Kirby's Adventure", "NES")).toBe(
+        "kirby-s-adventure-nes"
+      );
+    });
+
+    it("handles empty inputs", () => {
+      expect(slugifyStructuredDataId("", "")).toBe("");
+      expect(slugifyStructuredDataId(null, null)).toBe("");
+    });
+
+    it("truncates long slugs to 100 characters", () => {
+      const longName = "A".repeat(100);
+      const result = slugifyStructuredDataId(longName, "Platform");
+      expect(result.length).toBeLessThanOrEqual(100);
+    });
+
+    it("removes leading and trailing hyphens", () => {
+      expect(slugifyStructuredDataId("---Test---", "---Platform---")).toBe(
+        "test-platform"
+      );
+    });
+  });
+
+  describe("normalizeImageUrlForSeo", () => {
+    it("returns undefined for empty value", () => {
+      expect(normalizeImageUrlForSeo(null, "https://example.com")).toBeUndefined();
+      expect(normalizeImageUrlForSeo("", "https://example.com")).toBeUndefined();
+    });
+
+    it("returns absolute URLs unchanged", () => {
+      expect(
+        normalizeImageUrlForSeo("https://example.com/img.png", "https://other.com")
+      ).toBe("https://example.com/img.png");
+    });
+
+    it("handles protocol-relative URLs", () => {
+      const result = normalizeImageUrlForSeo("//cdn.example.com/img.png", "");
+      expect(result).toMatch(/^https?:\/\/cdn\.example\.com\/img\.png$/);
+    });
+
+    it("prepends origin for absolute paths", () => {
+      expect(normalizeImageUrlForSeo("/images/cover.png", "https://example.com")).toBe(
+        "https://example.com/images/cover.png"
+      );
+    });
+
+    it("prepends origin with slash for relative paths", () => {
+      expect(normalizeImageUrlForSeo("covers/game.jpg", "https://example.com")).toBe(
+        "https://example.com/covers/game.jpg"
+      );
+    });
+
+    it("returns undefined for relative paths without origin", () => {
+      expect(normalizeImageUrlForSeo("/images/cover.png", "")).toBeUndefined();
+    });
+  });
+
+  describe("extractReleaseYear", () => {
+    it("extracts year from release_year field", () => {
+      expect(extractReleaseYear({ release_year: 1991 })).toBe(1991);
+    });
+
+    it("extracts year from releaseYear field", () => {
+      expect(extractReleaseYear({ releaseYear: "1995" })).toBe(1995);
+    });
+
+    it("extracts year from year field", () => {
+      expect(extractReleaseYear({ year: 2000 })).toBe(2000);
+    });
+
+    it("returns null for invalid years", () => {
+      expect(extractReleaseYear({ year: "invalid" })).toBeNull();
+      expect(extractReleaseYear({ year: 1900 })).toBeNull();
+      expect(extractReleaseYear({ year: 2200 })).toBeNull();
+    });
+
+    it("returns null for missing game", () => {
+      expect(extractReleaseYear(null)).toBeNull();
+      expect(extractReleaseYear(undefined)).toBeNull();
+    });
+  });
+
+  describe("getStructuredDataCandidates", () => {
+    const sampleGames = [
+      { game_name: "Chrono Trigger", platform: "SNES", rating: 9.5, release_year: 1995 },
+      { game_name: "Super Metroid", platform: "SNES", rating: 9.3, release_year: 1994 },
+      {
+        game_name: "Final Fantasy VI",
+        platform: "SNES",
+        rating: 9.4,
+        release_year: 1994,
+      },
+      { game_name: "Unknown Game", platform: "NES", rating: null },
+    ];
+
+    it("returns top-rated unique games", () => {
+      const result = getStructuredDataCandidates(sampleGames, 3);
+      expect(result).toHaveLength(3);
+      expect(result[0].game.game_name).toBe("Chrono Trigger");
+    });
+
+    it("filters out games without ratings", () => {
+      const result = getStructuredDataCandidates(sampleGames, 10);
+      expect(result.every((entry) => entry.rating !== null)).toBe(true);
+    });
+
+    it("returns empty array for empty input", () => {
+      expect(getStructuredDataCandidates([], 6)).toEqual([]);
+      expect(getStructuredDataCandidates(null, 6)).toEqual([]);
+    });
+
+    it("respects the limit parameter", () => {
+      const result = getStructuredDataCandidates(sampleGames, 2);
+      expect(result).toHaveLength(2);
+    });
+
+    it("deduplicates by name and platform", () => {
+      const duplicates = [
+        { game_name: "Same Game", platform: "SNES", rating: 8.0 },
+        { game_name: "Same Game", platform: "SNES", rating: 9.0 },
+      ];
+      const result = getStructuredDataCandidates(duplicates, 10);
+      expect(result).toHaveLength(1);
+    });
+
+    it("uses default limit when not specified", () => {
+      const manyGames = Array.from({ length: 20 }, (_, i) => ({
+        game_name: `Game ${i}`,
+        platform: "SNES",
+        rating: 8.0 + i * 0.1,
+      }));
+      const result = getStructuredDataCandidates(manyGames);
+      expect(result).toHaveLength(STRUCTURED_DATA_LIMIT);
+    });
+  });
+
+  describe("mapGameToVideoGameSchema", () => {
+    const entry = {
+      game: {
+        game_name: "Super Mario World",
+        platform: "SNES",
+        genre: "Platformer, Adventure",
+        cover: "https://example.com/smw.png",
+        release_year: 1990,
+      },
+      rating: 9.5,
+    };
+
+    it("creates valid VideoGame schema", () => {
+      const result = mapGameToVideoGameSchema(entry, "https://example.com");
+      expect(result["@type"]).toBe("VideoGame");
+      expect(result.name).toBe("Super Mario World");
+      expect(result.gamePlatform).toBe("SNES");
+    });
+
+    it("includes genre array", () => {
+      const result = mapGameToVideoGameSchema(entry, "https://example.com");
+      expect(result.genre).toEqual(["Platformer", "Adventure"]);
+    });
+
+    it("includes aggregate rating for rated games", () => {
+      const result = mapGameToVideoGameSchema(entry, "https://example.com");
+      expect(result.aggregateRating).toBeDefined();
+      expect(result.aggregateRating.ratingValue).toBe(9.5);
+      expect(result.aggregateRating["@type"]).toBe("AggregateRating");
+    });
+
+    it("includes review for rated games", () => {
+      const result = mapGameToVideoGameSchema(entry, "https://example.com");
+      expect(result.review).toBeDefined();
+      expect(result.review["@type"]).toBe("Review");
+      expect(result.review.author.name).toBe("Dragon's Hoard Atlas");
+    });
+
+    it("includes image URL", () => {
+      const result = mapGameToVideoGameSchema(entry, "https://example.com");
+      expect(result.image).toBe("https://example.com/smw.png");
+    });
+
+    it("generates proper URL with slug", () => {
+      const result = mapGameToVideoGameSchema(entry, "https://example.com");
+      expect(result.url).toBe("https://example.com/#game-super-mario-world-snes");
+    });
+
+    it("handles missing fields gracefully", () => {
+      const minimalEntry = {
+        game: { game_name: "Test" },
+        rating: null,
+      };
+      const result = mapGameToVideoGameSchema(minimalEntry, "");
+      expect(result.name).toBe("Test");
+      expect(result.aggregateRating).toBeUndefined();
+    });
+  });
+
+  describe("buildStructuredDataPayload", () => {
+    const games = [
+      { game_name: "Chrono Trigger", platform: "SNES", rating: 9.5 },
+      { game_name: "Super Metroid", platform: "SNES", rating: 9.3 },
+    ];
+
+    it("builds valid JSON-LD payload", () => {
+      const payload = buildStructuredDataPayload(games, "https://example.com");
+      expect(payload["@context"]).toBe("https://schema.org");
+      expect(payload["@type"]).toBe("ItemList");
+      expect(payload.name).toBe("Dragon's Hoard Atlas – Collector Spotlight");
+    });
+
+    it("includes itemListElement with correct positions", () => {
+      const payload = buildStructuredDataPayload(games, "https://example.com");
+      expect(payload.itemListElement).toHaveLength(2);
+      expect(payload.itemListElement[0].position).toBe(1);
+      expect(payload.itemListElement[1].position).toBe(2);
+    });
+
+    it("returns null for empty games array", () => {
+      expect(buildStructuredDataPayload([], "")).toBeNull();
+    });
+
+    it("returns null when no candidates have ratings", () => {
+      const noRatings = [{ game_name: "Test", platform: "NES", rating: null }];
+      expect(buildStructuredDataPayload(noRatings, "")).toBeNull();
+    });
+  });
+
+  describe("updateStructuredData", () => {
+    beforeEach(() => {
+      // Clean up any existing structured data
+      const existing = document.getElementById(STRUCTURED_DATA_ID);
+      if (existing) existing.remove();
+    });
+
+    afterEach(() => {
+      removeStructuredData();
+    });
+
+    it("injects script element into document head", () => {
+      const games = [{ game_name: "Test Game", platform: "SNES", rating: 8.0 }];
+      const result = updateStructuredData(games);
+      expect(result).toBe(true);
+      const script = document.getElementById(STRUCTURED_DATA_ID);
+      expect(script).not.toBeNull();
+      expect(script.type).toBe("application/ld+json");
+    });
+
+    it("updates existing script element", () => {
+      const games1 = [{ game_name: "Game 1", platform: "NES", rating: 7.0 }];
+      const games2 = [{ game_name: "Game 2", platform: "SNES", rating: 9.0 }];
+
+      updateStructuredData(games1);
+      const content1 = document.getElementById(STRUCTURED_DATA_ID).textContent;
+
+      updateStructuredData(games2);
+      const content2 = document.getElementById(STRUCTURED_DATA_ID).textContent;
+
+      expect(content1).not.toBe(content2);
+      expect(content2).toContain("Game 2");
+    });
+
+    it("returns false for empty games array", () => {
+      expect(updateStructuredData([])).toBe(false);
+    });
+
+    it("returns false for non-array input", () => {
+      expect(updateStructuredData(null)).toBe(false);
+      expect(updateStructuredData("not an array")).toBe(false);
+    });
+
+    it("contains valid JSON in script content", () => {
+      const games = [{ game_name: "Test", platform: "NES", rating: 8.5 }];
+      updateStructuredData(games);
+      const script = document.getElementById(STRUCTURED_DATA_ID);
+      const parsed = JSON.parse(script.textContent);
+      expect(parsed["@context"]).toBe("https://schema.org");
+    });
+  });
+
+  describe("removeStructuredData", () => {
+    it("removes existing structured data script", () => {
+      const games = [{ game_name: "Test", platform: "NES", rating: 8.0 }];
+      updateStructuredData(games);
+      expect(document.getElementById(STRUCTURED_DATA_ID)).not.toBeNull();
+
+      const result = removeStructuredData();
+      expect(result).toBe(true);
+      expect(document.getElementById(STRUCTURED_DATA_ID)).toBeNull();
+    });
+
+    it("returns false when no structured data exists", () => {
+      expect(removeStructuredData()).toBe(false);
+    });
+  });
+
+  describe("constants", () => {
+    it("exports STRUCTURED_DATA_LIMIT", () => {
+      expect(STRUCTURED_DATA_LIMIT).toBe(6);
+    });
+
+    it("exports STRUCTURED_DATA_ID", () => {
+      expect(STRUCTURED_DATA_ID).toBe("site-structured-data");
     });
   });
 });

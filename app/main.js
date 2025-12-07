@@ -8,6 +8,7 @@ import { renderGrid, setupQuickActions, showLoadingSkeletons } from "./ui/grid.j
 import { openModal, setupModalHandlers } from "./ui/modal.js";
 import { generateGameKey } from "./utils/keys.js";
 import { getRegionCodesForRow } from "./features/filtering.js";
+import { updateStructuredData } from "./features/seo.js";
 
 // Show loading state immediately
 showLoadingSkeletons();
@@ -87,6 +88,9 @@ async function bootstrapNewUI() {
     setupFilterHandlers();
     setupMobileNavigation();
     setupModalHandlers();
+
+    // Inject JSON-LD structured data for SEO
+    updateStructuredData(games);
 
     // Show status message if using sample data
     if (dataSource === "sample") {
