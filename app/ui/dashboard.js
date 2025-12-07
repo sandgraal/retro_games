@@ -4,6 +4,7 @@
  */
 
 import { formatCurrency, formatNumber } from "../utils/format.js";
+import { generateGameKey } from "../utils/keys.js";
 
 /**
  * Update dashboard statistics
@@ -171,9 +172,10 @@ function animateNumber(element, start, end, duration) {
  * @returns {Object} Statistics object
  */
 export function calculateStats(games, owned, statuses = {}) {
-  const ownedGames = games.filter(
-    (game) => owned[`${game.game_name}___${game.platform}`]
-  );
+  const ownedGames = games.filter((game) => {
+    const key = generateGameKey(game.game_name, game.platform);
+    return key && owned[key];
+  });
 
   const stats = {
     totalGames: games.length,

@@ -4,7 +4,7 @@ _Last updated: December 2025_
 
 ## Purpose
 
-This document operationalizes the high-level implementation plan into actionable, bite-sized tasks so any contributor (human or AI agent) can understand what to build next. It should be read alongside [`docs/current-state.md`](./current-state.md) for baseline architecture details and [`docs/refactoring-roadmap.md`](./refactoring-roadmap.md) for the critical modularization work.
+This document operationalizes the high-level implementation plan into actionable, bite-sized tasks so any contributor (human or AI agent) can understand what to build next. It should be read alongside [`docs/current-state.md`](./current-state.md) for baseline architecture details and the Phase 0 section below for the critical modularization work.
 
 ## Guiding Principles
 

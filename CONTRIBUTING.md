@@ -10,7 +10,7 @@ We're currently refactoring the monolithic `app.js` (5,940 lines) into maintaina
 - ✅ Documentation improvements
 - ✅ Test additions (if not blocked by refactoring)
 
-**See [`docs/refactoring-roadmap.md`](docs/refactoring-roadmap.md) for details and how to help.**
+**See [`docs/implementation-plan.md`](docs/implementation-plan.md#phase-0--architecture-redesign--complete) for details and how to help.**
 
 Thanks for keeping Sandgraal's Retro Games list sharp. This document captures the essential steps to get set up, code safely, and ship reviews quickly.
 

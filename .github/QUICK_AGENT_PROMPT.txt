@@ -1,7 +1,7 @@
 QUICK AGENT HANDOFF PROMPT (Copy-Paste This)
 =============================================
 
-Review project status in docs/AGENT_QUICKSTART.md and docs/refactoring-roadmap.md. 
+Review project status in docs/AGENT_QUICKSTART.md and docs/implementation-plan.md (Phase 0 section). 
 
 Pick the next highest-priority unchecked task (Phase 0 refactoring is CRITICAL). 
 

@@ -18,8 +18,8 @@ You are an AI software development agent working on the Retro Games List project
 
 1. **Review Current State**
    - Read `docs/AGENT_QUICKSTART.md` for project overview
-   - Check `docs/refactoring-roadmap.md` for Phase 0 tasks (HIGHEST PRIORITY)
-   - Review `docs/implementation-plan.md` for unchecked items
+   - Review `docs/implementation-plan.md` (Phase 0 section) for highest-priority tasks
+   - Cross-check `docs/current-state.md` for known issues
    - Check `docs/current-state.md` for known issues
    - Look for any in-progress work (branches, uncommitted changes, open PRs)
 
@@ -131,7 +131,7 @@ Begin by reviewing current state and identifying the next highest-priority task.
 
 ```
 
-Review project status in docs/AGENT_QUICKSTART.md and docs/refactoring-roadmap.md. Pick the next highest-priority unchecked task (Phase 0 refactoring is CRITICAL). Work autonomously making minimal changes, testing frequently. Stop when you hit a decision point, blocker, or complete 4 hours of work. Create PR with: (1) what changed, (2) progress update with roadmap checkboxes, (3) why you stopped & intervention needed, (4) next agent instructions. Follow feature freeze: NO new features, only Phase 0 refactoring and critical bug fixes. Ensure tests pass and docs updated.
+Review project status in docs/AGENT_QUICKSTART.md and docs/implementation-plan.md (Phase 0 section). Pick the next highest-priority unchecked task (Phase 0 refactoring is CRITICAL). Work autonomously making minimal changes, testing frequently. Stop when you hit a decision point, blocker, or complete 4 hours of work. Create PR with: (1) what changed, (2) progress update with roadmap checkboxes, (3) why you stopped & intervention needed, (4) next agent instructions. Follow feature freeze: NO new features, only Phase 0 refactoring and critical bug fixes. Ensure tests pass and docs updated.
 
 ````
 
@@ -141,7 +141,7 @@ Review project status in docs/AGENT_QUICKSTART.md and docs/refactoring-roadmap.m
 
 Essential reading before starting work:
 1. `docs/AGENT_QUICKSTART.md` - Project overview (5 min)
-2. `docs/refactoring-roadmap.md` - Phase 0 tasks (15 min)
+2. `docs/implementation-plan.md` (Phase 0 section) - Phase 0 tasks (15 min)
 3. `docs/current-state.md` - Current architecture (10 min)
 4. `docs/implementation-plan.md` - Full roadmap (20 min)
 
@@ -169,7 +169,7 @@ npm run test:e2e          # Run E2E tests
 
 - "Ran out of ideas" ← Pick next task from roadmap!
 - "Code looks messy" ← That's Phase 0's job to fix
-- "Not sure what to do" ← Read docs/refactoring-roadmap.md
+- "Not sure what to do" ← Read docs/implementation-plan.md (Phase 0 section)
 - "Tests are hard" ← Update them as you refactor
 
 ---

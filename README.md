@@ -123,7 +123,7 @@ Keep these commands green locally before pushing to avoid CI failures.
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup tips, coding standards, and the pull-request checklist.
 
-**Important for new contributors**: We're currently in Phase 0 refactoring to modularize the codebase. See [`docs/refactoring-roadmap.md`](docs/refactoring-roadmap.md) for details. Feature development is paused during this period—only bug fixes accepted until refactoring completes (est. 4 weeks).
+**Important for new contributors**: We're currently in Phase 0 refactoring to modularize the codebase. See [`docs/implementation-plan.md`](docs/implementation-plan.md#phase-0--architecture-redesign--complete) for details. Feature development is paused during this period—only bug fixes accepted until refactoring completes (est. 4 weeks).
 
 ## Documentation
 
@@ -134,7 +134,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup tips, coding standards, and t
 - [`README.md`](README.md) - This file (features & quick start)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) - Contributor guide & feature freeze notice
 - [`docs/AGENT_QUICKSTART.md`](docs/AGENT_QUICKSTART.md) - Fast onboarding for AI agents
-- [`docs/refactoring-roadmap.md`](docs/refactoring-roadmap.md) - **Phase 0 architecture refactoring** 🔴
+- [`docs/implementation-plan.md`](docs/implementation-plan.md#phase-0--architecture-redesign--complete) - **Phase 0 architecture refactoring** 🔴
 - [`docs/implementation-plan.md`](docs/implementation-plan.md) - Complete roadmap (Phases 0-4)
 - [`docs/current-state.md`](docs/current-state.md) - Current architecture & status
 

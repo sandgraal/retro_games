@@ -135,7 +135,7 @@ npm run lint && npm run format:check && npm test
 
 ## 📋 Task Workflow
 
-1. **Check Phase 0 status** in `refactoring-roadmap.md`
+1. **Check Phase 0 status** in `implementation-plan.md` (Phase 0 section)
 2. **Pick unclaimed track** (or next task in current track)
 3. **Create/claim GitHub issue** with clear acceptance criteria
 4. **Make minimal changes** - Surgical extraction, not rewrite
@@ -274,7 +274,7 @@ See [`current-state.md`](./current-state.md) for complete list.
 ### Common Questions
 
 **Q: Which task should I work on?**
-A: Check `refactoring-roadmap.md` for unclaimed Phase 0 tasks. Follow the order: Utilities → State → Data → UI → Features.
+A: Check `implementation-plan.md` (Phase 0 section) for unclaimed tasks. Follow the order: Utilities → State → Data → UI → Features.
 
 **Q: How do I know if a module is too big?**
 A: Target <500 lines. If you can't describe it in one sentence, split it.
@@ -313,7 +313,7 @@ When all tracks are done:
 
 **Remember**: We're not rewriting, we're **reorganizing working code** to make it maintainable. The application is already excellent—we're just making it easier to improve further.
 
-**Ready to start?** → Read [`refactoring-roadmap.md`](./refactoring-roadmap.md) for day-by-day Phase 0 tasks.
+**Ready to start?** → Read [`implementation-plan.md`](./implementation-plan.md) for day-by-day Phase 0 tasks.
 
 ---
 

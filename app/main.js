@@ -5,6 +5,7 @@
 
 import { updateDashboard, calculateStats } from "./ui/dashboard.js";
 import { renderGrid, setupQuickActions, showLoadingSkeletons } from "./ui/grid.js";
+import { generateGameKey } from "./utils/keys.js";
 
 // Show loading state immediately
 showLoadingSkeletons();
@@ -243,7 +244,8 @@ function applyFilters() {
     const owned = window.__OWNED_DATA__ || {};
     const statuses = window.__STATUSES_DATA__ || {};
     filtered = filtered.filter((game) => {
-      const gameKey = `${game.game_name}___${game.platform}`;
+      const gameKey = generateGameKey(game.game_name, game.platform);
+      if (!gameKey) return false;
       if (statusFilters.includes("owned") && owned[gameKey]) return true;
       if (statusFilters.includes("wishlist") && statuses.wishlist[gameKey]) return true;
       if (statusFilters.includes("backlog") && statuses.backlog[gameKey]) return true;
