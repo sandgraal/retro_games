@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sandgraal's Game Collection</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Museum-quality curation meets modern digital interface for retro game collectors"
+    />
+
+    <!-- Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+
+    <!-- New Design System Styles -->
+    <link rel="stylesheet" href="style-new.css" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Preload Scripts -->
+    <link rel="preload" href="app/main.js" as="script" />
+
+    <!-- Supabase -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
+      defer
+    ></script>
+  </head>
+  <body>
+    <!-- Skip Link for Accessibility -->
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+
+    <!-- App Shell -->
+    <div class="app-shell">
+      <!-- Sticky Header -->
+      <header class="app-header" role="banner">
+        <div class="header-content">
+          <div class="app-logo">
+            <span class="app-logo-icon" aria-hidden="true">🎮</span>
+            <span>Sandgraal's Collection</span>
+          </div>
+
+          <div class="header-search">
+            <span class="header-search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              id="headerSearch"
+              class="header-search-input"
+              placeholder="Search games..."
+              aria-label="Search games"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="header-actions">
+            <button
+              type="button"
+              class="header-action-btn"
+              id="exportBtn"
+              aria-label="Export collection"
+              title="Export Owned Games"
+            >
+              <span aria-hidden="true">📤</span>
+            </button>
+            <button
+              type="button"
+              class="header-action-btn"
+              id="shareBtn"
+              aria-label="Share collection"
+              title="Get Shareable Link"
+            >
+              <span aria-hidden="true">🔗</span>
+            </button>
+            <button
+              type="button"
+              class="header-action-btn"
+              id="settingsBtn"
+              aria-label="Settings"
+              title="Settings"
+            >
+              <span aria-hidden="true">⚙️</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main id="mainContent" class="app-main" tabindex="-1">
+        <!-- Hero Dashboard - Stats First -->
+        <section class="hero-dashboard" aria-label="Collection dashboard">
+          <h2 class="dashboard-title">Your Collection at a Glance</h2>
+          <div class="dashboard-grid" id="dashboardGrid">
+            <!-- Owned Games Card -->
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon" aria-hidden="true">🎮</span>
+              </div>
+              <div class="stat-card-label">Owned Games</div>
+              <div class="stat-card-value accent-primary" id="ownedCount">0</div>
+              <div class="stat-card-subtitle" id="ownedPlatformBreakdown">Loading...</div>
+              <div class="stat-progress">
+                <div class="stat-progress-bar">
+                  <div
+                    class="stat-progress-fill"
+                    style="width: 0%"
+                    id="ownedProgressBar"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Collection Value Card -->
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon" aria-hidden="true">💰</span>
+              </div>
+              <div class="stat-card-label">Collection Value</div>
+              <div class="stat-card-value accent-warm" id="collectionValue">$0</div>
+              <div class="stat-card-trend" id="valueTrend">
+                <span aria-hidden="true">↗</span>
+                <span>Calculating...</span>
+              </div>
+            </div>
+
+            <!-- Recent Additions Card -->
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon" aria-hidden="true">✨</span>
+              </div>
+              <div class="stat-card-label">Recent Additions</div>
+              <div class="stat-card-value" id="recentCount">5</div>
+              <div class="stat-card-carousel" id="recentGamesCarousel">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Wishlist Card -->
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon" aria-hidden="true">⭐</span>
+              </div>
+              <div class="stat-card-label">Wishlist</div>
+              <div class="stat-card-value" id="wishlistCount">0</div>
+              <div class="stat-card-subtitle" id="wishlistValue">Est. $0</div>
+            </div>
+
+            <!-- Backlog Card -->
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon" aria-hidden="true">📚</span>
+              </div>
+              <div class="stat-card-label">Backlog</div>
+              <div class="stat-card-value" id="backlogCount">0</div>
+              <div class="stat-card-subtitle" id="backlogHours">~0 hours</div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="stat-card">
+              <div class="stat-card-header">
+                <span class="stat-card-icon" aria-hidden="true">⚡</span>
+              </div>
+              <div class="stat-card-label">Quick Actions</div>
+              <div class="stat-card-carousel">
+                <button type="button" class="game-card-action" id="importBtn">
+                  Import
+                </button>
+                <button type="button" class="game-card-action" id="backupBtn">
+                  Backup
+                </button>
+                <button type="button" class="game-card-action" id="contributeBtn">
+                  Submit Media
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Collection Grid with Filters -->
+        <section class="collection-container" aria-label="Game collection">
+          <!-- Filters Sidebar -->
+          <aside class="filters-sidebar" id="filtersSidebar" role="complementary">
+            <div class="filters-header">
+              <h3 class="filters-title">Filters</h3>
+              <button type="button" class="filters-clear" id="clearFilters" disabled>
+                Clear All
+              </button>
+            </div>
+
+            <!-- Search Filter -->
+            <div class="filter-search">
+              <span class="filter-search-icon" aria-hidden="true">🔍</span>
+              <input
+                type="search"
+                id="filterSearch"
+                class="filter-search-input"
+                placeholder="Search..."
+                aria-label="Filter by search"
+              />
+            </div>
+
+            <!-- Platform Filter -->
+            <div class="filter-group">
+              <div class="filter-group-label">
+                <span>Platform</span>
+                <span class="filter-count" id="platformCount">0</span>
+              </div>
+              <div class="filter-options" id="platformFilters">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Genre Filter -->
+            <div class="filter-group">
+              <div class="filter-group-label">
+                <span>Genre</span>
+                <span class="filter-count" id="genreCount">0</span>
+              </div>
+              <div class="filter-options" id="genreFilters">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="filter-group">
+              <div class="filter-group-label">
+                <span>Status</span>
+                <span class="filter-count" id="statusCount">0</span>
+              </div>
+              <div class="filter-options" id="statusFilters">
+                <label class="filter-option">
+                  <input type="checkbox" value="owned" />
+                  <span class="filter-option-label">Owned</span>
+                  <span class="filter-option-count" data-status="owned">0</span>
+                </label>
+                <label class="filter-option">
+                  <input type="checkbox" value="wishlist" />
+                  <span class="filter-option-label">Wishlist</span>
+                  <span class="filter-option-count" data-status="wishlist">0</span>
+                </label>
+                <label class="filter-option">
+                  <input type="checkbox" value="backlog" />
+                  <span class="filter-option-label">Backlog</span>
+                  <span class="filter-option-count" data-status="backlog">0</span>
+                </label>
+                <label class="filter-option">
+                  <input type="checkbox" value="trade" />
+                  <span class="filter-option-label">For Trade</span>
+                  <span class="filter-option-count" data-status="trade">0</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Sort Options -->
+            <div class="filter-group">
+              <div class="filter-group-label">
+                <span>Sort By</span>
+              </div>
+              <div class="filter-sort" id="sortOptions">
+                <button type="button" class="sort-option active" data-sort="name">
+                  Name (A-Z)
+                </button>
+                <button type="button" class="sort-option" data-sort="rating">
+                  Rating (High to Low)
+                </button>
+                <button type="button" class="sort-option" data-sort="year">
+                  Year (Newest First)
+                </button>
+                <button type="button" class="sort-option" data-sort="value">
+                  Value (High to Low)
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Game Grid -->
+          <div class="game-grid" id="gameGrid" role="list">
+            <!-- Populated by JS -->
+            <div class="loading">
+              <div class="loading-spinner"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Mobile Navigation -->
+      <nav class="mobile-nav" aria-label="Mobile navigation">
+        <button type="button" class="mobile-nav-item active" data-nav="collection">
+          <span class="mobile-nav-icon" aria-hidden="true">🎮</span>
+          <span>Collection</span>
+        </button>
+        <button type="button" class="mobile-nav-item" data-nav="stats">
+          <span class="mobile-nav-icon" aria-hidden="true">📊</span>
+          <span>Stats</span>
+        </button>
+        <button type="button" class="mobile-nav-item filters-toggle" id="filtersToggle">
+          <span class="mobile-nav-icon" aria-hidden="true">🔧</span>
+          <span>Filters</span>
+        </button>
+        <button type="button" class="mobile-nav-item" data-nav="more">
+          <span class="mobile-nav-icon" aria-hidden="true">⋯</span>
+          <span>More</span>
+        </button>
+      </nav>
+
+      <!-- Filters Backdrop (Mobile) -->
+      <div class="filters-backdrop" id="filtersBackdrop"></div>
+    </div>
+
+    <!-- Load Config -->
+    <script src="config.js"></script>
+
+    <!-- Load App -->
+    <script type="module" src="app/main.js"></script>
+  </body>
+</html>

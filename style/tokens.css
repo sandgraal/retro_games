@@ -1,0 +1,84 @@
+/**
+ * Design Tokens
+ * Museum-quality curation meets modern digital interface
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* Primary: Museum Gallery Darks */
+  --bg-primary: #0a0e14;
+  --bg-elevated: #14181f;
+  --bg-glass: rgba(20, 24, 31, 0.85);
+
+  /* Accent: Refined Teal + PS2 Blue */
+  --accent-primary: #00d4ff;
+  --accent-secondary: #6366f1;
+  --accent-warm: #f59e0b;
+
+  /* Text: High Contrast Hierarchy */
+  --text-primary: #ffffff;
+  --text-secondary: #a1a8b8;
+  --text-muted: #6b7280;
+
+  /* Status Colors (game conditions) */
+  --status-owned: #10b981;
+  --status-wishlist: #f59e0b;
+  --status-backlog: #6366f1;
+  --status-trade: #8b5cf6;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 48px;
+  --spacing-xxl: 64px;
+
+  /* Typography */
+  --font-display: "Rajdhani", "Inter", system-ui;
+  --font-body: "Inter", system-ui;
+  --font-accent: "Space Mono", monospace;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 32px;
+  --font-size-3xl: 48px;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 20px rgba(0, 212, 255, 0.3);
+
+  /* Animation */
+  --duration-fast: 0.2s;
+  --duration-medium: 0.4s;
+  --duration-slow: 0.6s;
+  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-in: cubic-bezier(0.4, 0, 1, 1);
+  --easing-out: cubic-bezier(0, 0, 0.2, 1);
+  --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Breakpoints (for JS) */
+  --breakpoint-mobile: 320px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-wide: 1440px;
+}
