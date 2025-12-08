@@ -21,8 +21,6 @@
 /* Import Utilities */
 @import url("style/utilities.css");
 
-/* Note: Google Fonts are now loaded in index.html for faster rendering */
-
 /* App Shell */
 .app-shell {
   min-height: 100vh;
