@@ -4917,6 +4917,293 @@ describe("ui/dashboard", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ui/dashboard DOM tests
+// ─────────────────────────────────────────────────────────────────────────────
+import { updateDashboard } from "../app/ui/dashboard.js";
+
+describe("ui/dashboard DOM functions", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <div class="hero-dashboard">
+        <div class="stat-card">
+          <span id="ownedCount">0</span>
+          <span id="ownedPlatformBreakdown"></span>
+          <div id="ownedProgressBar" style="width: 0%"></div>
+        </div>
+        <div class="stat-card">
+          <span id="collectionValue">$0.00</span>
+          <span id="valueTrend" class="stat-card-trend"></span>
+        </div>
+        <div class="stat-card">
+          <span id="recentCount">0</span>
+          <div id="recentGamesCarousel"></div>
+        </div>
+        <div class="stat-card">
+          <span id="wishlistCount">0</span>
+          <span id="wishlistValue"></span>
+        </div>
+        <div class="stat-card">
+          <span id="backlogCount">0</span>
+          <span id="backlogHours"></span>
+        </div>
+      </div>
+    `;
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  describe("updateDashboard", () => {
+    it("updates owned count", async () => {
+      const stats = {
+        ownedCount: 25,
+        totalGames: 100,
+        platformBreakdown: { SNES: 15, NES: 10 },
+        totalValue: 500,
+        recentAdditions: [],
+        wishlistCount: 0,
+        wishlistValue: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      // Wait for animation to complete
+      await new Promise((r) => setTimeout(r, 1100));
+      const count = document.getElementById("ownedCount");
+      expect(count.textContent).not.toBe("0");
+    });
+
+    it("updates platform breakdown", () => {
+      const stats = {
+        ownedCount: 25,
+        totalGames: 100,
+        platformBreakdown: { SNES: 15, NES: 10 },
+        totalValue: 0,
+        recentAdditions: [],
+        wishlistCount: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      const breakdown = document.getElementById("ownedPlatformBreakdown");
+      expect(breakdown.textContent).toContain("SNES");
+    });
+
+    it("updates progress bar width", () => {
+      const stats = {
+        ownedCount: 25,
+        totalGames: 100,
+        platformBreakdown: {},
+        totalValue: 0,
+        recentAdditions: [],
+        wishlistCount: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      const progressBar = document.getElementById("ownedProgressBar");
+      expect(progressBar.style.width).toBe("25%");
+    });
+
+    it("updates collection value", () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 1234,
+        recentAdditions: [],
+        wishlistCount: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      const value = document.getElementById("collectionValue");
+      expect(value.textContent).toContain("1,234");
+    });
+
+    it("updates value trend up", () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 500,
+        valueTrend: { direction: "up", amount: 50 },
+        recentAdditions: [],
+        wishlistCount: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      const trend = document.getElementById("valueTrend");
+      expect(trend.innerHTML).toContain("↗");
+      expect(trend.innerHTML).toContain("50");
+      expect(trend.className).not.toContain("down");
+    });
+
+    it("updates value trend down", () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 500,
+        valueTrend: { direction: "down", amount: -25 },
+        recentAdditions: [],
+        wishlistCount: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      const trend = document.getElementById("valueTrend");
+      expect(trend.innerHTML).toContain("↘");
+      expect(trend.className).toContain("down");
+    });
+
+    it("updates recent count", () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 0,
+        recentAdditions: [
+          { id: 1, name: "Game 1", cover: "cover1.jpg" },
+          { id: 2, name: "Game 2", cover: "cover2.jpg" },
+        ],
+        wishlistCount: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      const count = document.getElementById("recentCount");
+      expect(count.textContent).toBe("2");
+    });
+
+    it("renders recent games carousel", () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 0,
+        recentAdditions: [
+          { id: 1, name: "Game 1", cover: "cover1.jpg" },
+          { id: 2, name: "Game 2", cover: "cover2.jpg" },
+        ],
+        wishlistCount: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      const carousel = document.getElementById("recentGamesCarousel");
+      expect(carousel.querySelectorAll(".carousel-cover").length).toBe(2);
+    });
+
+    it("dispatches openGameModal on carousel click", () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 0,
+        recentAdditions: [{ id: 123, name: "Test Game", cover: "test.jpg" }],
+        wishlistCount: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      let eventData = null;
+      window.addEventListener(
+        "openGameModal",
+        (e) => {
+          eventData = e.detail;
+        },
+        { once: true }
+      );
+      const cover = document.querySelector(".carousel-cover");
+      cover.click();
+      expect(eventData).not.toBeNull();
+      expect(eventData.gameId).toBe("123");
+    });
+
+    it("updates wishlist count", async () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 0,
+        recentAdditions: [],
+        wishlistCount: 15,
+        wishlistValue: 350,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      await new Promise((r) => setTimeout(r, 900));
+      const count = document.getElementById("wishlistCount");
+      expect(count.textContent).not.toBe("0");
+    });
+
+    it("updates wishlist value", () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 0,
+        recentAdditions: [],
+        wishlistCount: 5,
+        wishlistValue: 250,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      const value = document.getElementById("wishlistValue");
+      expect(value.textContent).toContain("250");
+    });
+
+    it("updates backlog count", async () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 0,
+        recentAdditions: [],
+        wishlistCount: 0,
+        backlogCount: 42,
+        backlogHours: 120,
+      };
+      updateDashboard(stats);
+      await new Promise((r) => setTimeout(r, 900));
+      const count = document.getElementById("backlogCount");
+      expect(count.textContent).not.toBe("0");
+    });
+
+    it("updates backlog hours", () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 0,
+        recentAdditions: [],
+        wishlistCount: 0,
+        backlogCount: 10,
+        backlogHours: 250,
+      };
+      updateDashboard(stats);
+      const hours = document.getElementById("backlogHours");
+      expect(hours.textContent).toContain("250");
+    });
+
+    it("handles missing elements gracefully", () => {
+      document.body.innerHTML = "<div></div>";
+      const stats = { ownedCount: 10, totalGames: 100 };
+      expect(() => updateDashboard(stats)).not.toThrow();
+    });
+
+    it("shows no games yet when breakdown is empty", () => {
+      const stats = {
+        ownedCount: 0,
+        totalGames: 0,
+        platformBreakdown: {},
+        totalValue: 0,
+        recentAdditions: [],
+        wishlistCount: 0,
+        backlogCount: 0,
+      };
+      updateDashboard(stats);
+      const breakdown = document.getElementById("ownedPlatformBreakdown");
+      expect(breakdown.textContent).toBe("No games yet");
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // data/loader tests
 // ─────────────────────────────────────────────────────────────────────────────
 import {
