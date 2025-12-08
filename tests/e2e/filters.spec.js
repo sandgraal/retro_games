@@ -66,22 +66,21 @@ test.describe("Search Filtering", () => {
 
 test.describe("Dashboard Stats", () => {
   test("displays dashboard with stats cards", async ({ page }) => {
-    // Look for dashboard container
-    const dashboard = page.locator("#dashboard, .dashboard, [data-dashboard]").first();
+    // Look for dashboard container - matches hero-dashboard class from index.html
+    const dashboard = page
+      .locator(".hero-dashboard, #dashboard, .dashboard, [data-dashboard]")
+      .first();
 
-    if ((await dashboard.count()) > 0) {
-      await expect(dashboard).toBeVisible();
+    await expect(dashboard).toBeVisible();
 
-      // Look for stat cards
-      const statCards = dashboard.locator(".stat-card, .dashboard-card, [data-stat]");
-      const cardCount = await statCards.count();
+    // Look for stat cards within dashboard grid
+    const statCards = dashboard.locator(
+      ".stat-card, .dashboard-card, [data-stat], .dashboard-grid > *"
+    );
+    const cardCount = await statCards.count();
 
-      // Should have at least one stat card
-      expect(cardCount).toBeGreaterThanOrEqual(1);
-    } else {
-      // Dashboard may not be visible in all layouts
-      test.skip("Dashboard not found in UI");
-    }
+    // Should have at least one stat card
+    expect(cardCount).toBeGreaterThanOrEqual(1);
   });
 
   test("shows total games count", async ({ page }) => {
