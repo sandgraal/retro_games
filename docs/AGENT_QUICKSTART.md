@@ -1,16 +1,18 @@
 # Agent Quickstart Guide
 
-_Last updated: December 2025_
+_Last updated: January 2025_
 
 👋 **Welcome, AI Agent!** This guide helps you quickly understand the Retro Games List project and start contributing effectively.
 
 ## 🎯 Project Status at a Glance
 
 - **Application**: ⭐ Feature-complete & production-ready
-- **Architecture**: ✅ **REFACTORED** (January 2025) - 28 ES6 modules extracted
-- **Tests**: ✅ **815 unit tests + 14 E2E tests passing** (78% coverage)
+- **Architecture**: ✅ **REFACTORED** (January 2025) - 29 ES6 modules extracted
+- **Tests**: ✅ **954 unit tests + 14 E2E tests passing** (87% coverage)
 - **CI/CD**: ✅ Automated (lint, test, security, Lighthouse)
 - **Documentation**: ✅ Comprehensive & current
+- **Phase 0-2**: ✅ Complete
+- **Phase 3 SEO/Content**: ✅ 5/6 Content Marketing items complete
 
 ## 📚 Required Reading (Priority Order)
 
@@ -21,19 +23,22 @@ _Last updated: December 2025_
 5. **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Coding standards & workflow (10 min)
 6. **[.github/copilot-instructions.md](../.github/copilot-instructions.md)** - Detailed coding patterns (20 min)
 
-## 🎨 Recent Changes (December 2025)
+## 🎨 Recent Changes (January 2025)
 
-**Phase 0-1 Complete**: All module extraction finished with comprehensive test coverage
+**Phase 3 Content Marketing In Progress**: SEO track complete, content pipeline established
 
-- ✅ **28 ES6 modules** extracted from 5,940-line `app-legacy.js`
-- ✅ **7,200+ total lines** across all modules
-- ✅ **815 unit tests + 14 E2E tests passing** with 78% coverage
+- ✅ **29 ES6 modules** extracted from 5,940-line `app-legacy.js`
+- ✅ **7,600+ total lines** across all modules
+- ✅ **954 unit tests + 14 E2E tests passing** with 87% coverage
 - ✅ **6 UI modules**: dashboard, grid, modal, filters, carousel, theme
-- ✅ **7 feature modules**: virtualization, filtering, sorting, search, pagination, sharing, seo
+- ✅ **8 feature modules**: virtualization, filtering, sorting, search, pagination, sharing, seo, embed
 - ✅ **4 state modules**: collection, filters, preferences, cache
 - ✅ **5 data modules**: supabase, loader, aggregates, pricing, storage
 - ✅ **4 utility modules**: format, validation, keys, dom
 - ✅ **1 design module**: tokens
+- ✅ **Content pipeline**: Markdown guides with templates (docs/guides/)
+- ✅ **Console references**: NES, Genesis, PS2 reference pages live
+- ✅ **Collecting guides**: PS2, SNES, RPG guides published
 - ✅ Legacy code archived to `archive/app-legacy.js`
 
 ## 🎯 What to Work On
@@ -51,13 +56,13 @@ _Last updated: December 2025_
 
 1. ~~**E2E Test Expansion**~~ ✅ Done (14 tests)
 2. ~~**Cover Import Automation**~~ ✅ Done (cover-refresh.yml workflow)
-3. **Community Contribution Workflow** - Edits with review queue
+3. ~~**Embeddable Widgets**~~ ✅ Done (app/features/embed.js)
+4. **Community Contribution Workflow** - Edits with review queue
 
 ### Lower Priority: Future Features
 
-- Phase 2: Advanced media workflows, content preservation
-- Phase 3: Community features, SEO, content marketing
-- Phase 4: Monetization, marketplace integration
+- Phase 3 User Growth: Analytics, onboarding, referrals (BLOCKED - requires external services)
+- Phase 4: Monetization, marketplace integration (BLOCKED - requires business decisions)
 
 ## 🏗️ Architecture Overview
 
@@ -68,23 +73,25 @@ retro_games/
 ├── index.html                      # Main entry point
 ├── style.css                       # Master stylesheet (imports)
 ├── app/
-│   ├── main.js                    # Bootstrap (456 lines)
+│   ├── main.js                    # Bootstrap (575 lines)
 │   │
-│   ├── ui/                        # 6 modules, 1,989 lines
-│   │   ├── dashboard.js           # Stats & calculations (493 lines)
-│   │   ├── grid.js                # Grid rendering (453 lines)
+│   ├── ui/                        # 6 modules, 2,558 lines
+│   │   ├── grid.js                # Grid rendering (639 lines)
+│   │   ├── modal.js               # Modal helpers (600 lines)
+│   │   ├── dashboard.js           # Stats & calculations (515 lines)
 │   │   ├── carousel.js            # Carousel helpers (313 lines)
 │   │   ├── theme.js               # Theme switching (259 lines)
-│   │   ├── modal.js               # Modal helpers (240 lines)
 │   │   └── filters.js             # Filter UI (232 lines)
 │   │
-│   ├── features/                  # 6 modules, 1,646 lines
+│   ├── features/                  # 8 modules, 2,290 lines
 │   │   ├── virtualization.js      # Virtual scrolling (371 lines)
+│   │   ├── embed.js               # Embeddable widgets (369 lines)
 │   │   ├── filtering.js           # Filter predicates (342 lines)
+│   │   ├── seo.js                 # JSON-LD structured data (316 lines)
 │   │   ├── search.js              # Search logic (282 lines)
 │   │   ├── pagination.js          # Pagination (220 lines)
 │   │   ├── sharing.js             # Share codes (219 lines)
-│   │   └── sorting.js             # Sort helpers (212 lines)
+│   │   └── sorting.js             # Sort helpers (172 lines)
 │   │
 │   ├── state/                     # 4 modules, 829 lines
 │   │   ├── filters.js             # Filter state (239 lines)
@@ -92,12 +99,12 @@ retro_games/
 │   │   ├── collection.js          # Owned state (190 lines)
 │   │   └── cache.js               # Cover cache (182 lines)
 │   │
-│   ├── data/                      # 5 modules, 721 lines
+│   ├── data/                      # 5 modules, 911 lines
 │   │   ├── pricing.js             # Price logic (263 lines)
 │   │   ├── loader.js              # Data loading (184 lines)
-│   │   ├── aggregates.js          # Stats aggregates (163 lines)
-│   │   ├── supabase.js            # Supabase config (70 lines)
-│   │   └── storage.js             # Storage helpers (41 lines)
+│   │   ├── supabase.js            # Supabase config (170 lines)
+│   │   ├── aggregates.js          # Stats aggregates (156 lines)
+│   │   └── storage.js             # Storage helpers (138 lines)
 │   │
 │   ├── utils/                     # 4 modules, 262 lines
 │   │   ├── format.js              # Formatting (162 lines)
@@ -111,10 +118,17 @@ retro_games/
 ├── archive/
 │   └── app-legacy.js              # Archived (5,940 lines)
 │
+├── docs/guides/                   # Content marketing pipeline
+│   ├── templates/                 # Guide templates
+│   ├── consoles/                  # NES, Genesis, PS2, SNES
+│   └── genres/                    # RPG, etc.
+│
 ├── tests/
-│   ├── utils.test.js              # 460 tests
+│   ├── utils.test.js              # 804 tests (all modules)
 │   ├── app.test.js                # 25 tests
-│   └── archive-media.test.js      # 3 tests
+│   ├── performance.test.js        # 26 tests
+│   ├── fetch-covers.test.js       # 48 tests
+│   └── e2e/                       # 14 Playwright tests
 │
 └── style/                         # Modular CSS
     └── components/
@@ -135,10 +149,10 @@ npm run lint              # Check code quality
 npm run lint:fix          # Auto-fix issues
 npm run format            # Format code
 npm run format:check      # Check formatting
-npm test                  # Unit tests (Vitest) - 674 tests
+npm test                  # Unit tests (Vitest) - 954 tests
 npm run test:watch        # Watch mode
-npm run test:coverage     # Coverage report (70.48%)
-npm run test:e2e          # E2E tests (Playwright)
+npm run test:coverage     # Coverage report (87%)
+npm run test:e2e          # E2E tests (Playwright) - 14 tests
 npm run lighthouse        # Performance audit
 
 # Before committing
