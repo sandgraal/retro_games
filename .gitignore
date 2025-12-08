@@ -37,3 +37,6 @@ data/pricecharting-cache.json
 __pycache__/
 *.pyc
 
+# Build output
+dist/
+

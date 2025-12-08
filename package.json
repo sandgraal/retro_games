@@ -7,7 +7,9 @@
     "doc": "docs"
   },
   "scripts": {
+    "build": "npm run build:config && npm run build:css",
     "build:config": "node scripts/generate-config.js",
+    "build:css": "node scripts/build-css.js",
     "lint": "eslint app scripts",
     "lint:fix": "eslint app scripts --fix",
     "format": "prettier --write \"**/*.{js,json,md,css,html}\"",
