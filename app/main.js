@@ -562,7 +562,9 @@ window.addEventListener("openGameModal", (e) => {
   const { game, gameKey } = e.detail;
   const owned = window.__OWNED_DATA__ || {};
   const statuses = window.__STATUSES_DATA__ || {};
-  openModal(game, gameKey, owned, statuses);
+  const priceData = window.__PRICE_DATA__ || {};
+  const gamePrices = priceData[gameKey] || null;
+  openModal(game, gameKey, owned, statuses, gamePrices);
 });
 
 // Start initialization when DOM is ready

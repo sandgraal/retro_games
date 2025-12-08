@@ -3155,6 +3155,7 @@ import {
   buildCloseButtonAttrs,
   buildModalStatusButtons,
   buildGameDetailsHtml,
+  buildPriceSection,
 } from "../app/ui/modal.js";
 
 describe("ui/modal", () => {
@@ -3405,6 +3406,44 @@ describe("ui/modal", () => {
 
     it("returns empty for null game", () => {
       expect(buildGameDetailsHtml(null)).toBe("");
+    });
+  });
+
+  describe("buildPriceSection", () => {
+    it("builds price section with all price types", () => {
+      const priceData = {
+        loose: 17500,
+        cib: 46500,
+        new: 72500,
+        snapshotDate: "2025-03-10",
+      };
+      const html = buildPriceSection(priceData);
+      expect(html).toContain("Market Prices");
+      expect(html).toContain("Loose");
+      expect(html).toContain("Complete");
+      expect(html).toContain("New");
+      expect(html).toContain("$175.00");
+      expect(html).toContain("$465.00");
+      expect(html).toContain("$725.00");
+      expect(html).toContain("PriceCharting");
+      expect(html).toContain("2025-03-10");
+    });
+
+    it("handles partial price data", () => {
+      const priceData = { loose: 5000 };
+      const html = buildPriceSection(priceData);
+      expect(html).toContain("$50.00");
+      expect(html).not.toContain("Complete");
+      expect(html).not.toContain("New");
+    });
+
+    it("returns empty for null price data", () => {
+      expect(buildPriceSection(null)).toBe("");
+    });
+
+    it("returns empty for zero prices", () => {
+      const priceData = { loose: 0, cib: 0, new: 0 };
+      expect(buildPriceSection(priceData)).toBe("");
     });
   });
 });

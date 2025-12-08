@@ -83,17 +83,18 @@ _Last updated: December 2025_
 1. ~~**Complete Modal Integration** - Wire modal component to game card clicks~~ ✅ Done
 2. ~~**Install Coverage Tooling** - Add @vitest/coverage-v8 to track test coverage metrics~~ ✅ Done
 3. ~~**Wire Virtualization** - Connect extracted `features/virtualization.js` to grid rendering~~ ✅ Done
+4. ~~**Price Data Integration** - Complete PriceCharting integration for dashboard and modal~~ ✅ Done
 
 **Medium Priority**:
 
-4. **Price Data Integration** - Complete PriceCharting integration for dashboard and modal
 5. **Performance Testing** - Test with 10k+ game datasets to validate virtualization
 6. **Media Workflow** - Automated cover import and archival tooling (scripts/audit-missing-covers.js ✅)
+7. **Modal Price Display** - Show game prices in modal detail view
 
 **Lower Priority**:
 
-7. **Community Features** - User profiles, collection sharing, discussions
-8. **Advanced Analytics** - Collection insights, trending games, recommendations
+8. **Community Features** - User profiles, collection sharing, discussions
+9. **Advanced Analytics** - Collection insights, trending games, recommendations
 
 See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive roadmap.
 
@@ -113,9 +114,9 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 
 **Test Coverage:**
 
-- `tests/utils.test.js`: 667 tests (covers all extracted helpers)
+- `tests/utils.test.js`: 672 tests (covers all extracted helpers)
 - `tests/app.test.js`: 25 tests (integration tests)
 - `tests/archive-media.test.js`: 3 tests
 - `tests/audit-missing-covers.test.js`: 26 tests
-- **Total: 721 tests passing**
+- **Total: 726 tests passing**
 - **Coverage: 76%+ statements**

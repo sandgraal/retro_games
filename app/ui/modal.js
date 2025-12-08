@@ -5,7 +5,7 @@
  */
 
 import { escapeHtml } from "../utils/dom.js";
-import { formatFieldLabel } from "../utils/format.js";
+import { formatFieldLabel, formatCurrency } from "../utils/format.js";
 
 // === Metadata Card Building ===
 
@@ -271,6 +271,55 @@ export function buildModalStatusButtons(gameKey, currentStatus) {
 }
 
 /**
+ * Build price section HTML for the modal.
+ * @param {Object|null} priceData - Price data with loose/cib/new cents values
+ * @returns {string} HTML string
+ */
+export function buildPriceSection(priceData) {
+  if (!priceData) return "";
+
+  const hasLoose = priceData.loose && priceData.loose > 0;
+  const hasCib = priceData.cib && priceData.cib > 0;
+  const hasNew = priceData.new && priceData.new > 0;
+
+  if (!hasLoose && !hasCib && !hasNew) return "";
+
+  const items = [];
+  if (hasLoose) {
+    items.push(`<div class="price-item">
+      <span class="price-label">Loose</span>
+      <span class="price-value">${formatCurrency(priceData.loose / 100)}</span>
+    </div>`);
+  }
+  if (hasCib) {
+    items.push(`<div class="price-item">
+      <span class="price-label">Complete</span>
+      <span class="price-value price-value--cib">${formatCurrency(priceData.cib / 100)}</span>
+    </div>`);
+  }
+  if (hasNew) {
+    items.push(`<div class="price-item">
+      <span class="price-label">New</span>
+      <span class="price-value price-value--new">${formatCurrency(priceData.new / 100)}</span>
+    </div>`);
+  }
+
+  const sourceText = priceData.snapshotDate
+    ? `<span class="price-source">via PriceCharting • ${priceData.snapshotDate}</span>`
+    : "";
+
+  return `
+    <div class="modal-section modal-prices">
+      <h3 class="modal-section-title">Market Prices</h3>
+      <div class="price-grid">
+        ${items.join("")}
+      </div>
+      ${sourceText}
+    </div>
+  `;
+}
+
+/**
  * Build game details HTML for the modal.
  * @param {Object} game - Game data object
  * @returns {string} HTML string
@@ -431,8 +480,9 @@ export function buildGameDetailsHtml(game) {
  * @param {string} gameKey - Game key
  * @param {Object} owned - Owned games map
  * @param {Object} [statuses={}] - Status maps
+ * @param {Object} [priceData=null] - Price data for this game
  */
-export function openModal(game, gameKey, owned, statuses = {}) {
+export function openModal(game, gameKey, owned, statuses = {}, priceData = null) {
   const backdrop = document.getElementById("gameModalBackdrop");
   const titleEl = document.getElementById("gameModalTitle");
   const coverImg = document.getElementById("gameModalCoverImage");
@@ -465,7 +515,7 @@ export function openModal(game, gameKey, owned, statuses = {}) {
   }
 
   // Set details
-  detailsEl.innerHTML = buildGameDetailsHtml(game);
+  detailsEl.innerHTML = buildGameDetailsHtml(game) + buildPriceSection(priceData);
 
   // Store game key on modal for status button handlers
   backdrop.dataset.gameKey = gameKey;
