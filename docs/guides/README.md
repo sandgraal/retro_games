@@ -7,6 +7,7 @@ This directory contains markdown-based collecting guides and console reference p
 ### Console Reference Pages
 
 - [NES Reference Guide](./consoles/nes/reference.md) - Technical specs, variants, library highlights
+- [SNES Reference Guide](./consoles/snes/reference.md) - 16-bit Nintendo documentation
 - [N64 Reference Guide](./consoles/n64/reference.md) - 64-bit era technical documentation
 - [Genesis/Mega Drive Reference](./consoles/genesis/reference.md) - Sega's 16-bit powerhouse
 - [PS1 Reference Guide](./consoles/ps1/reference.md) - Original PlayStation documentation

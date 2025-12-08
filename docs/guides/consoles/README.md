@@ -59,10 +59,10 @@ The console that revived the gaming industry. 1,252 licensed titles across all r
 
 The 16-bit champion with an unmatched RPG library.
 
-| Resource                                            | Description                  |
-| --------------------------------------------------- | ---------------------------- |
-| SNES Reference Guide                                | Coming soon                  |
-| [SNES Collecting Guide](./snes/collecting-guide.md) | Complete collecting strategy |
+| Resource                                            | Description                    |
+| --------------------------------------------------- | ------------------------------ |
+| [SNES Reference Guide](./snes/reference.md)         | Technical specs, Mode 7, chips |
+| [SNES Collecting Guide](./snes/collecting-guide.md) | Complete collecting strategy   |
 
 **Quick Stats:** 1990-2003 • 49.1M units • 16-bit excellence
 
