@@ -44,40 +44,40 @@ Game records use these columns (track these constants in `app/main.js`):
 
 ## File Responsibilities
 
-**Module Architecture (January 2025):** 27 ES6 modules across 6 directories with 674 tests.
+**Module Architecture (December 2025):** 28 ES6 modules across 6 directories with 730 tests.
 
 ### Core Files
 
-| File                     | Purpose                           | Patterns                                                                                      |
-| ------------------------ | --------------------------------- | --------------------------------------------------------------------------------------------- |
-| `index.html`             | DOM scaffold, semantic structure  | Hero dashboard, masonry grid, filters sidebar, mobile nav; Supabase JS loaded via CDN         |
-| `app/main.js`            | Application bootstrap (456 lines) | Loads data, initializes UI modules, sets up event handlers. Modal at line 447 is placeholder. |
-| `config.js`              | Supabase credentials              | Generated from `.env` via `npm run build:config`; `.gitignore` protects it                    |
-| `data/sample-games.json` | Fallback offline data             | Full JSON dataset when Supabase unavailable                                                   |
-| `archive/app-legacy.js`  | Legacy monolithic code            | 5,940-line original app.js - archived for reference only                                      |
+| File                     | Purpose                           | Patterns                                                                              |
+| ------------------------ | --------------------------------- | ------------------------------------------------------------------------------------- |
+| `index.html`             | DOM scaffold, semantic structure  | Hero dashboard, masonry grid, filters sidebar, mobile nav; Supabase JS loaded via CDN |
+| `app/main.js`            | Application bootstrap (575 lines) | Loads data, initializes UI modules, sets up event handlers, price data integration.   |
+| `config.js`              | Supabase credentials              | Generated from `.env` via `npm run build:config`; `.gitignore` protects it            |
+| `data/sample-games.json` | Fallback offline data             | Full JSON dataset when Supabase unavailable                                           |
+| `archive/app-legacy.js`  | Legacy monolithic code            | 5,940-line original app.js - archived for reference only                              |
 
-### UI Modules (`app/ui/` - 6 modules, 1,989 lines)
+### UI Modules (`app/ui/` - 6 modules, 2,558 lines)
 
 | File                  | Lines | Purpose                        | Key Exports                                                                                         |
 | --------------------- | ----- | ------------------------------ | --------------------------------------------------------------------------------------------------- |
-| `app/ui/dashboard.js` | 493   | Dashboard stats & calculations | `calculateAverageRating()`, `countPlatforms()`, `calculatePlatformBreakdown()`, `getTopPlatforms()` |
-| `app/ui/grid.js`      | 453   | Game grid rendering helpers    | `normalizeCoverUrl()`, `resolveCoverUrl()`, `STATUS_CLASSES`, `STATUS_DISPLAY_LABELS`, placeholders |
+| `app/ui/grid.js`      | 639   | Game grid rendering helpers    | `normalizeCoverUrl()`, `resolveCoverUrl()`, `STATUS_CLASSES`, `STATUS_DISPLAY_LABELS`, placeholders |
+| `app/ui/modal.js`     | 600   | Modal metadata & rendering     | `buildMetadataCard()`, `openModal()`, `closeModal()`, `buildPriceSection()`, focus trap helpers     |
+| `app/ui/dashboard.js` | 515   | Dashboard stats & calculations | `calculateAverageRating()`, `countPlatforms()`, `calculateStats()`, `getTopPlatforms()`             |
 | `app/ui/carousel.js`  | 313   | Carousel scroll calculations   | `calculateScrollStep()`, `computeButtonStates()`, trending pick helpers, ARIA helpers               |
 | `app/ui/theme.js`     | 259   | Theme & motion preferences     | `getPreferredTheme()`, `applyThemeChoice()`, `prefersReducedMotion()`, motion preference helpers    |
-| `app/ui/modal.js`     | 551   | Modal metadata & rendering     | `buildMetadataCard()`, `openModal()`, `closeModal()`, `setupModalHandlers()`, focus trap helpers    |
 | `app/ui/filters.js`   | 232   | Filter UI builders             | `extractUniquePlatforms()`, `extractUniqueGenres()`, `buildSelectOptions()`, dropdown builders      |
 
-### Feature Modules (`app/features/` - 7 modules, 1,900 lines)
+### Feature Modules (`app/features/` - 7 modules, 1,922 lines)
 
 | File                             | Lines | Purpose                   | Key Exports                                                                                    |
 | -------------------------------- | ----- | ------------------------- | ---------------------------------------------------------------------------------------------- |
 | `app/features/virtualization.js` | 371   | Virtual scrolling helpers | `computeVirtualWindow()`, `updateVirtualScrollState()`, `VIRTUALIZE_MIN_ITEMS`, scroll helpers |
 | `app/features/filtering.js`      | 342   | Filter predicates         | `rowMatchesPlatform()`, `rowMatchesGenre()`, `rowMatchesStatus()`, `detectRegion()`            |
+| `app/features/seo.js`            | 316   | JSON-LD structured data   | `updateStructuredData()`, `mapGameToVideoGameSchema()`, `buildStructuredDataPayload()`         |
 | `app/features/search.js`         | 282   | Search & typeahead        | `normalizeSearchQuery()`, `scoreSearchMatch()`, `buildSearchPredicate()`, typeahead constants  |
-| `app/features/seo.js`            | 265   | JSON-LD structured data   | `updateStructuredData()`, `mapGameToVideoGameSchema()`, `buildStructuredDataPayload()`         |
 | `app/features/pagination.js`     | 220   | Pagination calculations   | `computePageRange()`, `computePageWindowRange()`, `PAGE_SIZE_CHOICES`, page size constants     |
 | `app/features/sharing.js`        | 219   | Share codes & export      | `encodeSharePayload()`, `decodeSharePayload()`, `buildBackupPayload()`, CSV export helpers     |
-| `app/features/sorting.js`        | 212   | Sort comparators          | `buildSortComparator()`, `parseSortConfig()`, `SORT_OPTIONS`, column constants                 |
+| `app/features/sorting.js`        | 172   | Sort comparators          | `buildSortComparator()`, `parseSortConfig()`, `SORT_OPTIONS`, column constants                 |
 
 ### State Modules (`app/state/` - 4 modules, 829 lines)
 
@@ -88,15 +88,15 @@ Game records use these columns (track these constants in `app/main.js`):
 | `app/state/collection.js`  | 190   | Owned/wishlist state    | `STORAGE_KEY`, status constants (`STATUS_OWNED`, `STATUS_WISHLIST`, etc.), collection helpers |
 | `app/state/cache.js`       | 182   | Cover URL caching       | `getCoverCacheStorage()`, `FALLBACK_COVER_CACHE_KEY`, cache TTL helpers                       |
 
-### Data Modules (`app/data/` - 5 modules, 721 lines)
+### Data Modules (`app/data/` - 5 modules, 911 lines)
 
 | File                     | Lines | Purpose                   | Key Exports                                                                                  |
 | ------------------------ | ----- | ------------------------- | -------------------------------------------------------------------------------------------- |
 | `app/data/pricing.js`    | 263   | Price normalization       | `normalizePriceValue()`, `selectStatusPrice()`, `resolvePriceValue()`, `formatPriceValue()`  |
 | `app/data/loader.js`     | 184   | Data loading & processing | `applySupabaseFilters()`, `computeRegionCodes()`, `normalizeIncomingRows()`, `buildRowKey()` |
-| `app/data/aggregates.js` | 163   | Stats aggregates          | `computeLocalGenreAggregates()`, `computeLocalTimelineSeries()`, RPC response parsers        |
-| `app/data/supabase.js`   | 70    | Supabase client config    | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, table/bucket constants                                  |
-| `app/data/storage.js`    | 41    | Storage URL helpers       | `normalizeImageUrl()`, `buildStoragePublicUrl()`, `normalizeCoverUrl()`                      |
+| `app/data/supabase.js`   | 170   | Supabase client config    | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, table/bucket constants                                  |
+| `app/data/aggregates.js` | 156   | Stats aggregates          | `computeLocalGenreAggregates()`, `computeLocalTimelineSeries()`, RPC response parsers        |
+| `app/data/storage.js`    | 138   | Storage URL helpers       | `normalizeImageUrl()`, `buildStoragePublicUrl()`, `normalizeCoverUrl()`                      |
 
 ### Utility Modules (`app/utils/` - 4 modules, 262 lines)
 
