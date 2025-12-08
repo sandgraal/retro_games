@@ -42,13 +42,15 @@ retro_games/
 │   │   ├── modal.js               # Game detail modal helpers (240 lines)
 │   │   └── filters.js             # Filter UI builders (232 lines)
 │   │
-│   ├── features/                  # Feature logic modules (6 modules, 1,646 lines)
+│   ├── features/                  # Feature logic modules (8 modules, 2,290 lines)
 │   │   ├── virtualization.js      # Grid virtualization helpers (371 lines)
+│   │   ├── embed.js               # Embeddable game widgets (369 lines)
 │   │   ├── filtering.js           # Filter predicates & matching (342 lines)
+│   │   ├── seo.js                 # JSON-LD structured data (316 lines)
 │   │   ├── search.js              # Search & typeahead logic (282 lines)
 │   │   ├── pagination.js          # Pagination calculations (220 lines)
 │   │   ├── sharing.js             # Share codes & export/import (219 lines)
-│   │   └── sorting.js             # Sort comparators & config (212 lines)
+│   │   └── sorting.js             # Sort comparators & config (172 lines)
 │   │
 │   ├── state/                     # State management (4 modules, 829 lines)
 │   │   ├── filters.js             # Filter state & constants (239 lines)
@@ -294,11 +296,13 @@ All planned modules have been extracted and are now in use:
 | Module | Lines | Key Exports |
 |--------|-------|-------------|
 | `virtualization.js` | 371 | `computeVirtualWindow`, `updateVirtualScrollState`, scroll helpers |
+| `embed.js` | 369 | `buildGameWidget`, `buildCollectionWidget`, `generateEmbedCode`, widget themes |
 | `filtering.js` | 342 | `rowMatchesPlatform`, `rowMatchesGenre`, `rowMatchesStatus`, filter predicates |
+| `seo.js` | 316 | `updateStructuredData`, `mapGameToVideoGameSchema`, JSON-LD builders |
 | `search.js` | 282 | `normalizeSearchQuery`, `scoreSearchMatch`, `buildSearchPredicate` |
 | `pagination.js` | 220 | `computePageRange`, `computePageWindowRange`, page size constants |
 | `sharing.js` | 219 | `encodeSharePayload`, `decodeSharePayload`, `buildBackupPayload`, CSV export |
-| `sorting.js` | 212 | `buildSortComparator`, `parseSortConfig`, column constants |
+| `sorting.js` | 172 | `buildSortComparator`, `parseSortConfig`, column constants |
 
 ### State Management (`app/state/`)
 
