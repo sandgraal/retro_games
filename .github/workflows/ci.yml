@@ -104,6 +104,8 @@ jobs:
           cache: "npm"
       - name: Install dependencies
         run: npm ci
+      - name: Build CSS bundle
+        run: npm run build:css
       - name: Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v11
         with:
