@@ -18,6 +18,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [Dreamcast Reference Guide](./consoles/dreamcast/reference.md) - Sega's final console
 - [PS1 Reference Guide](./consoles/ps1/reference.md) - Original PlayStation documentation
 - [PS2 Reference Guide](./consoles/ps2/reference.md) - Best-selling console documentation
+- [PSP Reference Guide](./consoles/psp/reference.md) - Sony's portable powerhouse
 
 ### Console Collecting Guides
 
@@ -30,6 +31,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [N64 Collecting Guide](./consoles/n64/collecting-guide.md) - Complete Nintendo 64 strategy
 - [PS1 Collecting Guide](./consoles/ps1/collecting-guide.md) - PlayStation 1 strategy
 - [PS2 Collecting Guide](./consoles/ps2/collecting-guide.md) - Complete PS2 strategy
+- [PSP Collecting Guide](./consoles/psp/collecting-guide.md) - Sony portable strategy
 - [Saturn Collecting Guide](./consoles/saturn/collecting-guide.md) - Sega 32-bit import haven
 - [SNES Collecting Guide](./consoles/snes/collecting-guide.md) - 16-bit Nintendo essentials
 - [Wii Collecting Guide](./consoles/wii/collecting-guide.md) - Motion control era strategy

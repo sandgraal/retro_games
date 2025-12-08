@@ -202,13 +202,22 @@ The best-selling console of all time with an enormous library.
 
 ---
 
+### PlayStation Portable (PSP)
+
+Sony's revolutionary handheld that brought console-quality gaming on the go.
+
+| Resource                                          | Description                        |
+| ------------------------------------------------- | ---------------------------------- |
+| [PSP Reference Guide](./psp/reference.md)         | Technical specs, variants, library |
+| [PSP Collecting Guide](./psp/collecting-guide.md) | Complete collecting strategy       |
+
+**Quick Stats:** 2004-2014 • 80M+ units • 1,849 games worldwide
+
+---
+
 ## Coming Soon
 
 We're actively expanding our console coverage. Upcoming guides:
-
-### Sony
-
-- [ ] PlayStation Portable (PSP) Reference
 
 ### Other
 
