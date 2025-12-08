@@ -90,7 +90,7 @@ _Last updated: December 2025_
 **Medium Priority**:
 
 6. **Media Workflow** - Automated cover import and archival tooling (scripts/audit-missing-covers.js ✅)
-7. **E2E Test Expansion** - Add Playwright tests for new UI flows
+7. ~~**E2E Test Expansion** - Add Playwright tests for new UI flows~~ ✅ Done (14 tests)
 
 **Lower Priority**:
 
@@ -118,7 +118,8 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 - `tests/utils.test.js`: 676 tests (covers all extracted helpers)
 - `tests/app.test.js`: 25 tests (integration tests)
 - `tests/performance.test.js`: 26 tests (10k+ dataset performance)
+- `tests/e2e/`: 14 Playwright E2E tests (modal, filters, accessibility)
 - `tests/archive-media.test.js`: 3 tests
 - `tests/audit-missing-covers.test.js`: 26 tests
-- **Total: 756 tests passing**
+- **Total: 756 unit tests + 14 E2E tests**
 - **Coverage: 76%+ statements**
