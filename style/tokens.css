@@ -36,9 +36,10 @@
   --spacing-xxl: 64px;
 
   /* Typography */
-  --font-display: "Rajdhani", "Inter", system-ui;
-  --font-body: "Inter", system-ui;
-  --font-accent: "Space Mono", monospace;
+  /* System-first font stacks to avoid remote font requests during CI */
+  --font-display: "Inter", "Segoe UI", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-accent: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
 
   --font-size-xs: 12px;
   --font-size-sm: 14px;
