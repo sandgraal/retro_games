@@ -37,8 +37,8 @@ _Last updated: January 2025_
 - ✅ **4 utility modules**: format, validation, keys, dom
 - ✅ **1 design module**: tokens
 - ✅ **Content pipeline**: Markdown guides with templates (docs/guides/)
-- ✅ **Console references**: NES, SNES, N64, Genesis, Dreamcast, PS1, PS2 reference pages live
-- ✅ **Collecting guides**: NES, SNES, N64, Genesis, Dreamcast, PS1, PS2, RPG guides published
+- ✅ **Console references**: NES, SNES, N64, GameCube, Genesis, Dreamcast, PS1, PS2 reference pages live
+- ✅ **Collecting guides**: NES, SNES, N64, GameCube, Genesis, Dreamcast, PS1, PS2, RPG guides published
 - ✅ Legacy code archived to `archive/app-legacy.js`
 
 ## 🎯 What to Work On
@@ -228,8 +228,8 @@ All Phase 0-3 implementation tasks are complete:
 
 ### Content Library Complete
 
-- **7 Console Reference Guides**: NES, SNES, N64, Genesis, Dreamcast, PS1, PS2
-- **7 Console Collecting Guides**: NES, SNES, N64, Genesis, Dreamcast, PS1, PS2
+- **8 Console Reference Guides**: NES, SNES, N64, GameCube, Genesis, Dreamcast, PS1, PS2
+- **8 Console Collecting Guides**: NES, SNES, N64, GameCube, Genesis, Dreamcast, PS1, PS2
 - **1 Genre Collecting Guide**: RPG
 - **Outreach Plan**: Community & influencer strategy documented
 
