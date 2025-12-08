@@ -51,10 +51,11 @@ _Last updated: December 2025_
 
 - **Modal integration**: ✅ Modal component wired to game card clicks with full functionality
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
-- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 679 tests passing
-- **Price data integration**: Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: ✅ 679 tests passing; @vitest/coverage-v8 installed (76% statements)
+- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 756 tests passing
+- **Price data integration**: ✅ Complete PriceCharting API integration for modal and dashboard
+- **Test coverage**: ✅ 756 tests passing; @vitest/coverage-v8 installed (76% statements)
 - **Feature completion**: ✅ Virtualization wired to grid, renders only visible cards for 80+ games
+- **Performance testing**: ✅ 26 tests validating filtering/sorting/virtualization with 10k+ datasets
 
 ### Technical Debt
 
@@ -73,7 +74,7 @@ _Last updated: December 2025_
 
 - Supabase pagination streams data in 400-row chunks and server-side filters ensure we only hydrate rows matching current query
 - Virtualized grid handles large datasets efficiently
-- For 10k+ titles with no filters, we eventually download full dataset—could explore more server-side aggregation
+- ✅ Performance tests validate operations complete within time bounds (filtering <50ms, sorting <100ms for 10k items)
 - PriceCharting integration adds price data without blocking main UI
 
 ## Next Steps
@@ -84,12 +85,12 @@ _Last updated: December 2025_
 2. ~~**Install Coverage Tooling** - Add @vitest/coverage-v8 to track test coverage metrics~~ ✅ Done
 3. ~~**Wire Virtualization** - Connect extracted `features/virtualization.js` to grid rendering~~ ✅ Done
 4. ~~**Price Data Integration** - Complete PriceCharting integration for dashboard and modal~~ ✅ Done
+5. ~~**Performance Testing** - Test with 10k+ game datasets to validate virtualization~~ ✅ Done
 
 **Medium Priority**:
 
-5. **Performance Testing** - Test with 10k+ game datasets to validate virtualization
 6. **Media Workflow** - Automated cover import and archival tooling (scripts/audit-missing-covers.js ✅)
-7. **Modal Price Display** - Show game prices in modal detail view
+7. **E2E Test Expansion** - Add Playwright tests for new UI flows
 
 **Lower Priority**:
 
@@ -100,23 +101,24 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 
 ## Module Inventory (December 2025)
 
-**28 ES6 modules** totaling 6,900+ lines:
+**28 ES6 modules** totaling 7,200+ lines:
 
 | Directory       | Modules | Lines | Purpose                                                                              |
 | --------------- | ------- | ----- | ------------------------------------------------------------------------------------ |
-| `app/ui/`       | 6       | 2,180 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                      |
-| `app/features/` | 7       | 1,900 | Feature logic (virtualization, filtering, sorting, search, pagination, sharing, seo) |
+| `app/ui/`       | 6       | 2,558 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                      |
+| `app/features/` | 7       | 1,922 | Feature logic (virtualization, filtering, sorting, search, pagination, sharing, seo) |
 | `app/state/`    | 4       | 829   | State management (collection, filters, preferences, cache)                           |
-| `app/data/`     | 5       | 721   | Data layer (supabase, loader, aggregates, pricing, storage)                          |
+| `app/data/`     | 5       | 911   | Data layer (supabase, loader, aggregates, pricing, storage)                          |
 | `app/utils/`    | 4       | 262   | Pure utilities (dom, format, keys, validation)                                       |
 | `app/design/`   | 1       | 127   | Design tokens                                                                        |
-| `app/main.js`   | 1       | 460   | Bootstrap orchestration                                                              |
+| `app/main.js`   | 1       | 575   | Bootstrap orchestration                                                              |
 
 **Test Coverage:**
 
-- `tests/utils.test.js`: 672 tests (covers all extracted helpers)
+- `tests/utils.test.js`: 676 tests (covers all extracted helpers)
 - `tests/app.test.js`: 25 tests (integration tests)
+- `tests/performance.test.js`: 26 tests (10k+ dataset performance)
 - `tests/archive-media.test.js`: 3 tests
 - `tests/audit-missing-covers.test.js`: 26 tests
-- **Total: 726 tests passing**
+- **Total: 756 tests passing**
 - **Coverage: 76%+ statements**
