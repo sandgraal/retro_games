@@ -101,5 +101,26 @@ describe("scripts/build-css.js", () => {
       }
       expect(exitCode).toBe(0);
     });
+
+    it("generates production index.html with bundled CSS", () => {
+      execSync(`node ${SCRIPT_PATH}`, { cwd: ROOT_DIR });
+      const indexPath = path.join(DIST_DIR, "index.html");
+      expect(fs.existsSync(indexPath)).toBe(true);
+
+      const content = fs.readFileSync(indexPath, "utf8");
+      expect(content).toContain('href="style.min.css"');
+      expect(content).not.toContain('href="style.css"');
+    });
+
+    it("creates symlinks for required assets", () => {
+      execSync(`node ${SCRIPT_PATH}`, { cwd: ROOT_DIR });
+
+      // Check symlinks or copies exist for key directories
+      const appPath = path.join(DIST_DIR, "app");
+      const dataPath = path.join(DIST_DIR, "data");
+
+      expect(fs.existsSync(appPath)).toBe(true);
+      expect(fs.existsSync(dataPath)).toBe(true);
+    });
   });
 });

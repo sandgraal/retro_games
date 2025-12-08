@@ -129,6 +129,41 @@ function build() {
   console.log(
     `   dist/style.min.css ${(minifiedSize / 1024).toFixed(1)}KB (${savings}% smaller)`
   );
+
+  // Create production index.html with bundled CSS reference
+  const indexPath = path.join(ROOT_DIR, "index.html");
+  const distIndexPath = path.join(DIST_DIR, "index.html");
+  if (fs.existsSync(indexPath)) {
+    let indexHtml = fs.readFileSync(indexPath, "utf8");
+    // Replace style.css reference with bundled version
+    indexHtml = indexHtml.replace(/href="style\.css"/g, 'href="style.min.css"');
+    fs.writeFileSync(distIndexPath, indexHtml, "utf8");
+    console.log("   dist/index.html    (using bundled CSS)");
+  }
+
+  // Create symlinks for assets needed by index.html
+  const symlinkDirs = ["app", "data", "covers", "config.js", "favicon.png"];
+  for (const item of symlinkDirs) {
+    const srcPath = path.join(ROOT_DIR, item);
+    const destPath = path.join(DIST_DIR, item);
+    if (fs.existsSync(srcPath) && !fs.existsSync(destPath)) {
+      try {
+        // Use relative path for symlink
+        const relativeSrc = path.relative(DIST_DIR, srcPath);
+        fs.symlinkSync(relativeSrc, destPath);
+        console.log(`   dist/${item} -> ${relativeSrc}`);
+      } catch {
+        // Symlink may fail on Windows, copy instead
+        if (fs.statSync(srcPath).isDirectory()) {
+          fs.cpSync(srcPath, destPath, { recursive: true });
+        } else {
+          fs.copyFileSync(srcPath, destPath);
+        }
+        console.log(`   dist/${item} (copied)`);
+      }
+    }
+  }
+
   console.log("\n✅ CSS build complete!");
 }
 

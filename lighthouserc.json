@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "numberOfRuns": 1,
-      "startServerCommand": "npm run serve:lighthouse",
+      "startServerCommand": "npm run serve:dist",
       "startServerReadyPattern": "Available on",
       "startServerReadyTimeout": 60000,
       "url": ["http://127.0.0.1:4173/index.html"],
