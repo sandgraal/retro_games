@@ -57,7 +57,7 @@ _Last updated: January 2025_
 1. ~~**E2E Test Expansion**~~ ✅ Done (14 tests)
 2. ~~**Cover Import Automation**~~ ✅ Done (cover-refresh.yml workflow)
 3. ~~**Embeddable Widgets**~~ ✅ Done (app/features/embed.js)
-4. **Community Contribution Workflow** - Edits with review queue
+4. ~~**Community Contribution Workflow**~~ ✅ Done (issue templates + pending_media table)
 
 ### Lower Priority: Future Features
 

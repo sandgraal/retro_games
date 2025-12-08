@@ -157,13 +157,13 @@ This outreach plan establishes a sustainable strategy for building awareness, dr
 
 ### Content to Create
 
-| Asset                                     | Priority | Purpose                  | Timeline |
-| ----------------------------------------- | -------- | ------------------------ | -------- |
-| N64 Collecting Guide                      | High     | Fill content gap         | Week 1-2 |
-| PlayStation 1 Reference                   | High     | Major platform           | Week 2-3 |
-| "Collection Value Calculator" walkthrough | Medium   | Demonstrate core feature | Week 3   |
-| Video demo (60 seconds)                   | Medium   | Social sharing           | Week 4   |
-| Infographic: "Retro Market 2025"          | Medium   | Shareable data           | Week 5   |
+| Asset                                     | Priority | Purpose                  | Status  |
+| ----------------------------------------- | -------- | ------------------------ | ------- |
+| ~~N64 Collecting Guide~~                  | High     | Fill content gap         | ✅ Done |
+| ~~PlayStation 1 Reference~~               | High     | Major platform           | ✅ Done |
+| "Collection Value Calculator" walkthrough | Medium   | Demonstrate core feature | Pending |
+| Video demo (60 seconds)                   | Medium   | Social sharing           | Pending |
+| Infographic: "Retro Market 2025"          | Medium   | Shareable data           | Pending |
 
 ---
 
