@@ -9,6 +9,7 @@ import { openModal, setupModalHandlers } from "./ui/modal.js";
 import { generateGameKey } from "./utils/keys.js";
 import { getRegionCodesForRow } from "./features/filtering.js";
 import { updateStructuredData } from "./features/seo.js";
+import { checkForceSampleMode } from "./data/supabase.js";
 
 // Show loading state immediately
 showLoadingSkeletons();
@@ -29,12 +30,15 @@ async function bootstrapNewUI() {
       trade: JSON.parse(localStorage.getItem("roms_trade") || "{}"),
     };
 
-    // Try to load from Supabase first
+    // Check if sample mode is forced
+    const forceSample = checkForceSampleMode();
+
+    // Try to load from Supabase first (unless sample mode is forced)
     let games = [];
     let dataSource = "sample";
 
     const supabaseConfig = window.__SUPABASE_CONFIG__;
-    if (supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
+    if (!forceSample && supabaseConfig && supabaseConfig.url && supabaseConfig.anonKey) {
       try {
         const { createClient } = window.supabase;
         const client = createClient(supabaseConfig.url, supabaseConfig.anonKey);
