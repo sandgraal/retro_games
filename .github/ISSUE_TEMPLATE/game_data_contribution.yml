@@ -1,0 +1,121 @@
+---
+name: 🎮 Game Data Contribution
+description: Add or update game metadata, covers, or pricing information
+labels: ["data-contribution", "needs-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Game Data Contribution
+
+        Help improve our database! Submit new games, update metadata, or add cover images.
+        All contributions go through a review queue before being merged.
+
+        **Guidelines:**
+        - One game per submission (submit multiple issues for multiple games)
+        - Provide accurate, verifiable information
+        - Link to sources when possible (Wikipedia, MobyGames, IGDB)
+        - For cover images, ensure you have rights or the image is public domain
+
+  - type: dropdown
+    id: contribution-type
+    attributes:
+      label: Contribution Type
+      description: What kind of contribution is this?
+      options:
+        - Add new game
+        - Update existing game metadata
+        - Add or update cover image
+        - Add or update pricing data
+        - Fix incorrect data
+    validations:
+      required: true
+
+  - type: input
+    id: game-name
+    attributes:
+      label: Game Name
+      description: The official title of the game
+      placeholder: e.g., Chrono Trigger
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: The platform this data applies to
+      placeholder: e.g., SNES, PS1, Genesis
+    validations:
+      required: true
+
+  - type: input
+    id: release-year
+    attributes:
+      label: Release Year
+      description: Original release year (YYYY)
+      placeholder: e.g., 1995
+
+  - type: input
+    id: region
+    attributes:
+      label: Region
+      description: Region code (NTSC-U, NTSC-J, PAL)
+      placeholder: e.g., NTSC-U
+
+  - type: input
+    id: genre
+    attributes:
+      label: Genre(s)
+      description: Comma-separated genres
+      placeholder: e.g., RPG, JRPG, Turn-Based
+
+  - type: input
+    id: rating
+    attributes:
+      label: Rating
+      description: Aggregate rating (0-10 scale)
+      placeholder: e.g., 9.5
+
+  - type: input
+    id: players
+    attributes:
+      label: Player Count
+      description: Number of players supported
+      placeholder: e.g., 1-2 players
+
+  - type: textarea
+    id: cover-url
+    attributes:
+      label: Cover Image URL
+      description: URL to a high-quality cover image (prefer PNG/JPG, 400x500px minimum)
+      placeholder: https://example.com/covers/chrono-trigger.jpg
+
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources
+      description: Links to verify this information
+      placeholder: |
+        - Wikipedia: https://en.wikipedia.org/wiki/...
+        - MobyGames: https://www.mobygames.com/game/...
+        - IGDB: https://www.igdb.com/games/...
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: Any other relevant information
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      description: Please confirm the following
+      options:
+        - label: I have verified this information is accurate
+          required: true
+        - label: I understand this contribution will be reviewed before being added
+          required: true
+        - label: Any images I've linked are properly licensed or public domain
+          required: true

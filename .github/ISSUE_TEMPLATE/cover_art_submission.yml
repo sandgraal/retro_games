@@ -1,0 +1,96 @@
+---
+name: 🖼️ Cover Art Submission
+description: Submit cover art for games missing artwork
+labels: ["cover-art", "needs-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Cover Art Submission
+
+        Help complete our visual database! Submit cover images for games that are missing artwork.
+
+        **Requirements:**
+        - Minimum resolution: 400x500 pixels (aspect ratio ~3:4)
+        - Formats: PNG or JPG
+        - Region-appropriate artwork preferred
+        - No watermarks or overlays
+        - Must be the official box art or promotional material
+
+        **Accepted Sources:**
+        - Official box art scans
+        - Publisher/developer promotional materials
+        - Public domain gaming archives
+        - Your own high-quality scans
+
+  - type: input
+    id: game-name
+    attributes:
+      label: Game Name
+      description: Exact name as it appears in the database
+      placeholder: e.g., Chrono Trigger
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: The platform for this cover art
+      placeholder: e.g., SNES
+    validations:
+      required: true
+
+  - type: dropdown
+    id: region
+    attributes:
+      label: Cover Region
+      description: Which region is this cover art from?
+      options:
+        - NTSC-U (North America)
+        - NTSC-J (Japan)
+        - PAL (Europe/Australia)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: image-url
+    attributes:
+      label: Cover Image URL
+      description: Direct link to the image file
+      placeholder: https://example.com/covers/chrono-trigger-snes.png
+    validations:
+      required: true
+
+  - type: textarea
+    id: image-details
+    attributes:
+      label: Image Details
+      description: Resolution, format, and any relevant notes
+      placeholder: |
+        Resolution: 800x1067 pixels
+        Format: PNG
+        Notes: Front box art scan
+
+  - type: input
+    id: source
+    attributes:
+      label: Source
+      description: Where did you obtain this image?
+      placeholder: e.g., Personal scan, MobyGames, Wikipedia Commons
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: licensing
+    attributes:
+      label: Licensing Confirmation
+      description: Please confirm the following
+      options:
+        - label: This image is free from watermarks and third-party overlays
+          required: true
+        - label: I have the rights to submit this image OR it is public domain/fair use
+          required: true
+        - label: This is official box art or promotional material
+          required: true
