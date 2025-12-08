@@ -77,12 +77,9 @@ describe("archive-media script", () => {
       const SERVICE_KEY = "test-key";
       const bucket = "media-archive";
 
-      const results = [];
-      let cursor = null;
       const base = `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/list/${bucket}`;
 
       const body = { limit: 1000 };
-      if (cursor) body.cursor = cursor;
 
       await mockFetch(base, {
         method: "POST",
