@@ -10,6 +10,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [SNES Reference Guide](./consoles/snes/reference.md) - 16-bit Nintendo documentation
 - [N64 Reference Guide](./consoles/n64/reference.md) - 64-bit era technical documentation
 - [Genesis/Mega Drive Reference](./consoles/genesis/reference.md) - Sega's 16-bit powerhouse
+- [Saturn Reference Guide](./consoles/saturn/reference.md) - Sega's 32-bit 2D powerhouse
 - [PS1 Reference Guide](./consoles/ps1/reference.md) - Original PlayStation documentation
 - [PS2 Reference Guide](./consoles/ps2/reference.md) - Best-selling console documentation
 
@@ -22,6 +23,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [N64 Collecting Guide](./consoles/n64/collecting-guide.md) - Complete Nintendo 64 strategy
 - [PS1 Collecting Guide](./consoles/ps1/collecting-guide.md) - PlayStation 1 strategy
 - [PS2 Collecting Guide](./consoles/ps2/collecting-guide.md) - Complete PS2 strategy
+- [Saturn Collecting Guide](./consoles/saturn/collecting-guide.md) - Sega 32-bit import haven
 - [SNES Collecting Guide](./consoles/snes/collecting-guide.md) - 16-bit Nintendo essentials
 
 ### Genre Guides

@@ -122,6 +122,19 @@ Sega's innovative final console with built-in modem and VGA output.
 
 ---
 
+### Sega Saturn
+
+Sega's 2D powerhouse with unmatched arcade ports and import scene.
+
+| Resource                                                | Description                              |
+| ------------------------------------------------------- | ---------------------------------------- |
+| [Saturn Reference Guide](./saturn/reference.md)         | Technical specs, RAM carts, import guide |
+| [Saturn Collecting Guide](./saturn/collecting-guide.md) | Complete collecting strategy             |
+
+**Quick Stats:** 1994-2000 • 9.26M units • 2D fighting & shmup paradise
+
+---
+
 ## Sony Consoles
 
 ### PlayStation 1 (PS1 / PSX)
@@ -161,7 +174,6 @@ We're actively expanding our console coverage. Upcoming guides:
 
 ### Sega
 
-- [ ] Sega Saturn Reference & Collecting Guide
 - [ ] Sega Master System Reference
 
 ### Sony
