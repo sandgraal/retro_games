@@ -15,6 +15,7 @@ This directory contains markdown-based collecting guides and console reference p
 
 ### Console Collecting Guides
 
+- [Dreamcast Collecting Guide](./consoles/dreamcast/collecting-guide.md) - Sega's final console
 - [Genesis Collecting Guide](./consoles/genesis/collecting-guide.md) - Sega 16-bit strategy
 - [NES Collecting Guide](./consoles/nes/collecting-guide.md) - 8-bit Nintendo essentials
 - [N64 Collecting Guide](./consoles/n64/collecting-guide.md) - Complete Nintendo 64 strategy

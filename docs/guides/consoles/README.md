@@ -96,6 +96,19 @@ Sega's flagship 16-bit console with distinctive FM synthesis audio.
 
 ---
 
+### Sega Dreamcast
+
+Sega's innovative final console with built-in modem and VGA output.
+
+| Resource                                                      | Description                        |
+| ------------------------------------------------------------- | ---------------------------------- |
+| [Dreamcast Reference Guide](./dreamcast/reference.md)         | Technical specs, variants, library |
+| [Dreamcast Collecting Guide](./dreamcast/collecting-guide.md) | Complete collecting strategy       |
+
+**Quick Stats:** 1998-2001 • 9.13M units • Ahead of its time
+
+---
+
 ## Sony Consoles
 
 ### PlayStation 1 (PS1 / PSX)
@@ -137,7 +150,6 @@ We're actively expanding our console coverage. Upcoming guides:
 ### Sega
 
 - [ ] Sega Saturn Reference & Collecting Guide
-- [ ] Sega Dreamcast Reference & Collecting Guide
 - [ ] Sega Master System Reference
 
 ### Sony
