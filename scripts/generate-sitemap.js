@@ -15,6 +15,9 @@ const IGNORE_DIRS = new Set([
   "supabase",
   "evaluation",
   "test-results",
+  "coverage",
+  "backups",
+  "archive",
 ]);
 const ROUTE_METADATA = {
   "/": { changefreq: "daily", priority: "1.0" },
