@@ -1,6 +1,29 @@
 # Collector Guides
 
-This directory contains markdown-based collecting guides that can be rendered as static pages for SEO and community value.
+This directory contains markdown-based collecting guides and console reference pages for SEO and community value.
+
+## Published Guides
+
+### Console Reference Pages
+
+- [NES Reference Guide](./consoles/nes/reference.md) - Technical specs, variants, library highlights
+- [Genesis/Mega Drive Reference](./consoles/genesis/reference.md) - Sega's 16-bit powerhouse
+- [PS2 Reference Guide](./consoles/ps2/reference.md) - Best-selling console documentation
+
+### Console Collecting Guides
+
+- [PS2 Collecting Guide](./consoles/ps2/collecting-guide.md) - Complete PS2 strategy
+- [SNES Collecting Guide](./consoles/snes/collecting-guide.md) - 16-bit Nintendo essentials
+
+### Genre Guides
+
+- [RPG Collecting Guide](./genres/rpg/collecting-guide.md) - Cross-platform JRPG/WRPG coverage
+
+### Index Pages
+
+- [Console Reference Library](./consoles/README.md) - Complete console index
+
+---
 
 ## Directory Structure
 
@@ -12,14 +35,14 @@ guides/
 │   ├── genre-guide.md           # Template for genre-specific guides
 │   └── interview.md             # Template for collector interviews
 ├── consoles/
-│   ├── ps1/                     # PlayStation 1 guides
-│   ├── ps2/                     # PlayStation 2 guides
-│   ├── n64/                     # Nintendo 64 guides
+│   ├── README.md                # Console library index
+│   ├── nes/                     # NES/Famicom guides
 │   ├── snes/                    # Super Nintendo guides
+│   ├── genesis/                 # Sega Genesis/Mega Drive guides
+│   ├── ps2/                     # PlayStation 2 guides
 │   └── ...
 └── genres/
     ├── rpg/                     # RPG collecting guides
-    ├── platformers/             # Platformer guides
     └── ...
 ```
 

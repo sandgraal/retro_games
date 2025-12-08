@@ -5176,8 +5176,13 @@ describe("ui/dashboard DOM functions", () => {
         backlogHours: 120,
       };
       updateDashboard(stats);
-      await new Promise((r) => setTimeout(r, 900));
+      // Use polling to handle RAF timing variability in jsdom
       const count = document.getElementById("backlogCount");
+      let attempts = 0;
+      while (count.textContent === "0" && attempts < 20) {
+        await new Promise((r) => setTimeout(r, 100));
+        attempts++;
+      }
       expect(count.textContent).not.toBe("0");
     });
 
