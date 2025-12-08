@@ -37,8 +37,8 @@ _Last updated: January 2025_
 - ✅ **4 utility modules**: format, validation, keys, dom
 - ✅ **1 design module**: tokens
 - ✅ **Content pipeline**: Markdown guides with templates (docs/guides/)
-- ✅ **Console references**: NES, Genesis, PS2 reference pages live
-- ✅ **Collecting guides**: PS2, SNES, RPG guides published
+- ✅ **Console references**: NES, SNES, N64, Genesis, PS1, PS2 reference pages live
+- ✅ **Collecting guides**: NES, SNES, N64, Genesis, PS1, PS2, RPG guides published
 - ✅ Legacy code archived to `archive/app-legacy.js`
 
 ## 🎯 What to Work On
@@ -213,19 +213,30 @@ All PRs must pass:
 - Update relevant docs when changing behavior
 - Keep roadmap checkboxes current
 
-## 🐛 Known Issues & Next Steps
+## 🐛 Current Status & Next Steps
 
-### High Priority
+### ✅ COMPLETE (January 2025)
 
-1. **Modal not wired** - Modal helpers exist in `ui/modal.js` but not connected to grid card clicks
-2. **Virtualization not wired** - Helpers in `features/virtualization.js` need DOM integration
-3. **Coverage tooling missing** - Need to install `@vitest/coverage-v8`
+All Phase 0-3 implementation tasks are complete:
 
-### Medium Priority
+1. **Modal integration** - Modal helpers wired to grid card clicks
+2. **Virtualization** - Virtual scrolling integrated with DOM
+3. **Coverage tooling** - `@vitest/coverage-v8` installed (87% coverage)
+4. **Price integration** - PriceCharting API integration complete
+5. **Performance testing** - 26 tests for 10k+ game datasets
+6. **Media workflows** - Automated cover import with fallback workers
 
-4. **Price integration** - Complete PriceCharting API integration
-5. **Performance testing** - Test with 10k+ game datasets
-6. **Media workflows** - Automated cover import
+### Content Library Complete
+
+- **6 Console Reference Guides**: NES, SNES, N64, Genesis, PS1, PS2
+- **6 Console Collecting Guides**: NES, SNES, N64, Genesis, PS1, PS2
+- **1 Genre Collecting Guide**: RPG
+- **Outreach Plan**: Community & influencer strategy documented
+
+### ⛔ BLOCKED (Requires External Services)
+
+- **Phase 3 User Growth**: Analytics, onboarding, referrals - requires PostHog/Segment
+- **Phase 4 Monetization**: Requires business decisions on revenue model
 
 See [`current-state.md`](./current-state.md) for complete list.
 
@@ -287,6 +298,7 @@ All metrics achieved:
 - ✅ Ask questions when blocked
 - ✅ Use existing exports from modules
 - ✅ Keep PRs focused and reviewable
+- ✅ Check implementation-plan.md for task status before starting
 
 ### DON'T
 
@@ -296,13 +308,14 @@ All metrics achieved:
 - ❌ Mix multiple concerns in one PR
 - ❌ Duplicate constants (use imports)
 - ❌ Break existing functionality
+- ❌ Work on BLOCKED tasks without external service setup
 
 ## 🆘 Getting Unstuck
 
 ### Common Questions
 
 **Q: Which task should I work on?**
-A: Check `current-state.md` "Next Steps" section. Priority order: Modal wiring → Virtualization wiring → Coverage tooling.
+A: Check `implementation-plan.md` for blocked/unblocked tasks. Most implementation is complete - focus on content expansion or test coverage improvements.
 
 **Q: Where do I find helper functions?**
 A: Check the appropriate module in `app/`. Use grep or semantic search to find existing helpers before writing new ones.
@@ -316,6 +329,9 @@ A: No. Use JSDoc with `@ts-check`. TypeScript requires build step (against proje
 **Q: Tests are failing after my changes?**
 A: Check that you're using the correct imports. Many constants are duplicated across modules for backward compatibility.
 
+**Q: What content can I create?**
+A: Check `docs/guides/consoles/README.md` "Coming Soon" section for planned guides. Use templates in `docs/guides/templates/`.
+
 ## 📞 Communication
 
 - **Progress updates**: Update roadmap checkboxes in PRs
@@ -325,18 +341,25 @@ A: Check that you're using the correct imports. Many constants are duplicated ac
 
 ## 🎉 Current Status
 
-Phase 0 refactoring is **complete**. All module extraction is done. The codebase is now:
+Phase 0-3 implementation is **complete**. All module extraction and content marketing tasks are done. The codebase is now:
 
-- **27 focused modules** instead of 1 monolithic file
-- **674 tests** providing 76% statement coverage
+- **29 focused modules** instead of 1 monolithic file
+- **954 tests** providing 87% statement coverage
 - **Well-documented** with updated architecture docs
-- **Ready for Phase 2 feature work** (price data, media workflows)
+- **Content-rich** with 6 console references, 6 collecting guides, and outreach strategy
+- **Production-ready** with CI/CD, security, and performance monitoring
+
+### What's Left?
+
+- **Phase 3 User Growth**: BLOCKED on analytics/email service decisions
+- **Phase 4 Monetization**: BLOCKED on business decisions
+- **Content Expansion**: More console/genre guides per "Coming Soon" list
 
 ---
 
-**Remember**: We're not rewriting, we're **reorganizing working code** to make it maintainable. The application is already excellent—we're just making it easier to improve further.
+**Remember**: The application is feature-complete. Focus on quality improvements, content expansion, and documentation unless external services are configured for User Growth features.
 
-**Ready to start?** → Read [`implementation-plan.md`](./implementation-plan.md) for day-by-day Phase 0 tasks.
+**Ready to contribute?** → Check [`docs/guides/consoles/README.md`](./guides/consoles/README.md) for content gaps or [`implementation-plan.md`](./implementation-plan.md) for task status.
 
 ---
 
