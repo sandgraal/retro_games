@@ -53,10 +53,13 @@ _Last updated: December 2025_
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
 - **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 804 tests passing
 - **Price data integration**: ✅ Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: ✅ 915 unit tests + 14 E2E tests passing; @vitest/coverage-v8 installed (88% statements)
+- **Test coverage**: ✅ 917 unit tests + 14 E2E tests passing; @vitest/coverage-v8 installed (88% statements)
 - **Feature completion**: ✅ Virtualization wired to grid, renders only visible cards for 80+ games
 - **Performance testing**: ✅ 26 tests validating filtering/sorting/virtualization with 10k+ datasets
 - **E2E testing**: ✅ 14 Playwright E2E tests all passing (no skipped tests)
+- **CSS optimization**: ✅ CSS bundler eliminates render-blocking @imports (36KB minified bundle)
+- **SEO enhancements**: ✅ Enhanced meta tags, noscript fallback, JSON-LD structured data
+- **Contribution workflow**: ✅ GitHub issue templates for bug reports, features, and game data submissions
 
 ### Technical Debt
 
