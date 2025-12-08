@@ -1,14 +1,14 @@
 # Agent Quickstart Guide
 
-_Last updated: January 2025_
+_Last updated: December 2025_
 
 👋 **Welcome, AI Agent!** This guide helps you quickly understand the Retro Games List project and start contributing effectively.
 
 ## 🎯 Project Status at a Glance
 
 - **Application**: ⭐ Feature-complete & production-ready
-- **Architecture**: ✅ **REFACTORED** (January 2025) - 27 ES6 modules extracted
-- **Tests**: ✅ **674 tests passing** (76% coverage)
+- **Architecture**: ✅ **REFACTORED** (January 2025) - 28 ES6 modules extracted
+- **Tests**: ✅ **804 unit tests + 14 E2E tests passing** (76% coverage)
 - **CI/CD**: ✅ Automated (lint, test, security, Lighthouse)
 - **Documentation**: ✅ Comprehensive & current
 
@@ -21,33 +21,37 @@ _Last updated: January 2025_
 5. **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Coding standards & workflow (10 min)
 6. **[.github/copilot-instructions.md](../.github/copilot-instructions.md)** - Detailed coding patterns (20 min)
 
-## 🎨 Recent Changes (January 2025)
+## 🎨 Recent Changes (December 2025)
 
-**Phase 0 Complete**: All module extraction finished with comprehensive test coverage
+**Phase 0-1 Complete**: All module extraction finished with comprehensive test coverage
 
-- ✅ **27 ES6 modules** extracted from 5,940-line `app-legacy.js`
-- ✅ **6,670 total lines** across all modules
-- ✅ **674 tests passing** with 76% coverage
+- ✅ **28 ES6 modules** extracted from 5,940-line `app-legacy.js`
+- ✅ **7,200+ total lines** across all modules
+- ✅ **804 unit tests + 14 E2E tests passing** with 76% coverage
 - ✅ **6 UI modules**: dashboard, grid, modal, filters, carousel, theme
-- ✅ **6 feature modules**: virtualization, filtering, sorting, search, pagination, sharing
+- ✅ **7 feature modules**: virtualization, filtering, sorting, search, pagination, sharing, seo
 - ✅ **4 state modules**: collection, filters, preferences, cache
 - ✅ **5 data modules**: supabase, loader, aggregates, pricing, storage
 - ✅ **4 utility modules**: format, validation, keys, dom
+- ✅ **1 design module**: tokens
 - ✅ Legacy code archived to `archive/app-legacy.js`
 
 ## 🎯 What to Work On
 
-### Highest Priority: Integration & Polish
+### Highest Priority: Content & Media
 
-1. **Complete Modal Integration** - Wire modal helpers to game card click handlers in `main.js`
-2. **Wire Virtualization** - Connect `features/virtualization.js` to grid rendering
-3. **Install Coverage Tooling** - Add `@vitest/coverage-v8` for coverage metrics
+1. ~~**Complete Modal Integration**~~ ✅ Done
+2. ~~**Wire Virtualization**~~ ✅ Done
+3. ~~**Install Coverage Tooling**~~ ✅ Done
+4. ~~**Price Data Integration**~~ ✅ Done
+5. ~~**Performance Testing**~~ ✅ Done (26 tests for 10k+ datasets)
+6. **Media Archival Strategy** - Implement backups for media, checksum verification
 
 ### Medium Priority: Feature Completion
 
-1. **Price Data Integration** - Complete PriceCharting integration for modal and dashboard
-2. **Performance Testing** - Test with 10k+ game datasets
-3. **Media Workflows** - Automated cover import and archival
+1. ~~**E2E Test Expansion**~~ ✅ Done (14 tests)
+2. **Cover Import Automation** - Supabase Edge Function/cron for missing covers
+3. **Community Contribution Workflow** - Edits with review queue
 
 ### Lower Priority: Future Features
 
