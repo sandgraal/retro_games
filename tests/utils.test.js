@@ -3156,6 +3156,12 @@ import {
   buildModalStatusButtons,
   buildGameDetailsHtml,
   buildPriceSection,
+  isModalOpen,
+  getFocusableElements,
+  createFocusTrap,
+  openModal,
+  closeModal,
+  setupModalHandlers,
 } from "../app/ui/modal.js";
 
 describe("ui/modal", () => {
@@ -3446,10 +3452,320 @@ describe("ui/modal", () => {
       expect(buildPriceSection(priceData)).toBe("");
     });
   });
+
+  describe("isModalOpen", () => {
+    it("returns false for null modal", () => {
+      expect(isModalOpen(null)).toBe(false);
+    });
+
+    it("returns false when hidden", () => {
+      const modal = document.createElement("div");
+      modal.hidden = true;
+      expect(isModalOpen(modal)).toBe(false);
+    });
+
+    it("returns false when display none", () => {
+      const modal = document.createElement("div");
+      modal.style.display = "none";
+      expect(isModalOpen(modal)).toBe(false);
+    });
+
+    it("returns true when visible", () => {
+      const modal = document.createElement("div");
+      modal.hidden = false;
+      modal.style.display = "block";
+      expect(isModalOpen(modal)).toBe(true);
+    });
+  });
+
+  describe("getFocusableElements", () => {
+    it("returns empty for null container", () => {
+      expect(getFocusableElements(null)).toEqual([]);
+    });
+
+    it("finds buttons and links", () => {
+      const container = document.createElement("div");
+      container.innerHTML = `
+        <button>Button 1</button>
+        <a href="#">Link</a>
+        <button disabled>Disabled</button>
+        <input type="text">
+      `;
+      const elements = getFocusableElements(container);
+      expect(elements.length).toBe(3);
+    });
+
+    it("finds tabindex elements", () => {
+      const container = document.createElement("div");
+      container.innerHTML = `
+        <div tabindex="0">Focusable</div>
+        <div tabindex="-1">Not focusable</div>
+      `;
+      const elements = getFocusableElements(container);
+      expect(elements.length).toBe(1);
+    });
+  });
+
+  describe("createFocusTrap", () => {
+    it("returns null for null container", () => {
+      expect(createFocusTrap(null)).toBe(null);
+    });
+
+    it("returns handler object", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<button>A</button><button>B</button>";
+      const trap = createFocusTrap(container);
+      expect(trap).toHaveProperty("handleKeyDown");
+      expect(typeof trap.handleKeyDown).toBe("function");
+    });
+
+    it("traps focus on Tab from last element", () => {
+      const container = document.createElement("div");
+      container.innerHTML =
+        '<button id="first">First</button><button id="last">Last</button>';
+      document.body.appendChild(container);
+      const trap = createFocusTrap(container);
+      const last = container.querySelector("#last");
+      last.focus();
+      const event = new KeyboardEvent("keydown", { key: "Tab", shiftKey: false });
+      let defaultPrevented = false;
+      event.preventDefault = () => {
+        defaultPrevented = true;
+      };
+      trap.handleKeyDown(event);
+      expect(defaultPrevented).toBe(true);
+      document.body.removeChild(container);
+    });
+
+    it("traps focus on Shift+Tab from first element", () => {
+      const container = document.createElement("div");
+      container.innerHTML =
+        '<button id="first">First</button><button id="last">Last</button>';
+      document.body.appendChild(container);
+      const trap = createFocusTrap(container);
+      const first = container.querySelector("#first");
+      first.focus();
+      const event = new KeyboardEvent("keydown", { key: "Tab", shiftKey: true });
+      let defaultPrevented = false;
+      event.preventDefault = () => {
+        defaultPrevented = true;
+      };
+      trap.handleKeyDown(event);
+      expect(defaultPrevented).toBe(true);
+      document.body.removeChild(container);
+    });
+
+    it("ignores non-Tab keys", () => {
+      const container = document.createElement("div");
+      container.innerHTML = "<button>A</button>";
+      const trap = createFocusTrap(container);
+      const event = new KeyboardEvent("keydown", { key: "Enter" });
+      expect(() => trap.handleKeyDown(event)).not.toThrow();
+    });
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ui/filters tests
+// ui/modal DOM tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("ui/modal DOM functions", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <div id="gameModalBackdrop" hidden aria-hidden="true">
+        <div class="modal-content">
+          <button id="gameModalClose" aria-label="Close modal">×</button>
+          <h2 id="gameModalTitle"></h2>
+          <img id="gameModalCoverImage" src="" alt="">
+          <div id="gameModalActions"></div>
+          <div id="gameModalDetails"></div>
+        </div>
+      </div>
+    `;
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  describe("openModal", () => {
+    it("opens the modal with game details", () => {
+      const game = { game_name: "Chrono Trigger", platform: "SNES", rating: "9.5" };
+      openModal(game, "Chrono Trigger___SNES", {}, {}, null);
+      const backdrop = document.getElementById("gameModalBackdrop");
+      expect(backdrop.hidden).toBe(false);
+      expect(backdrop.getAttribute("aria-hidden")).toBe("false");
+    });
+
+    it("sets the modal title", () => {
+      const game = { game_name: "Zelda" };
+      openModal(game, "Zelda___NES", {}, {}, null);
+      const title = document.getElementById("gameModalTitle");
+      expect(title.textContent).toBe("Zelda");
+    });
+
+    it("stores game key on backdrop", () => {
+      const game = { game_name: "Zelda" };
+      openModal(game, "Zelda___NES", {}, {}, null);
+      const backdrop = document.getElementById("gameModalBackdrop");
+      expect(backdrop.dataset.gameKey).toBe("Zelda___NES");
+    });
+
+    it("displays cover image when available", () => {
+      const game = { game_name: "Zelda", cover: "https://example.com/cover.jpg" };
+      openModal(game, "Zelda___NES", {}, {}, null);
+      const img = document.getElementById("gameModalCoverImage");
+      expect(img.src).toBe("https://example.com/cover.jpg");
+      expect(img.style.display).toBe("block");
+    });
+
+    it("hides cover image when not available", () => {
+      const game = { game_name: "Zelda" };
+      openModal(game, "Zelda___NES", {}, {}, null);
+      const img = document.getElementById("gameModalCoverImage");
+      expect(img.style.display).toBe("none");
+    });
+
+    it("renders status buttons", () => {
+      const game = { game_name: "Zelda" };
+      openModal(game, "Zelda___NES", {}, {}, null);
+      const actions = document.getElementById("gameModalActions");
+      expect(actions.innerHTML).toContain("Own It");
+      expect(actions.innerHTML).toContain("Wishlist");
+    });
+
+    it("renders game details", () => {
+      const game = { game_name: "Zelda", platform: "NES", genre: "Adventure" };
+      openModal(game, "Zelda___NES", {}, {}, null);
+      const details = document.getElementById("gameModalDetails");
+      expect(details.innerHTML).toContain("NES");
+      expect(details.innerHTML).toContain("Adventure");
+    });
+
+    it("renders price section when price data provided", () => {
+      const game = { game_name: "Zelda" };
+      const priceData = { loose: 5000, cib: 15000, snapshotDate: "2025-01-01" };
+      openModal(game, "Zelda___NES", {}, {}, priceData);
+      const details = document.getElementById("gameModalDetails");
+      expect(details.innerHTML).toContain("Market Prices");
+      expect(details.innerHTML).toContain("$50.00");
+    });
+
+    it("does nothing if modal elements missing", () => {
+      document.body.innerHTML = "";
+      expect(() => openModal({ game_name: "Test" }, "key", {}, {}, null)).not.toThrow();
+    });
+
+    it("closes on Escape key", () => {
+      const game = { game_name: "Zelda" };
+      openModal(game, "Zelda___NES", {}, {}, null);
+      const backdrop = document.getElementById("gameModalBackdrop");
+      expect(backdrop.hidden).toBe(false);
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      expect(backdrop.hidden).toBe(true);
+    });
+
+    it("handles default title when game_name missing", () => {
+      openModal({}, "key", {}, {}, null);
+      const title = document.getElementById("gameModalTitle");
+      expect(title.textContent).toBe("Game Details");
+    });
+  });
+
+  describe("closeModal", () => {
+    it("closes the modal", () => {
+      openModal({ game_name: "Test" }, "key", {}, {}, null);
+      closeModal();
+      const backdrop = document.getElementById("gameModalBackdrop");
+      expect(backdrop.hidden).toBe(true);
+      expect(backdrop.getAttribute("aria-hidden")).toBe("true");
+    });
+
+    it("removes escape handler", () => {
+      openModal({ game_name: "Test" }, "key", {}, {}, null);
+      const backdrop = document.getElementById("gameModalBackdrop");
+      expect(backdrop._escapeHandler).not.toBeNull();
+      closeModal();
+      expect(backdrop._escapeHandler).toBeNull();
+    });
+
+    it("does nothing if modal missing", () => {
+      document.body.innerHTML = "";
+      expect(() => closeModal()).not.toThrow();
+    });
+  });
+
+  describe("setupModalHandlers", () => {
+    it("closes modal on close button click", () => {
+      setupModalHandlers();
+      openModal({ game_name: "Test" }, "key", {}, {}, null);
+      const closeBtn = document.getElementById("gameModalClose");
+      closeBtn.click();
+      const backdrop = document.getElementById("gameModalBackdrop");
+      expect(backdrop.hidden).toBe(true);
+    });
+
+    it("closes modal on backdrop click", () => {
+      setupModalHandlers();
+      openModal({ game_name: "Test" }, "key", {}, {}, null);
+      const backdrop = document.getElementById("gameModalBackdrop");
+      backdrop.click();
+      expect(backdrop.hidden).toBe(true);
+    });
+
+    it("does not close on content click", () => {
+      setupModalHandlers();
+      openModal({ game_name: "Test" }, "key", {}, {}, null);
+      const content = document.querySelector(".modal-content");
+      content.click();
+      const backdrop = document.getElementById("gameModalBackdrop");
+      expect(backdrop.hidden).toBe(false);
+    });
+
+    it("dispatches gameStatusChange on status button click", () => {
+      setupModalHandlers();
+      openModal({ game_name: "Test" }, "Test___SNES", {}, {}, null);
+      let eventData = null;
+      window.addEventListener(
+        "gameStatusChange",
+        (e) => {
+          eventData = e.detail;
+        },
+        { once: true }
+      );
+      const ownBtn = document.querySelector('[data-action="owned"]');
+      ownBtn.click();
+      expect(eventData).not.toBeNull();
+      expect(eventData.action).toBe("owned");
+      expect(eventData.gameKey).toBe("Test___SNES");
+    });
+
+    it("updates button state on status button click", () => {
+      setupModalHandlers();
+      openModal({ game_name: "Test" }, "Test___SNES", {}, {}, null);
+      const ownBtn = document.querySelector('[data-action="owned"]');
+      ownBtn.click();
+      expect(ownBtn.classList.contains("owned")).toBe(true);
+    });
+
+    it("clears other button states on status button click", () => {
+      setupModalHandlers();
+      openModal({ game_name: "Test" }, "Test___SNES", {}, {}, null);
+      const ownBtn = document.querySelector('[data-action="owned"]');
+      const wishBtn = document.querySelector('[data-action="wishlist"]');
+      ownBtn.click();
+      wishBtn.click();
+      expect(ownBtn.classList.contains("owned")).toBe(false);
+      expect(wishBtn.classList.contains("wishlist")).toBe(true);
+    });
+
+    it("handles missing elements gracefully", () => {
+      document.body.innerHTML = "";
+      expect(() => setupModalHandlers()).not.toThrow();
+    });
+  });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 import {
   extractUniquePlatforms,
