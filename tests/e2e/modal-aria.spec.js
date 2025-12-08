@@ -23,10 +23,12 @@ test("gameModalBackdrop aria-hidden state changes correctly", async ({ page }) =
   const count = await gameCards.count();
 
   if (count > 0) {
-    await gameCards.first().click();
+    // Click on the cover area specifically to avoid action buttons
+    const coverArea = gameCards.first().locator(".game-card-cover");
+    await coverArea.click();
 
     // Wait for modal to be visible (hidden attribute removed)
-    await expect(modalBackdrop).not.toHaveAttribute("hidden");
+    await expect(modalBackdrop).not.toHaveAttribute("hidden", { timeout: 3000 });
     await expect(modalBackdrop).toHaveAttribute("aria-hidden", "false");
 
     // Close the modal by pressing ESC
