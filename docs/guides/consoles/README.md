@@ -46,10 +46,10 @@ In-depth collector resources covering:
 
 The console that revived the gaming industry. 1,252 licensed titles across all regions.
 
-| Resource                                  | Description                                   |
-| ----------------------------------------- | --------------------------------------------- |
-| [NES Reference Guide](./nes/reference.md) | Technical specs, variants, library highlights |
-| NES Collecting Guide                      | Coming soon                                   |
+| Resource                                          | Description                                   |
+| ------------------------------------------------- | --------------------------------------------- |
+| [NES Reference Guide](./nes/reference.md)         | Technical specs, variants, library highlights |
+| [NES Collecting Guide](./nes/collecting-guide.md) | Complete collecting strategy                  |
 
 **Quick Stats:** 1983-1995 • 61.9M units • 8-bit era pioneer
 
