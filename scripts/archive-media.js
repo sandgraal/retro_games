@@ -144,7 +144,16 @@ async function main() {
   console.log(`📝 Manifest written to ${manifestPath}`);
 }
 
-main().catch((error) => {
-  console.error("❌ Archive failed", error);
-  process.exit(1);
-});
+// Run if executed directly
+if (require.main === module) {
+  main().catch((error) => {
+    console.error("❌ Archive failed", error);
+    process.exit(1);
+  });
+}
+
+// Export for testing
+module.exports = {
+  parseArgs,
+  encodePath,
+};
