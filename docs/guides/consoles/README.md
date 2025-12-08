@@ -221,9 +221,23 @@ We're actively expanding our console coverage. Upcoming guides:
 
 ### Other
 
-- [ ] TurboGrafx-16 / PC Engine Reference
 - [ ] Neo Geo Reference & Collecting Guide
 - [ ] Atari 2600/7800 Reference
+
+---
+
+## Other Consoles
+
+### TurboGrafx-16 / PC Engine
+
+NEC's innovative console that pioneered CD gaming and dominated Japan.
+
+| Resource                                                           | Description                        |
+| ------------------------------------------------------------------ | ---------------------------------- |
+| [TurboGrafx-16 Reference Guide](./turbografx/reference.md)         | Technical specs, variants, library |
+| [TurboGrafx-16 Collecting Guide](./turbografx/collecting-guide.md) | Complete collecting strategy       |
+
+**Quick Stats:** 1987-1994 • 10M units • 650+ games (JP) / 143 (NA)
 
 ---
 

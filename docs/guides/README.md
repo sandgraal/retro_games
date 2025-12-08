@@ -19,6 +19,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [PS1 Reference Guide](./consoles/ps1/reference.md) - Original PlayStation documentation
 - [PS2 Reference Guide](./consoles/ps2/reference.md) - Best-selling console documentation
 - [PSP Reference Guide](./consoles/psp/reference.md) - Sony's portable powerhouse
+- [TurboGrafx-16 Reference Guide](./consoles/turbografx/reference.md) - NEC's CD pioneer
 
 ### Console Collecting Guides
 
@@ -34,6 +35,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [PSP Collecting Guide](./consoles/psp/collecting-guide.md) - Sony portable strategy
 - [Saturn Collecting Guide](./consoles/saturn/collecting-guide.md) - Sega 32-bit import haven
 - [SNES Collecting Guide](./consoles/snes/collecting-guide.md) - 16-bit Nintendo essentials
+- [TurboGrafx-16 Collecting Guide](./consoles/turbografx/collecting-guide.md) - NEC/Hudson strategy
 - [Wii Collecting Guide](./consoles/wii/collecting-guide.md) - Motion control era strategy
 
 ### Genre Guides
