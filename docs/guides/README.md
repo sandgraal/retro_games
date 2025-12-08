@@ -23,6 +23,10 @@ This directory contains markdown-based collecting guides and console reference p
 
 - [Console Reference Library](./consoles/README.md) - Complete console index
 
+### Outreach & Marketing
+
+- [Community Outreach Plan](./outreach-plan.md) - Strategy for community engagement and influencer partnerships
+
 ---
 
 ## Directory Structure
