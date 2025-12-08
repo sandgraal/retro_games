@@ -49,7 +49,7 @@ The console that revived the gaming industry. 1,252 licensed titles across all r
 | Resource                                  | Description                                   |
 | ----------------------------------------- | --------------------------------------------- |
 | [NES Reference Guide](./nes/reference.md) | Technical specs, variants, library highlights |
-| SNES Collecting Guide                     | Coming soon                                   |
+| NES Collecting Guide                      | Coming soon                                   |
 
 **Quick Stats:** 1983-1995 • 61.9M units • 8-bit era pioneer
 
@@ -65,6 +65,19 @@ The 16-bit champion with an unmatched RPG library.
 | [SNES Collecting Guide](./snes/collecting-guide.md) | Complete collecting strategy |
 
 **Quick Stats:** 1990-2003 • 49.1M units • 16-bit excellence
+
+---
+
+### Nintendo 64
+
+Nintendo's bold leap into 3D gaming with cartridge-based architecture.
+
+| Resource                                          | Description                        |
+| ------------------------------------------------- | ---------------------------------- |
+| [N64 Reference Guide](./n64/reference.md)         | Technical specs, variants, add-ons |
+| [N64 Collecting Guide](./n64/collecting-guide.md) | Complete collecting strategy       |
+
+**Quick Stats:** 1996-2002 • 32.9M units • 388 NA games
 
 ---
 
@@ -104,7 +117,6 @@ We're actively expanding our console coverage. Upcoming guides:
 
 ### Nintendo
 
-- [ ] Nintendo 64 Reference & Collecting Guide
 - [ ] GameCube Reference & Collecting Guide
 - [ ] Game Boy Family Reference
 - [ ] Wii Reference Guide
