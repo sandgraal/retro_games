@@ -5595,3 +5595,461 @@ describe("features/seo", () => {
     });
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ui/grid DOM tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  renderGrid,
+  showLoadingSkeletons,
+  updateCardStatus,
+  setupQuickActions,
+} from "../app/ui/grid.js";
+
+describe("ui/grid DOM functions", () => {
+  beforeEach(() => {
+    document.body.innerHTML = '<div id="gameGrid" class="game-grid"></div>';
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  describe("renderGrid", () => {
+    it("renders game cards for small datasets", () => {
+      const games = [
+        { game_name: "Chrono Trigger", platform: "SNES", genre: "RPG", rating: "9.5" },
+        { game_name: "Final Fantasy VI", platform: "SNES", genre: "RPG", rating: "9.4" },
+      ];
+      renderGrid(games, {}, {});
+      const grid = document.getElementById("gameGrid");
+      const cards = grid.querySelectorAll(".game-card");
+      expect(cards.length).toBe(2);
+    });
+
+    it("renders empty state when no games", () => {
+      renderGrid([], {}, {});
+      const grid = document.getElementById("gameGrid");
+      expect(grid.innerHTML).toContain("game-grid-empty");
+      expect(grid.innerHTML).toContain("No Games Found");
+    });
+
+    it("does nothing if grid element missing", () => {
+      document.body.innerHTML = "";
+      expect(() => renderGrid([{ game_name: "Test", platform: "NES" }])).not.toThrow();
+    });
+
+    it("clears previous content before rendering", () => {
+      const grid = document.getElementById("gameGrid");
+      grid.innerHTML = "<div>Old Content</div>";
+      renderGrid([{ game_name: "Test", platform: "NES" }], {}, {});
+      expect(grid.innerHTML).not.toContain("Old Content");
+    });
+
+    it("sets data-game-key attribute on cards", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+      const card = document.querySelector(".game-card");
+      expect(card.getAttribute("data-game-key")).toBe("Zelda___NES");
+    });
+
+    it("applies owned status to cards", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      const owned = { Zelda___NES: true };
+      renderGrid(games, owned, {});
+      const card = document.querySelector(".game-card");
+      expect(card.innerHTML).toContain("Owned");
+    });
+
+    it("applies wishlist status to cards", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      const statuses = { wishlist: { Zelda___NES: true } };
+      renderGrid(games, {}, statuses);
+      const card = document.querySelector(".game-card");
+      expect(card.innerHTML).toContain("Wishlist");
+    });
+
+    it("applies backlog status to cards", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      const statuses = { backlog: { Zelda___NES: true } };
+      renderGrid(games, {}, statuses);
+      const card = document.querySelector(".game-card");
+      expect(card.innerHTML).toContain("Backlog");
+    });
+
+    it("renders cover image when available", () => {
+      const games = [
+        { game_name: "Zelda", platform: "NES", cover: "https://example.com/cover.jpg" },
+      ];
+      renderGrid(games, {}, {});
+      const img = document.querySelector(".game-card img");
+      expect(img).not.toBeNull();
+      expect(img.src).toBe("https://example.com/cover.jpg");
+    });
+
+    it("renders placeholder when no cover", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+      const placeholder = document.querySelector(".card-placeholder");
+      expect(placeholder).not.toBeNull();
+      expect(placeholder.textContent).toBe("ZE");
+    });
+
+    it("renders game metadata in overlay", () => {
+      const games = [
+        {
+          game_name: "Zelda",
+          platform: "NES",
+          genre: "Action, Adventure",
+          rating: "9.0",
+        },
+      ];
+      renderGrid(games, {}, {});
+      const overlay = document.querySelector(".game-card-overlay");
+      expect(overlay.innerHTML).toContain("Zelda");
+      expect(overlay.innerHTML).toContain("NES");
+      expect(overlay.innerHTML).toContain("Action");
+      expect(overlay.innerHTML).toContain("9.0");
+    });
+
+    it("renders quick action buttons", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+      const actions = document.querySelector(".game-card-actions");
+      expect(actions.innerHTML).toContain("Own");
+      expect(actions.innerHTML).toContain("Want");
+    });
+
+    it("makes cards keyboard focusable", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+      const card = document.querySelector(".game-card");
+      expect(card.tabIndex).toBe(0);
+    });
+
+    it("sets article role for accessibility", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+      const card = document.querySelector(".game-card");
+      expect(card.tagName).toBe("ARTICLE");
+      expect(card.getAttribute("role")).toBe("listitem");
+    });
+
+    it("handles null owned parameter", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      expect(() => renderGrid(games, null, {})).not.toThrow();
+    });
+
+    it("handles null statuses parameter", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      expect(() => renderGrid(games, {}, null)).not.toThrow();
+    });
+
+    it("applies featured class to high-rated games at modulo index", () => {
+      const games = [
+        { game_name: "Zelda", platform: "NES", rating: "9.5" }, // index 0
+      ];
+      renderGrid(games, {}, {});
+      const card = document.querySelector(".game-card");
+      expect(card.classList.contains("featured")).toBe(true);
+    });
+
+    it("dispatches openGameModal event on card click", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+      const card = document.querySelector(".game-card");
+      let eventData = null;
+      window.addEventListener(
+        "openGameModal",
+        (e) => {
+          eventData = e.detail;
+        },
+        { once: true }
+      );
+      card.click();
+      expect(eventData).not.toBeNull();
+      expect(eventData.game.game_name).toBe("Zelda");
+      expect(eventData.gameKey).toBe("Zelda___NES");
+    });
+
+    it("dispatches openGameModal on Enter key", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+      const card = document.querySelector(".game-card");
+      let eventData = null;
+      window.addEventListener(
+        "openGameModal",
+        (e) => {
+          eventData = e.detail;
+        },
+        { once: true }
+      );
+      card.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+      expect(eventData).not.toBeNull();
+    });
+
+    it("dispatches openGameModal on Space key", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+      const card = document.querySelector(".game-card");
+      let eventData = null;
+      window.addEventListener(
+        "openGameModal",
+        (e) => {
+          eventData = e.detail;
+        },
+        { once: true }
+      );
+      card.dispatchEvent(new KeyboardEvent("keydown", { key: " " }));
+      expect(eventData).not.toBeNull();
+    });
+
+    it("does not dispatch modal event when clicking action button", () => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+      const actionBtn = document.querySelector(".game-card-action");
+      let eventFired = false;
+      window.addEventListener(
+        "openGameModal",
+        () => {
+          eventFired = true;
+        },
+        { once: true }
+      );
+      actionBtn.click();
+      expect(eventFired).toBe(false);
+    });
+  });
+
+  describe("showLoadingSkeletons", () => {
+    it("shows skeleton cards", () => {
+      showLoadingSkeletons(6);
+      const grid = document.getElementById("gameGrid");
+      const skeletons = grid.querySelectorAll(".game-card-skeleton");
+      expect(skeletons.length).toBe(6);
+    });
+
+    it("defaults to 12 skeletons", () => {
+      showLoadingSkeletons();
+      const grid = document.getElementById("gameGrid");
+      const skeletons = grid.querySelectorAll(".game-card-skeleton");
+      expect(skeletons.length).toBe(12);
+    });
+
+    it("does nothing if grid missing", () => {
+      document.body.innerHTML = "";
+      expect(() => showLoadingSkeletons()).not.toThrow();
+    });
+
+    it("replaces existing content", () => {
+      const grid = document.getElementById("gameGrid");
+      grid.innerHTML = "<div>Old Content</div>";
+      showLoadingSkeletons(3);
+      expect(grid.innerHTML).not.toContain("Old Content");
+    });
+  });
+
+  describe("updateCardStatus", () => {
+    beforeEach(() => {
+      const games = [{ game_name: "Zelda", platform: "NES" }];
+      renderGrid(games, {}, {});
+    });
+
+    it("adds status badge to card", () => {
+      updateCardStatus("Zelda___NES", "owned");
+      const card = document.querySelector('[data-game-key="Zelda___NES"]');
+      expect(card.innerHTML).toContain("Owned");
+    });
+
+    it("removes old badge when updating status", () => {
+      updateCardStatus("Zelda___NES", "owned");
+      updateCardStatus("Zelda___NES", "wishlist");
+      const card = document.querySelector('[data-game-key="Zelda___NES"]');
+      const badges = card.querySelectorAll(".game-card-status");
+      expect(badges.length).toBe(1);
+      expect(card.innerHTML).toContain("Wishlist");
+      expect(card.innerHTML).not.toContain("Owned");
+    });
+
+    it("removes badge when status is null", () => {
+      updateCardStatus("Zelda___NES", "owned");
+      updateCardStatus("Zelda___NES", null);
+      const card = document.querySelector('[data-game-key="Zelda___NES"]');
+      expect(card.querySelector(".game-card-status")).toBeNull();
+    });
+
+    it("updates quick action buttons", () => {
+      updateCardStatus("Zelda___NES", "owned");
+      const actions = document.querySelector(".game-card-actions");
+      expect(actions.innerHTML).not.toContain('data-action="own"');
+      expect(actions.innerHTML).toContain('data-action="wishlist"');
+    });
+
+    it("does nothing for non-existent card", () => {
+      expect(() => updateCardStatus("NonExistent___NES", "owned")).not.toThrow();
+    });
+  });
+
+  describe("setupQuickActions", () => {
+    beforeEach(() => {
+      const games = [
+        { game_name: "Zelda", platform: "NES" },
+        { game_name: "Mario", platform: "NES" },
+      ];
+      renderGrid(games, {}, {});
+    });
+
+    it("dispatches gameStatusChange on action click", () => {
+      setupQuickActions();
+      const actionBtn = document.querySelector('[data-action="own"]');
+      let eventData = null;
+      window.addEventListener(
+        "gameStatusChange",
+        (e) => {
+          eventData = e.detail;
+        },
+        { once: true }
+      );
+      actionBtn.click();
+      expect(eventData).not.toBeNull();
+      expect(eventData.action).toBe("own");
+      expect(eventData.gameKey).toBe("Zelda___NES");
+    });
+
+    it("does not dispatch for non-action clicks", () => {
+      setupQuickActions();
+      const card = document.querySelector(".game-card");
+      let eventFired = false;
+      window.addEventListener(
+        "gameStatusChange",
+        () => {
+          eventFired = true;
+        },
+        { once: true }
+      );
+      // Click on card overlay, not action button
+      const overlay = card.querySelector(".game-card-overlay");
+      overlay.click();
+      expect(eventFired).toBe(false);
+    });
+
+    it("stops propagation on action click", () => {
+      setupQuickActions();
+      const actionBtn = document.querySelector('[data-action="own"]');
+      let modalOpened = false;
+      window.addEventListener(
+        "openGameModal",
+        () => {
+          modalOpened = true;
+        },
+        { once: true }
+      );
+      actionBtn.click();
+      expect(modalOpened).toBe(false);
+    });
+
+    it("handles wishlist action", () => {
+      setupQuickActions();
+      const actionBtn = document.querySelector('[data-action="wishlist"]');
+      let eventData = null;
+      window.addEventListener(
+        "gameStatusChange",
+        (e) => {
+          eventData = e.detail;
+        },
+        { once: true }
+      );
+      actionBtn.click();
+      expect(eventData.action).toBe("wishlist");
+    });
+
+    it("does nothing if grid missing", () => {
+      document.body.innerHTML = "";
+      expect(() => setupQuickActions()).not.toThrow();
+    });
+  });
+
+  describe("renderGrid with many games", () => {
+    it("handles 50 games without virtualization", () => {
+      const games = Array.from({ length: 50 }, (_, i) => ({
+        game_name: `Game ${i + 1}`,
+        platform: "SNES",
+        genre: "Action",
+        rating: "8.0",
+      }));
+      renderGrid(games, {}, {});
+      const grid = document.getElementById("gameGrid");
+      const cards = grid.querySelectorAll(".game-card");
+      expect(cards.length).toBe(50);
+    });
+
+    it("applies different statuses to different cards", () => {
+      const games = [
+        { game_name: "Game1", platform: "SNES" },
+        { game_name: "Game2", platform: "SNES" },
+        { game_name: "Game3", platform: "SNES" },
+        { game_name: "Game4", platform: "SNES" },
+      ];
+      const owned = { Game1___SNES: true };
+      const statuses = {
+        wishlist: { Game2___SNES: true },
+        backlog: { Game3___SNES: true },
+        trade: { Game4___SNES: true },
+      };
+      renderGrid(games, owned, statuses);
+      const cards = document.querySelectorAll(".game-card");
+      expect(cards[0].innerHTML).toContain("Owned");
+      expect(cards[1].innerHTML).toContain("Wishlist");
+      expect(cards[2].innerHTML).toContain("Backlog");
+      expect(cards[3].innerHTML).toContain("For Trade");
+    });
+  });
+
+  describe("renderGrid edge cases", () => {
+    it("handles game with special characters in name", () => {
+      const games = [{ game_name: "Pokémon: Red & Blue", platform: "GB" }];
+      renderGrid(games, {}, {});
+      const card = document.querySelector(".game-card");
+      expect(card.innerHTML).toContain("Pokémon: Red &amp; Blue");
+    });
+
+    it("handles game with missing fields", () => {
+      const games = [{ game_name: "Minimal Game" }];
+      expect(() => renderGrid(games, {}, {})).not.toThrow();
+      const card = document.querySelector(".game-card");
+      expect(card).not.toBeNull();
+    });
+
+    it("handles game with empty name", () => {
+      const games = [{ game_name: "", platform: "SNES" }];
+      renderGrid(games, {}, {});
+      const title = document.querySelector(".game-card-title");
+      expect(title.textContent).toBe("Untitled");
+    });
+
+    it("handles game with null name", () => {
+      const games = [{ game_name: null, platform: "SNES" }];
+      renderGrid(games, {}, {});
+      const title = document.querySelector(".game-card-title");
+      expect(title.textContent).toBe("Untitled");
+    });
+
+    it("uses lazy loading for cover images", () => {
+      const games = [
+        { game_name: "Zelda", platform: "NES", cover: "https://example.com/cover.jpg" },
+      ];
+      renderGrid(games, {}, {});
+      const img = document.querySelector(".game-card img");
+      expect(img.getAttribute("loading")).toBe("lazy");
+    });
+
+    it("includes alt text for cover images", () => {
+      const games = [
+        { game_name: "Zelda", platform: "NES", cover: "https://example.com/cover.jpg" },
+      ];
+      renderGrid(games, {}, {});
+      const img = document.querySelector(".game-card img");
+      expect(img.getAttribute("alt")).toContain("Zelda");
+    });
+  });
+});
