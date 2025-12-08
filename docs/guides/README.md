@@ -9,14 +9,18 @@ This directory contains markdown-based collecting guides and console reference p
 - [NES Reference Guide](./consoles/nes/reference.md) - Technical specs, variants, library highlights
 - [SNES Reference Guide](./consoles/snes/reference.md) - 16-bit Nintendo documentation
 - [N64 Reference Guide](./consoles/n64/reference.md) - 64-bit era technical documentation
+- [GameCube Reference Guide](./consoles/gamecube/reference.md) - Nintendo's compact powerhouse
+- [Game Boy Family Reference](./consoles/gameboy/reference.md) - GB, GBC, GBA documentation
 - [Genesis/Mega Drive Reference](./consoles/genesis/reference.md) - Sega's 16-bit powerhouse
 - [Saturn Reference Guide](./consoles/saturn/reference.md) - Sega's 32-bit 2D powerhouse
+- [Dreamcast Reference Guide](./consoles/dreamcast/reference.md) - Sega's final console
 - [PS1 Reference Guide](./consoles/ps1/reference.md) - Original PlayStation documentation
 - [PS2 Reference Guide](./consoles/ps2/reference.md) - Best-selling console documentation
 
 ### Console Collecting Guides
 
 - [Dreamcast Collecting Guide](./consoles/dreamcast/collecting-guide.md) - Sega's final console
+- [Game Boy Family Collecting Guide](./consoles/gameboy/collecting-guide.md) - GB, GBC, GBA strategy
 - [GameCube Collecting Guide](./consoles/gamecube/collecting-guide.md) - Nintendo's compact powerhouse
 - [Genesis Collecting Guide](./consoles/genesis/collecting-guide.md) - Sega 16-bit strategy
 - [NES Collecting Guide](./consoles/nes/collecting-guide.md) - 8-bit Nintendo essentials

@@ -94,6 +94,19 @@ Nintendo's compact sixth-generation console with innovative features.
 
 ---
 
+### Game Boy Family (GB / GBC / GBA)
+
+Nintendo's legendary handheld lineage spanning three generations.
+
+| Resource                                                   | Description                          |
+| ---------------------------------------------------------- | ------------------------------------ |
+| [Game Boy Reference Guide](./gameboy/reference.md)         | Technical specs, all models, library |
+| [Game Boy Collecting Guide](./gameboy/collecting-guide.md) | Complete collecting strategy         |
+
+**Quick Stats:** 1989-2008 • 200M+ units • 3,500+ games across family
+
+---
+
 ## Sega Consoles
 
 ### Sega Genesis / Mega Drive
@@ -169,7 +182,6 @@ We're actively expanding our console coverage. Upcoming guides:
 
 ### Nintendo
 
-- [ ] Game Boy Family Reference
 - [ ] Wii Reference Guide
 
 ### Sega
