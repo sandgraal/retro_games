@@ -161,6 +161,19 @@ Sega's 2D powerhouse with unmatched arcade ports and import scene.
 
 ---
 
+### Sega Master System
+
+Sega's 8-bit challenger that dominated Europe and Brazil.
+
+| Resource                                                             | Description                        |
+| -------------------------------------------------------------------- | ---------------------------------- |
+| [Master System Reference Guide](./mastersystem/reference.md)         | Technical specs, variants, library |
+| [Master System Collecting Guide](./mastersystem/collecting-guide.md) | Complete collecting strategy       |
+
+**Quick Stats:** 1985-1998 • 13M units • 370+ games worldwide
+
+---
+
 ## Sony Consoles
 
 ### PlayStation 1 (PS1 / PSX)
@@ -192,10 +205,6 @@ The best-selling console of all time with an enormous library.
 ## Coming Soon
 
 We're actively expanding our console coverage. Upcoming guides:
-
-### Sega
-
-- [ ] Sega Master System Reference
 
 ### Sony
 
