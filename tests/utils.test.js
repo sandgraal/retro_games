@@ -142,6 +142,16 @@ import {
   STRUCTURED_DATA_LIMIT,
   STRUCTURED_DATA_ID,
 } from "../app/features/seo.js";
+import {
+  WIDGET_SIZES,
+  WIDGET_THEMES,
+  WIDGET_SOURCE_URL,
+  generateWidgetStyles,
+  buildGameWidget,
+  buildIframeEmbed,
+  generateEmbedCode,
+  buildCollectionWidget,
+} from "../app/features/embed.js";
 
 describe("dom utilities", () => {
   it("escapes HTML special characters", () => {
@@ -6660,6 +6670,272 @@ describe("ui/grid DOM functions", () => {
       renderGrid(games, {}, {});
       const img = document.querySelector(".game-card img");
       expect(img.getAttribute("alt")).toContain("Zelda");
+    });
+  });
+});
+
+// === features/embed.js Tests ===
+describe("features/embed.js", () => {
+  describe("constants", () => {
+    it("exports widget sizes", () => {
+      expect(WIDGET_SIZES.small).toBeDefined();
+      expect(WIDGET_SIZES.medium).toBeDefined();
+      expect(WIDGET_SIZES.large).toBeDefined();
+      expect(WIDGET_SIZES.small.width).toBe(250);
+      expect(WIDGET_SIZES.medium.width).toBe(350);
+      expect(WIDGET_SIZES.large.width).toBe(450);
+    });
+
+    it("exports widget themes", () => {
+      expect(WIDGET_THEMES.dark).toBeDefined();
+      expect(WIDGET_THEMES.light).toBeDefined();
+      expect(WIDGET_THEMES.dark.bg).toBe("#0a0e14");
+      expect(WIDGET_THEMES.light.bg).toBe("#ffffff");
+    });
+
+    it("exports source URL", () => {
+      expect(WIDGET_SOURCE_URL).toBeDefined();
+      expect(typeof WIDGET_SOURCE_URL).toBe("string");
+    });
+  });
+
+  describe("generateWidgetStyles", () => {
+    it("generates CSS with theme colors", () => {
+      const styles = generateWidgetStyles(WIDGET_THEMES.dark, WIDGET_SIZES.medium);
+      expect(styles).toContain("#0a0e14");
+      expect(styles).toContain("350px");
+      expect(styles).toContain(".rg-widget");
+    });
+
+    it("uses light theme colors", () => {
+      const styles = generateWidgetStyles(WIDGET_THEMES.light, WIDGET_SIZES.small);
+      expect(styles).toContain("#ffffff");
+      expect(styles).toContain("250px");
+    });
+
+    it("includes all widget classes", () => {
+      const styles = generateWidgetStyles(WIDGET_THEMES.dark, WIDGET_SIZES.medium);
+      expect(styles).toContain(".rg-widget-cover");
+      expect(styles).toContain(".rg-widget-info");
+      expect(styles).toContain(".rg-widget-title");
+      expect(styles).toContain(".rg-widget-platform");
+    });
+  });
+
+  describe("buildGameWidget", () => {
+    const sampleGame = {
+      game_name: "Final Fantasy VII",
+      platform: "PS1",
+      genre: "RPG",
+      release_year: 1997,
+      rating: 9.5,
+      cover: "https://example.com/ff7.jpg",
+      loose_price: 25,
+      cib_price: 60,
+    };
+
+    it("builds widget HTML with game data", () => {
+      const html = buildGameWidget(sampleGame);
+      expect(html).toContain("Final Fantasy VII");
+      expect(html).toContain("PS1");
+      expect(html).toContain("RPG");
+      expect(html).toContain("1997");
+    });
+
+    it("includes cover image", () => {
+      const html = buildGameWidget(sampleGame);
+      expect(html).toContain("https://example.com/ff7.jpg");
+      expect(html).toContain("<img");
+    });
+
+    it("includes rating when enabled", () => {
+      const html = buildGameWidget(sampleGame, { showRating: true });
+      expect(html).toContain("★");
+      expect(html).toContain("9.5");
+    });
+
+    it("hides rating when disabled", () => {
+      const html = buildGameWidget(sampleGame, { showRating: false });
+      // Rating span should not be rendered, but CSS class definition will still be in styles
+      expect(html).not.toContain('class="rg-widget-rating"');
+    });
+
+    it("includes prices when enabled", () => {
+      const html = buildGameWidget(sampleGame, { showPrice: true });
+      expect(html).toContain("Loose:");
+      expect(html).toContain("CIB:");
+    });
+
+    it("hides prices when disabled", () => {
+      const html = buildGameWidget(sampleGame, { showPrice: false });
+      // Price div should not be rendered, but CSS class definition will still be in styles
+      expect(html).not.toContain('class="rg-widget-price"');
+    });
+
+    it("applies dark theme", () => {
+      const html = buildGameWidget(sampleGame, { theme: "dark" });
+      expect(html).toContain("#0a0e14");
+    });
+
+    it("applies light theme", () => {
+      const html = buildGameWidget(sampleGame, { theme: "light" });
+      expect(html).toContain("#ffffff");
+    });
+
+    it("uses different sizes", () => {
+      const smallHtml = buildGameWidget(sampleGame, { size: "small" });
+      const largeHtml = buildGameWidget(sampleGame, { size: "large" });
+      expect(smallHtml).toContain("250px");
+      expect(largeHtml).toContain("450px");
+    });
+
+    it("handles game without cover", () => {
+      const gameNoCover = { game_name: "Test", platform: "NES" };
+      const html = buildGameWidget(gameNoCover);
+      expect(html).toContain("No Cover");
+    });
+
+    it("escapes HTML in game name", () => {
+      const gameXss = { game_name: "<script>alert('xss')</script>", platform: "NES" };
+      const html = buildGameWidget(gameXss);
+      expect(html).not.toContain("<script>");
+      expect(html).toContain("&lt;script&gt;");
+    });
+
+    it("includes source attribution link", () => {
+      const html = buildGameWidget(sampleGame);
+      expect(html).toContain("Powered by Retro Games Hub");
+      expect(html).toContain("rg-widget-source");
+    });
+
+    it("uses custom source URL", () => {
+      const html = buildGameWidget(sampleGame, { sourceUrl: "https://custom.com" });
+      expect(html).toContain("https://custom.com");
+    });
+
+    it("handles missing game data gracefully", () => {
+      const emptyGame = {};
+      const html = buildGameWidget(emptyGame);
+      expect(html).toContain("Unknown Game");
+      expect(html).toContain("rg-widget");
+    });
+  });
+
+  describe("buildIframeEmbed", () => {
+    const sampleGame = {
+      game_name: "Super Mario Bros",
+      platform: "NES",
+    };
+
+    it("returns iframe HTML", () => {
+      const html = buildIframeEmbed(sampleGame);
+      expect(html).toContain("<iframe");
+      expect(html).toContain("</iframe>");
+    });
+
+    it("uses data URI source", () => {
+      const html = buildIframeEmbed(sampleGame);
+      expect(html).toContain("data:text/html;base64,");
+    });
+
+    it("sets correct dimensions", () => {
+      const html = buildIframeEmbed(sampleGame, { size: "medium" });
+      expect(html).toContain('width="370"');
+      expect(html).toContain('height="220"');
+    });
+
+    it("includes accessibility title", () => {
+      const html = buildIframeEmbed(sampleGame);
+      expect(html).toContain('title="Retro Games Widget"');
+    });
+  });
+
+  describe("generateEmbedCode", () => {
+    const sampleGame = {
+      game_name: "Sonic",
+      platform: "Genesis",
+      cover: "https://example.com/sonic.jpg",
+    };
+
+    it("generates HTML format by default", () => {
+      const code = generateEmbedCode(sampleGame);
+      expect(code).toContain("rg-widget");
+      expect(code).toContain("Sonic");
+    });
+
+    it("generates iframe format", () => {
+      const code = generateEmbedCode(sampleGame, { format: "iframe" });
+      expect(code).toContain("<iframe");
+    });
+
+    it("generates markdown format", () => {
+      const code = generateEmbedCode(sampleGame, { format: "markdown" });
+      expect(code).toContain("![Sonic (Genesis)]");
+      expect(code).toContain("https://example.com/sonic.jpg");
+    });
+
+    it("passes options through to widget builder", () => {
+      const code = generateEmbedCode(sampleGame, { format: "html", theme: "light" });
+      expect(code).toContain("#ffffff");
+    });
+  });
+
+  describe("buildCollectionWidget", () => {
+    const sampleStats = {
+      ownedCount: 150,
+      totalValue: 2500,
+      platformBreakdown: { NES: 50, SNES: 40, PS1: 60 },
+      wishlistCount: 25,
+    };
+
+    it("builds collection widget HTML", () => {
+      const html = buildCollectionWidget(sampleStats);
+      expect(html).toContain("rg-collection-widget");
+      expect(html).toContain("150");
+      expect(html).toContain("Games Owned");
+    });
+
+    it("shows platform count", () => {
+      const html = buildCollectionWidget(sampleStats);
+      expect(html).toContain("3"); // 3 platforms
+      expect(html).toContain("Platforms");
+    });
+
+    it("shows total value", () => {
+      const html = buildCollectionWidget(sampleStats);
+      expect(html).toContain("Est. Value");
+    });
+
+    it("shows wishlist count", () => {
+      const html = buildCollectionWidget(sampleStats);
+      expect(html).toContain("25");
+      expect(html).toContain("Wishlist");
+    });
+
+    it("uses custom title", () => {
+      const html = buildCollectionWidget(sampleStats, { title: "My NES Games" });
+      expect(html).toContain("My NES Games");
+    });
+
+    it("applies dark theme", () => {
+      const html = buildCollectionWidget(sampleStats, { theme: "dark" });
+      expect(html).toContain("#0a0e14");
+    });
+
+    it("applies light theme", () => {
+      const html = buildCollectionWidget(sampleStats, { theme: "light" });
+      expect(html).toContain("#ffffff");
+    });
+
+    it("includes source attribution", () => {
+      const html = buildCollectionWidget(sampleStats);
+      expect(html).toContain("Track your collection at Retro Games Hub");
+    });
+
+    it("handles empty stats", () => {
+      const html = buildCollectionWidget({});
+      expect(html).toContain("0"); // Default values
+      expect(html).toContain("rg-collection-widget");
     });
   });
 });
