@@ -9,7 +9,7 @@ _Last updated: December 2025_
 - **Phase 0 refactoring** (January 2025): Complete modular extraction from 5,940-line `app-legacy.js` into 28 focused modules.
 - Vanilla JavaScript with modular structure: `app/main.js` (460 lines) bootstraps all modules.
 - **28 ES6 modules** across 6 directories: `ui/`, `features/`, `state/`, `data/`, `utils/`, `design/`.
-- **721 tests** covering all extracted modules (76%+ statement coverage).
+- **917 tests** covering all extracted modules (87%+ statement coverage).
 - **JSON-LD structured data** for schema.org VideoGame SEO (December 2025).
 - Supabase acts as the backing data store with graceful fallback to `data/sample-games.json`.
 - No build tooling or bundler; modular CSS architecture with design tokens in `style/` directory.
@@ -51,9 +51,9 @@ _Last updated: December 2025_
 
 - **Modal integration**: ✅ Modal component wired to game card clicks with full functionality
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
-- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 804 tests passing
+- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 917 tests passing
 - **Price data integration**: ✅ Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: ✅ 917 unit tests + 14 E2E tests passing; @vitest/coverage-v8 installed (88% statements)
+- **Test coverage**: ✅ 917 unit tests + 14 E2E tests passing; @vitest/coverage-v8 installed (87% statements)
 - **Feature completion**: ✅ Virtualization wired to grid, renders only visible cards for 80+ games
 - **Performance testing**: ✅ 26 tests validating filtering/sorting/virtualization with 10k+ datasets
 - **E2E testing**: ✅ 14 Playwright E2E tests all passing (no skipped tests)
@@ -123,7 +123,8 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 - `tests/performance.test.js`: 26 tests (10k+ dataset performance)
 - `tests/fetch-covers.test.js`: 48 tests (cover fetching script)
 - `tests/archive-media.test.js`: 14 tests (media archival script)
-- `tests/e2e/`: 14 Playwright E2E tests (modal, filters, accessibility)
+- `tests/build-css.test.js`: 11 tests (CSS bundler script)
 - `tests/audit-missing-covers.test.js`: 26 tests
-- **Total: 915 unit tests + 14 E2E tests**
-- **Coverage: 88%+ statements**
+- `tests/e2e/`: 14 Playwright E2E tests (modal, filters, accessibility)
+- **Total: 917 unit tests + 14 E2E tests**
+- **Coverage: 87%+ statements**

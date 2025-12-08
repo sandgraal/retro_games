@@ -21,7 +21,7 @@ This document operationalizes the high-level implementation plan into actionable
 
 Work is organized into five build phases plus operational cadences. Each phase is subdivided into tracks with goal statements, exit criteria, and granular tasks. Tracks can run in parallel when dependencies are satisfied.
 
-**✅ UPDATE: Phase 0 Complete (January 2025)** - All 5 tracks extracted with 674 tests passing. See [`docs/architecture.md`](./architecture.md) for complete module inventory.
+**✅ UPDATE: Phase 0 Complete (January 2025)** - All 5 tracks extracted with 917 tests passing (87% coverage). See [`docs/architecture.md`](./architecture.md) for complete module inventory.
 
 ### Phase 0 – Architecture Redesign ✅ **COMPLETE**
 
@@ -33,7 +33,7 @@ Work is organized into five build phases plus operational cadences. Each phase i
 
 - **27 ES6 modules** extracted from 5,940-line `app-legacy.js`
 - **6,670 total lines** across all modules
-- **674 tests passing** (76% statement coverage)
+- **917 tests passing** (87% statement coverage)
 - **No file exceeds 500 lines** (largest: `ui/dashboard.js` at 493 lines)
 - **All 5 tracks complete** with full test coverage
 
@@ -65,7 +65,7 @@ Work is organized into five build phases plus operational cadences. Each phase i
 | **Extract Data Layer**         | Isolate all external I/O        | Clean API boundary, Supabase logic isolated, tests mock easily       | `data/supabase.js`, `data/loader.js`, `data/aggregates.js`, `data/pricing.js`, `data/storage.js`                                                    | ✅     |
 | **Extract UI Modules**         | Separate rendering from logic   | Each UI component in own file, clean interfaces                      | `ui/grid.js`, `ui/modal.js`, `ui/filters.js`, `ui/dashboard.js`, `ui/carousel.js`, `ui/theme.js`                                                    | ✅     |
 | **Extract Feature Modules**    | Isolate complex feature logic   | Features independently testable, clear boundaries                    | `features/virtualization.js`, `features/pagination.js`, `features/search.js`, `features/sharing.js`, `features/sorting.js`, `features/filtering.js` | ✅     |
-| **Update Test Infrastructure** | Tests work with new structure   | All tests passing, coverage maintained/improved                      | Module-specific tests, integration tests, 674 tests passing                                                                                         | ✅     |
+| **Update Test Infrastructure** | Tests work with new structure   | All tests passing, coverage maintained/improved                      | Module-specific tests, integration tests, 917 tests passing                                                                                         | ✅     |
 | **Documentation & Cleanup**    | Clear handoff to next phase     | Architecture documented, old code archived, migration guide complete | `docs/architecture.md`, updated contributing docs, `archive/app-legacy.js`                                                                          | ✅     |
 
 **Success Metrics for Phase 0** (All achieved ✅):
@@ -73,7 +73,7 @@ Work is organized into five build phases plus operational cadences. Each phase i
 - ✅ No file exceeds 500 lines (largest: `ui/dashboard.js` at 493 lines)
 - ✅ No function exceeds 50 lines
 - ✅ ESLint completes in <10 seconds
-- ✅ Test coverage: 674 tests passing, 76% statements
+- ✅ Test coverage: 917 tests passing, 87% statements
 - ✅ All existing tests passing
 - ✅ Zero regressions in functionality
 - ✅ Documentation complete
