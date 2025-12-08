@@ -81,6 +81,19 @@ Nintendo's bold leap into 3D gaming with cartridge-based architecture.
 
 ---
 
+### Nintendo GameCube
+
+Nintendo's compact sixth-generation console with innovative features.
+
+| Resource                                                    | Description                        |
+| ----------------------------------------------------------- | ---------------------------------- |
+| [GameCube Reference Guide](./gamecube/reference.md)         | Technical specs, variants, library |
+| [GameCube Collecting Guide](./gamecube/collecting-guide.md) | Complete collecting strategy       |
+
+**Quick Stats:** 2001-2007 • 21.7M units • 299 NA games
+
+---
+
 ## Sega Consoles
 
 ### Sega Genesis / Mega Drive
@@ -143,7 +156,6 @@ We're actively expanding our console coverage. Upcoming guides:
 
 ### Nintendo
 
-- [ ] GameCube Reference & Collecting Guide
 - [ ] Game Boy Family Reference
 - [ ] Wii Reference Guide
 
