@@ -18,7 +18,7 @@ This project maintains comprehensive documentation for developers, contributors,
 
 - **[docs/architecture.md](./architecture.md)** ⭐ **START HERE** - Complete architecture documentation
   - File structure and module organization
-  - **27 ES6 modules** with detailed exports
+  - **29 ES6 modules** with detailed exports
   - Design system (colors, typography, components)
   - Data flow and state management
   - Performance considerations
@@ -39,8 +39,9 @@ This project maintains comprehensive documentation for developers, contributors,
 - **[docs/implementation-plan.md](./implementation-plan.md)** - Full project roadmap
   - Phase 0: Architecture Redesign ✅ COMPLETE (January 2025)
   - Phase 1: Foundation Hardening ✅ COMPLETE
-  - Phase 2-4: Future features
-  - Track-based organization
+  - Phase 2: UX & Features ✅ COMPLETE
+  - Phase 3: SEO ✅ COMPLETE, Content Marketing 5/6 done
+  - Phase 4: Monetization (blocked on business decisions)
 
 - **[docs/image-sourcing.md](./image-sourcing.md)** - Cover art and media guidelines
   - Trusted sources
@@ -77,7 +78,14 @@ This project maintains comprehensive documentation for developers, contributors,
     - `genre-guide.md` - Genre-focused guide template
     - `interview.md` - Collector interview template
   - [guides/consoles/](./guides/consoles/) - Console-specific guides
-    - [ps2/collecting-guide.md](./guides/consoles/ps2/collecting-guide.md) - PlayStation 2 collecting guide
+    - [consoles/README.md](./guides/consoles/README.md) - Console library index
+    - [nes/reference.md](./guides/consoles/nes/reference.md) - NES reference guide
+    - [genesis/reference.md](./guides/consoles/genesis/reference.md) - Genesis reference guide
+    - [ps2/reference.md](./guides/consoles/ps2/reference.md) - PS2 reference guide
+    - [ps2/collecting-guide.md](./guides/consoles/ps2/collecting-guide.md) - PS2 collecting guide
+    - [snes/collecting-guide.md](./guides/consoles/snes/collecting-guide.md) - SNES collecting guide
+  - [guides/genres/](./guides/genres/) - Genre-specific guides
+    - [rpg/collecting-guide.md](./guides/genres/rpg/collecting-guide.md) - RPG collecting guide
 
 ## Testing & Evaluation
 
@@ -87,10 +95,14 @@ This project maintains comprehensive documentation for developers, contributors,
   - Evaluation metrics
 
 - **[tests/](../tests/)** - Test files
-  - `utils.test.js` - Module unit tests (460 tests)
+  - `utils.test.js` - Module unit tests (804 tests)
   - `app.test.js` - Integration tests (25 tests)
-  - `archive-media.test.js` - Media archival tests (3 tests)
-  - `e2e/*.spec.js` - End-to-end tests
+  - `performance.test.js` - Performance tests (26 tests)
+  - `fetch-covers.test.js` - Cover fetching tests (48 tests)
+  - `archive-media.test.js` - Media archival tests (14 tests)
+  - `build-css.test.js` - CSS bundler tests (11 tests)
+  - `audit-missing-covers.test.js` - Cover audit tests (26 tests)
+  - `e2e/*.spec.js` - End-to-end tests (14 tests)
 
 ## Context & History
 
