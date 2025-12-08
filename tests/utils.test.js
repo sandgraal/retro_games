@@ -4251,6 +4251,7 @@ import {
   buildProgressBar,
   buildCarouselCover,
   buildRecentAdditionsCarousel,
+  calculateStats,
 } from "../app/ui/dashboard.js";
 
 describe("ui/dashboard", () => {
@@ -4494,6 +4495,68 @@ describe("ui/dashboard", () => {
     it("shows empty message for no games", () => {
       const html = buildRecentAdditionsCarousel([]);
       expect(html).toContain("carousel-empty");
+    });
+  });
+
+  describe("calculateStats", () => {
+    it("calculates basic stats without price data", () => {
+      const games = [
+        { game_name: "Chrono Trigger", platform: "SNES" },
+        { game_name: "Final Fantasy VI", platform: "SNES" },
+        { game_name: "Mega Man 2", platform: "NES" },
+      ];
+      const owned = { "Chrono Trigger___SNES": true };
+      const result = calculateStats(games, owned, {});
+      expect(result.totalGames).toBe(3);
+      expect(result.ownedCount).toBe(1);
+      expect(result.totalValue).toBe(0);
+      expect(result.platformBreakdown.SNES).toBe(1);
+    });
+
+    it("calculates collection value from price data", () => {
+      const games = [
+        { game_name: "Chrono Trigger", platform: "SNES" },
+        { game_name: "Final Fantasy VI", platform: "SNES" },
+      ];
+      const owned = {
+        "Chrono Trigger___SNES": true,
+        "Final Fantasy VI___SNES": true,
+      };
+      const priceData = {
+        "Chrono Trigger___SNES": { loose: 17500, cib: 46500, new: 72500 },
+        "Final Fantasy VI___SNES": { loose: 5000, cib: 15000, new: 25000 },
+      };
+      const result = calculateStats(games, owned, {}, priceData);
+      expect(result.totalValue).toBe(615); // (46500 + 15000) / 100
+      expect(result.gamesWithPrices).toBe(2);
+    });
+
+    it("falls back to loose price when CIB unavailable", () => {
+      const games = [{ game_name: "Test Game", platform: "NES" }];
+      const owned = { "Test Game___NES": true };
+      const priceData = {
+        "Test Game___NES": { loose: 2000 },
+      };
+      const result = calculateStats(games, owned, {}, priceData);
+      expect(result.totalValue).toBe(20); // 2000 / 100
+    });
+
+    it("calculates wishlist value using new price", () => {
+      const games = [{ game_name: "Rare Game", platform: "SNES" }];
+      const statuses = { wishlist: { "Rare Game___SNES": true } };
+      const priceData = {
+        "Rare Game___SNES": { loose: 5000, cib: 10000, new: 20000 },
+      };
+      const result = calculateStats(games, {}, statuses, priceData);
+      expect(result.wishlistValue).toBe(200); // 20000 / 100
+      expect(result.wishlistCount).toBe(1);
+    });
+
+    it("handles empty inputs gracefully", () => {
+      const result = calculateStats([], {}, {}, {});
+      expect(result.totalGames).toBe(0);
+      expect(result.ownedCount).toBe(0);
+      expect(result.totalValue).toBe(0);
     });
   });
 });

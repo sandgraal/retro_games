@@ -67,14 +67,37 @@ async function bootstrapNewUI() {
       throw new Error("No games available to display!");
     }
 
+    // Load price data (async, non-blocking for initial render)
+    let priceData = {};
+    try {
+      const priceResponse = await fetch("./data/sample-price-history.json");
+      const priceJson = await priceResponse.json();
+      if (priceJson.latest && Array.isArray(priceJson.latest)) {
+        priceJson.latest.forEach((p) => {
+          if (p.game_key) {
+            priceData[p.game_key] = {
+              loose: p.loose_price_cents,
+              cib: p.cib_price_cents,
+              new: p.new_price_cents,
+              currency: p.currency || "USD",
+              snapshotDate: p.snapshot_date,
+            };
+          }
+        });
+      }
+    } catch (err) {
+      console.warn("⚠️ Price data unavailable:", err.message);
+    }
+
     // Store globally for filter operations
     window.__GAMES_DATA__ = games;
     window.__OWNED_DATA__ = owned;
     window.__STATUSES_DATA__ = statuses;
     window.__NOTES_DATA__ = notes;
+    window.__PRICE_DATA__ = priceData;
 
     // Calculate dashboard stats and render
-    const stats = calculateStats(games, owned, statuses);
+    const stats = calculateStats(games, owned, statuses, priceData);
     updateDashboard(stats);
 
     // Setup filters with game data
@@ -526,7 +549,8 @@ window.addEventListener("gameStatusChange", (e) => {
   const games = window.__GAMES_DATA__ || [];
   const owned = window.__OWNED_DATA__ || {};
   const statuses = window.__STATUSES_DATA__ || {};
-  const stats = calculateStats(games, owned, statuses);
+  const priceData = window.__PRICE_DATA__ || {};
+  const stats = calculateStats(games, owned, statuses, priceData);
   updateDashboard(stats);
 
   // Re-render grid to update visual state

@@ -443,9 +443,10 @@ function animateNumber(element, start, end, duration) {
  * @param {Array} games - All games
  * @param {Object} owned - Owned games object
  * @param {Object} statuses - Game statuses (wishlist, backlog, etc.)
+ * @param {Object} priceData - Price data keyed by game key
  * @returns {Object} Statistics object
  */
-export function calculateStats(games, owned, statuses = {}) {
+export function calculateStats(games, owned, statuses = {}, priceData = {}) {
   const ownedGames = games.filter((game) => {
     const key = generateGameKey(game.game_name, game.platform);
     return key && owned[key];
@@ -461,6 +462,7 @@ export function calculateStats(games, owned, statuses = {}) {
     backlogHours: 0,
     platformBreakdown: {},
     recentAdditions: [],
+    gamesWithPrices: 0,
   };
 
   // Calculate owned games stats
@@ -471,8 +473,17 @@ export function calculateStats(games, owned, statuses = {}) {
     }
     stats.platformBreakdown[game.platform]++;
 
-    // Total value (placeholder - needs price data)
-    // stats.totalValue += game.price || 0;
+    // Calculate value from price data (use CIB price as default)
+    const gameKey = generateGameKey(game.game_name, game.platform);
+    const prices = priceData[gameKey];
+    if (prices && prices.cib) {
+      // Convert cents to dollars
+      stats.totalValue += prices.cib / 100;
+      stats.gamesWithPrices++;
+    } else if (prices && prices.loose) {
+      stats.totalValue += prices.loose / 100;
+      stats.gamesWithPrices++;
+    }
   });
 
   // Recent additions (most recently added to owned)
@@ -480,13 +491,24 @@ export function calculateStats(games, owned, statuses = {}) {
 
   // Wishlist and backlog (from statuses object)
   if (statuses.wishlist) {
-    stats.wishlistCount = Object.keys(statuses.wishlist).length;
-    // stats.wishlistValue = calculated from prices
+    const wishlistKeys = Object.keys(statuses.wishlist).filter(
+      (k) => statuses.wishlist[k]
+    );
+    stats.wishlistCount = wishlistKeys.length;
+    // Calculate wishlist value (use new price for items you want to buy)
+    wishlistKeys.forEach((gameKey) => {
+      const prices = priceData[gameKey];
+      if (prices) {
+        const price = prices.new || prices.cib || prices.loose || 0;
+        stats.wishlistValue += price / 100;
+      }
+    });
   }
 
   if (statuses.backlog) {
-    stats.backlogCount = Object.keys(statuses.backlog).length;
-    // stats.backlogHours = estimated play time
+    stats.backlogCount = Object.keys(statuses.backlog).filter(
+      (k) => statuses.backlog[k]
+    ).length;
   }
 
   return stats;
