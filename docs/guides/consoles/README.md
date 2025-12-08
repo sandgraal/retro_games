@@ -87,10 +87,10 @@ Nintendo's bold leap into 3D gaming with cartridge-based architecture.
 
 Sega's flagship 16-bit console with distinctive FM synthesis audio.
 
-| Resource                                          | Description                       |
-| ------------------------------------------------- | --------------------------------- |
-| [Genesis Reference Guide](./genesis/reference.md) | Technical specs, add-ons, library |
-| Genesis Collecting Guide                          | Coming soon                       |
+| Resource                                                  | Description                       |
+| --------------------------------------------------------- | --------------------------------- |
+| [Genesis Reference Guide](./genesis/reference.md)         | Technical specs, add-ons, library |
+| [Genesis Collecting Guide](./genesis/collecting-guide.md) | Complete collecting strategy      |
 
 **Quick Stats:** 1988-1997 • 40M units • "Blast Processing" era
 
