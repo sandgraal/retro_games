@@ -107,6 +107,19 @@ Nintendo's legendary handheld lineage spanning three generations.
 
 ---
 
+### Nintendo Wii
+
+Nintendo's motion control revolution that became the best-selling console of its generation.
+
+| Resource                                          | Description                        |
+| ------------------------------------------------- | ---------------------------------- |
+| [Wii Reference Guide](./wii/reference.md)         | Technical specs, variants, library |
+| [Wii Collecting Guide](./wii/collecting-guide.md) | Complete collecting strategy       |
+
+**Quick Stats:** 2006-2013 • 101.6M units • 1,262 NA games
+
+---
+
 ## Sega Consoles
 
 ### Sega Genesis / Mega Drive
@@ -179,10 +192,6 @@ The best-selling console of all time with an enormous library.
 ## Coming Soon
 
 We're actively expanding our console coverage. Upcoming guides:
-
-### Nintendo
-
-- [ ] Wii Reference Guide
 
 ### Sega
 

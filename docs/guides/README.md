@@ -10,6 +10,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [SNES Reference Guide](./consoles/snes/reference.md) - 16-bit Nintendo documentation
 - [N64 Reference Guide](./consoles/n64/reference.md) - 64-bit era technical documentation
 - [GameCube Reference Guide](./consoles/gamecube/reference.md) - Nintendo's compact powerhouse
+- [Wii Reference Guide](./consoles/wii/reference.md) - Motion control revolution
 - [Game Boy Family Reference](./consoles/gameboy/reference.md) - GB, GBC, GBA documentation
 - [Genesis/Mega Drive Reference](./consoles/genesis/reference.md) - Sega's 16-bit powerhouse
 - [Saturn Reference Guide](./consoles/saturn/reference.md) - Sega's 32-bit 2D powerhouse
@@ -29,6 +30,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [PS2 Collecting Guide](./consoles/ps2/collecting-guide.md) - Complete PS2 strategy
 - [Saturn Collecting Guide](./consoles/saturn/collecting-guide.md) - Sega 32-bit import haven
 - [SNES Collecting Guide](./consoles/snes/collecting-guide.md) - 16-bit Nintendo essentials
+- [Wii Collecting Guide](./consoles/wii/collecting-guide.md) - Motion control era strategy
 
 ### Genre Guides
 
