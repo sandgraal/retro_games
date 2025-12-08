@@ -126,8 +126,8 @@ function loadManualCovers() {
 function normalizeGameName(name) {
   return name
     .replace(/\s*-\s*/g, " ") // Replace hyphens with spaces
-    .replace(/['']/g, "'") // Normalize quotes
-    .replace(/[""]/g, '"') // Normalize double quotes
+    .replace(/[\u2018\u2019]/g, "'") // Normalize curly single quotes to straight
+    .replace(/[\u201C\u201D]/g, '"') // Normalize curly double quotes to straight
     .replace(/\s+/g, " ") // Collapse whitespace
     .trim();
 }
