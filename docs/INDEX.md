@@ -68,6 +68,17 @@ This project maintains comprehensive documentation for developers, contributors,
   - Build and test commands
   - Conventions and anti-patterns
 
+## Content & Guides
+
+- **[docs/guides/](./guides/)** - Collector guides and content templates
+  - [guides/README.md](./guides/README.md) - Guide structure and workflow
+  - [guides/templates/](./guides/templates/) - Templates for new content
+    - `console-guide.md` - Console collecting guide template
+    - `genre-guide.md` - Genre-focused guide template
+    - `interview.md` - Collector interview template
+  - [guides/consoles/](./guides/consoles/) - Console-specific guides
+    - [ps2/collecting-guide.md](./guides/consoles/ps2/collecting-guide.md) - PlayStation 2 collecting guide
+
 ## Testing & Evaluation
 
 - **[evaluation/README.md](../evaluation/README.md)** - Automated testing framework
