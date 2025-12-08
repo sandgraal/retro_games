@@ -44,7 +44,7 @@ Game records use these columns (track these constants in `app/main.js`):
 
 ## File Responsibilities
 
-**Module Architecture (December 2025):** 28 ES6 modules across 6 directories with 917 unit tests + 14 E2E tests (87% statement coverage).
+**Module Architecture (December 2025):** 29 ES6 modules across 6 directories with 954 unit tests + 14 E2E tests (87% statement coverage).
 
 ### Core Files
 
@@ -69,9 +69,12 @@ Game records use these columns (track these constants in `app/main.js`):
 
 ### Feature Modules (`app/features/` - 7 modules, 1,922 lines)
 
+### Feature Modules (`app/features/` - 8 modules, 2,290 lines)
+
 | File                             | Lines | Purpose                   | Key Exports                                                                                    |
 | -------------------------------- | ----- | ------------------------- | ---------------------------------------------------------------------------------------------- |
 | `app/features/virtualization.js` | 371   | Virtual scrolling helpers | `computeVirtualWindow()`, `updateVirtualScrollState()`, `VIRTUALIZE_MIN_ITEMS`, scroll helpers |
+| `app/features/embed.js`          | 369   | Embeddable widgets        | `buildGameWidget()`, `buildCollectionWidget()`, `generateEmbedCode()`, `WIDGET_THEMES`         |
 | `app/features/filtering.js`      | 342   | Filter predicates         | `rowMatchesPlatform()`, `rowMatchesGenre()`, `rowMatchesStatus()`, `detectRegion()`            |
 | `app/features/seo.js`            | 316   | JSON-LD structured data   | `updateStructuredData()`, `mapGameToVideoGameSchema()`, `buildStructuredDataPayload()`         |
 | `app/features/search.js`         | 282   | Search & typeahead        | `normalizeSearchQuery()`, `scoreSearchMatch()`, `buildSearchPredicate()`, typeahead constants  |

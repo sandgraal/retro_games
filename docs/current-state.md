@@ -104,21 +104,21 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 
 ## Module Inventory (December 2025)
 
-**28 ES6 modules** totaling 7,200+ lines:
+**29 ES6 modules** totaling 7,600+ lines:
 
-| Directory       | Modules | Lines | Purpose                                                                              |
-| --------------- | ------- | ----- | ------------------------------------------------------------------------------------ |
-| `app/ui/`       | 6       | 2,558 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                      |
-| `app/features/` | 7       | 1,922 | Feature logic (virtualization, filtering, sorting, search, pagination, sharing, seo) |
-| `app/state/`    | 4       | 829   | State management (collection, filters, preferences, cache)                           |
-| `app/data/`     | 5       | 911   | Data layer (supabase, loader, aggregates, pricing, storage)                          |
-| `app/utils/`    | 4       | 262   | Pure utilities (dom, format, keys, validation)                                       |
-| `app/design/`   | 1       | 127   | Design tokens                                                                        |
-| `app/main.js`   | 1       | 575   | Bootstrap orchestration                                                              |
+| Directory       | Modules | Lines | Purpose                                                                                     |
+| --------------- | ------- | ----- | ------------------------------------------------------------------------------------------- |
+| `app/ui/`       | 6       | 2,558 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                             |
+| `app/features/` | 8       | 2,290 | Feature logic (virtualization, filtering, sorting, search, pagination, sharing, seo, embed) |
+| `app/state/`    | 4       | 829   | State management (collection, filters, preferences, cache)                                  |
+| `app/data/`     | 5       | 911   | Data layer (supabase, loader, aggregates, pricing, storage)                                 |
+| `app/utils/`    | 4       | 262   | Pure utilities (dom, format, keys, validation)                                              |
+| `app/design/`   | 1       | 127   | Design tokens                                                                               |
+| `app/main.js`   | 1       | 575   | Bootstrap orchestration                                                                     |
 
 **Test Coverage:**
 
-- `tests/utils.test.js`: 767 tests (covers all extracted helpers + DOM tests)
+- `tests/utils.test.js`: 804 tests (covers all extracted helpers + DOM tests + embed tests)
 - `tests/app.test.js`: 25 tests (integration tests)
 - `tests/performance.test.js`: 26 tests (10k+ dataset performance)
 - `tests/fetch-covers.test.js`: 48 tests (cover fetching script)
@@ -126,5 +126,5 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 - `tests/build-css.test.js`: 11 tests (CSS bundler script)
 - `tests/audit-missing-covers.test.js`: 26 tests
 - `tests/e2e/`: 14 Playwright E2E tests (modal, filters, accessibility)
-- **Total: 917 unit tests + 14 E2E tests**
+- **Total: 954 unit tests + 14 E2E tests**
 - **Coverage: 87%+ statements**
