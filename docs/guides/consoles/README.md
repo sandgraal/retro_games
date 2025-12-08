@@ -98,6 +98,19 @@ Sega's flagship 16-bit console with distinctive FM synthesis audio.
 
 ## Sony Consoles
 
+### PlayStation 1 (PS1 / PSX)
+
+The console that revolutionized gaming with CD-ROM technology and third-party support.
+
+| Resource                                  | Description                        |
+| ----------------------------------------- | ---------------------------------- |
+| [PS1 Reference Guide](./ps1/reference.md) | Technical specs, variants, library |
+| PS1 Collecting Guide                      | Coming soon                        |
+
+**Quick Stats:** 1994-2006 • 102.5M units • 7,918 games worldwide
+
+---
+
 ### PlayStation 2 (PS2)
 
 The best-selling console of all time with an enormous library.
@@ -129,7 +142,7 @@ We're actively expanding our console coverage. Upcoming guides:
 
 ### Sony
 
-- [ ] PlayStation 1 Reference & Collecting Guide
+- [ ] PlayStation 1 Collecting Guide
 - [ ] PlayStation Portable (PSP) Reference
 
 ### Other

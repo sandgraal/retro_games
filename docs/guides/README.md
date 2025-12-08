@@ -9,6 +9,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [NES Reference Guide](./consoles/nes/reference.md) - Technical specs, variants, library highlights
 - [N64 Reference Guide](./consoles/n64/reference.md) - 64-bit era technical documentation
 - [Genesis/Mega Drive Reference](./consoles/genesis/reference.md) - Sega's 16-bit powerhouse
+- [PS1 Reference Guide](./consoles/ps1/reference.md) - Original PlayStation documentation
 - [PS2 Reference Guide](./consoles/ps2/reference.md) - Best-selling console documentation
 
 ### Console Collecting Guides
