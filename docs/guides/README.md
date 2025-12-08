@@ -18,6 +18,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [Genesis Collecting Guide](./consoles/genesis/collecting-guide.md) - Sega 16-bit strategy
 - [NES Collecting Guide](./consoles/nes/collecting-guide.md) - 8-bit Nintendo essentials
 - [N64 Collecting Guide](./consoles/n64/collecting-guide.md) - Complete Nintendo 64 strategy
+- [PS1 Collecting Guide](./consoles/ps1/collecting-guide.md) - PlayStation 1 strategy
 - [PS2 Collecting Guide](./consoles/ps2/collecting-guide.md) - Complete PS2 strategy
 - [SNES Collecting Guide](./consoles/snes/collecting-guide.md) - 16-bit Nintendo essentials
 
