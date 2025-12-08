@@ -221,7 +221,6 @@ We're actively expanding our console coverage. Upcoming guides:
 
 ### Other
 
-- [ ] Neo Geo Reference & Collecting Guide
 - [ ] Atari 2600/7800 Reference
 
 ---
@@ -238,6 +237,19 @@ NEC's innovative console that pioneered CD gaming and dominated Japan.
 | [TurboGrafx-16 Collecting Guide](./turbografx/collecting-guide.md) | Complete collecting strategy       |
 
 **Quick Stats:** 1987-1994 • 10M units • 650+ games (JP) / 143 (NA)
+
+---
+
+### Neo Geo (AES / MVS)
+
+SNK's legendary arcade-at-home platform with premium collecting prestige.
+
+| Resource                                                 | Description                        |
+| -------------------------------------------------------- | ---------------------------------- |
+| [Neo Geo Reference Guide](./neogeo/reference.md)         | Technical specs, variants, library |
+| [Neo Geo Collecting Guide](./neogeo/collecting-guide.md) | Complete collecting strategy       |
+
+**Quick Stats:** 1990-2004 • 157 games • Fighting game paradise
 
 ---
 

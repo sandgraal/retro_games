@@ -16,6 +16,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [Saturn Reference Guide](./consoles/saturn/reference.md) - Sega's 32-bit 2D powerhouse
 - [Master System Reference Guide](./consoles/mastersystem/reference.md) - Sega's 8-bit challenger
 - [Dreamcast Reference Guide](./consoles/dreamcast/reference.md) - Sega's final console
+- [Neo Geo Reference Guide](./consoles/neogeo/reference.md) - SNK's arcade-at-home
 - [PS1 Reference Guide](./consoles/ps1/reference.md) - Original PlayStation documentation
 - [PS2 Reference Guide](./consoles/ps2/reference.md) - Best-selling console documentation
 - [PSP Reference Guide](./consoles/psp/reference.md) - Sony's portable powerhouse
@@ -30,6 +31,7 @@ This directory contains markdown-based collecting guides and console reference p
 - [Master System Collecting Guide](./consoles/mastersystem/collecting-guide.md) - Sega 8-bit strategy
 - [NES Collecting Guide](./consoles/nes/collecting-guide.md) - 8-bit Nintendo essentials
 - [N64 Collecting Guide](./consoles/n64/collecting-guide.md) - Complete Nintendo 64 strategy
+- [Neo Geo Collecting Guide](./consoles/neogeo/collecting-guide.md) - SNK premium strategy
 - [PS1 Collecting Guide](./consoles/ps1/collecting-guide.md) - PlayStation 1 strategy
 - [PS2 Collecting Guide](./consoles/ps2/collecting-guide.md) - Complete PS2 strategy
 - [PSP Collecting Guide](./consoles/psp/collecting-guide.md) - Sony portable strategy
