@@ -42,8 +42,9 @@ async function bootstrapNewUI() {
       try {
         const { createClient } = window.supabase;
         const client = createClient(supabaseConfig.url, supabaseConfig.anonKey);
+        // Use games_consolidated view for deduplicated games with variant counts
         const { data, error } = await client
-          .from("games")
+          .from("games_consolidated")
           .select("*")
           .order("game_name", { ascending: true });
 

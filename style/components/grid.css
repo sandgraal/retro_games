@@ -100,6 +100,22 @@
   color: #ffffff;
 }
 
+/* Variant Badge - shows regional versions */
+.game-card-variants {
+  position: absolute;
+  top: var(--spacing-sm);
+  left: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  background: rgba(0, 212, 255, 0.85);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-md);
+  z-index: 2;
+  cursor: help;
+  letter-spacing: 0.05em;
+}
+
 /* Quick Info Overlay */
 .game-card-overlay {
   position: absolute;

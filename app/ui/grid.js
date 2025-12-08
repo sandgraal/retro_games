@@ -178,6 +178,33 @@ export function buildStatusBadge(status) {
   return `<div class="game-card-status ${escapeHtml(status)}">${escapeHtml(label)}</div>`;
 }
 
+/**
+ * Build variant badge markup showing regional version count.
+ * @param {number} variantCount - Number of regional variants
+ * @param {string[]} [availableRegions] - Array of available region codes
+ * @returns {string} HTML string or empty
+ */
+export function buildVariantBadge(variantCount, availableRegions = []) {
+  if (!variantCount || variantCount <= 0) return "";
+  const regionLabels = {
+    "NTSC-U": "🇺🇸",
+    "NTSC-J": "🇯🇵",
+    PAL: "🇪🇺",
+    "NTSC-K": "🇰🇷",
+    "NTSC-C": "🇨🇳",
+    WORLD: "🌍",
+  };
+  const flags =
+    availableRegions.length > 0
+      ? availableRegions
+          .slice(0, 3)
+          .map((r) => regionLabels[r] || "")
+          .join("")
+      : "";
+  const suffix = availableRegions.length > 3 ? "+" : "";
+  return `<div class="game-card-variants" title="${variantCount} regional variant${variantCount > 1 ? "s" : ""}">${flags}${suffix}</div>`;
+}
+
 // === Empty State ===
 
 /**
@@ -512,6 +539,7 @@ function createGameCard(game, gameKey, owned, statuses, index) {
     <div class="game-card-cover">
       ${coverHtml}
       ${buildStatusBadge(status)}
+      ${buildVariantBadge(game.variant_count, game.available_regions)}
     </div>
     <div class="game-card-overlay">
       <h3 class="game-card-title">${escapeHtml(game.game_name || "Untitled")}</h3>

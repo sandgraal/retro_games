@@ -403,11 +403,34 @@ export function buildGameDetailsHtml(game) {
     sections.push(buildMetadataCard("Gameplay", gameplayItems, { layout: "grid" }));
   }
 
-  // Regions & Versions section
+  // Regions & Versions section (enhanced for consolidated games)
   const regionItems = [];
   if (game.region) {
     regionItems.push({ label: "Region", value: game.region });
     consumed.add("region");
+  }
+  // Show available regional variants if present
+  if (Array.isArray(game.available_regions) && game.available_regions.length > 0) {
+    const regionLabels = {
+      "NTSC-U": "🇺🇸 USA",
+      "NTSC-J": "🇯🇵 Japan",
+      PAL: "🇪🇺 Europe",
+      "NTSC-K": "🇰🇷 Korea",
+      "NTSC-C": "🇨🇳 China",
+      WORLD: "🌍 Worldwide",
+    };
+    const regionDisplay = game.available_regions
+      .map((r) => regionLabels[r] || r)
+      .join(", ");
+    regionItems.push({ label: "Available Regions", value: regionDisplay });
+    consumed.add("available_regions");
+  }
+  if (game.variant_count && game.variant_count > 0) {
+    regionItems.push({
+      label: "Regional Variants",
+      value: `${game.variant_count} version${game.variant_count > 1 ? "s" : ""}`,
+    });
+    consumed.add("variant_count");
   }
   if (game.version) {
     regionItems.push({ label: "Version", value: game.version });
