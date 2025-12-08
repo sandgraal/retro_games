@@ -8,7 +8,7 @@ _Last updated: December 2025_
 
 - **Application**: ⭐ Feature-complete & production-ready
 - **Architecture**: ✅ **REFACTORED** (January 2025) - 28 ES6 modules extracted
-- **Tests**: ✅ **804 unit tests + 14 E2E tests passing** (76% coverage)
+- **Tests**: ✅ **815 unit tests + 14 E2E tests passing** (78% coverage)
 - **CI/CD**: ✅ Automated (lint, test, security, Lighthouse)
 - **Documentation**: ✅ Comprehensive & current
 
@@ -27,7 +27,7 @@ _Last updated: December 2025_
 
 - ✅ **28 ES6 modules** extracted from 5,940-line `app-legacy.js`
 - ✅ **7,200+ total lines** across all modules
-- ✅ **804 unit tests + 14 E2E tests passing** with 76% coverage
+- ✅ **815 unit tests + 14 E2E tests passing** with 78% coverage
 - ✅ **6 UI modules**: dashboard, grid, modal, filters, carousel, theme
 - ✅ **7 feature modules**: virtualization, filtering, sorting, search, pagination, sharing, seo
 - ✅ **4 state modules**: collection, filters, preferences, cache
@@ -45,12 +45,12 @@ _Last updated: December 2025_
 3. ~~**Install Coverage Tooling**~~ ✅ Done
 4. ~~**Price Data Integration**~~ ✅ Done
 5. ~~**Performance Testing**~~ ✅ Done (26 tests for 10k+ datasets)
-6. **Media Archival Strategy** - Implement backups for media, checksum verification
+6. ~~**Media Archival Strategy**~~ ✅ Done (media-archive.yml workflow)
 
 ### Medium Priority: Feature Completion
 
 1. ~~**E2E Test Expansion**~~ ✅ Done (14 tests)
-2. **Cover Import Automation** - Supabase Edge Function/cron for missing covers
+2. ~~**Cover Import Automation**~~ ✅ Done (cover-refresh.yml workflow)
 3. **Community Contribution Workflow** - Edits with review queue
 
 ### Lower Priority: Future Features

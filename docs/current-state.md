@@ -53,7 +53,7 @@ _Last updated: December 2025_
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
 - **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 804 tests passing
 - **Price data integration**: ✅ Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: ✅ 804 unit tests + 14 E2E tests passing; @vitest/coverage-v8 installed (76% statements)
+- **Test coverage**: ✅ 815 unit tests + 14 E2E tests passing; @vitest/coverage-v8 installed (78% statements)
 - **Feature completion**: ✅ Virtualization wired to grid, renders only visible cards for 80+ games
 - **Performance testing**: ✅ 26 tests validating filtering/sorting/virtualization with 10k+ datasets
 - **E2E testing**: ✅ 14 Playwright E2E tests all passing (no skipped tests)
@@ -119,8 +119,8 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 - `tests/app.test.js`: 25 tests (integration tests)
 - `tests/performance.test.js`: 26 tests (10k+ dataset performance)
 - `tests/fetch-covers.test.js`: 48 tests (cover fetching script)
+- `tests/archive-media.test.js`: 14 tests (media archival script)
 - `tests/e2e/`: 14 Playwright E2E tests (modal, filters, accessibility)
-- `tests/archive-media.test.js`: 3 tests
 - `tests/audit-missing-covers.test.js`: 26 tests
-- **Total: 804 unit tests + 14 E2E tests**
-- **Coverage: 76%+ statements**
+- **Total: 815 unit tests + 14 E2E tests**
+- **Coverage: 78%+ statements**
