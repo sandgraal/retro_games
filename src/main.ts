@@ -198,7 +198,7 @@ function handleImport(): void {
       } else {
         showStatus("CSV import coming soon!", "info");
       }
-    } catch (error) {
+    } catch {
       showStatus("Failed to read file.", "error");
     }
   };
