@@ -44,6 +44,7 @@ This directory contains markdown-based collecting guides and console reference p
 
 ### Genre Guides
 
+- [Platformer Collecting Guide](./genres/platformer/collecting-guide.md) - Mario, Sonic, Mega Man & more
 - [RPG Collecting Guide](./genres/rpg/collecting-guide.md) - Cross-platform JRPG/WRPG coverage
 
 ### Index Pages
