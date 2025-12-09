@@ -26,9 +26,9 @@ Thanks for keeping the Dragon's Hoard Atlas sharp. This document captures the es
 
 1. `git clone https://github.com/sandgraal/retro_games`
 2. `cd retro_games && npm install`
-3. Copy `.env.example` to `.env` and fill in Supabase credentials when available.
-4. Generate `config.js` with `npm run build:config`.
-5. Serve locally via `python -m http.server 8080` (or similar).
+3. Optional: copy `.env.example` to `.env` and fill in Supabase credentials when available.
+4. Optional: generate `config.js` with `npm run build:config`.
+5. Start dev server: `npm run dev` (http://localhost:3000). For a built preview, use `npm run preview`.
 
 ## 3. Coding standards
 
