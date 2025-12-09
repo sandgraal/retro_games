@@ -430,3 +430,15 @@
   outline: 2px solid var(--accent-primary);
   outline-offset: -2px;
 }
+
+/* Guide Link Styling */
+.guide-link {
+  color: var(--accent-primary);
+  font-weight: 500;
+  transition: color var(--duration-fast) var(--easing-default);
+}
+
+.guide-link:hover {
+  color: var(--accent-secondary);
+  text-decoration: underline;
+}

@@ -6,6 +6,7 @@
 
 import { escapeHtml } from "../utils/dom.js";
 import { formatFieldLabel, formatCurrency } from "../utils/format.js";
+import { hasGuides, getCollectingGuideUrl, getGuideDisplayName } from "../data/guides.js";
 
 // === Metadata Card Building ===
 
@@ -477,6 +478,15 @@ export function buildGameDetailsHtml(game) {
   linksItems.push(
     `<a href="https://gamefaqs.gamespot.com/search?game=${gameName}" target="_blank" rel="noopener noreferrer">GameFAQs</a>`
   );
+
+  // Add collector's guide link if available
+  if (hasGuides(game.platform)) {
+    const guideUrl = getCollectingGuideUrl(game.platform);
+    const displayName = getGuideDisplayName(game.platform);
+    linksItems.push(
+      `<a href="${escapeHtml(guideUrl)}" target="_blank" rel="noopener noreferrer" class="guide-link">📖 ${escapeHtml(displayName)} Guide</a>`
+    );
+  }
 
   const linksHtml = `
     <div class="modal-section">
