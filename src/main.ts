@@ -15,7 +15,7 @@ import {
   setGameStatus,
   loadPersistedState,
 } from "./state";
-import { mountGameGrid, mountDashboard, mountFilters, mountModal } from "./ui";
+import { mountGameGrid, mountDashboard, mountFilters, mountModal, mountSettingsModal, openSettings } from "./ui";
 import {
   exportCollectionToCSV,
   createBackup,
@@ -60,7 +60,8 @@ async function init(): Promise<void> {
       mountDashboard("#dashboardGrid"),
       mountGameGrid("#gameGrid"),
       mountFilters("#filtersSidebar"),
-      mountModal("#gameModal")
+      mountModal("#gameModal"),
+      mountSettingsModal()
     );
 
     // Load game data
@@ -215,8 +216,7 @@ async function handleShare(): Promise<void> {
  * Handle settings action
  */
 function handleSettings(): void {
-  // TODO: Open settings modal
-  showStatus("Settings coming soon!", "info");
+  openSettings();
 }
 
 /**

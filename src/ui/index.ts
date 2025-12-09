@@ -13,3 +13,4 @@ export { mountGameGrid } from "./game-grid";
 export { mountDashboard } from "./dashboard";
 export { mountFilters } from "./filters";
 export { mountModal } from "./modal";
+export { mountSettingsModal, openSettings, closeSettings } from "./settings-modal";

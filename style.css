@@ -17,6 +17,7 @@
 @import url("style/components/filters.css");
 @import url("style/components/modal.css");
 @import url("style/components/cards.css");
+@import url("style/components/settings.css");
 
 /* Import Utilities */
 @import url("style/utilities.css");
