@@ -1225,6 +1225,291 @@ describe("data/aggregates", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// data/guides tests
+// ─────────────────────────────────────────────────────────────────────────────
+import {
+  getGuideDirectory,
+  getReferenceGuideUrl,
+  getCollectingGuideUrl,
+  hasGuides,
+  getGuideDisplayName,
+} from "../app/data/guides.js";
+
+describe("data/guides", () => {
+  describe("getGuideDirectory", () => {
+    it("returns directory for valid Nintendo platforms", () => {
+      expect(getGuideDirectory("nes")).toBe("nes");
+      expect(getGuideDirectory("NES")).toBe("nes");
+      expect(getGuideDirectory("famicom")).toBe("nes");
+      expect(getGuideDirectory("Nintendo Entertainment System")).toBe("nes");
+      expect(getGuideDirectory("snes")).toBe("snes");
+      expect(getGuideDirectory("SNES")).toBe("snes");
+      expect(getGuideDirectory("Super Nintendo")).toBe("snes");
+      expect(getGuideDirectory("Super Famicom")).toBe("snes");
+      expect(getGuideDirectory("n64")).toBe("n64");
+      expect(getGuideDirectory("N64")).toBe("n64");
+      expect(getGuideDirectory("Nintendo 64")).toBe("n64");
+      expect(getGuideDirectory("gamecube")).toBe("gamecube");
+      expect(getGuideDirectory("GameCube")).toBe("gamecube");
+      expect(getGuideDirectory("GCN")).toBe("gamecube");
+      expect(getGuideDirectory("wii")).toBe("wii");
+      expect(getGuideDirectory("Wii")).toBe("wii");
+    });
+
+    it("returns directory for Game Boy variants", () => {
+      expect(getGuideDirectory("gb")).toBe("gameboy");
+      expect(getGuideDirectory("GB")).toBe("gameboy");
+      expect(getGuideDirectory("gbc")).toBe("gameboy");
+      expect(getGuideDirectory("GBC")).toBe("gameboy");
+      expect(getGuideDirectory("gba")).toBe("gameboy");
+      expect(getGuideDirectory("GBA")).toBe("gameboy");
+      expect(getGuideDirectory("Game Boy")).toBe("gameboy");
+      expect(getGuideDirectory("Game Boy Color")).toBe("gameboy");
+      expect(getGuideDirectory("Game Boy Advance")).toBe("gameboy");
+    });
+
+    it("returns directory for valid Sega platforms", () => {
+      expect(getGuideDirectory("genesis")).toBe("genesis");
+      expect(getGuideDirectory("Genesis")).toBe("genesis");
+      expect(getGuideDirectory("Mega Drive")).toBe("genesis");
+      expect(getGuideDirectory("Sega Genesis")).toBe("genesis");
+      expect(getGuideDirectory("saturn")).toBe("saturn");
+      expect(getGuideDirectory("Saturn")).toBe("saturn");
+      expect(getGuideDirectory("Sega Saturn")).toBe("saturn");
+      expect(getGuideDirectory("dreamcast")).toBe("dreamcast");
+      expect(getGuideDirectory("Dreamcast")).toBe("dreamcast");
+      expect(getGuideDirectory("Sega Dreamcast")).toBe("dreamcast");
+      expect(getGuideDirectory("master system")).toBe("mastersystem");
+      expect(getGuideDirectory("Master System")).toBe("mastersystem");
+      expect(getGuideDirectory("Sega Master System")).toBe("mastersystem");
+      expect(getGuideDirectory("sms")).toBe("mastersystem");
+      expect(getGuideDirectory("SMS")).toBe("mastersystem");
+    });
+
+    it("returns directory for valid Sony platforms", () => {
+      expect(getGuideDirectory("ps1")).toBe("ps1");
+      expect(getGuideDirectory("PS1")).toBe("ps1");
+      expect(getGuideDirectory("psx")).toBe("ps1");
+      expect(getGuideDirectory("PSX")).toBe("ps1");
+      expect(getGuideDirectory("playstation")).toBe("ps1");
+      expect(getGuideDirectory("PlayStation")).toBe("ps1");
+      expect(getGuideDirectory("PlayStation 1")).toBe("ps1");
+      expect(getGuideDirectory("ps2")).toBe("ps2");
+      expect(getGuideDirectory("PS2")).toBe("ps2");
+      expect(getGuideDirectory("PlayStation 2")).toBe("ps2");
+      expect(getGuideDirectory("psp")).toBe("psp");
+      expect(getGuideDirectory("PSP")).toBe("psp");
+      expect(getGuideDirectory("PlayStation Portable")).toBe("psp");
+    });
+
+    it("returns directory for other platforms", () => {
+      expect(getGuideDirectory("turbografx-16")).toBe("turbografx");
+      expect(getGuideDirectory("TurboGrafx-16")).toBe("turbografx");
+      expect(getGuideDirectory("PC Engine")).toBe("turbografx");
+      expect(getGuideDirectory("tg16")).toBe("turbografx");
+      expect(getGuideDirectory("neo geo")).toBe("neogeo");
+      expect(getGuideDirectory("Neo Geo")).toBe("neogeo");
+      expect(getGuideDirectory("neo-geo")).toBe("neogeo");
+      expect(getGuideDirectory("neogeo")).toBe("neogeo");
+      expect(getGuideDirectory("aes")).toBe("neogeo");
+      expect(getGuideDirectory("AES")).toBe("neogeo");
+      expect(getGuideDirectory("mvs")).toBe("neogeo");
+      expect(getGuideDirectory("MVS")).toBe("neogeo");
+      expect(getGuideDirectory("atari")).toBe("atari");
+      expect(getGuideDirectory("Atari")).toBe("atari");
+      expect(getGuideDirectory("atari 2600")).toBe("atari");
+      expect(getGuideDirectory("Atari 2600")).toBe("atari");
+      expect(getGuideDirectory("atari 7800")).toBe("atari");
+      expect(getGuideDirectory("Atari 7800")).toBe("atari");
+    });
+
+    it("returns null for unknown platforms", () => {
+      expect(getGuideDirectory("xbox")).toBeNull();
+      expect(getGuideDirectory("Xbox")).toBeNull();
+      expect(getGuideDirectory("ps3")).toBeNull();
+      expect(getGuideDirectory("3ds")).toBeNull();
+      expect(getGuideDirectory("switch")).toBeNull();
+      expect(getGuideDirectory("unknown")).toBeNull();
+      expect(getGuideDirectory("random text")).toBeNull();
+    });
+
+    it("handles invalid input gracefully", () => {
+      expect(getGuideDirectory(null)).toBeNull();
+      expect(getGuideDirectory(undefined)).toBeNull();
+      expect(getGuideDirectory("")).toBeNull();
+      expect(getGuideDirectory(123)).toBeNull();
+      expect(getGuideDirectory({})).toBeNull();
+      expect(getGuideDirectory([])).toBeNull();
+    });
+
+    it("handles whitespace-padded input", () => {
+      expect(getGuideDirectory("  nes  ")).toBe("nes");
+      expect(getGuideDirectory("  SNES  ")).toBe("snes");
+      expect(getGuideDirectory("\tps1\t")).toBe("ps1");
+    });
+  });
+
+  describe("getReferenceGuideUrl", () => {
+    it("returns URL for known platforms", () => {
+      expect(getReferenceGuideUrl("nes")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/nes/reference.md"
+      );
+      expect(getReferenceGuideUrl("snes")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/snes/reference.md"
+      );
+      expect(getReferenceGuideUrl("ps2")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/ps2/reference.md"
+      );
+      expect(getReferenceGuideUrl("genesis")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/genesis/reference.md"
+      );
+    });
+
+    it("returns URL for platform aliases", () => {
+      expect(getReferenceGuideUrl("Super Nintendo")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/snes/reference.md"
+      );
+      expect(getReferenceGuideUrl("PlayStation 2")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/ps2/reference.md"
+      );
+      expect(getReferenceGuideUrl("Mega Drive")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/genesis/reference.md"
+      );
+    });
+
+    it("returns null for unknown platforms", () => {
+      expect(getReferenceGuideUrl("xbox")).toBeNull();
+      expect(getReferenceGuideUrl("unknown")).toBeNull();
+      expect(getReferenceGuideUrl(null)).toBeNull();
+      expect(getReferenceGuideUrl("")).toBeNull();
+    });
+  });
+
+  describe("getCollectingGuideUrl", () => {
+    it("returns URL for known platforms", () => {
+      expect(getCollectingGuideUrl("nes")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/nes/collecting-guide.md"
+      );
+      expect(getCollectingGuideUrl("snes")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/snes/collecting-guide.md"
+      );
+      expect(getCollectingGuideUrl("dreamcast")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/dreamcast/collecting-guide.md"
+      );
+    });
+
+    it("returns URL for platform aliases", () => {
+      expect(getCollectingGuideUrl("Sega Dreamcast")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/dreamcast/collecting-guide.md"
+      );
+      expect(getCollectingGuideUrl("Nintendo 64")).toBe(
+        "https://github.com/sandgraal/retro-games/blob/main/docs/guides/consoles/n64/collecting-guide.md"
+      );
+    });
+
+    it("returns null for unknown platforms", () => {
+      expect(getCollectingGuideUrl("xbox")).toBeNull();
+      expect(getCollectingGuideUrl(null)).toBeNull();
+      expect(getCollectingGuideUrl("")).toBeNull();
+    });
+  });
+
+  describe("hasGuides", () => {
+    it("returns true for platforms with guides", () => {
+      expect(hasGuides("nes")).toBe(true);
+      expect(hasGuides("NES")).toBe(true);
+      expect(hasGuides("snes")).toBe(true);
+      expect(hasGuides("ps1")).toBe(true);
+      expect(hasGuides("ps2")).toBe(true);
+      expect(hasGuides("genesis")).toBe(true);
+      expect(hasGuides("dreamcast")).toBe(true);
+      expect(hasGuides("saturn")).toBe(true);
+      expect(hasGuides("n64")).toBe(true);
+      expect(hasGuides("gamecube")).toBe(true);
+      expect(hasGuides("wii")).toBe(true);
+      expect(hasGuides("psp")).toBe(true);
+      expect(hasGuides("gb")).toBe(true);
+      expect(hasGuides("gba")).toBe(true);
+      expect(hasGuides("turbografx-16")).toBe(true);
+      expect(hasGuides("neo geo")).toBe(true);
+      expect(hasGuides("atari")).toBe(true);
+    });
+
+    it("returns true for platform aliases", () => {
+      expect(hasGuides("Super Nintendo")).toBe(true);
+      expect(hasGuides("PlayStation 2")).toBe(true);
+      expect(hasGuides("Mega Drive")).toBe(true);
+      expect(hasGuides("Sega Saturn")).toBe(true);
+      expect(hasGuides("Game Boy Advance")).toBe(true);
+    });
+
+    it("returns false for platforms without guides", () => {
+      expect(hasGuides("xbox")).toBe(false);
+      expect(hasGuides("ps3")).toBe(false);
+      expect(hasGuides("3ds")).toBe(false);
+      expect(hasGuides("switch")).toBe(false);
+      expect(hasGuides("unknown")).toBe(false);
+    });
+
+    it("returns false for invalid input", () => {
+      expect(hasGuides(null)).toBe(false);
+      expect(hasGuides(undefined)).toBe(false);
+      expect(hasGuides("")).toBe(false);
+      expect(hasGuides(123)).toBe(false);
+    });
+  });
+
+  describe("getGuideDisplayName", () => {
+    it("returns display name for known platforms", () => {
+      expect(getGuideDisplayName("nes")).toBe("NES");
+      expect(getGuideDisplayName("snes")).toBe("SNES");
+      expect(getGuideDisplayName("n64")).toBe("N64");
+      expect(getGuideDisplayName("gamecube")).toBe("GameCube");
+      expect(getGuideDisplayName("wii")).toBe("Wii");
+      expect(getGuideDisplayName("gb")).toBe("Game Boy");
+      expect(getGuideDisplayName("gba")).toBe("Game Boy");
+      expect(getGuideDisplayName("genesis")).toBe("Genesis");
+      expect(getGuideDisplayName("saturn")).toBe("Saturn");
+      expect(getGuideDisplayName("dreamcast")).toBe("Dreamcast");
+      expect(getGuideDisplayName("master system")).toBe("Master System");
+      expect(getGuideDisplayName("ps1")).toBe("PS1");
+      expect(getGuideDisplayName("ps2")).toBe("PS2");
+      expect(getGuideDisplayName("psp")).toBe("PSP");
+      expect(getGuideDisplayName("turbografx-16")).toBe("TurboGrafx-16");
+      expect(getGuideDisplayName("neo geo")).toBe("Neo Geo");
+      expect(getGuideDisplayName("atari")).toBe("Atari");
+    });
+
+    it("handles case-insensitive lookups", () => {
+      expect(getGuideDisplayName("NES")).toBe("NES");
+      expect(getGuideDisplayName("SNES")).toBe("SNES");
+      expect(getGuideDisplayName("PS2")).toBe("PS2");
+      expect(getGuideDisplayName("Genesis")).toBe("Genesis");
+    });
+
+    it("works with platform aliases", () => {
+      expect(getGuideDisplayName("Super Nintendo")).toBe("SNES");
+      expect(getGuideDisplayName("PlayStation 2")).toBe("PS2");
+      expect(getGuideDisplayName("Mega Drive")).toBe("Genesis");
+      expect(getGuideDisplayName("Sega Saturn")).toBe("Saturn");
+      expect(getGuideDisplayName("Game Boy Advance")).toBe("Game Boy");
+    });
+
+    it("returns empty string for unknown platforms", () => {
+      expect(getGuideDisplayName("xbox")).toBe("");
+      expect(getGuideDisplayName("unknown")).toBe("");
+    });
+
+    it("returns empty string for invalid input", () => {
+      expect(getGuideDisplayName(null)).toBe("");
+      expect(getGuideDisplayName(undefined)).toBe("");
+      expect(getGuideDisplayName("")).toBe("");
+      expect(getGuideDisplayName(123)).toBe("");
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // data/pricing tests
 // ─────────────────────────────────────────────────────────────────────────────
 import {
