@@ -47,14 +47,14 @@ The \`archive/legacy-app/\` directory contains the original vanilla JavaScript i
 
 ## Test Coverage
 
-**Total: 193 unit tests + 14 E2E tests = 207 tests**
+**Total: 200 unit tests + 14 E2E tests = 214 tests**
 
 | Test File                              | Tests | Purpose                    |
 | -------------------------------------- | ----- | -------------------------- |
 | \`tests/core.test.ts\`                 | 26    | Signals, keys, types       |
 | \`tests/state.test.ts\`                | 27    | Store, collection, filters |
 | \`tests/features.test.ts\`             | 12    | Export, backup, sharing    |
-| \`tests/format.test.ts\`               | 29    | Formatting utilities       |
+| `tests/format.test.ts`                 | 36    | Formatting utilities       |
 | \`tests/fetch-covers.test.js\`         | 48    | Cover fetching script      |
 | \`tests/audit-missing-covers.test.js\` | 26    | Cover audit script         |
 | \`tests/archive-media.test.js\`        | 14    | Media archival script      |

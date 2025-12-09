@@ -11,7 +11,7 @@ _Last updated: December 2025_
 | Application   | ⭐ Feature-complete & production-ready |
 | Language      | **TypeScript** (strict mode)           |
 | Build         | **Vite 7.x**                           |
-| Tests         | ✅ **207 total** (193 unit + 14 E2E)   |
+| Tests         | ✅ **214 total** (200 unit + 14 E2E)   |
 | CI/CD         | ✅ Automated (lint, test, security)    |
 | Documentation | ✅ Current and synchronized            |
 
@@ -103,7 +103,7 @@ CSS uses **kebab-case** class names (not BEM):
 | \`tests/core.test.ts\`                 | 26    | Signals, keys, types    |
 | \`tests/state.test.ts\`                | 27    | Store, collection       |
 | \`tests/features.test.ts\`             | 12    | Export, backup, sharing |
-| \`tests/format.test.ts\`               | 29    | Formatting utilities    |
+| `tests/format.test.ts`                 | 36    | Formatting utilities    |
 | \`tests/fetch-covers.test.js\`         | 48    | Cover fetching script   |
 | \`tests/audit-missing-covers.test.js\` | 26    | Cover audit script      |
 | \`tests/archive-media.test.js\`        | 14    | Media archival script   |

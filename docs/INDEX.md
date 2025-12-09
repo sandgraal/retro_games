@@ -98,14 +98,14 @@ This project maintains comprehensive documentation for developers, contributors,
   - `core.test.ts` - Signals, keys, types (26 tests)
   - `state.test.ts` - Store, collection, filters (27 tests)
   - `features.test.ts` - Export, backup, sharing (12 tests)
-  - `format.test.ts` - Formatting utilities (29 tests)
+  - `format.test.ts` - Formatting utilities (36 tests)
   - `fetch-covers.test.js` - Cover fetching script (48 tests)
   - `audit-missing-covers.test.js` - Cover audit script (26 tests)
   - `archive-media.test.js` - Media archival script (14 tests)
   - `build-css.test.js` - CSS bundler script (11 tests)
   - `e2e/*.spec.js` - Playwright E2E tests (14 tests)
 
-**Total: 193 unit tests + 14 E2E tests = 207 tests**
+**Total: 200 unit tests + 14 E2E tests = 214 tests**
 
 ## Context & History
 
