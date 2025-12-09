@@ -52,6 +52,7 @@ export default [
       "covers/",
       "dist/",
       "archive/",
+      "**/*.complex.ts", // Complex v3 files under development
     ],
   },
   nodeScriptsConfig,
