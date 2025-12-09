@@ -16,7 +16,14 @@ import {
   setGameNotes,
   loadPersistedState,
 } from "./state";
-import { mountGameGrid, mountDashboard, mountFilters, mountModal, mountSettingsModal, openSettings } from "./ui";
+import {
+  mountGameGrid,
+  mountDashboard,
+  mountFilters,
+  mountModal,
+  mountSettingsModal,
+  openSettings,
+} from "./ui";
 import {
   exportCollectionToCSV,
   createBackup,
@@ -241,7 +248,10 @@ function handleBackup(): void {
  */
 function handleContribute(): void {
   // Open contribution guide or form
-  window.open("https://github.com/sandgraal/retro-games/blob/main/CONTRIBUTING.md", "_blank");
+  window.open(
+    "https://github.com/sandgraal/retro-games/blob/main/CONTRIBUTING.md",
+    "_blank"
+  );
 }
 
 /**

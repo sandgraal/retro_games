@@ -14,7 +14,7 @@
       rgba(10, 12, 18, 0.6) 60%,
       rgba(10, 12, 18, 0.7) 100%
     ),
-    url("../images/ledger-dragon.png");
+    url("../images/ledger-dragon.jpg");
   background-size: cover;
   background-position: center;
   margin-bottom: var(--spacing-xl);
