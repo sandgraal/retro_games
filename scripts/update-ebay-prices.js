@@ -1,8 +1,17 @@
 #!/usr/bin/env node
-const fs = require("fs");
 const path = require("path");
-const { parse } = require("csv-parse/sync");
-const dotenv = require("dotenv");
+const {
+  loadEnv,
+  ensureFileExists,
+  buildGameKey,
+  resolveRegionCodes,
+  readGames,
+  readCache,
+  writeCache,
+  hoursSince,
+  ensureFetch,
+  normalizeRefreshHours,
+} = require("./shared/ingestion.cjs");
 
 const ROOT = path.resolve(__dirname, "..");
 const CSV_PATH = path.join(ROOT, "games.csv");
@@ -13,10 +22,11 @@ const REQUEST_DELAY_MS = 850;
 const SOURCE = "ebay";
 const EBAY_ENDPOINT = "https://svcs.ebay.com/services/search/FindingService/v1";
 
-function loadEnv() {
-  const envFile = path.join(ROOT, ".env");
-  if (fs.existsSync(envFile)) {
-    dotenv.config({ path: envFile });
+class SkipEbayPriceError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "SkipEbayPriceError";
+    this.isSkip = true;
   }
 }
 
@@ -47,28 +57,6 @@ function parseArgs(argv) {
   return options;
 }
 
-function ensureFileExists(filePath, friendlyName) {
-  if (!fs.existsSync(filePath)) {
-    console.error(`❌ Missing ${friendlyName}: ${filePath}`);
-    process.exit(1);
-  }
-}
-
-function buildGameKey(name, platform) {
-  if (!name || !platform) return null;
-  return `${name}___${platform}`;
-}
-
-function resolveRegionCodes(raw) {
-  if (!raw) return [];
-  const normalized = raw.toString().toLowerCase();
-  const codes = new Set();
-  if (/ntsc|usa|north america|canada/.test(normalized)) codes.add("NTSC");
-  if (/pal|europe|uk|australia/.test(normalized)) codes.add("PAL");
-  if (/jpn|japan/.test(normalized)) codes.add("JPN");
-  return Array.from(codes);
-}
-
 function resolvePrimaryRegion(game) {
   if (Array.isArray(game.regionCodes) && game.regionCodes.length) {
     if (game.regionCodes.includes("NTSC")) return "NTSC";
@@ -76,55 +64,6 @@ function resolvePrimaryRegion(game) {
     if (game.regionCodes.includes("JPN")) return "JPN";
   }
   return "NTSC";
-}
-
-function readGames(filter) {
-  ensureFileExists(CSV_PATH, "games.csv");
-  const csvContent = fs.readFileSync(CSV_PATH, "utf8");
-  const records = parse(csvContent, { columns: true, skip_empty_lines: true });
-  const unique = new Map();
-  records.forEach((row) => {
-    const name = row["Game Name"]?.trim();
-    const platform = row["Platform"]?.trim();
-    const key = buildGameKey(name, platform);
-    if (!key || unique.has(key)) return;
-    if (filter && !key.toLowerCase().includes(filter)) return;
-    unique.set(key, {
-      key,
-      name,
-      platform,
-      regionRaw: row["Region"]?.trim() || "",
-      regionCodes: resolveRegionCodes(row["Region"]?.trim()),
-    });
-  });
-  return Array.from(unique.values());
-}
-
-function readCache() {
-  if (!fs.existsSync(CACHE_PATH)) return {};
-  try {
-    return JSON.parse(fs.readFileSync(CACHE_PATH, "utf8"));
-  } catch {
-    return {};
-  }
-}
-
-function writeCache(content) {
-  fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
-  fs.writeFileSync(CACHE_PATH, JSON.stringify(content, null, 2));
-}
-
-function hoursSince(timestamp) {
-  if (!timestamp) return Infinity;
-  const diff = Date.now() - new Date(timestamp).getTime();
-  return diff / (1000 * 60 * 60);
-}
-
-async function ensureFetch() {
-  if (typeof fetch === "function") return fetch;
-  const { default: fetchImpl } = await import("node-fetch");
-  global.fetch = fetchImpl;
-  return fetchImpl;
 }
 
 function buildSearchQuery(game) {
@@ -185,7 +124,9 @@ async function fetchEbayPrice(game, appId, globalId) {
     .filter((value) => Number.isFinite(value));
   const selected = median(cents);
   if (!Number.isFinite(selected)) {
-    throw new Error("No USD sold prices found");
+    throw new SkipEbayPriceError(
+      `No sold prices in USD found (GLOBAL-ID=${globalId}); skipping`
+    );
   }
   return { price_cents: selected, sampleSize: cents.length };
 }
@@ -328,7 +269,7 @@ function buildSnapshot(game, cents, sampleSize) {
 }
 
 async function main() {
-  loadEnv();
+  loadEnv(ROOT);
   const options = parseArgs(process.argv.slice(2));
   ensureFileExists(CSV_PATH, "games.csv");
   const ebayAppId = (process.env.EBAY_APP_ID || "").trim();
@@ -345,13 +286,13 @@ async function main() {
   const variantEndpoint = supabaseUrl
     ? `${supabaseUrl.replace(/\/$/, "")}/rest/v1/game_variant_prices`
     : null;
-  const refreshHours = Number.parseInt(
-    process.env.EBAY_REFRESH_HOURS || DEFAULT_REFRESH_HOURS,
-    10
+  const refreshHours = normalizeRefreshHours(
+    process.env.EBAY_REFRESH_HOURS,
+    DEFAULT_REFRESH_HOURS
   );
 
-  const games = readGames(options.filter);
-  const cache = readCache();
+  const games = readGames(CSV_PATH, options.filter);
+  const cache = readCache(CACHE_PATH);
   const targets = selectGames(games, cache, options, refreshHours);
   if (!targets.length) {
     console.log("No games selected for refresh.");
@@ -363,6 +304,7 @@ async function main() {
   );
   let success = 0;
   let failures = 0;
+  let skipped = 0;
   for (const game of targets) {
     try {
       const { price_cents: cents, sampleSize } = await fetchEbayPrice(
@@ -381,16 +323,21 @@ async function main() {
         `✅ ${game.name} [${game.platform}] – Median sold $${(cents / 100).toFixed(2)} (${sampleSize})`
       );
     } catch (err) {
-      failures += 1;
-      console.warn(`⚠️  ${game.name} [${game.platform}] failed: ${err.message}`);
+      if (err instanceof SkipEbayPriceError || err?.isSkip) {
+        skipped += 1;
+        console.info(`ℹ️  ${game.name} [${game.platform}] skipped: ${err.message}`);
+      } else {
+        failures += 1;
+        console.warn(`⚠️  ${game.name} [${game.platform}] failed: ${err.message}`);
+      }
     }
     await sleep(REQUEST_DELAY_MS);
   }
 
   if (!options.dryRun) {
-    writeCache(cache);
+    writeCache(CACHE_PATH, cache);
   }
-  console.log(`Done. ${success} succeeded, ${failures} failed.`);
+  console.log(`Done. ${success} succeeded, ${failures} failed, ${skipped} skipped.`);
 }
 
 main().catch((err) => {

@@ -1,9 +1,21 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { parse } from "csv-parse/sync";
-import dotenv from "dotenv";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const {
+  loadEnv,
+  ensureFileExists,
+  buildGameKey,
+  resolveRegionCodes,
+  readGames,
+  readCache,
+  writeCache,
+  hoursSince,
+  ensureFetch,
+} = require("./shared/ingestion.cjs");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,13 +34,6 @@ const REGION_FACTORS = {
   PAL: { loose: 1.12, cib: 1.1, new: 1.15 },
   JPN: { loose: 0.85, cib: 0.88, new: 0.92 },
 };
-
-function loadEnv() {
-  const envFile = path.join(ROOT, ".env");
-  if (fs.existsSync(envFile)) {
-    dotenv.config({ path: envFile });
-  }
-}
 
 function parseArgs(argv) {
   const options = {
@@ -57,13 +62,6 @@ function parseArgs(argv) {
   return options;
 }
 
-function ensureFileExists(filePath, friendlyName) {
-  if (!fs.existsSync(filePath)) {
-    console.error(`❌ Missing ${friendlyName}: ${filePath}`);
-    process.exit(1);
-  }
-}
-
 function readConsoleMap() {
   try {
     const raw = fs.readFileSync(CONSOLE_MAP_PATH, "utf8");
@@ -82,21 +80,6 @@ function readConsoleMap() {
   }
 }
 
-function buildGameKey(name, platform) {
-  if (!name || !platform) return null;
-  return `${name}___${platform}`;
-}
-
-function resolveRegionCodes(raw) {
-  if (!raw) return [];
-  const normalized = raw.toString().toLowerCase();
-  const codes = new Set();
-  if (/ntsc|usa|north america|canada/.test(normalized)) codes.add("NTSC");
-  if (/pal|europe|uk|australia/.test(normalized)) codes.add("PAL");
-  if (/jpn|japan/.test(normalized)) codes.add("JPN");
-  return Array.from(codes);
-}
-
 function resolvePrimaryRegion(game) {
   if (Array.isArray(game.regionCodes) && game.regionCodes.length) {
     if (game.regionCodes.includes("NTSC")) return "NTSC";
@@ -106,59 +89,10 @@ function resolvePrimaryRegion(game) {
   return "NTSC";
 }
 
-function readGames(filter) {
-  ensureFileExists(CSV_PATH, "games.csv");
-  const csvContent = fs.readFileSync(CSV_PATH, "utf8");
-  const records = parse(csvContent, { columns: true, skip_empty_lines: true });
-  const unique = new Map();
-  records.forEach((row) => {
-    const name = row["Game Name"]?.trim();
-    const platform = row["Platform"]?.trim();
-    const key = buildGameKey(name, platform);
-    if (!key || unique.has(key)) return;
-    if (filter && !key.toLowerCase().includes(filter)) return;
-    unique.set(key, {
-      key,
-      name,
-      platform,
-      regionRaw: row["Region"]?.trim() || "",
-      regionCodes: resolveRegionCodes(row["Region"]?.trim()),
-    });
-  });
-  return Array.from(unique.values());
-}
-
-function readCache() {
-  if (!fs.existsSync(CACHE_PATH)) return {};
-  try {
-    return JSON.parse(fs.readFileSync(CACHE_PATH, "utf8"));
-  } catch {
-    return {};
-  }
-}
-
-function writeCache(content) {
-  fs.mkdirSync(path.dirname(CACHE_PATH), { recursive: true });
-  fs.writeFileSync(CACHE_PATH, JSON.stringify(content, null, 2));
-}
-
 function resolveConsole(platform, map) {
   if (!platform) return "";
   const upper = platform.toUpperCase();
   return map[upper] || platform;
-}
-
-function hoursSince(timestamp) {
-  if (!timestamp) return Infinity;
-  const diff = Date.now() - new Date(timestamp).getTime();
-  return diff / (1000 * 60 * 60);
-}
-
-async function ensureFetch() {
-  if (typeof fetch === "function") return fetch;
-  const { default: fetchImpl } = await import("node-fetch");
-  global.fetch = fetchImpl;
-  return fetchImpl;
 }
 
 async function fetchProduct({ name, platform }, queryConsole, baseUrl, token) {
@@ -323,7 +257,7 @@ async function sleep(ms) {
 }
 
 async function main() {
-  loadEnv();
+  loadEnv(ROOT);
   const options = parseArgs(process.argv.slice(2));
   const priceToken = (process.env.PRICECHARTING_TOKEN || "").trim();
   if (!priceToken) {
@@ -341,8 +275,8 @@ async function main() {
     ? `${supabaseUrl.replace(/\/$/, "")}/rest/v1/game_variant_prices`
     : null;
   const consoleMap = readConsoleMap();
-  const games = readGames(options.filter);
-  const cache = readCache();
+  const games = readGames(CSV_PATH, options.filter);
+  const cache = readCache(CACHE_PATH);
   const refreshHours = Number.parseInt(
     process.env.PRICECHARTING_REFRESH_HOURS || DEFAULT_REFRESH_HOURS,
     10
@@ -385,7 +319,7 @@ async function main() {
   }
 
   if (!options.dryRun) {
-    writeCache(cache);
+    writeCache(CACHE_PATH, cache);
   }
   console.log(`Done. ${success} succeeded, ${failures} failed.`);
 }
