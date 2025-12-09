@@ -44,7 +44,7 @@ Game records use these columns (track these constants in `app/main.js`):
 
 ## File Responsibilities
 
-**Module Architecture (December 2025):** 29 ES6 modules across 6 directories with 954 unit tests + 14 E2E tests (87% statement coverage).
+**Module Architecture (December 2025):** 30 ES6 modules across 6 directories with 991 unit tests + 14 E2E tests (87% statement coverage).
 
 ### Core Files
 
@@ -91,7 +91,7 @@ Game records use these columns (track these constants in `app/main.js`):
 | `app/state/collection.js`  | 190   | Owned/wishlist state    | `STORAGE_KEY`, status constants (`STATUS_OWNED`, `STATUS_WISHLIST`, etc.), collection helpers |
 | `app/state/cache.js`       | 182   | Cover URL caching       | `getCoverCacheStorage()`, `FALLBACK_COVER_CACHE_KEY`, cache TTL helpers                       |
 
-### Data Modules (`app/data/` - 5 modules, 911 lines)
+### Data Modules (`app/data/` - 6 modules, 1,064 lines)
 
 | File                     | Lines | Purpose                   | Key Exports                                                                                  |
 | ------------------------ | ----- | ------------------------- | -------------------------------------------------------------------------------------------- |
@@ -99,6 +99,7 @@ Game records use these columns (track these constants in `app/main.js`):
 | `app/data/loader.js`     | 184   | Data loading & processing | `applySupabaseFilters()`, `computeRegionCodes()`, `normalizeIncomingRows()`, `buildRowKey()` |
 | `app/data/supabase.js`   | 170   | Supabase client config    | `SUPABASE_URL`, `SUPABASE_ANON_KEY`, table/bucket constants                                  |
 | `app/data/aggregates.js` | 156   | Stats aggregates          | `computeLocalGenreAggregates()`, `computeLocalTimelineSeries()`, RPC response parsers        |
+| `app/data/guides.js`     | 153   | Collector guide URLs      | `getGuideDirectory()`, `getReferenceGuideUrl()`, `getCollectingGuideUrl()`, `hasGuides()`    |
 | `app/data/storage.js`    | 138   | Storage URL helpers       | `normalizeImageUrl()`, `buildStoragePublicUrl()`, `normalizeCoverUrl()`                      |
 
 ### Utility Modules (`app/utils/` - 4 modules, 262 lines)
