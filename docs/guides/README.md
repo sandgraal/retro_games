@@ -6,6 +6,7 @@ This directory contains markdown-based collecting guides and console reference p
 
 ### Console Reference Pages
 
+- [Atari Reference Guide](./consoles/atari/reference.md) - Classic 2600/7800 documentation
 - [NES Reference Guide](./consoles/nes/reference.md) - Technical specs, variants, library highlights
 - [SNES Reference Guide](./consoles/snes/reference.md) - 16-bit Nintendo documentation
 - [N64 Reference Guide](./consoles/n64/reference.md) - 64-bit era technical documentation
@@ -24,6 +25,7 @@ This directory contains markdown-based collecting guides and console reference p
 
 ### Console Collecting Guides
 
+- [Atari Collecting Guide](./consoles/atari/collecting-guide.md) - Classic 2600/7800 strategy
 - [Dreamcast Collecting Guide](./consoles/dreamcast/collecting-guide.md) - Sega's final console
 - [Game Boy Family Collecting Guide](./consoles/gameboy/collecting-guide.md) - GB, GBC, GBA strategy
 - [GameCube Collecting Guide](./consoles/gamecube/collecting-guide.md) - Nintendo's compact powerhouse

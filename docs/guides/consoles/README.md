@@ -215,16 +215,6 @@ Sony's revolutionary handheld that brought console-quality gaming on the go.
 
 ---
 
-## Coming Soon
-
-We're actively expanding our console coverage. Upcoming guides:
-
-### Other
-
-- [ ] Atari 2600/7800 Reference
-
----
-
 ## Other Consoles
 
 ### TurboGrafx-16 / PC Engine
@@ -250,6 +240,19 @@ SNK's legendary arcade-at-home platform with premium collecting prestige.
 | [Neo Geo Collecting Guide](./neogeo/collecting-guide.md) | Complete collecting strategy       |
 
 **Quick Stats:** 1990-2004 • 157 games • Fighting game paradise
+
+---
+
+### Atari 2600 / 7800
+
+The console that started it all and its enhanced successor.
+
+| Resource                                              | Description                        |
+| ----------------------------------------------------- | ---------------------------------- |
+| [Atari Reference Guide](./atari/reference.md)         | Technical specs, variants, library |
+| [Atari Collecting Guide](./atari/collecting-guide.md) | Complete collecting strategy       |
+
+**Quick Stats:** 1977-1992 • 30M+ units (2600) • 500+ games
 
 ---
 
