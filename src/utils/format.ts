@@ -12,8 +12,7 @@ function getCurrencyFormatter(
 ): Intl.NumberFormat | null {
   const key = `${minFractionDigits}-${maxFractionDigits}`;
   if (!currencyFormatters.has(key)) {
-    currencyFormatters.set(
-      key,
+    const formatter =
       typeof Intl !== "undefined"
         ? new Intl.NumberFormat("en-US", {
             style: "currency",
@@ -21,8 +20,10 @@ function getCurrencyFormatter(
             minimumFractionDigits: minFractionDigits,
             maximumFractionDigits: maxFractionDigits,
           })
-        : null
-    );
+        : null;
+    if (formatter) {
+      currencyFormatters.set(key, formatter);
+    }
   }
   return currencyFormatters.get(key) ?? null;
 }
