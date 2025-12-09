@@ -10,7 +10,7 @@
  */
 
 import { effect, type Computed } from "../core/runtime";
-import type { GameWithKey } from "../core/types.v3";
+import type { GameWithKey } from "../core/types";
 
 // === Types ===
 
