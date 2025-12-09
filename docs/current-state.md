@@ -77,9 +77,10 @@ The \`archive/legacy-app/\` directory contains the original vanilla JavaScript i
 
 ### Technical Debt
 
-- Documentation referenced outdated \`app/\` directory structure (now \`src/\`)
-- Some v3 experimental files in \`src/\` that should be cleaned up
-- CSS uses kebab-case while some code initially used BEM (now aligned)
+- ✅ ~~Documentation referenced outdated `app/` directory structure~~ (fixed December 2025)
+- ✅ ~~V3 experimental files~~ (removed December 2025)
+- ✅ ~~CSS naming inconsistency~~ (aligned to kebab-case)
+- Virtual list could benefit from more tests
 
 ### Data & Security
 
@@ -101,9 +102,9 @@ npm run format # Prettier format
 
 ## Next Steps
 
-1. **Consolidate documentation** - Remove references to legacy \`app/\` structure
-2. **Clean up v3 experimental files** - Remove or finalize \`_.v3._\` files in \`src/\`
-3. **Expand test coverage** - Add more integration tests for UI components
-4. **Media workflow automation** - Improve cover import and archival tooling
+1. **Expand test coverage** - Add integration tests for UI components
+2. **Media workflow automation** - Improve cover import and archival tooling
+3. **User Growth features** - Blocked on analytics/email service decisions (see Phase 3)
+4. **Monetization** - Blocked on business decisions (see Phase 4)
 
-See [\`docs/implementation-plan.md\`](./implementation-plan.md) for comprehensive roadmap.
+See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive roadmap.

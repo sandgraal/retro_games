@@ -13,7 +13,7 @@ _Last updated: December 2025_
 | Build         | **Vite 7.x**                           |
 | Tests         | ✅ **207 total** (193 unit + 14 E2E)   |
 | CI/CD         | ✅ Automated (lint, test, security)    |
-| Documentation | ⚠️ Being updated (was outdated)        |
+| Documentation | ✅ Current and synchronized            |
 
 ## 📚 Required Reading (Priority Order)
 
@@ -92,9 +92,8 @@ CSS uses **kebab-case** class names (not BEM):
 
 ### DON'T
 
-- Modify \`archive/\` directory (legacy reference only)
-- Use \`_.v3._\` files (experimental, may be removed)
-- Commit \`config.js\` with real credentials
+- Modify `archive/` directory (legacy reference only)
+- Commit `config.js` with real credentials
 - Use innerHTML with user data (XSS risk)
 
 ## 🧪 Test Structure
@@ -115,9 +114,9 @@ CSS uses **kebab-case** class names (not BEM):
 
 ### Current Priorities
 
-1. **Documentation cleanup** - Remove outdated references to \`app/\` directory
-2. **V3 file cleanup** - Finalize or remove \`_.v3._\` experimental files
-3. **Additional tests** - Expand integration test coverage
+1. **Expand test coverage** - Add integration tests for UI components
+2. **Media workflow automation** - Improve cover import and archival tooling
+3. **User Growth features** - Blocked on analytics/email service decisions
 
 ### Completed ✅
 
@@ -128,6 +127,8 @@ CSS uses **kebab-case** class names (not BEM):
 - Filters (platform, genre, region, status, search)
 - Export/import (CSV, JSON backup, share codes)
 - All E2E tests passing
+- Documentation synchronized with codebase
+- V3 experimental files cleaned up
 
 ## 📁 Legacy Code Warning
 
