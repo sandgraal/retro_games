@@ -55,6 +55,8 @@ For artwork guidance, see [`docs/image-sourcing.md`](docs/image-sourcing.md) for
 
 Want the Collection Value card and modal price panel to light up with real valuations?
 
+**Option A: PriceCharting API (existing)**
+
 1. Request a token from [PriceCharting](https://www.pricecharting.com/api) and add the following to `.env` (alongside your Supabase values):
 
    ```
@@ -73,7 +75,27 @@ Want the Collection Value card and modal price panel to light up with real valua
 
    Use `--filter "chrono trigger"` for targeted refreshes or `--dry-run` to verify credentials without writing. Snapshots land in the `game_price_snapshots` table (surfaceable via the `game_price_latest` view), and the client automatically consumes them without further configuration.
 
-3. When Supabase or API credentials are unavailable, the UI falls back to `data/sample-price-history.json` so contributors can still see how the experience behaves.
+**Option B: eBay sold listings (free alternative)**
+
+1. Create an [eBay developer application](https://developer.ebay.com/) and add the following to `.env`:
+
+   ```
+   EBAY_APP_ID=your-ebay-app-id
+   EBAY_GLOBAL_ID=EBAY-US
+   SUPABASE_SERVICE_ROLE_KEY=service-role-key
+   ```
+
+   Set `EBAY_GLOBAL_ID` to another marketplace (e.g., `EBAY-GB`) if you want region-specific comps. Adjust `EBAY_REFRESH_HOURS` if you need a different recrawl window (defaults to 24 hours).
+
+2. Run the eBay ingestion helper to compute the median sold price from recent completed listings and write a snapshot per game:
+
+   ```bash
+   npm run prices:update:ebay -- --limit 25
+   ```
+
+   Use `--filter "chrono trigger"` for targeted refreshes or `--dry-run` to validate credentials without writing. Results persist to `game_price_snapshots` (plus regional variants) using the same schema the UI already understands, and the helper keeps a local cache at `data/ebay-price-cache.json`.
+
+When Supabase or API credentials are unavailable, the UI falls back to `data/sample-price-history.json` so contributors can still see how the experience behaves.
 
 ### Automated refresh via GitHub Actions
 

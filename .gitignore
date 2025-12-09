@@ -23,6 +23,7 @@ test-results/
 
 # Price data cache
 data/pricecharting-cache.json
+data/ebay-price-cache.json
 
 # Temporary/backup files from development
 *-new.*
