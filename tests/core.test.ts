@@ -125,6 +125,43 @@ describe("signals", () => {
       expect(cleanup).toHaveBeenCalled();
     });
   });
+
+  describe("batch", () => {
+    it("should defer notifications until batch completes", () => {
+      const a = createSignal(0);
+      const b = createSignal(0);
+      const subscriber = vi.fn();
+
+      a.subscribe(subscriber);
+      b.subscribe(subscriber);
+
+      batch(() => {
+        a.set(1);
+        b.set(2);
+      });
+
+      // Subscriber should be called after batch completes, not during
+      expect(subscriber).toHaveBeenCalledTimes(2);
+    });
+
+    it("should allow nested batches", () => {
+      const signal = createSignal(0);
+      const subscriber = vi.fn();
+      signal.subscribe(subscriber);
+
+      batch(() => {
+        signal.set(1);
+        batch(() => {
+          signal.set(2);
+        });
+        signal.set(3);
+      });
+
+      // All notifications happen after outermost batch
+      expect(subscriber).toHaveBeenCalledTimes(3);
+      expect(signal.get()).toBe(3);
+    });
+  });
 });
 
 describe("keys", () => {

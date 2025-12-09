@@ -23,6 +23,10 @@ export interface ComputedSignal<T> {
 // Track current computation for auto-dependency tracking
 let currentComputation: (() => void) | null = null;
 
+// Batching state
+let batchDepth = 0;
+const pendingNotifications = new Set<() => void>();
+
 /**
  * Create a reactive signal
  */
@@ -44,8 +48,12 @@ export function createSignal<T>(initialValue: T): Signal<T> {
 
     if (!Object.is(value, nextValue)) {
       value = nextValue;
-      // Notify subscribers synchronously for immediate reactivity
-      subscribers.forEach((fn) => fn(value));
+      // Queue or execute notifications
+      if (batchDepth > 0) {
+        subscribers.forEach((fn) => pendingNotifications.add(() => fn(value)));
+      } else {
+        subscribers.forEach((fn) => fn(value));
+      }
     }
   };
 
@@ -141,8 +149,19 @@ export function effect(fn: () => void | (() => void)): Unsubscribe {
 }
 
 /**
- * Batch multiple signal updates into one notification
+ * Batch multiple signal updates into one notification cycle
  */
 export function batch(fn: () => void): void {
-  fn();
+  batchDepth++;
+  try {
+    fn();
+  } finally {
+    batchDepth--;
+    if (batchDepth === 0) {
+      // Execute all pending notifications
+      const notifications = [...pendingNotifications];
+      pendingNotifications.clear();
+      notifications.forEach((notify) => notify());
+    }
+  }
 }
