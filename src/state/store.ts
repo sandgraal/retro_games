@@ -370,6 +370,14 @@ export function resetFilters(): void {
 }
 
 /**
+ * Reset collection (for testing)
+ */
+export function resetCollection(): void {
+  collectionSignal.set(new Map());
+  notesSignal.set(new Map());
+}
+
+/**
  * Toggle platform filter
  */
 export function togglePlatformFilter(platform: string): void {

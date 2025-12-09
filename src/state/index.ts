@@ -35,6 +35,7 @@ export {
   getGameNotes,
   updateFilters,
   resetFilters,
+  resetCollection,
   togglePlatformFilter,
   toggleGenreFilter,
   setSearchQuery,

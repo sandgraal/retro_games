@@ -12,9 +12,19 @@ import {
   setLoading,
   setError,
   setDataSource,
+  setGameStatus,
   loadPersistedState,
 } from "./state";
 import { mountGameGrid, mountDashboard, mountFilters, mountModal } from "./ui";
+import {
+  exportCollectionToCSV,
+  createBackup,
+  createShareCode,
+  parseShareCode,
+  downloadFile,
+  copyToClipboard,
+  getExportStats,
+} from "./features";
 
 /**
  * Register service worker for offline support
@@ -69,6 +79,9 @@ async function init(): Promise<void> {
     if (gamesResult.source === "sample") {
       showStatus("Showing sample dataset. Configure Supabase for cloud sync.", "info");
     }
+
+    // Check for share code in URL
+    checkUrlShareCode();
   } catch (error) {
     console.error("❌ Initialization failed:", error);
     setError(error instanceof Error ? error.message : "Unknown error");
@@ -124,20 +137,141 @@ function setupHeaderActions(): void {
   const shareBtn = document.getElementById("shareBtn");
   const settingsBtn = document.getElementById("settingsBtn");
 
-  exportBtn?.addEventListener("click", () => {
-    // TODO: Implement export
-    console.log("Export clicked");
-  });
+  exportBtn?.addEventListener("click", handleExport);
+  shareBtn?.addEventListener("click", handleShare);
+  settingsBtn?.addEventListener("click", handleSettings);
+}
 
-  shareBtn?.addEventListener("click", () => {
-    // TODO: Implement sharing
-    console.log("Share clicked");
-  });
+/**
+ * Handle export action
+ */
+function handleExport(): void {
+  const stats = getExportStats();
 
-  settingsBtn?.addEventListener("click", () => {
-    // TODO: Implement settings
-    console.log("Settings clicked");
-  });
+  if (stats.total === 0) {
+    showStatus("No games in collection to export.", "info");
+    return;
+  }
+
+  // Show export options dialog
+  const action = prompt(
+    `Export Options:\n` +
+      `1 - CSV (${stats.total} games)\n` +
+      `2 - Full Backup (JSON)\n\n` +
+      `Enter 1 or 2:`,
+    "1"
+  );
+
+  if (action === "1") {
+    const csv = exportCollectionToCSV();
+    const filename = `dragons-hoard-collection-${formatDate()}.csv`;
+    downloadFile(csv, filename, "text/csv");
+    showStatus(`Exported ${stats.total} games to ${filename}`, "success");
+  } else if (action === "2") {
+    const backup = createBackup();
+    const filename = `dragons-hoard-backup-${formatDate()}.json`;
+    downloadFile(JSON.stringify(backup, null, 2), filename, "application/json");
+    showStatus(`Backup created: ${filename}`, "success");
+  }
+}
+
+/**
+ * Handle share action
+ */
+async function handleShare(): Promise<void> {
+  const stats = getExportStats();
+
+  if (stats.total === 0) {
+    showStatus("No games in collection to share.", "info");
+    return;
+  }
+
+  const code = createShareCode();
+
+  // Try native share if available
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: "My Dragon's Hoard Collection",
+        text: `Check out my retro game collection (${stats.owned} owned, ${stats.wishlist} wishlist)`,
+        url: `${window.location.origin}?share=${encodeURIComponent(code)}`,
+      });
+      return;
+    } catch {
+      // User cancelled or share failed, fall through to clipboard
+    }
+  }
+
+  // Fallback to clipboard
+  const success = await copyToClipboard(code);
+  if (success) {
+    showStatus("Share code copied to clipboard!", "success");
+  } else {
+    showStatus("Failed to copy share code.", "error");
+  }
+}
+
+/**
+ * Handle settings action
+ */
+function handleSettings(): void {
+  // TODO: Open settings modal
+  showStatus("Settings coming soon!", "info");
+}
+
+/**
+ * Check URL for share code and import if present
+ */
+function checkUrlShareCode(): void {
+  const params = new URLSearchParams(window.location.search);
+  const shareCode = params.get("share");
+
+  if (!shareCode) return;
+
+  const data = parseShareCode(decodeURIComponent(shareCode));
+  if (!data) {
+    showStatus("Invalid share code in URL.", "error");
+    return;
+  }
+
+  // Count games to import
+  const total =
+    data.owned.length + data.wishlist.length + data.backlog.length + data.trade.length;
+
+  if (total === 0) {
+    showStatus("Share code contains no games.", "info");
+    return;
+  }
+
+  // Ask user if they want to import
+  const confirm = window.confirm(
+    `Import shared collection?\n\n` +
+      `${data.owned.length} owned\n` +
+      `${data.wishlist.length} wishlist\n` +
+      `${data.backlog.length} backlog\n` +
+      `${data.trade.length} for trade\n\n` +
+      `This will merge with your existing collection.`
+  );
+
+  if (!confirm) return;
+
+  // Import the collection
+  data.owned.forEach((key) => setGameStatus(key, "owned"));
+  data.wishlist.forEach((key) => setGameStatus(key, "wishlist"));
+  data.backlog.forEach((key) => setGameStatus(key, "backlog"));
+  data.trade.forEach((key) => setGameStatus(key, "trade"));
+
+  // Clean up URL
+  window.history.replaceState({}, "", window.location.pathname);
+
+  showStatus(`Imported ${total} games from shared collection!`, "success");
+}
+
+/**
+ * Format date for filenames
+ */
+function formatDate(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 // Start the application
