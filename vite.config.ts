@@ -16,11 +16,6 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
       },
-      output: {
-        manualChunks: {
-          vendor: ["imagesloaded"],
-        },
-      },
     },
   },
 
@@ -42,9 +37,5 @@ export default defineConfig({
 
   preview: {
     port: 4173,
-  },
-
-  optimizeDeps: {
-    include: ["imagesloaded"],
   },
 });
