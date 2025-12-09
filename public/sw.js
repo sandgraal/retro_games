@@ -1,12 +1,15 @@
 /**
  * Service Worker for Dragon's Hoard Atlas
  * Provides offline support and caching
+ *
+ * Note: Vite generates hashed asset filenames, so we use
+ * runtime caching instead of static precaching for assets.
  */
 
-const CACHE_NAME = "dragons-hoard-v2";
-const STATIC_ASSETS = ["/", "/index.html", "/style.css", "/data/sample-games.json"];
+const CACHE_NAME = "dragons-hoard-v3";
+const STATIC_ASSETS = ["/", "/index.html", "/data/sample-games.json"];
 
-// Install event - cache static assets
+// Install event - cache essential assets
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
