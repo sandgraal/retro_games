@@ -1,8 +1,39 @@
-# Retro Games List
+# Dragon's Hoard Atlas
 
 A fast, private, and beautifully designed tracker for classic and retro games. Built for serious collectors, archivists, and retro fans who want control over their library.
 
-**Project Status**: ⭐ **Feature-complete & production-ready** | ✅ **Redesigned December 2025**
+**Project Status**: ⭐ **v2.0 Architecture Rebuild** | 🔧 **TypeScript + Vite + Reactive Signals**
+
+## Architecture (v2.0)
+
+The application has been rebuilt with a modern reactive architecture:
+
+```
+src/
+├── core/           # Reactive primitives
+│   ├── signals.ts  # createSignal, computed, effect
+│   ├── types.ts    # TypeScript type definitions
+│   └── keys.ts     # Game key generation
+├── state/          # Centralized reactive state
+│   └── store.ts    # Signal-based state management
+├── data/           # Data layer
+│   ├── supabase.ts # Type-safe Supabase client
+│   └── loader.ts   # Data loading & processing
+├── ui/             # Component system
+│   ├── game-card.ts
+│   ├── game-grid.ts
+│   ├── dashboard.ts
+│   ├── filters.ts
+│   └── modal.ts
+└── main.ts         # Application entry point
+```
+
+**Key Features:**
+
+- **Reactive signals** - Fine-grained reactivity with automatic dependency tracking
+- **Type safety** - Full TypeScript with strict mode
+- **Vite build** - Lightning-fast HMR, optimized production bundles
+- **20 KB gzipped** - Dramatically smaller than legacy codebase
 
 The application features a museum-quality interface with modular architecture, glassmorphism design system, and PS2-era aesthetic sophistication (see [`docs/architecture.md`](docs/architecture.md)).
 
