@@ -17,10 +17,27 @@ import {
 import { mountGameGrid, mountDashboard, mountFilters, mountModal } from "./ui";
 
 /**
+ * Register service worker for offline support
+ */
+async function registerServiceWorker(): Promise<void> {
+  if ("serviceWorker" in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      console.log("📦 Service worker registered:", registration.scope);
+    } catch (error) {
+      console.warn("Service worker registration failed:", error);
+    }
+  }
+}
+
+/**
  * Initialize the application
  */
 async function init(): Promise<void> {
   console.log("🎮 Dragon's Hoard Atlas initializing...");
+
+  // Register service worker for offline support
+  registerServiceWorker();
 
   const cleanupFunctions: (() => void)[] = [];
 
