@@ -1,36 +1,35 @@
-# Repository Context Snapshot (2024-06)
+# Repository Context Snapshot (2025-12)
 
 ## project_summary
 
-- Static web application that lists retro video games with filtering, ownership tracking via `localStorage`, and modal detail views.
-- Data is expected from a Supabase table named `games`; a large `games.csv` is committed as a reference dataset.
-- UI is a single-page experience built with vanilla HTML/CSS/JS and external fonts/icons.
+- Static, production-ready retro game tracker with glassmorphism UI, Supabase-backed data (with offline sample JSON fallbacks), and optional price valuations.
+- Modular vanilla JS architecture (29 ES modules across `app/` for UI, features, state, data, utils) plus modular CSS under `style/`.
+- Optional Supabase tables/views for games, aggregates, and price snapshots; GitHub Actions handle price refresh, media archival, and backups.
 
 ## dependency_graph
 
-- **Frontend runtime**: Browser + vanilla JavaScript.
-- **External services**: Supabase (REST over `supabase-js` CDN).
-- **Assets**: Google Fonts ("Press Start 2P"), remote cover art URLs stored in Supabase/CSV.
-- **Tooling**: None bundled; development uses ad-hoc static servers.
+- **Runtime:** Vanilla JS/CSS/HTML (no bundler) served statically.
+- **APIs/Services:** Supabase REST/Storage (+ optional RPCs), PriceCharting API, eBay Finding API (new alternative), GitHub Actions caches.
+- **Tooling:** ESLint, Prettier, Vitest, Playwright, Lighthouse CI, csv-parse, dotenv, http-server.
 
 ## commands_map
 
-- **Develop**: `python -m http.server 8080` (or any static server) from repo root.
-- **Build**: Not required; assets served as-is.
-- **Test/Lint**: `npm run lint`, `npm run format:check`, `npm test`, and `npm run lighthouse` (via Lighthouse CI).
-- **Data maintenance**: Update Supabase `games` table (optionally regenerate `games.csv`).
+- **Config/Build:** `npm run build:config`, `npm run build:css`, `npm run build`.
+- **Quality:** `npm run lint`, `npm run format:check`, `npm test`, `npm run test:e2e`, `npm run lighthouse`.
+- **Data:** `npm run prices:update` (PriceCharting), `npm run prices:update:ebay` (eBay sold listings), `npm run sitemap`, `npm run seed:generate`.
+- **Serve/Preview:** `python -m http.server 8080` or `npm run serve:lighthouse` / `npm run serve:dist`.
 
 ## key_paths_by_feature
 
-- `index.html` – page shell, filter controls, and script/style includes.
-- `style.css` – comprehensive styling for desktop/mobile layouts and modal UI.
-- `app.js` – Supabase integration, table rendering, ownership tracking, share/import logic, modal interactions.
-- `games.csv` – canonical list of retro games used to seed/update Supabase.
-- `.github/ISSUE_TEMPLATE/` – templates for bug reports and feature requests.
+- **Entry/UI:** `index.html`, `style.css`, `app/main.js`, `app/ui/*.js`, `style/components/*.css`.
+- **Features:** `app/features/*.js` (filtering, search, pagination, virtualization, sharing, seo, embed).
+- **Data/State:** `app/data/*.js` (pricing, loader, supabase, aggregates, storage); `app/state/*.js` (collection, preferences, filters, cache).
+- **Scripts:** `scripts/update-price-snapshots.js` (PriceCharting), `scripts/update-ebay-prices.js` (eBay alternative), `scripts/build-css.js`, `scripts/generate-config.js`, `scripts/generate-seed-sql.js`.
+- **Docs:** `docs/architecture.md`, `docs/current-state.md`, `docs/data-pipeline.md`, `docs/AGENT_QUICKSTART.md`.
 
 ## known_constraints_and_feature_flags
 
-- No authentication or authorization; ownership data stays local to the browser unless exported/imported manually.
-- Data schema is implicit—column names derived from Supabase response, so schema changes require updating both Supabase and frontend constants.
-- No bundler or modularization; large single JS/CSS files can become hard to maintain as features grow.
-- Accessibility relies on manual DOM management; modal focus handling exists but lacks automated testing.
+- No bundler; code runs directly in-browser—keep modules small and dependency-free.
+- Supabase credentials optional; app auto-falls back to `data/sample-games.json` and `data/sample-price-history.json`.
+- LocalStorage persistence for collection/notes—changes must remain backward compatible.
+- CI enforces lint/format/test/Lighthouse/gitleaks; secrets must stay in env vars and not committed.
