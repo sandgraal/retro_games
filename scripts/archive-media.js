@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();

@@ -55,9 +55,7 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
 
     <!-- Preload critical resources -->
-    <link rel="modulepreload" href="app/main.js" />
-    <link rel="modulepreload" href="app/ui/grid.js" />
-    <link rel="modulepreload" href="app/ui/dashboard.js" />
+    <!-- Vite will handle module preloading in production -->
 
     <!-- Supabase -->
     <script
@@ -481,10 +479,19 @@
       </div>
     </noscript>
 
-    <!-- Load Config -->
-    <script src="config.js"></script>
+    <!-- Load Config (external, not bundled) -->
+    <script type="module">
+      // Dynamic config loading
+      try {
+        const script = document.createElement("script");
+        script.src = "config.js";
+        document.head.appendChild(script);
+      } catch (e) {
+        console.warn("Config not found, using sample data");
+      }
+    </script>
 
-    <!-- Load App -->
-    <script type="module" src="app/main.js"></script>
+    <!-- Load App (Vite handles this in dev, builds to dist in prod) -->
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

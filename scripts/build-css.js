@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-"use strict";
 
 /**
  * CSS Build Script
@@ -15,8 +14,12 @@
  *   dist/style.min.css - Concatenated CSS bundle
  */
 
-const fs = require("node:fs");
-const path = require("node:path");
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DIST_DIR = path.join(ROOT_DIR, "dist");

@@ -21,8 +21,12 @@
  * @module scripts/fetch-covers
  */
 
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const CACHE_PATH = path.resolve(__dirname, "../data/cover-cache.json");
 const MANUAL_COVERS_PATH = path.resolve(__dirname, "../data/manual-covers.json");

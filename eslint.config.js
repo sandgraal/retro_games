@@ -1,9 +1,10 @@
-const js = require("@eslint/js");
-const globals = require("globals");
-const prettier = require("eslint-config-prettier");
+import js from "@eslint/js";
+import globals from "globals";
+import prettier from "eslint-config-prettier";
+import tseslint from "typescript-eslint";
 
 const browserConfig = {
-  files: ["app.js", "app/**/*.js"],
+  files: ["app/**/*.js"],
   languageOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
@@ -20,7 +21,7 @@ const nodeScriptsConfig = {
   files: ["scripts/**/*.js"],
   languageOptions: {
     ecmaVersion: "latest",
-    sourceType: "script",
+    sourceType: "module",
     globals: {
       ...globals.node,
     },
@@ -31,11 +32,37 @@ const nodeScriptsConfig = {
   },
 };
 
-module.exports = [
+const typescriptConfig = {
+  files: ["src/**/*.ts", "tests/**/*.ts"],
+  languageOptions: {
+    ecmaVersion: "latest",
+    sourceType: "module",
+    globals: {
+      ...globals.browser,
+      ...globals.node,
+      HTMLElementTagNameMap: "readonly",
+    },
+    parser: tseslint.parser,
+  },
+  plugins: {
+    "@typescript-eslint": tseslint.plugin,
+  },
+  rules: {
+    // Disable base no-unused-vars in favor of TS version
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+    ],
+  },
+};
+
+export default [
   {
-    ignores: ["config.js", "node_modules/", "evaluation/", "covers/"],
+    ignores: ["config.js", "node_modules/", "evaluation/", "covers/", "dist/"],
   },
   browserConfig,
   nodeScriptsConfig,
+  typescriptConfig,
   prettier,
 ];

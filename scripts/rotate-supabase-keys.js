@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-const fs = require("fs");
-const path = require("path");
-const readline = require("readline");
-const { spawnSync } = require("child_process");
+import fs from "node:fs";
+import path from "node:path";
+import readline from "node:readline";
+import { spawnSync } from "node:child_process";
 
 const envPath = path.resolve(process.cwd(), process.argv[2] || ".env");
 

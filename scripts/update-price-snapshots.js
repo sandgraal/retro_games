@@ -1,8 +1,12 @@
 #!/usr/bin/env node
-const fs = require("fs");
-const path = require("path");
-const { parse } = require("csv-parse/sync");
-const dotenv = require("dotenv");
+import fs from "node:fs";
+import path from "node:path";
+import { parse } from "csv-parse/sync";
+import dotenv from "dotenv";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const ROOT = path.resolve(__dirname, "..");
 const CSV_PATH = path.join(ROOT, "games.csv");

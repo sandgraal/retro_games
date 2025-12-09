@@ -1,0 +1,48 @@
+/**
+ * State Module Exports
+ */
+
+export {
+  // Computed state
+  filteredGames,
+  availablePlatforms,
+  availableGenres,
+  collectionStats,
+
+  // Reactive getters
+  games,
+  prices,
+  isLoading,
+  error,
+  dataSource,
+  collection,
+  notes,
+  filterState,
+  theme,
+  viewMode,
+  sidebarOpen,
+  modalGame,
+
+  // Actions
+  setGames,
+  setPrices,
+  setLoading,
+  setError,
+  setDataSource,
+  setGameStatus,
+  getGameStatus,
+  setGameNotes,
+  getGameNotes,
+  updateFilters,
+  resetFilters,
+  togglePlatformFilter,
+  toggleGenreFilter,
+  setSearchQuery,
+  setSort,
+  setTheme,
+  setViewMode,
+  toggleSidebar,
+  openGameModal,
+  closeGameModal,
+  loadPersistedState,
+} from "./store";
