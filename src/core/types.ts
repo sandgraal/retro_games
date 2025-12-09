@@ -5,23 +5,38 @@
 
 // === Game Data Types ===
 
+/**
+ * Game data from Supabase games_consolidated view
+ * This matches the production schema exactly
+ */
 export interface Game {
-  id?: string;
+  id?: number; // bigint in Supabase
   game_name: string;
   platform: string;
   genre: string;
-  rating: string | number;
-  release_year: string | number;
-  cover?: string;
-  screenshots?: string[];
-  region?: string;
+  rating: string | number; // numeric in Supabase
+  rating_cat?: string; // "Top 10", "Top 25", etc.
+  release_year: number | string;
   player_mode?: string;
-  player_count?: string;
+  region?: string;
   notes?: string;
-  Details?: string;
-  rating_category?: string;
+  player_count?: string;
+  cover?: string;
+  // Extended metadata (from game consolidation schema)
+  description?: string;
+  developer?: string;
+  publisher?: string;
+  esrb_rating?: string;
+  metacritic_score?: number;
+  igdb_id?: number;
+  updated_at?: string;
+  // Variant data
   variant_count?: number;
   available_regions?: string[];
+  // Legacy fields (sample data only, not in Supabase)
+  Details?: string;
+  screenshots?: string[];
+  rating_category?: string; // Alias for rating_cat in sample data
 }
 
 export type GameKey = string; // Format: "gameName___platform"

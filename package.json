@@ -21,7 +21,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "seed:generate": "node scripts/generate-seed-sql.js",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "serve:lighthouse": "vite preview --port 4173",
@@ -31,6 +30,7 @@
     "prices:update": "node scripts/update-price-snapshots.js",
     "archive:media": "node scripts/archive-media.js",
     "audit:covers": "node scripts/audit-missing-covers.js",
+    "enrich:data": "node scripts/enrich-game-data.js",
     "prepare": "husky"
   },
   "repository": {
