@@ -16,18 +16,24 @@ export async function loadGames(): Promise<DataLoadResult> {
   // Check for force sample mode
   const forceSample = checkForceSampleMode();
 
-  if (!forceSample && supabase.isAvailable()) {
-    try {
-      const games = await supabase.fetchGames();
-      if (games.length > 0) {
-        return {
-          games,
-          source: "supabase",
-          timestamp: Date.now(),
-        };
+  if (!forceSample) {
+    const supabaseReady = await supabase.waitForSupabaseReady();
+
+    if (supabaseReady) {
+      try {
+        const games = await supabase.fetchGames();
+        if (games.length > 0) {
+          return {
+            games,
+            source: "supabase",
+            timestamp: Date.now(),
+          };
+        }
+      } catch (error) {
+        console.warn("Supabase fetch failed, falling back to sample:", error);
       }
-    } catch (error) {
-      console.warn("Supabase fetch failed, falling back to sample:", error);
+    } else {
+      console.warn("Supabase config unavailable before timeout, using sample data");
     }
   }
 
