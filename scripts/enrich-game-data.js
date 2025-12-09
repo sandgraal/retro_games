@@ -109,10 +109,9 @@ function saveCache(cache) {
 /**
  * Clean game name for Wikipedia search.
  * @param {string} name - Game name
- * @param {string} platform - Platform name
  * @returns {string} Cleaned search query
  */
-function cleanGameName(name, platform) {
+function cleanGameName(name) {
   // Remove region suffixes
   let cleaned = name
     .replace(/\s*\((USA|Japan|Europe|Translated\s+En)\)/gi, "")
@@ -161,7 +160,7 @@ function platformToWikiFormat(platform) {
  * @returns {Promise<Object|null>} Extracted game info or null
  */
 async function fetchWikipediaInfo(fetchFn, gameName, platform) {
-  const cleaned = cleanGameName(gameName, platform);
+  const cleaned = cleanGameName(gameName);
   const wikiPlatform = platformToWikiFormat(platform);
 
   // Try multiple search queries
@@ -216,7 +215,7 @@ async function fetchWikipediaInfo(fetchFn, gameName, platform) {
           return info;
         }
       }
-    } catch (err) {
+    } catch {
       // Continue to next query
     }
     await sleep(RATE_LIMIT_MS);
