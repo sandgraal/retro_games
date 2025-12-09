@@ -69,7 +69,7 @@ async function init(): Promise<void> {
       mountDashboard("#dashboardGrid"),
       mountGameGrid("#gameGrid"),
       mountFilters("#filtersSidebar"),
-      mountModal("#gameModal"),
+      mountModal("#gameModalBackdrop"),
       mountSettingsModal()
     );
 

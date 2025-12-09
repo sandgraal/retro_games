@@ -28,10 +28,16 @@ export function initModal(ctx: ComponentContext): void {
 
     if (game) {
       renderModal(element, game);
+      // Remove hidden attribute and update aria for accessibility
+      element.removeAttribute("hidden");
+      element.setAttribute("aria-hidden", "false");
       element.classList.add("open");
       document.body.style.overflow = "hidden";
       trapFocus(element);
     } else {
+      // Add hidden attribute and update aria for accessibility
+      element.setAttribute("hidden", "");
+      element.setAttribute("aria-hidden", "true");
       element.classList.remove("open");
       document.body.style.overflow = "";
     }
@@ -56,84 +62,88 @@ export function initModal(ctx: ComponentContext): void {
 }
 
 /**
- * Render modal content
+ * Render modal content into existing HTML structure
  */
-function renderModal(container: HTMLElement, game: GameWithKey): void {
+function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
   const status = getGameStatus(game.key);
   const notes = getGameNotes(game.key);
   const rating = parseFloat(String(game.rating));
 
-  container.innerHTML = `
-    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button type="button" class="modal__close" aria-label="Close modal">×</button>
-      
-      <div class="modal__content">
-        <div class="modal__cover">
-          ${
-            game.cover
-              ? `<img src="${escapeHtml(game.cover)}" alt="${escapeHtml(game.game_name)} cover art" />`
-              : `<div class="modal__cover-placeholder">${escapeHtml(game.game_name.slice(0, 2).toUpperCase())}</div>`
-          }
-        </div>
-        
-        <div class="modal__info">
-          <h2 id="modalTitle" class="modal__title">${escapeHtml(game.game_name)}</h2>
-          
-          <div class="modal__meta">
-            <span class="modal__platform">${escapeHtml(game.platform)}</span>
-            ${!isNaN(rating) ? `<span class="modal__rating">⭐ ${rating.toFixed(1)}</span>` : ""}
-            ${game.release_year ? `<span class="modal__year">${escapeHtml(String(game.release_year))}</span>` : ""}
-          </div>
-          
-          ${game.genre ? `<p class="modal__genre">${escapeHtml(game.genre)}</p>` : ""}
-          ${game.region ? `<p class="modal__region">Region: ${escapeHtml(game.region)}</p>` : ""}
-          ${game.player_mode ? `<p class="modal__players">${escapeHtml(game.player_mode)}</p>` : ""}
-          
-          <div class="modal__status">
-            <label for="statusSelect">Collection Status:</label>
-            <select id="statusSelect" class="modal__status-select">
-              <option value="none" ${status === "none" ? "selected" : ""}>Not in collection</option>
-              <option value="owned" ${status === "owned" ? "selected" : ""}>Owned</option>
-              <option value="wishlist" ${status === "wishlist" ? "selected" : ""}>Wishlist</option>
-              <option value="backlog" ${status === "backlog" ? "selected" : ""}>Backlog</option>
-              <option value="trade" ${status === "trade" ? "selected" : ""}>For Trade</option>
-            </select>
-          </div>
-          
-          <div class="modal__notes">
-            <label for="notesInput">Notes:</label>
-            <textarea id="notesInput" class="modal__notes-input" rows="3" placeholder="Add your notes...">${escapeHtml(notes)}</textarea>
-          </div>
-          
-          ${
-            game.Details
-              ? `
-            <a href="${escapeHtml(game.Details)}" target="_blank" rel="noopener noreferrer" class="modal__link">
-              View on Wikipedia →
-            </a>
-          `
-              : ""
-          }
-        </div>
+  // Update modal title
+  const titleEl = backdrop.querySelector("#gameModalTitle");
+  if (titleEl) {
+    titleEl.textContent = game.game_name;
+  }
+
+  // Update cover image
+  const coverImg = backdrop.querySelector("#gameModalCoverImage") as HTMLImageElement;
+  if (coverImg) {
+    if (game.cover) {
+      coverImg.src = game.cover;
+      coverImg.alt = `${game.game_name} cover art`;
+      coverImg.style.display = "";
+    } else {
+      coverImg.style.display = "none";
+    }
+  }
+
+  // Update details section
+  const detailsEl = backdrop.querySelector("#gameModalDetails");
+  if (detailsEl) {
+    detailsEl.innerHTML = `
+      <div class="modal-meta">
+        <span class="modal-platform">${escapeHtml(game.platform)}</span>
+        ${!isNaN(rating) ? `<span class="modal-rating">⭐ ${rating.toFixed(1)}</span>` : ""}
+        ${game.release_year ? `<span class="modal-year">${escapeHtml(String(game.release_year))}</span>` : ""}
       </div>
-    </div>
-  `;
+      
+      ${game.genre ? `<p class="modal-genre">${escapeHtml(game.genre)}</p>` : ""}
+      ${game.region ? `<p class="modal-region">Region: ${escapeHtml(game.region)}</p>` : ""}
+      ${game.player_mode ? `<p class="modal-players">${escapeHtml(game.player_mode)}</p>` : ""}
+      
+      <div class="modal-status">
+        <label for="statusSelect">Collection Status:</label>
+        <select id="statusSelect" class="modal-status-select">
+          <option value="none" ${status === "none" ? "selected" : ""}>Not in collection</option>
+          <option value="owned" ${status === "owned" ? "selected" : ""}>Owned</option>
+          <option value="wishlist" ${status === "wishlist" ? "selected" : ""}>Wishlist</option>
+          <option value="backlog" ${status === "backlog" ? "selected" : ""}>Backlog</option>
+          <option value="trade" ${status === "trade" ? "selected" : ""}>For Trade</option>
+        </select>
+      </div>
+      
+      <div class="modal-notes">
+        <label for="notesInput">Notes:</label>
+        <textarea id="notesInput" class="modal-notes-input" rows="3" placeholder="Add your notes...">${escapeHtml(notes)}</textarea>
+      </div>
+      
+      ${
+        game.Details
+          ? `
+        <a href="${escapeHtml(game.Details)}" target="_blank" rel="noopener noreferrer" class="modal-link">
+          View on Wikipedia →
+        </a>
+      `
+          : ""
+      }
+    `;
 
-  // Setup close button
-  const closeBtn = container.querySelector(".modal__close");
+    // Setup status select
+    const statusSelect = detailsEl.querySelector("#statusSelect") as HTMLSelectElement;
+    statusSelect?.addEventListener("change", () => {
+      setGameStatus(game.key, statusSelect.value as any);
+    });
+
+    // Setup notes input
+    const notesInput = detailsEl.querySelector("#notesInput") as HTMLTextAreaElement;
+    notesInput?.addEventListener("blur", () => {
+      setGameNotes(game.key, notesInput.value);
+    });
+  }
+
+  // Setup close button (might already have listener but re-add for safety)
+  const closeBtn = backdrop.querySelector("#gameModalClose");
   closeBtn?.addEventListener("click", closeGameModal);
-
-  // Setup status select
-  const statusSelect = container.querySelector("#statusSelect") as HTMLSelectElement;
-  statusSelect?.addEventListener("change", () => {
-    setGameStatus(game.key, statusSelect.value as any);
-  });
-
-  // Setup notes input
-  const notesInput = container.querySelector("#notesInput") as HTMLTextAreaElement;
-  notesInput?.addEventListener("blur", () => {
-    setGameNotes(game.key, notesInput.value);
-  });
 }
 
 /**

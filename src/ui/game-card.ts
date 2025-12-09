@@ -37,8 +37,8 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
     "aria-label": `${game.game_name} for ${game.platform}`,
   });
 
-  // Cover image
-  const cover = createElement("div", { class: "game-card__cover" });
+  // Cover image (uses kebab-case to match CSS)
+  const cover = createElement("div", { class: "game-card-cover" });
   if (game.cover) {
     const img = createElement("img", {
       src: game.cover,
@@ -55,12 +55,12 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
   }
   card.appendChild(cover);
 
-  // Status badge
+  // Status badge (CSS uses .game-card-status.owned pattern)
   if (status !== "none") {
     const badge = createElement(
       "div",
       {
-        class: `game-card__status game-card__status--${status}`,
+        class: `game-card-status ${status}`,
       },
       `${STATUS_ICONS[status]} ${STATUS_LABELS[status]}`
     );
@@ -68,28 +68,26 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
   }
 
   // Info overlay
-  const overlay = createElement("div", { class: "game-card__overlay" });
+  const overlay = createElement("div", { class: "game-card-overlay" });
 
-  const title = createElement("h3", { class: "game-card__title" }, game.game_name);
+  const title = createElement("h3", { class: "game-card-title" }, game.game_name);
   overlay.appendChild(title);
 
-  const meta = createElement("div", { class: "game-card__meta" });
-  meta.appendChild(
-    createElement("span", { class: "game-card__platform" }, game.platform)
-  );
+  const meta = createElement("div", { class: "game-card-meta" });
+  meta.appendChild(createElement("span", { class: "game-card-platform" }, game.platform));
 
   if (game.rating) {
     const rating = parseFloat(String(game.rating));
     if (!isNaN(rating)) {
       meta.appendChild(
-        createElement("span", { class: "game-card__rating" }, `⭐ ${rating.toFixed(1)}`)
+        createElement("span", { class: "game-card-rating" }, `⭐ ${rating.toFixed(1)}`)
       );
     }
   }
   overlay.appendChild(meta);
 
   if (game.genre) {
-    const genre = createElement("p", { class: "game-card__genre" }, game.genre);
+    const genre = createElement("p", { class: "game-card-genre" }, game.genre);
     overlay.appendChild(genre);
   }
 
@@ -115,7 +113,7 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
  * Create a placeholder for missing cover art
  */
 function createPlaceholder(name: string): HTMLElement {
-  const placeholder = createElement("div", { class: "game-card__placeholder" });
+  const placeholder = createElement("div", { class: "game-card-placeholder" });
   const text = name.slice(0, 2).toUpperCase();
   placeholder.textContent = text;
   return placeholder;
@@ -125,9 +123,9 @@ function createPlaceholder(name: string): HTMLElement {
  * Create a skeleton loading card
  */
 export function createSkeletonCard(): HTMLElement {
-  const card = createElement("div", { class: "game-card game-card--skeleton" });
+  const card = createElement("div", { class: "game-card game-card-skeleton" });
   const cover = createElement("div", {
-    class: "game-card__cover game-card__cover--skeleton",
+    class: "game-card-cover",
   });
   card.appendChild(cover);
   return card;
