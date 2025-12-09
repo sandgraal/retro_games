@@ -11,6 +11,7 @@ import {
   formatFieldLabel,
   timeAgo,
   formatAbsoluteDate,
+  formatRelativeDate,
   formatBytes,
   formatDuration,
 } from "../src/utils/format";
@@ -147,9 +148,43 @@ describe("formatAbsoluteDate", () => {
     expect(result).toContain("2024");
   });
 
+  it("handles date strings", () => {
+    const result = formatAbsoluteDate("2025-12-09");
+    expect(result).toContain("2025");
+  });
+
   it("handles empty values", () => {
     expect(formatAbsoluteDate(null)).toBe("");
     expect(formatAbsoluteDate(undefined)).toBe("");
+  });
+
+  it("handles invalid date strings", () => {
+    expect(formatAbsoluteDate("not-a-date")).toBe("");
+  });
+});
+
+describe("formatRelativeDate", () => {
+  it("formats Date objects", () => {
+    const recent = new Date(Date.now() - 60000);
+    expect(formatRelativeDate(recent)).toBe("1m");
+  });
+
+  it("formats timestamps", () => {
+    expect(formatRelativeDate(Date.now() - 7200000)).toBe("2h");
+  });
+
+  it("formats date strings", () => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+    expect(formatRelativeDate(yesterday)).toBe("1d");
+  });
+
+  it("handles empty values", () => {
+    expect(formatRelativeDate(null)).toBe("");
+    expect(formatRelativeDate(undefined)).toBe("");
+  });
+
+  it("handles invalid date strings", () => {
+    expect(formatRelativeDate("not-a-date")).toBe("");
   });
 });
 
