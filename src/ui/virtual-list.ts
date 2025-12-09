@@ -45,17 +45,17 @@ const DEFAULT_CONFIG: VirtualListConfig = {
 // === Virtual List Class ===
 
 export class VirtualList {
-  private container: HTMLElement;
-  private scrollContainer: HTMLElement;
-  private content: HTMLElement;
-  private config: VirtualListConfig;
+  private readonly container: HTMLElement;
+  private readonly scrollContainer: HTMLElement;
+  private readonly content: HTMLElement;
+  private readonly config: VirtualListConfig;
   private items: GameWithKey[] = [];
   private nodePool: PooledNode[] = [];
   private columns = 1;
   private visibleRange = { start: 0, end: 0 };
   private scrollTimeout: number | null = null;
-  private resizeObserver: ResizeObserver;
-  private renderCallback: (
+  private readonly resizeObserver: ResizeObserver;
+  private readonly renderCallback: (
     game: GameWithKey,
     element: HTMLElement,
     index: number
@@ -197,8 +197,7 @@ export class VirtualList {
   }
 
   private calculateVisibleRange(): { start: number; end: number } {
-    const scrollTop = this.scrollContainer.scrollTop;
-    const viewportHeight = this.scrollContainer.clientHeight;
+    const { scrollTop, clientHeight: viewportHeight } = this.scrollContainer;
 
     const rowHeight = this.config.itemHeight + this.config.gap;
     const startRow = Math.max(
@@ -325,7 +324,7 @@ export function createVirtualList(
       : selector;
 
   if (!container) {
-    console.warn(`Virtual list container not found: ${selector}`);
+    console.warn(`Virtual list container not found: ${String(selector)}`);
     return () => {};
   }
 

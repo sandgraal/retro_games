@@ -46,13 +46,13 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--limit" && argv[i + 1]) {
-      options.limit = parseInt(argv[i + 1], 10) || 25;
-      i += 1;
+      options.limit = Number.parseInt(argv[i + 1], 10) || 25;
+      i++;
     } else if (arg === "--dry-run") {
       options.dryRun = true;
     } else if ((arg === "--output" || arg === "-o") && argv[i + 1]) {
       options.output = path.resolve(argv[i + 1]);
-      i += 1;
+      i++;
     } else if (arg === "--all-games") {
       options.canonicalOnly = false;
     }
@@ -113,13 +113,11 @@ function saveCache(cache) {
  */
 function cleanGameName(name) {
   // Remove region suffixes
-  let cleaned = name
-    .replace(/\s*\((USA|Japan|Europe|Translated\s+En)\)/gi, "")
-    .replace(/\s*\(NES\)/gi, " NES")
-    .replace(/\s*\(PS1\)/gi, "")
+  return name
+    .replaceAll(/\s*\((USA|Japan|Europe|Translated\s+En)\)/gi, "")
+    .replaceAll(/\s*\(NES\)/gi, " NES")
+    .replaceAll(/\s*\(PS1\)/gi, "")
     .trim();
-
-  return cleaned;
 }
 
 /**
@@ -207,7 +205,7 @@ async function fetchWikipediaInfo(fetchFn, gameName, platform) {
           info.publisher = publisherMatch[1].trim();
         }
         if (yearMatch) {
-          info.release_year = parseInt(yearMatch[1] || yearMatch[2], 10);
+          info.release_year = Number.parseInt(yearMatch[1] || yearMatch[2], 10);
         }
 
         // Only return if we got useful data
@@ -422,4 +420,4 @@ async function main() {
   }
 }
 
-main().catch(console.error);
+await main();

@@ -1,6 +1,6 @@
 # Documentation Index
 
-_Last updated: January 2025_
+_Last updated: December 2025_
 
 ## 📚 Documentation Overview
 
@@ -95,14 +95,17 @@ This project maintains comprehensive documentation for developers, contributors,
   - Evaluation metrics
 
 - **[tests/](../tests/)** - Test files
-  - `utils.test.js` - Module unit tests (804 tests)
-  - `app.test.js` - Integration tests (25 tests)
-  - `performance.test.js` - Performance tests (26 tests)
-  - `fetch-covers.test.js` - Cover fetching tests (48 tests)
-  - `archive-media.test.js` - Media archival tests (14 tests)
-  - `build-css.test.js` - CSS bundler tests (11 tests)
-  - `audit-missing-covers.test.js` - Cover audit tests (26 tests)
-  - `e2e/*.spec.js` - End-to-end tests (14 tests)
+  - `core.test.ts` - Signals, keys, types (26 tests)
+  - `state.test.ts` - Store, collection, filters (27 tests)
+  - `features.test.ts` - Export, backup, sharing (12 tests)
+  - `format.test.ts` - Formatting utilities (29 tests)
+  - `fetch-covers.test.js` - Cover fetching script (48 tests)
+  - `audit-missing-covers.test.js` - Cover audit script (26 tests)
+  - `archive-media.test.js` - Media archival script (14 tests)
+  - `build-css.test.js` - CSS bundler script (11 tests)
+  - `e2e/*.spec.js` - Playwright E2E tests (14 tests)
+
+**Total: 193 unit tests + 14 E2E tests = 207 tests**
 
 ## Context & History
 
@@ -154,40 +157,22 @@ This project maintains comprehensive documentation for developers, contributors,
 - Use clear, concise language
 - Include code examples where helpful
 - Keep file paths absolute and current
-- Date-stamp major updates
+- Date-stamp major updates (use "December 2025" format)
 - Archive outdated docs to `docs/archive/`
 - Cross-reference related documentation
 
-## Recently Updated (January 2025)
+## Recently Updated (December 2025)
 
-✅ Complete documentation overhaul reflecting Phase 0 completion:
+✅ TypeScript architecture complete with reactive signals:
 
-- Updated `architecture.md` - Complete 27-module inventory with exports
-- Updated `current-state.md` - Phase 0 complete, accurate module metrics
-- Updated `implementation-plan.md` - All Phase 0 tracks marked complete
+- Updated `architecture.md` - TypeScript module structure with signals
+- Updated `current-state.md` - Accurate test counts and module inventory
+- Updated `implementation-plan.md` - Phase 0-3 complete status
 - Updated `AGENT_QUICKSTART.md` - Current architecture and priorities
-- Updated `CONTRIBUTING.md` - Feature freeze lifted
+- Updated `CONTRIBUTING.md` - TypeScript coding standards
 - Updated `.github/copilot-instructions.md` - Full module documentation
-- Updated this index document
 
-## Documentation Maintenance
-
-### When to Update
-
-- **After major features**: Update architecture.md and current-state.md
-- **After releases**: Update implementation-plan.md progress
-- **Code pattern changes**: Update copilot-instructions.md
-- **Setup changes**: Update setup.md and README.md
-- **Always**: Keep current-state.md synchronized with codebase
-
-### Documentation Standards
-
-- Use clear, concise language
-- Include code examples where helpful
-- Keep file paths absolute and current
-- Date-stamp major updates (use "January 2025" format)
-- Archive outdated docs to `docs/archive/`
-- Cross-reference related documentation
+## Archived Documentation
 
 **Redesign Docs** (superseded by architecture.md):
 
