@@ -60,23 +60,13 @@ It’s a clean, modern tool for serious collectors, archivists, and retro fans w
 
 ## Setup
 
-1. Copy `.env.example` to `.env` and fill in your Supabase project URL and anon key. Optionally set `SUPABASE_TABLE`
-   (single table) or `SUPABASE_TABLES` (comma-separated priority list) if your dataset lives in a custom view such as
-   `games_new`.
-2. Install dependencies once with `npm install`, then run `npm run build:config` to generate `config.js` from your `.env`.
-   Commit the generated `config.js` so GitHub Pages (or any static host) can read the public anon key; rerun and commit the file
-   whenever you rotate credentials.
-3. Serve the site locally with any static server, e.g. `python -m http.server 8080`.
-4. Anytime you rotate credentials, update `.env` and rerun `npm run build:config`.
+1. Install dependencies: `npm install`.
+2. Start dev server: `npm run dev` (Vite on http://localhost:3000).
+3. Optional: create `.env` and run `npm run build:config` to generate `config.js` for Supabase; repeat on credential rotation.
 
-- Rotate Supabase anon/service keys with `node scripts/rotate-supabase-keys.js` (updates `.env` and optionally GitHub secrets).
-- (Optional) Add `SUPABASE_STREAM_PAGE_SIZE=<int>` to tune the paginated `.range()` queries (defaults to 400 rows per chunk).
-- (Optional) Provide RPC names for dashboard aggregates via `SUPABASE_RPC_GENRES` and `SUPABASE_RPC_TIMELINE` (or `rpc.genres` / `rpc.timeline` in `config.js`). The default migrations already ship `rpc_genre_counts` / `rpc_timeline_counts`, so you can leave these unset unless you rename the functions.
-- (Optional) Enable live valuations by adding `PRICECHARTING_TOKEN=<your-token>` (plus optional `PRICECHARTING_CURRENCY` and `PRICECHARTING_CACHE_HOURS`)—the dashboard will fetch PriceCharting data, cache it locally, and chart per-status totals.
+No Supabase? The app auto-falls back to `data/sample-games.json` so it runs immediately.
 
-No Supabase project yet? The UI now auto-loads the curated `data/sample-games.json` dataset so everything renders immediately. Add real credentials later to swap in live data.
-
-See `docs/setup.md` for more detailed guidance.
+See `docs/setup.md` for details.
 
 Supabase schema + migration workflow lives in `docs/data-pipeline.md`.
 
