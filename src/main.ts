@@ -13,6 +13,7 @@ import {
   setError,
   setDataSource,
   setGameStatus,
+  setGameNotes,
   loadPersistedState,
 } from "./state";
 import { mountGameGrid, mountDashboard, mountFilters, mountModal, mountSettingsModal, openSettings } from "./ui";
@@ -21,6 +22,7 @@ import {
   createBackup,
   createShareCode,
   parseShareCode,
+  parseBackup,
   downloadFile,
   copyToClipboard,
   getExportStats,
@@ -95,6 +97,9 @@ async function init(): Promise<void> {
 
   // Setup header actions
   setupHeaderActions();
+
+  // Setup dashboard quick actions
+  setupDashboardActions();
 }
 
 /**
@@ -141,6 +146,102 @@ function setupHeaderActions(): void {
   exportBtn?.addEventListener("click", handleExport);
   shareBtn?.addEventListener("click", handleShare);
   settingsBtn?.addEventListener("click", handleSettings);
+}
+
+/**
+ * Setup dashboard quick action buttons
+ */
+function setupDashboardActions(): void {
+  const importBtn = document.getElementById("importBtn");
+  const backupBtn = document.getElementById("backupBtn");
+  const contributeBtn = document.getElementById("contributeBtn");
+
+  importBtn?.addEventListener("click", handleImport);
+  backupBtn?.addEventListener("click", handleBackup);
+  contributeBtn?.addEventListener("click", handleContribute);
+}
+
+/**
+ * Handle import action (file upload)
+ */
+function handleImport(): void {
+  // Create a file input and trigger it
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json,.csv";
+  input.onchange = async (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    try {
+      const content = await file.text();
+
+      if (file.name.endsWith(".json")) {
+        // Try to parse as backup
+        const backup = parseBackup(content);
+        if (backup) {
+          const total = Object.keys(backup.collection).length;
+          if (confirm(`Import ${total} games from backup?`)) {
+            importBackup(backup);
+            showStatus(`Imported ${total} games!`, "success");
+          }
+        } else {
+          showStatus("Invalid backup file format.", "error");
+        }
+      } else {
+        showStatus("CSV import coming soon!", "info");
+      }
+    } catch (error) {
+      showStatus("Failed to read file.", "error");
+    }
+  };
+  input.click();
+}
+
+/**
+ * Import a backup payload
+ */
+function importBackup(backup: ReturnType<typeof parseBackup>): void {
+  if (!backup) return;
+
+  Object.entries(backup.collection).forEach(([key, entry]) => {
+    if (typeof entry === "object" && entry && "status" in entry) {
+      setGameStatus(key, (entry as { status: string }).status as any);
+    }
+  });
+
+  if (backup.notes) {
+    Object.entries(backup.notes).forEach(([key, note]) => {
+      if (typeof note === "string") {
+        setGameNotes(key, note);
+      }
+    });
+  }
+}
+
+/**
+ * Handle backup action
+ */
+function handleBackup(): void {
+  const stats = getExportStats();
+
+  if (stats.total === 0) {
+    showStatus("No games in collection to backup.", "info");
+    return;
+  }
+
+  const backup = createBackup();
+  const filename = `dragons-hoard-backup-${formatDate()}.json`;
+  downloadFile(JSON.stringify(backup, null, 2), filename, "application/json");
+  showStatus(`Backup created: ${filename}`, "success");
+}
+
+/**
+ * Handle contribute action
+ */
+function handleContribute(): void {
+  // Open contribution guide or form
+  window.open("https://github.com/sandgraal/retro-games/blob/main/CONTRIBUTING.md", "_blank");
 }
 
 /**
