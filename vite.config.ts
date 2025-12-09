@@ -37,5 +37,8 @@ export default defineConfig({
 
   preview: {
     port: 4173,
+    headers: {
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
   },
 });
