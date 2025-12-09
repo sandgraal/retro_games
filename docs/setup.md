@@ -55,13 +55,17 @@ node scripts/generate-config.js --env .env.staging --out public/config.js
 
 ## 4. Run the site
 
-Serve the repository with any static server, e.g.:
+Preferred: Vite dev server with HMR
 
 ```bash
-python -m http.server 8080
+npm run dev
 ```
 
-Open `http://localhost:8080` and the app will load credentials from the generated `config.js`.
+Opens `http://localhost:3000`. For a production build preview:
+
+```bash
+npm run build && npm run preview
+```
 
 ### Instant demo mode
 
