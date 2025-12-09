@@ -1,0 +1,43 @@
+# Jekyll configuration for GitHub Pages
+# This file controls how Jekyll processes the site
+
+# Exclude files and folders that shouldn't be processed
+exclude:
+  - docs/guides/templates
+  - docs/guides/README.md
+  - node_modules
+  - package.json
+  - package-lock.json
+  - tsconfig.json
+  - vite.config.ts
+  - vitest.config.mjs
+  - eslint.config.js
+  - playwright.config.js
+  - lighthouserc.json
+  - "*.ts"
+  - "*.complex.ts"
+  - archive
+  - evaluation
+  - scripts
+  - supabase
+  - tests
+  - coverage
+  - test-results
+  - context
+  - data
+  - .env
+  - .env.example
+  - CONTRIBUTING.md
+  - "*.log"
+
+# Include the main app files
+include:
+  - index.html
+  - style.css
+  - config.js
+  - public
+  - style
+  - covers
+
+# Theme and layout settings (using GitHub Pages default)
+theme: jekyll-theme-primer
