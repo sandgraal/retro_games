@@ -5909,6 +5909,74 @@ describe("data/storage.js", () => {
     it("returns empty string for object without valid URL properties", () => {
       expect(normalizeCoverUrl({ name: "test" })).toBe("");
     });
+
+    it("handles whitespace-only strings", () => {
+      expect(normalizeCoverUrl("   ")).toBe("");
+      expect(normalizeCoverUrl("\t\n")).toBe("");
+    });
+
+    it("trims whitespace from valid URLs", () => {
+      expect(normalizeCoverUrl("  https://example.com/img.jpg  ")).toBe(
+        "https://example.com/img.jpg"
+      );
+    });
+
+    it("handles nested object URL extraction", () => {
+      expect(normalizeCoverUrl({ url: "  https://example.com/img.jpg  " })).toBe(
+        "https://example.com/img.jpg"
+      );
+      expect(normalizeCoverUrl({ href: "  https://example.com/img.jpg  " })).toBe(
+        "https://example.com/img.jpg"
+      );
+      expect(normalizeCoverUrl({ source: "  https://example.com/img.jpg  " })).toBe(
+        "https://example.com/img.jpg"
+      );
+    });
+
+    it("returns empty string for object with invalid URL properties", () => {
+      expect(normalizeCoverUrl({ url: "not a url" })).toBe("");
+      expect(normalizeCoverUrl({ href: "invalid" })).toBe("");
+      expect(normalizeCoverUrl({ source: "file://local" })).toBe("");
+    });
+
+    it("returns empty string for object with null/undefined URL properties", () => {
+      expect(normalizeCoverUrl({ url: null })).toBe("");
+      expect(normalizeCoverUrl({ url: undefined })).toBe("");
+      expect(normalizeCoverUrl({ href: null })).toBe("");
+      expect(normalizeCoverUrl({ source: undefined })).toBe("");
+    });
+
+    it("returns empty string for object with non-string URL properties", () => {
+      expect(normalizeCoverUrl({ url: 123 })).toBe("");
+      expect(normalizeCoverUrl({ href: [] })).toBe("");
+      expect(normalizeCoverUrl({ source: {} })).toBe("");
+    });
+
+    it("returns empty string for number values", () => {
+      expect(normalizeCoverUrl(123)).toBe("");
+      expect(normalizeCoverUrl(0)).toBe("");
+    });
+
+    it("returns empty string for array values", () => {
+      expect(normalizeCoverUrl([])).toBe("");
+      expect(normalizeCoverUrl(["https://example.com/img.jpg"])).toBe("");
+    });
+
+    it("prioritizes url over href over source in objects", () => {
+      expect(
+        normalizeCoverUrl({
+          url: "https://example.com/url.jpg",
+          href: "https://example.com/href.jpg",
+          source: "https://example.com/source.jpg",
+        })
+      ).toBe("https://example.com/url.jpg");
+      expect(
+        normalizeCoverUrl({
+          href: "https://example.com/href.jpg",
+          source: "https://example.com/source.jpg",
+        })
+      ).toBe("https://example.com/href.jpg");
+    });
   });
 
   describe("setRowCover", () => {
@@ -5969,6 +6037,37 @@ describe("data/storage.js", () => {
         screenshots: ["not-a-url", { url: "https://example.com/screen.jpg" }],
       };
       expect(resolveScreenshotCover(row)).toBe("https://example.com/screen.jpg");
+    });
+
+    it("returns empty string when all screenshots are invalid", () => {
+      const row = {
+        screenshots: ["invalid", "not-a-url", "ftp://bad.com/img.jpg"],
+      };
+      expect(resolveScreenshotCover(row)).toBe("");
+    });
+
+    it("handles non-array screenshots property", () => {
+      expect(resolveScreenshotCover({ screenshots: "not-array" })).toBe("");
+      expect(resolveScreenshotCover({ screenshots: null })).toBe("");
+      expect(resolveScreenshotCover({ screenshots: 123 })).toBe("");
+    });
+
+    it("handles object screenshots with various URL properties", () => {
+      const row = {
+        screenshots: [
+          { href: "https://example.com/screen1.jpg" },
+          { source: "https://example.com/screen2.jpg" },
+        ],
+      };
+      expect(resolveScreenshotCover(row)).toBe("https://example.com/screen1.jpg");
+    });
+
+    it("handles undefined input", () => {
+      expect(resolveScreenshotCover(undefined)).toBe("");
+    });
+
+    it("handles number input", () => {
+      expect(resolveScreenshotCover(123)).toBe("");
     });
   });
 });
