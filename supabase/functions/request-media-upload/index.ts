@@ -29,8 +29,7 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const pendingBucket =
-    Deno.env.get("SUPABASE_STORAGE_PENDING_BUCKET") || DEFAULT_BUCKET;
+  const pendingBucket = Deno.env.get("SUPABASE_STORAGE_PENDING_BUCKET") || DEFAULT_BUCKET;
 
   if (!supabaseUrl || !serviceKey) {
     return new Response(JSON.stringify({ error: "Missing server configuration" }), {
@@ -56,10 +55,13 @@ serve(async (req) => {
   const regionCode = (payload?.regionCode ?? "NTSC").toString();
 
   if (!filename || !contentType || !Number.isFinite(byteSize)) {
-    return new Response(JSON.stringify({ error: "filename, contentType, and byteSize are required" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "filename, contentType, and byteSize are required" }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 
   if (byteSize <= 0 || byteSize > MAX_UPLOAD_BYTES) {
@@ -99,10 +101,13 @@ serve(async (req) => {
     .createSignedUploadUrl(storagePath);
 
   if (error || !data) {
-    return new Response(JSON.stringify({ error: error?.message ?? "Failed to create upload URL" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: error?.message ?? "Failed to create upload URL" }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 
   return new Response(
@@ -119,6 +124,6 @@ serve(async (req) => {
     {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-    },
+    }
   );
 });
