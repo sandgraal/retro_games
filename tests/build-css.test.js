@@ -116,10 +116,8 @@ describe("scripts/build-css.js", () => {
       execSync(`node ${SCRIPT_PATH}`, { cwd: ROOT_DIR });
 
       // Check symlinks or copies exist for key directories
-      const appPath = path.join(DIST_DIR, "app");
       const dataPath = path.join(DIST_DIR, "data");
 
-      expect(fs.existsSync(appPath)).toBe(true);
       expect(fs.existsSync(dataPath)).toBe(true);
     });
   });

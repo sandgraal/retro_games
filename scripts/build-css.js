@@ -145,7 +145,7 @@ function build() {
   }
 
   // Create symlinks for assets needed by index.html
-  const symlinkDirs = ["app", "data", "covers", "config.js", "favicon.png"];
+  const symlinkDirs = ["data", "covers", "config.js", "favicon.png"];
   for (const item of symlinkDirs) {
     const srcPath = path.join(ROOT_DIR, item);
     const destPath = path.join(DIST_DIR, item);
