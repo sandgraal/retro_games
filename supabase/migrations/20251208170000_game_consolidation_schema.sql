@@ -1,14 +1,11 @@
--- Game Consolidation Schema Migration
+-- Game Consolidation Schema Migration (CI-safe rewrite)
 -- Applied: December 2025
 -- Purpose: Consolidate duplicate games and create regional variant tracking
--- 
--- This migration was applied via Supabase MCP tools directly to the production database.
--- 
--- PROBLEM SOLVED:
--- - 451 raw game entries reduced to 161 canonical games
--- - 290 duplicate/regional variant entries now linked via canonical_id
--- - 278 regional variants tracked in dedicated game_variants table
--- - Games with (Europe), (Japan), (USA) etc. are now variants of base games
+--
+-- This version is rewritten to work against the normalized local schema used in CI:
+-- - public.games.id is uuid (not bigint)
+-- - column names are normalized (name, rating_category, cover_url, details_url)
+-- - platform is referenced via platform_id (uuid)
 --
 -- NEW TABLES:
 -- - game_variants: Stores regional/version variants linked to canonical games
@@ -20,7 +17,7 @@
 -- - updated_at: Timestamp for change tracking
 --
 -- NEW VIEW:
--- - games_consolidated: Shows only canonical games with variant counts
+-- - games_consolidated: Shows canonical games with variant counts
 --   Includes: variant_count, available_regions[] for UI display
 
 -- ============================================================================
@@ -41,7 +38,7 @@ END $$;
 
 CREATE TABLE IF NOT EXISTS public.game_variants (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  game_id bigint NOT NULL REFERENCES public.games(id) ON DELETE CASCADE,
+  game_id uuid NOT NULL REFERENCES public.games(id) ON DELETE CASCADE,
   region region_code NOT NULL DEFAULT 'WORLD',
   variant_type variant_type NOT NULL DEFAULT 'official',
   local_title text,
@@ -88,7 +85,7 @@ ALTER TABLE public.games
   ADD COLUMN IF NOT EXISTS metacritic_score integer,
   ADD COLUMN IF NOT EXISTS igdb_id integer,
   ADD COLUMN IF NOT EXISTS is_canonical boolean DEFAULT true,
-  ADD COLUMN IF NOT EXISTS canonical_id bigint REFERENCES public.games(id),
+  ADD COLUMN IF NOT EXISTS canonical_id uuid REFERENCES public.games(id),
   ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 
 CREATE INDEX IF NOT EXISTS games_canonical_idx ON public.games (is_canonical) WHERE is_canonical = true;
@@ -101,17 +98,18 @@ CREATE INDEX IF NOT EXISTS games_igdb_id_idx ON public.games (igdb_id) WHERE igd
 CREATE OR REPLACE VIEW public.games_consolidated AS
 SELECT 
   g.id,
-  g.game_name,
-  g.platform,
+  g.name AS game_name,
+  p.name AS platform_name,
+  p.slug AS platform_slug,
   g.rating,
-  g.rating_cat,
-  g.genre,
+  g.rating_category AS rating_cat,
   g.release_year,
   g.player_mode,
   g.region,
   g.notes,
   g.player_count,
-  g.cover,
+  g.cover_url AS cover,
+  g.details_url,
   g.description,
   g.developer,
   g.publisher,
@@ -122,6 +120,7 @@ SELECT
   COALESCE(v.variant_count, 0) as variant_count,
   COALESCE(v.available_regions, ARRAY[]::text[]) as available_regions
 FROM public.games g
+LEFT JOIN public.platforms p ON p.id = g.platform_id
 LEFT JOIN (
   SELECT 
     game_id,
@@ -138,7 +137,7 @@ GRANT SELECT ON public.games_consolidated TO anon, authenticated;
 -- PART 4: Helper function to get game with variants
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION public.get_game_with_variants(p_game_id bigint)
+CREATE OR REPLACE FUNCTION public.get_game_with_variants(p_game_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -163,7 +162,7 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.get_game_with_variants(bigint) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_game_with_variants(uuid) TO anon, authenticated;
 
 -- ============================================================================
 -- DATA MIGRATION (applied separately, documented here for reference)
