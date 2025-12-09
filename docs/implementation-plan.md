@@ -21,7 +21,7 @@ This document operationalizes the high-level implementation plan into actionable
 
 Work is organized into five build phases plus operational cadences. Each phase is subdivided into tracks with goal statements, exit criteria, and granular tasks. Tracks can run in parallel when dependencies are satisfied.
 
-**✅ UPDATE: Phase 0-2 Complete, Phase 3 In Progress (January 2025)** - All module extraction finished with 954 tests passing (87% coverage). See [`docs/architecture.md`](./architecture.md) for complete module inventory.
+**✅ UPDATE: Phase 0-2 Complete, Phase 3 In Progress (January 2025)** - All module extraction finished with 991 tests passing (87% coverage). See [`docs/architecture.md`](./architecture.md) for complete module inventory.
 
 ---
 
@@ -29,7 +29,7 @@ Work is organized into five build phases plus operational cadences. Each phase i
 
 | Phase                      | Status      | Progress                                        |
 | -------------------------- | ----------- | ----------------------------------------------- |
-| Phase 0: Architecture      | ✅ COMPLETE | 29 modules extracted, 954 tests                 |
+| Phase 0: Architecture      | ✅ COMPLETE | 29 modules extracted, 991 tests                 |
 | Phase 1: Foundation        | ✅ COMPLETE | CI/CD, secrets, migrations                      |
 | Phase 2: UX & Features     | ✅ COMPLETE | Virtualization, pricing, media                  |
 | Phase 3: SEO & Web Vitals  | ✅ COMPLETE | JSON-LD, sitemap, Lighthouse CI                 |
@@ -49,7 +49,7 @@ Work is organized into five build phases plus operational cadences. Each phase i
 
 - **29 ES6 modules** extracted from 5,940-line `app-legacy.js`
 - **7,600+ total lines** across all modules
-- **954 tests passing** (87% statement coverage)
+- **991 tests passing** (87% statement coverage)
 - **No file exceeds 650 lines** (largest: `ui/grid.js` at 639 lines)
 - **All 5 tracks complete** with full test coverage
 

@@ -1,6 +1,6 @@
 # Architecture Overview
 
-_Last updated: January 2025_
+_Last updated: December 2025_
 
 ## Current Architecture
 
@@ -18,7 +18,7 @@ The application underwent a complete visual redesign from retro arcade aesthetic
 
 ### Modular Architecture (January 2025)
 
-**Phase 0 refactoring complete**: The application was refactored from a 5,940-line monolithic `app.js` into **27 focused ES6 modules** totaling 6,670 lines. All modules have comprehensive test coverage (674 tests passing, 76% statement coverage).
+**Phase 0 refactoring complete**: The application was refactored from a 5,940-line monolithic `app.js` into **29 focused ES6 modules** totaling 7,600+ lines. All modules have comprehensive test coverage (991 tests passing, 87% statement coverage).
 
 ### File Structure
 
@@ -58,12 +58,13 @@ retro_games/
 │   │   ├── collection.js          # Owned/wishlist state (190 lines)
 │   │   └── cache.js               # Cover URL caching (182 lines)
 │   │
-│   ├── data/                      # Data layer modules (5 modules, 721 lines)
+│   ├── data/                      # Data layer modules (6 modules, 1,064 lines)
 │   │   ├── pricing.js             # Price normalization & queries (263 lines)
 │   │   ├── loader.js              # Data loading & row processing (184 lines)
-│   │   ├── aggregates.js          # Genre/timeline aggregates (163 lines)
-│   │   ├── supabase.js            # Supabase client config (70 lines)
-│   │   └── storage.js             # Storage URL helpers (41 lines)
+│   │   ├── supabase.js            # Supabase client config (170 lines)
+│   │   ├── aggregates.js          # Genre/timeline aggregates (156 lines)
+│   │   ├── guides.js              # Collector guide URL mappings (153 lines)
+│   │   └── storage.js             # Storage URL helpers (138 lines)
 │   │
 │   └── utils/                     # Pure utilities (4 modules, 262 lines)
 │       ├── format.js              # Currency, rating, percent formatting (162 lines)
@@ -88,11 +89,15 @@ retro_games/
 │   └── ...
 │
 ├── tests/
+│   ├── utils.test.js              # Module unit tests (841 tests)
+│   ├── fetch-covers.test.js       # Cover fetching tests (48 tests)
+│   ├── audit-missing-covers.test.js # Audit script tests (26 tests)
+│   ├── performance.test.js        # Performance tests (26 tests)
 │   ├── app.test.js                # Integration tests (25 tests)
-│   ├── utils.test.js              # Module unit tests (460 tests)
-│   ├── archive-media.test.js      # Media archival tests (3 tests)
+│   ├── archive-media.test.js      # Media archival tests (14 tests)
+│   ├── build-css.test.js          # CSS bundler tests (11 tests)
 │   └── e2e/
-│       └── *.spec.js              # End-to-end tests
+│       └── *.spec.js              # End-to-end tests (14 tests)
 │
 ├── archive/
 │   └── app-legacy.js              # Archived monolithic code (5,940 lines)

@@ -9,7 +9,7 @@ _Last updated: January 2025_
 - **Phase 0 refactoring** (January 2025): Complete modular extraction from 5,940-line `app-legacy.js` into 29 focused modules.
 - Vanilla JavaScript with modular structure: `app/main.js` (575 lines) bootstraps all modules.
 - **29 ES6 modules** across 6 directories: `ui/`, `features/`, `state/`, `data/`, `utils/`, `design/`.
-- **954 tests** covering all extracted modules (87%+ statement coverage).
+- **991 tests** covering all extracted modules (87%+ statement coverage).
 - **JSON-LD structured data** for schema.org VideoGame SEO (December 2025).
 - **Embeddable widgets** for game cards and collections (January 2025).
 - Supabase acts as the backing data store with graceful fallback to `data/sample-games.json`.
@@ -52,9 +52,9 @@ _Last updated: January 2025_
 
 - **Modal integration**: ✅ Modal component wired to game card clicks with full functionality
 - **Legacy cleanup**: ✅ Old `app.js` archived to `archive/app-legacy.js`
-- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 954 tests passing
+- **Module extraction**: ✅ **COMPLETE** - All 5 tracks extracted with 991 tests passing
 - **Price data integration**: ✅ Complete PriceCharting API integration for modal and dashboard
-- **Test coverage**: ✅ 954 unit tests + 14 E2E tests passing; @vitest/coverage-v8 installed (87% statements)
+- **Test coverage**: ✅ 991 unit tests + 14 E2E tests passing; @vitest/coverage-v8 installed (87% statements)
 - **Feature completion**: ✅ Virtualization wired to grid, renders only visible cards for 80+ games
 - **Performance testing**: ✅ 26 tests validating filtering/sorting/virtualization with 10k+ datasets
 - **E2E testing**: ✅ 14 Playwright E2E tests all passing (no skipped tests)
@@ -105,27 +105,27 @@ See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive 
 
 ## Module Inventory (December 2025)
 
-**29 ES6 modules** totaling 7,600+ lines:
+**30 ES6 modules** totaling 7,750+ lines:
 
 | Directory       | Modules | Lines | Purpose                                                                                     |
 | --------------- | ------- | ----- | ------------------------------------------------------------------------------------------- |
 | `app/ui/`       | 6       | 2,558 | UI rendering (grid, dashboard, modal, filters, carousel, theme)                             |
 | `app/features/` | 8       | 2,290 | Feature logic (virtualization, filtering, sorting, search, pagination, sharing, seo, embed) |
+| `app/data/`     | 6       | 1,064 | Data layer (supabase, loader, aggregates, pricing, storage, guides)                         |
 | `app/state/`    | 4       | 829   | State management (collection, filters, preferences, cache)                                  |
-| `app/data/`     | 5       | 911   | Data layer (supabase, loader, aggregates, pricing, storage)                                 |
 | `app/utils/`    | 4       | 262   | Pure utilities (dom, format, keys, validation)                                              |
 | `app/design/`   | 1       | 127   | Design tokens                                                                               |
 | `app/main.js`   | 1       | 575   | Bootstrap orchestration                                                                     |
 
 **Test Coverage:**
 
-- `tests/utils.test.js`: 804 tests (covers all extracted helpers + DOM tests + embed tests)
-- `tests/app.test.js`: 25 tests (integration tests)
-- `tests/performance.test.js`: 26 tests (10k+ dataset performance)
+- `tests/utils.test.js`: 841 tests (covers all extracted helpers + DOM tests + embed tests + guides)
 - `tests/fetch-covers.test.js`: 48 tests (cover fetching script)
+- `tests/performance.test.js`: 26 tests (10k+ dataset performance)
+- `tests/audit-missing-covers.test.js`: 26 tests
+- `tests/app.test.js`: 25 tests (integration tests)
 - `tests/archive-media.test.js`: 14 tests (media archival script)
 - `tests/build-css.test.js`: 11 tests (CSS bundler script)
-- `tests/audit-missing-covers.test.js`: 26 tests
 - `tests/e2e/`: 14 Playwright E2E tests (modal, filters, accessibility)
-- **Total: 954 unit tests + 14 E2E tests**
+- **Total: 991 unit tests + 14 E2E tests**
 - **Coverage: 87%+ statements**
