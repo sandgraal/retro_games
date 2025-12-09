@@ -94,6 +94,28 @@ jobs:
           END
           \$\$;
           GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+          
+          -- Create auth schema and stub tables/functions that Supabase provides
+          CREATE SCHEMA IF NOT EXISTS auth;
+          
+          CREATE TABLE IF NOT EXISTS auth.users (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            email text,
+            created_at timestamptz DEFAULT now()
+          );
+          
+          -- Create auth.uid() function stub
+          CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid AS \$\$
+            SELECT NULL::uuid;
+          \$\$ LANGUAGE sql STABLE;
+          
+          -- Create auth.role() function stub  
+          CREATE OR REPLACE FUNCTION auth.role() RETURNS text AS \$\$
+            SELECT 'anon'::text;
+          \$\$ LANGUAGE sql STABLE;
+          
+          GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+          GRANT SELECT ON auth.users TO anon, authenticated, service_role;
           EOF
       - name: Apply migrations and seed
         run: |
