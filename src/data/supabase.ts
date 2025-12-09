@@ -32,6 +32,9 @@ declare global {
 
 let client: SupabaseClient | null = null;
 
+const SUPABASE_READY_TIMEOUT_MS = 4000;
+const SUPABASE_READY_POLL_MS = 50;
+
 /**
  * Get the Supabase configuration from window
  */
@@ -48,6 +51,38 @@ export function getConfig(): SupabaseConfig | null {
  */
 export function isAvailable(): boolean {
   return !!getConfig() && !!window.supabase;
+}
+
+/**
+ * Wait for Supabase globals and config to be ready
+ * Ensures the CDN script and config.js have both executed before attempting queries
+ */
+export async function waitForSupabaseReady(
+  timeoutMs = SUPABASE_READY_TIMEOUT_MS
+): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+
+  if (isAvailable()) return true;
+
+  const ensureConfigScript = (): void => {
+    const hasScript = document.querySelector('script[src="config.js"]');
+    if (!hasScript) {
+      const script = document.createElement("script");
+      script.src = "config.js";
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  };
+
+  ensureConfigScript();
+
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (isAvailable()) return true;
+    await new Promise((resolve) => setTimeout(resolve, SUPABASE_READY_POLL_MS));
+  }
+
+  return isAvailable();
 }
 
 /**

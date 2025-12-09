@@ -7,5 +7,6 @@ export {
   getClient as getSupabaseClient,
   isAvailable as isSupabaseAvailable,
   fetchGames as fetchSupabaseGames,
+  waitForSupabaseReady,
   resetClient as resetSupabaseClient,
 } from "./supabase";
