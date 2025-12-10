@@ -246,7 +246,7 @@ describe("features/export", () => {
           w: [],
           b: [],
           t: [],
-        }),
+        })
       );
 
       expect(parseShareCode(invalidCode)).toBeNull();

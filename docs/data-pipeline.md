@@ -32,30 +32,27 @@ Keep this document updated whenever schema/migration workflows change.
 Price valuations now feed the app via the `game_price_snapshots` table (and the `game_price_latest` view). Each row stores:
 
 - `game_key` / `game_name` / `platform` – ties the snapshot back to the frontend compound key (`game_name___platform`).
-- `product_id`, `product_name`, `console_name` – metadata returned by PriceCharting.
+- `product_id`, `product_name`, `console_name` – metadata returned by the pricing API.
 - `loose_price_cents`, `cib_price_cents`, `new_price_cents`, `currency` – integer cents for easy arithmetic.
 - `source`, `snapshot_date`, `fetched_at`, `metadata` – auditing + optional extras (release date, raw payload).
 
-Row Level Security allows public read access while inserts/deletes are restricted to the service role. The accompanying ingestion helpers are:
+Row Level Security allows public read access while inserts/deletes are restricted to the service role. The ingestion script is:
 
-- `scripts/update-price-snapshots.js` (PriceCharting API)
 - `scripts/update-ebay-prices.js` (eBay Finding API; median sold price from completed listings)
 
 1. Read `games.csv` to build a de-duped list of `game_name + platform`.
-2. Fetch the latest price for the next stale title from either PriceCharting (`PRICECHARTING_TOKEN`) or eBay (`EBAY_APP_ID`, `EBAY_GLOBAL_ID`).
-3. Write/upsert a snapshot via Supabase REST (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`) and keep a local cache (`data/pricecharting-cache.json` or `data/ebay-price-cache.json`).
-4. Update the fallback dataset `data/sample-price-history.json` so the UI still showcases the feature when Supabase credentials aren’t present.
+2. Fetch the latest price for the next stale title from eBay (`EBAY_APP_ID`, `EBAY_GLOBAL_ID`).
+3. Write/upsert a snapshot via Supabase REST (`SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`) and keep a local cache (`data/ebay-price-cache.json`).
+4. Update the fallback dataset `data/sample-price-history.json` so the UI still showcases the feature when Supabase credentials aren't present.
 
 Run it with:
 
-```bash
-PRICECHARTING_TOKEN=... SUPABASE_SERVICE_ROLE_KEY=... npm run prices:update -- --limit 25
-
-EBAY_APP_ID=... SUPABASE_SERVICE_ROLE_KEY=... npm run prices:update:ebay -- --limit 25
-```
+\`\`\`bash
+EBAY_APP_ID=... SUPABASE_SERVICE_ROLE_KEY=... npm run prices:update -- --limit 25
+\`\`\`
 
 Use `--filter "chrono trigger"` for targeted refreshes or `--dry-run` to validate credentials without writing. The scheduled GitHub Actions workflow described below now runs this utility regularly; fall back to the CLI when you need manual overrides or local debugging.
 
 ## Automated price refresh workflow
 
-The repository ships `.github/workflows/price-refresh.yml`, which installs dependencies, restores the cached `data/pricecharting-cache.json`, and runs `npm run prices:update -- --limit 25` twice per day. Configure the `PRICECHARTING_TOKEN`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` secrets (plus optional `PRICECHARTING_REFRESH_HOURS`) in GitHub to enable the job. Trigger it manually when you need an ad-hoc update, override the default limit/filter via `workflow_dispatch` inputs, or pass `dry_run=true` to verify credentials without writing snapshots.
+The repository ships `.github/workflows/price-refresh.yml`, which installs dependencies, restores the cached `data/ebay-price-cache.json`, and runs `npm run prices:update -- --limit 25` twice per day. Configure the `EBAY_APP_ID`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` secrets (plus optional `EBAY_REFRESH_HOURS`) in GitHub to enable the job. Trigger it manually when you need an ad-hoc update, override the default limit/filter via `workflow_dispatch` inputs, or pass `dry_run=true` to verify credentials without writing snapshots.

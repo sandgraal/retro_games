@@ -33,14 +33,11 @@ export async function loadGames(): Promise<DataLoadResult> {
         fallbackReason = "Supabase returned no games";
       } catch (error) {
         console.warn("Supabase fetch failed, falling back to sample:", error);
-        const message =
-          error instanceof Error ? error.message : "Unknown Supabase error";
+        const message = error instanceof Error ? error.message : "Unknown Supabase error";
         fallbackReason = `Supabase fetch failed (${message})`;
       }
     } else {
-      console.warn(
-        "Supabase config unavailable before timeout, using sample data"
-      );
+      console.warn("Supabase config unavailable before timeout, using sample data");
       fallbackReason = "Supabase config unavailable before timeout";
     }
   }
@@ -56,9 +53,7 @@ export async function loadGames(): Promise<DataLoadResult> {
 /**
  * Load sample games from JSON
  */
-export async function loadSampleGames(
-  reason?: string
-): Promise<DataLoadResult> {
+export async function loadSampleGames(reason?: string): Promise<DataLoadResult> {
   try {
     const response = await fetch(SAMPLE_DATA_PATH);
     if (!response.ok) {

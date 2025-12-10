@@ -1,4 +1,4 @@
-name: Price Snapshot Refresh
+name: Price Snapshot Refresh (eBay)
 
 on:
   schedule:
@@ -36,9 +36,9 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v4
         with:
           node-version: "20.19"
           cache: npm
@@ -50,28 +50,29 @@ jobs:
         id: price-cache
         uses: actions/cache/restore@v4
         with:
-          path: data/pricecharting-cache.json
-          key: price-cache-v1
+          path: data/ebay-price-cache.json
+          key: ebay-price-cache-v1
           restore-keys: |
-            price-cache-
+            ebay-price-cache-
 
       - name: Ensure cache file exists
         run: |
           mkdir -p data
-          if [ ! -f data/pricecharting-cache.json ]; then
-            echo "{}" > data/pricecharting-cache.json
+          if [ ! -f data/ebay-price-cache.json ]; then
+            echo "{}" > data/ebay-price-cache.json
           fi
 
-      - name: Refresh PriceCharting snapshots
+      - name: Refresh eBay price snapshots
         env:
-          PRICECHARTING_TOKEN: ${{ secrets.PRICECHARTING_TOKEN }}
+          EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
+          EBAY_GLOBAL_ID: ${{ secrets.EBAY_GLOBAL_ID || 'EBAY-US' }}
+          EBAY_REFRESH_HOURS: ${{ secrets.EBAY_REFRESH_HOURS || '24' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          PRICECHARTING_REFRESH_HOURS: ${{ secrets.PRICECHARTING_REFRESH_HOURS || '' }}
         run: |
           set -euo pipefail
-          if [ -z "${PRICECHARTING_TOKEN:-}" ] || [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
-            echo "PRICECHARTING_TOKEN, SUPABASE_URL, and SUPABASE_SERVICE_ROLE_KEY secrets are required." >&2
+          if [ -z "${EBAY_APP_ID:-}" ] || [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "EBAY_APP_ID, SUPABASE_URL, and SUPABASE_SERVICE_ROLE_KEY secrets are required." >&2
             exit 1
           fi
 
@@ -86,23 +87,23 @@ jobs:
             ARGS+=("--dry-run")
           fi
 
-          echo "Running price refresh with args: ${ARGS[*]}"
+          echo "Running eBay price refresh with args: ${ARGS[*]}"
           npm run prices:update -- "${ARGS[@]}"
 
       - name: Save price cache
         if: ${{ success() }}
         uses: actions/cache/save@v4
         with:
-          path: data/pricecharting-cache.json
-          key: price-cache-v1-${{ hashFiles('data/pricecharting-cache.json') }}
+          path: data/ebay-price-cache.json
+          key: ebay-price-cache-v1-${{ hashFiles('data/ebay-price-cache.json') }}
 
       - name: Create failure issue
         if: failure()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         with:
           script: |
             const title = `🔴 Price Snapshot Refresh Failed - ${new Date().toISOString().split('T')[0]}`;
-            const body = `## Workflow Failure\n\n**Workflow:** Price Snapshot Refresh\n**Run:** [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n**Triggered by:** ${context.eventName}\n\n### Likely Causes\n- Missing \`PRICECHARTING_TOKEN\` secret\n- Missing \`SUPABASE_URL\` secret\n- Missing \`SUPABASE_SERVICE_ROLE_KEY\` secret\n- PriceCharting API issues\n\nPlease check the workflow logs for details.`;
+            const body = `## Workflow Failure\n\n**Workflow:** Price Snapshot Refresh (eBay)\n**Run:** [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n**Triggered by:** ${context.eventName}\n\n### Likely Causes\n- Missing \`EBAY_APP_ID\` secret\n- Missing \`SUPABASE_URL\` secret\n- Missing \`SUPABASE_SERVICE_ROLE_KEY\` secret\n- eBay Finding API issues\n\nPlease check the workflow logs for details.`;
 
             // Check if similar issue already exists
             const issues = await github.rest.issues.listForRepo({

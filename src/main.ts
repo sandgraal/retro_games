@@ -91,9 +91,7 @@ async function init(): Promise<void> {
 
     // Show status if using sample data
     if (gamesResult.source === "sample") {
-      const fallbackDetails = gamesResult.reason
-        ? `${gamesResult.reason}. `
-        : "";
+      const fallbackDetails = gamesResult.reason ? `${gamesResult.reason}. ` : "";
       showStatus(
         `${fallbackDetails}Showing sample dataset. Configure Supabase for cloud sync.`,
         "info"

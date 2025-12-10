@@ -57,13 +57,6 @@ function buildConfig({ envPath, outputPath }) {
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  const priceToken = (process.env.PRICECHARTING_TOKEN || "").trim();
-  const priceCurrency = (process.env.PRICECHARTING_CURRENCY || "").trim();
-  const priceCacheHoursRaw = (process.env.PRICECHARTING_CACHE_HOURS || "").trim();
-  const priceCacheHours =
-    priceCacheHoursRaw && !Number.isNaN(Number(priceCacheHoursRaw))
-      ? Number(priceCacheHoursRaw)
-      : null;
   const storagePublicBucket = (process.env.SUPABASE_STORAGE_PUBLIC_BUCKET || "").trim();
   const storageAuthBucket = (process.env.SUPABASE_STORAGE_AUTH_BUCKET || "").trim();
   const storageArchiveBucket = (process.env.SUPABASE_STORAGE_ARCHIVE_BUCKET || "").trim();
@@ -81,14 +74,6 @@ function buildConfig({ envPath, outputPath }) {
   }
   if (table) {
     config.table = table;
-  }
-  if (priceToken || priceCurrency || priceCacheHours) {
-    config.pricing = {};
-    if (priceToken) config.pricing.token = priceToken;
-    if (priceCurrency) config.pricing.currency = priceCurrency.toUpperCase();
-    if (priceCacheHours && priceCacheHours > 0) {
-      config.pricing.cacheHours = priceCacheHours;
-    }
   }
   if (
     storagePublicBucket ||

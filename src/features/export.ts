@@ -187,7 +187,9 @@ export function parseBackup(json: string): BackupPayload | null {
     }
 
     const notes = normalizeNotes(data.notes);
-    const filters = isObject(data.filters) ? (data.filters as Record<string, unknown>) : undefined;
+    const filters = isObject(data.filters)
+      ? (data.filters as Record<string, unknown>)
+      : undefined;
 
     return {
       version,
@@ -206,7 +208,9 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function normalizeCollectionEntries(value: Record<string, unknown>): Record<string, CollectionEntry> {
+function normalizeCollectionEntries(
+  value: Record<string, unknown>
+): Record<string, CollectionEntry> {
   const entries: Record<string, CollectionEntry> = {};
 
   Object.entries(value).forEach(([key, entry]) => {
@@ -245,10 +249,18 @@ function isCollectionEntry(value: unknown): value is CollectionEntry {
   return true;
 }
 
-const COLLECTION_STATUSES: CollectionStatus[] = ["none", "owned", "wishlist", "backlog", "trade"];
+const COLLECTION_STATUSES: CollectionStatus[] = [
+  "none",
+  "owned",
+  "wishlist",
+  "backlog",
+  "trade",
+];
 
 function isCollectionStatus(value: unknown): value is CollectionStatus {
-  return typeof value === "string" && COLLECTION_STATUSES.includes(value as CollectionStatus);
+  return (
+    typeof value === "string" && COLLECTION_STATUSES.includes(value as CollectionStatus)
+  );
 }
 
 function parseStringArray(value: unknown): string[] | null {

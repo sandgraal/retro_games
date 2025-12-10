@@ -11,7 +11,7 @@
       "loose_price_cents": 17500,
       "cib_price_cents": 46500,
       "new_price_cents": 72500,
-      "source": "pricecharting",
+      "source": "ebay",
       "snapshot_date": "2025-03-10",
       "fetched_at": "2025-03-10T15:30:00Z"
     },
@@ -26,7 +26,7 @@
       "loose_price_cents": 7800,
       "cib_price_cents": 21500,
       "new_price_cents": 40000,
-      "source": "pricecharting",
+      "source": "ebay",
       "snapshot_date": "2025-03-10",
       "fetched_at": "2025-03-10T15:30:00Z"
     },
@@ -41,7 +41,7 @@
       "loose_price_cents": 2800,
       "cib_price_cents": 8500,
       "new_price_cents": 15000,
-      "source": "pricecharting",
+      "source": "ebay",
       "snapshot_date": "2025-03-10",
       "fetched_at": "2025-03-10T15:30:00Z"
     }
