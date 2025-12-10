@@ -13,7 +13,7 @@ jobs:
       contents: read
       issues: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install PostgreSQL client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Dump database
@@ -31,7 +31,7 @@ jobs:
           echo "BACKUP_FILE=backups/supabase-dump-${TIMESTAMP}.sql.gz" >> $GITHUB_ENV
           ls -lh backups/
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: supabase-backup-${{ github.run_id }}
           path: backups/supabase-dump-*.sql.gz
@@ -52,7 +52,7 @@ jobs:
 
       - name: Create failure issue
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = `🔴 Supabase Backup Failed - ${new Date().toISOString().split('T')[0]}`;
