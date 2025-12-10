@@ -15,7 +15,7 @@ _Last updated: December 2025_
 ## Data Flow
 
 1. `main.ts` loads persisted state, mounts UI components, then fetches games and price data in parallel.
-2. Loader waits up to 4 seconds for Supabase globals before using sample data; `?sample=1` or `__SANDGRAAL_FORCE_SAMPLE__` force the fallback.
+2. Loader waits up to 4 seconds for Supabase globals before using sample data; `?sample=1` or `__SANDGRAAL_FORCE_SAMPLE__` force the fallback, and the UI surfaces the reason when the sample dataset is shown.
 3. Collection status and notes updates persist immediately to `localStorage` and feed the dashboard and modal.
 4. Export/share/backup actions surface through header/settings controls and use `src/features/export.ts`.
 

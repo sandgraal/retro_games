@@ -1,35 +1,40 @@
-# Repository Context Snapshot (2025-12)
+# Repository Context Snapshot (2026-01)
 
 ## project_summary
 
-- Static, production-ready retro game tracker with glassmorphism UI, Supabase-backed data (with offline sample JSON fallbacks), and optional price valuations.
-- Modular vanilla JS architecture (29 ES modules across `app/` for UI, features, state, data, utils) plus modular CSS under `style/`.
-- Optional Supabase tables/views for games, aggregates, and price snapshots; GitHub Actions handle price refresh, media archival, and backups.
+- TypeScript + Vite single-page app for tracking retro game collections with a custom signal system and virtualized card grid.
+- Local-first data powered by `localStorage` (collection, notes, preferences) with optional Supabase metadata when `config.js` + CDN client are present.
+- Pricing and dashboard value displays read from the bundled `data/sample-price-history.json` snapshot (values in cents).
+- Offline-friendly delivery via `public/manifest.json` and `public/sw.js`; GH Pages deployment is supported via Vite base path configuration.
 
 ## dependency_graph
 
-- **Runtime:** Vanilla JS/CSS/HTML (no bundler) served statically.
-- **APIs/Services:** Supabase REST/Storage (+ optional RPCs), PriceCharting API, eBay Finding API (new alternative), GitHub Actions caches.
-- **Tooling:** ESLint, Prettier, Vitest, Playwright, Lighthouse CI, csv-parse, dotenv, http-server.
+- **Runtime:** Frameworkless TypeScript modules orchestrated by Vite, custom signals (`src/core/signals.ts`), and modular CSS under `style/` + `style.css`.
+- **Data/Services:** Supabase `games_consolidated` view when configured, falling back to `data/sample-games.json`; price history from `data/sample-price-history.json`; persistence in `localStorage`.
+- **Tooling:** Vite 7, TypeScript 5, ESLint/Prettier, Vitest, Playwright, Lighthouse CI, csv-parse/dotenv scripts for data tasks.
 
 ## commands_map
 
-- **Config/Build:** `npm run build:config`, `npm run build:css`, `npm run build`.
-- **Quality:** `npm run lint`, `npm run format:check`, `npm test`, `npm run test:e2e`, `npm run lighthouse`.
-- **Data:** `npm run prices:update` (PriceCharting), `npm run prices:update:ebay` (eBay sold listings), `npm run sitemap`, `npm run seed:generate`.
-- **Serve/Preview:** `python -m http.server 8080` or `npm run serve:lighthouse` / `npm run serve:dist`.
+- **Dev/Preview:** `npm run dev`, `npm run preview`.
+- **Build/Typecheck:** `npm run build` (tsc + Vite), `npm run typecheck`, `npm run build:config`, `npm run build:css` (legacy CSS build).
+- **Quality:** `npm run lint`, `npm run format:check`, `npm test`, `npm run test:e2e` (requires `npx playwright install --with-deps`), `npm run lighthouse`.
+- **Data/Utility:** `npm run sitemap`, `npm run prices:update`, `npm run prices:update:ebay`, `npm run archive:media`, `npm run audit:covers`, `npm run enrich:data`.
 
 ## key_paths_by_feature
 
-- **Entry/UI:** `index.html`, `style.css`, `app/main.js`, `app/ui/*.js`, `style/components/*.css`.
-- **Features:** `app/features/*.js` (filtering, search, pagination, virtualization, sharing, seo, embed).
-- **Data/State:** `app/data/*.js` (pricing, loader, supabase, aggregates, storage); `app/state/*.js` (collection, preferences, filters, cache).
-- **Scripts:** `scripts/update-price-snapshots.js` (PriceCharting), `scripts/update-ebay-prices.js` (eBay alternative), `scripts/build-css.js`, `scripts/generate-config.js`, `scripts/generate-seed-sql.js`.
-- **Docs:** `docs/architecture.md`, `docs/current-state.md`, `docs/data-pipeline.md`, `docs/AGENT_QUICKSTART.md`.
+- **Entry/UI shell:** `src/main.ts`, `index.html`, `style.css` + `style/` tokens/utilities.
+- **Signals & State:** `src/core/signals.ts`, `src/core/types.ts`, state store and selectors in `src/state/`.
+- **Data loading:** `src/data/loader.ts` (Supabase + sample fallback), Supabase client wrapper in `src/data/supabase.ts`.
+- **UI components:** `src/ui/` for header, filters, dashboard, grid/virtualization, modal, and settings modal.
+- **Features:** `src/features/export.ts` for CSV/backup/share codes and import helpers.
+- **Samples/assets:** `data/` for games/price snapshots, `public/` for service worker + manifest, `supabase/` for SQL schemas.
+- **Scripts:** `scripts/` for config generation, CSS build, sitemap and price updates, and archival utilities.
 
 ## known_constraints_and_feature_flags
 
-- No bundler; code runs directly in-browser—keep modules small and dependency-free.
-- Supabase credentials optional; app auto-falls back to `data/sample-games.json` and `data/sample-price-history.json`.
-- LocalStorage persistence for collection/notes—changes must remain backward compatible.
-- CI enforces lint/format/test/Lighthouse/gitleaks; secrets must stay in env vars and not committed.
+- Supabase path requires `config.js` and the CDN client; loader waits ~4s before falling back to sample data (or when `?sample=1`/`__SANDGRAAL_FORCE_SAMPLE__`).
+- `config.js` is generated from `.env` and now gitignored; run `npm run build:config` locally and avoid committing generated secrets.
+- Collection + notes persist to `localStorage`; schema should remain backward compatible to avoid data loss.
+- Pricing uses only the bundled snapshot; no live updates currently exist.
+- Node >=20.19.0 enforced via `package.json` engines; lockfile updates should be minimal unless required.
+- Service worker caches assets; consider cache-busting if altering resource paths or base URL.

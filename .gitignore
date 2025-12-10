@@ -5,6 +5,8 @@ Thumbs.db
 # Local configuration overrides
 config.local.js
 .env
+config.js
+public/config.js
 
 # Logs and temp files
 npm-debug.log*

@@ -136,12 +136,29 @@ export function parseShareCode(code: string): SharePayload | null {
     const json = atob(code);
     const compact = JSON.parse(json);
 
+    if (!isObject(compact)) {
+      console.warn("Failed to parse share code");
+      return null;
+    }
+
+    const owned = parseStringArray(compact.o);
+    const wishlist = parseStringArray(compact.w);
+    const backlog = parseStringArray(compact.b);
+    const trade = parseStringArray(compact.t);
+
+    if (!owned || !wishlist || !backlog || !trade) {
+      console.warn("Invalid share code structure");
+      return null;
+    }
+
+    const version = typeof compact.v === "number" ? compact.v : 1;
+
     return {
-      version: compact.v ?? 1,
-      owned: compact.o ?? [],
-      wishlist: compact.w ?? [],
-      backlog: compact.b ?? [],
-      trade: compact.t ?? [],
+      version,
+      owned,
+      wishlist,
+      backlog,
+      trade,
     };
   } catch {
     console.warn("Failed to parse share code");
@@ -156,16 +173,87 @@ export function parseBackup(json: string): BackupPayload | null {
   try {
     const data = JSON.parse(json);
 
-    if (!data.version || !data.collection) {
+    if (!isObject(data)) {
       console.warn("Invalid backup format");
       return null;
     }
 
-    return data as BackupPayload;
+    const version = typeof data.version === "number" ? data.version : null;
+    const collection = isObject(data.collection) ? data.collection : null;
+
+    if (version === null || !collection) {
+      console.warn("Invalid backup format");
+      return null;
+    }
+
+    const notes = normalizeNotes(data.notes);
+    const filters = isObject(data.filters) ? (data.filters as Record<string, unknown>) : undefined;
+
+    return {
+      version,
+      timestamp: typeof data.timestamp === "number" ? data.timestamp : Date.now(),
+      collection: normalizeCollectionEntries(collection),
+      notes,
+      filters,
+    } satisfies BackupPayload;
   } catch {
     console.warn("Failed to parse backup");
     return null;
   }
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeCollectionEntries(value: Record<string, unknown>): Record<string, CollectionEntry> {
+  const entries: Record<string, CollectionEntry> = {};
+
+  Object.entries(value).forEach(([key, entry]) => {
+    if (!isCollectionEntry(entry)) return;
+
+    entries[key] = {
+      gameKey: entry.gameKey,
+      status: entry.status,
+      addedAt: entry.addedAt,
+      ...(entry.notes !== undefined ? { notes: entry.notes } : {}),
+    };
+  });
+
+  return entries;
+}
+
+function normalizeNotes(value: unknown): Record<string, string> {
+  if (!isObject(value)) return {};
+
+  return Object.entries(value).reduce<Record<string, string>>((acc, [key, note]) => {
+    if (typeof note === "string") acc[key] = note;
+    return acc;
+  }, {});
+}
+
+function isCollectionEntry(value: unknown): value is CollectionEntry {
+  if (!isObject(value)) return false;
+
+  const entry = value as Record<string, unknown>;
+  const { gameKey, status, addedAt, notes } = entry;
+
+  if (typeof gameKey !== "string" || typeof addedAt !== "number") return false;
+  if (!isCollectionStatus(status)) return false;
+  if (notes !== undefined && typeof notes !== "string") return false;
+
+  return true;
+}
+
+const COLLECTION_STATUSES: CollectionStatus[] = ["none", "owned", "wishlist", "backlog", "trade"];
+
+function isCollectionStatus(value: unknown): value is CollectionStatus {
+  return typeof value === "string" && COLLECTION_STATUSES.includes(value as CollectionStatus);
+}
+
+function parseStringArray(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.every((item) => typeof item === "string") ? (value as string[]) : null;
 }
 
 /**
