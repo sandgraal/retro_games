@@ -98,8 +98,6 @@ async function init(): Promise<void> {
         `${fallbackDetails}Showing sample dataset. Configure Supabase for cloud sync.`,
         "info"
       );
-    } else if (gamesResult.reason) {
-      showStatus(gamesResult.reason, "info");
     }
 
     // Check for share code in URL
