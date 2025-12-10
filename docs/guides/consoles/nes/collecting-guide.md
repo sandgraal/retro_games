@@ -174,7 +174,7 @@ Games with notable 5-screw premiums:
 
 | Game               | First Print Feature  | Later Print  |
 | ------------------ | -------------------- | ------------ |
-| Legend of Zelda    | TM (trademark)       | ®           |
+| Legend of Zelda    | TM (trademark)       | ®            |
 | Metroid            | Yellow label         | Silver label |
 | Mike Tyson's P-O!! | Mike Tyson license   | Mr. Dream    |
 | Mega Man           | Black box art        | N/A          |
