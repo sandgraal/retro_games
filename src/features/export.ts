@@ -181,7 +181,7 @@ export function parseBackup(json: string): BackupPayload | null {
     const version = typeof data.version === "number" ? data.version : null;
     const collection = isObject(data.collection) ? data.collection : null;
 
-    if (!version || !collection) {
+    if (version === null || !collection) {
       console.warn("Invalid backup format");
       return null;
     }
