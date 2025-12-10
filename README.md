@@ -14,7 +14,7 @@ A TypeScript + Vite single-page app for tracking retro games. It uses a lightwei
 
 ## Data sources & configuration
 
-- **Supabase**: copy `.env.example` to `.env`, populate `SUPABASE_URL` and `SUPABASE_ANON_KEY`, then run `npm run build:config` to emit `config.js`. The loader waits up to 4s for `window.supabase` and `window.__SUPABASE_CONFIG__` before falling back to the sample file. Set `window.__SANDGRAAL_FORCE_SAMPLE__ = true` or append `?sample=1` to force the sample dataset.
+- **Supabase**: copy `.env.example` to `.env`, populate `SUPABASE_URL` and `SUPABASE_ANON_KEY`, then run `npm run build:config` to emit `config.js` (written to the repo root and `public/config.js` for bundling). The loader waits up to 4s for `window.supabase` and `window.__SUPABASE_CONFIG__` before falling back to the sample file. Set `window.__SANDGRAAL_FORCE_SAMPLE__ = true` or append `?sample=1` to force the sample dataset.
 - **Pricing**: only the local snapshot at `data/sample-price-history.json` is read. Values are stored in cents and are summed/sorted using the loose price when present.
 - **Persistence**: collection statuses, notes, preferences, and filters live in `localStorage` (`dragonshoard_*` keys).
 

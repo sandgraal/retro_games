@@ -42,6 +42,7 @@ function ensureFileExists(filePath, friendlyName) {
 function buildConfig({ envPath, outputPath }) {
   const resolvedEnv = envPath || path.join(ROOT_DIR, ".env");
   const resolvedOut = outputPath || path.join(ROOT_DIR, "config.js");
+  const publicOut = path.join(ROOT_DIR, "public", "config.js");
 
   ensureFileExists(resolvedEnv, ".env file");
   const result = dotenv.config({ path: resolvedEnv });
@@ -113,7 +114,13 @@ function buildConfig({ envPath, outputPath }) {
   ].join("\n");
 
   fs.writeFileSync(resolvedOut, content, "utf8");
+  fs.mkdirSync(path.dirname(publicOut), { recursive: true });
+  fs.writeFileSync(publicOut, content, "utf8");
+
   console.log(`✅ Wrote Supabase config to ${path.relative(ROOT_DIR, resolvedOut)}`);
+  console.log(
+    `✅ Copied Supabase config to ${path.relative(ROOT_DIR, publicOut)} (bundled)`
+  );
 }
 
 buildConfig(parseArgs());
