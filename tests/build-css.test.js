@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DIST_DIR = path.join(ROOT_DIR, "dist");
@@ -27,7 +27,7 @@ describe("scripts/build-css.js", () => {
     });
 
     it("creates dist directory if not exists", () => {
-      execSync(`node ${SCRIPT_PATH}`, { cwd: ROOT_DIR });
+      execFileSync("node", [SCRIPT_PATH], { cwd: ROOT_DIR });
       expect(fs.existsSync(DIST_DIR)).toBe(true);
     });
 
@@ -82,7 +82,7 @@ describe("scripts/build-css.js", () => {
     });
 
     it("bundle includes component styles", () => {
-      execSync(`node ${SCRIPT_PATH}`, { cwd: ROOT_DIR });
+      execFileSync("node", [SCRIPT_PATH], { cwd: ROOT_DIR });
       const minPath = path.join(DIST_DIR, "style.min.css");
       const content = fs.readFileSync(minPath, "utf8");
 
@@ -95,7 +95,7 @@ describe("scripts/build-css.js", () => {
     it("script exits with code 0 on success", () => {
       let exitCode = 0;
       try {
-        execSync(`node ${SCRIPT_PATH}`, { cwd: ROOT_DIR });
+        execFileSync("node", [SCRIPT_PATH], { cwd: ROOT_DIR });
       } catch {
         exitCode = 1;
       }
@@ -103,7 +103,7 @@ describe("scripts/build-css.js", () => {
     });
 
     it("generates production index.html with bundled CSS", () => {
-      execSync(`node ${SCRIPT_PATH}`, { cwd: ROOT_DIR });
+      execFileSync("node", [SCRIPT_PATH], { cwd: ROOT_DIR });
       const indexPath = path.join(DIST_DIR, "index.html");
       expect(fs.existsSync(indexPath)).toBe(true);
 
@@ -113,7 +113,7 @@ describe("scripts/build-css.js", () => {
     });
 
     it("creates symlinks for required assets", () => {
-      execSync(`node ${SCRIPT_PATH}`, { cwd: ROOT_DIR });
+      execFileSync("node", [SCRIPT_PATH], { cwd: ROOT_DIR });
 
       // Check symlinks or copies exist for key directories
       const dataPath = path.join(DIST_DIR, "data");
