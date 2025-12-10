@@ -318,9 +318,10 @@ async function loadGamesNeedingCovers(fetchImpl, options) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
   if (!url || !key) {
-    throw new Error(
-      "SUPABASE_URL and SUPABASE_ANON_KEY (or SUPABASE_SERVICE_ROLE_KEY) required"
+    console.error(
+      "❌ SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY) required"
     );
+    process.exit(1);
   }
 
   // Build query - get games without valid cover URLs

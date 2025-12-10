@@ -1,98 +1,125 @@
 name: Media Archive Backup
 
 on:
-    schedule:
-        # Run weekly on Sundays at 2:00 AM UTC
-        - cron: "0 2 * * 0"
-    workflow_dispatch:
-        inputs:
-            bucket:
-                description: "Supabase Storage bucket to archive"
-                required: false
-                default: "game-covers"
-            dry_run:
-                description: "Set to true to list objects without downloading"
-                required: false
-                default: "false"
+  schedule:
+    # Run weekly on Sundays at 2:00 AM UTC
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      bucket:
+        description: "Supabase Storage bucket to archive"
+        required: false
+        default: "game-covers"
+      dry_run:
+        description: "Set to true to list objects without downloading"
+        required: false
+        default: "false"
 
 env:
-    ARCHIVE_BUCKET: ${{ github.event.inputs.bucket || 'game-covers' }}
-    ARCHIVE_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+  ARCHIVE_BUCKET: ${{ github.event.inputs.bucket || 'game-covers' }}
+  ARCHIVE_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
 
 jobs:
-    archive-media:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-        steps:
-            - uses: actions/checkout@v4
+  archive-media:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
 
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: "20.19"
-                  cache: npm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19"
+          cache: npm
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Create archive directory
-              run: mkdir -p backups/media-archive
+      - name: Create archive directory
+        run: mkdir -p backups/media-archive
 
-            - name: Archive media from Supabase Storage
-              if: env.ARCHIVE_DRY_RUN != 'true'
-              env:
-                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-                  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-              run: |
-                  node scripts/archive-media.js \
-                    --bucket "$ARCHIVE_BUCKET" \
-                    --output backups/media-archive
+      - name: Archive media from Supabase Storage
+        if: env.ARCHIVE_DRY_RUN != 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node scripts/archive-media.js \
+            --bucket "$ARCHIVE_BUCKET" \
+            --output backups/media-archive
 
-            - name: List objects (dry run)
-              if: env.ARCHIVE_DRY_RUN == 'true'
-              env:
-                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-                  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-              run: |
-                  echo "Dry run mode - listing objects in bucket: $ARCHIVE_BUCKET"
-                  # In future, could add a --list-only flag to archive-media.js
+      - name: List objects (dry run)
+        if: env.ARCHIVE_DRY_RUN == 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Dry run mode - listing objects in bucket: $ARCHIVE_BUCKET"
+          # In future, could add a --list-only flag to archive-media.js
 
-            - name: Compress archive
-              if: env.ARCHIVE_DRY_RUN != 'true'
-              run: |
-                  if [ -f backups/media-archive/manifest.json ]; then
-                    TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-                    tar -czvf "backups/media-archive-${TIMESTAMP}.tar.gz" -C backups media-archive
-                    echo "ARCHIVE_FILE=backups/media-archive-${TIMESTAMP}.tar.gz" >> $GITHUB_ENV
-                  fi
+      - name: Compress archive
+        if: env.ARCHIVE_DRY_RUN != 'true'
+        run: |
+          if [ -f backups/media-archive/manifest.json ]; then
+            TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+            tar -czvf "backups/media-archive-${TIMESTAMP}.tar.gz" -C backups media-archive
+            echo "ARCHIVE_FILE=backups/media-archive-${TIMESTAMP}.tar.gz" >> $GITHUB_ENV
+          fi
 
-            - name: Upload archive artifact
-              if: env.ARCHIVE_DRY_RUN != 'true'
-              uses: actions/upload-artifact@v4
-              with:
-                  name: media-archive-${{ github.run_id }}
-                  path: backups/media-archive-*.tar.gz
-                  retention-days: 90
-                  if-no-files-found: warn
+      - name: Upload archive artifact
+        if: env.ARCHIVE_DRY_RUN != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: media-archive-${{ github.run_id }}
+          path: backups/media-archive-*.tar.gz
+          retention-days: 90
+          if-no-files-found: warn
 
-            - name: Report summary
-              if: always()
-              run: |
-                  echo "## Media Archive Summary" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Bucket**: $ARCHIVE_BUCKET" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Dry Run**: $ARCHIVE_DRY_RUN" >> $GITHUB_STEP_SUMMARY
-                  if [ -f backups/media-archive/manifest.json ]; then
-                    OBJECT_COUNT=$(jq '.objects | length' backups/media-archive/manifest.json)
-                    TOTAL_SIZE=$(jq '[.objects[].size] | add // 0' backups/media-archive/manifest.json)
-                    TOTAL_SIZE_MB=$(echo "scale=2; $TOTAL_SIZE / 1048576" | bc)
-                    echo "- **Objects archived**: $OBJECT_COUNT" >> $GITHUB_STEP_SUMMARY
-                    echo "- **Total size**: ${TOTAL_SIZE_MB} MB" >> $GITHUB_STEP_SUMMARY
-                    echo "" >> $GITHUB_STEP_SUMMARY
-                    echo "### Checksum Manifest" >> $GITHUB_STEP_SUMMARY
-                    echo '```json' >> $GITHUB_STEP_SUMMARY
-                    head -50 backups/media-archive/manifest.json >> $GITHUB_STEP_SUMMARY
-                    echo '```' >> $GITHUB_STEP_SUMMARY
-                  else
-                    echo "- No manifest generated" >> $GITHUB_STEP_SUMMARY
-                  fi
+      - name: Report summary
+        if: always()
+        run: |
+          echo "## Media Archive Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bucket**: $ARCHIVE_BUCKET" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run**: $ARCHIVE_DRY_RUN" >> $GITHUB_STEP_SUMMARY
+          if [ -f backups/media-archive/manifest.json ]; then
+            OBJECT_COUNT=$(jq '.objects | length' backups/media-archive/manifest.json)
+            TOTAL_SIZE=$(jq '[.objects[].size] | add // 0' backups/media-archive/manifest.json)
+            TOTAL_SIZE_MB=$(echo "scale=2; $TOTAL_SIZE / 1048576" | bc)
+            echo "- **Objects archived**: $OBJECT_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total size**: ${TOTAL_SIZE_MB} MB" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Checksum Manifest" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            head -50 backups/media-archive/manifest.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- No manifest generated" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Create failure issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🔴 Media Archive Backup Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## Workflow Failure\n\n**Workflow:** Media Archive Backup\n**Run:** [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n**Triggered by:** ${context.eventName}\n\n### Likely Causes\n- Missing \`SUPABASE_URL\` secret\n- Missing \`SUPABASE_SERVICE_ROLE_KEY\` secret\n- Supabase Storage issues\n\nPlease check the workflow logs for details.`;
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'workflow-failure,media-archive'
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['workflow-failure', 'media-archive', 'automated']
+              });
+            }
