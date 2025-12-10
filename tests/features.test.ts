@@ -159,6 +159,17 @@ describe("features/export", () => {
       expect(parseBackup("invalid json")).toBeNull();
       expect(parseBackup("{}")).toBeNull();
     });
+
+    it("should return null when collection is not an object", () => {
+      const backup = {
+        version: 2,
+        timestamp: Date.now(),
+        collection: [],
+        notes: {},
+      };
+
+      expect(parseBackup(JSON.stringify(backup))).toBeNull();
+    });
   });
 
   describe("createShareCode / parseShareCode", () => {
@@ -225,6 +236,20 @@ describe("features/export", () => {
       expect(parsed?.wishlist).toContain("g2___snes");
       expect(parsed?.backlog).toContain("g3___snes");
       expect(parsed?.trade).toContain("g4___snes");
+    });
+
+    it("should return null when payload arrays are invalid", () => {
+      const invalidCode = btoa(
+        JSON.stringify({
+          v: 2,
+          o: "not-an-array",
+          w: [],
+          b: [],
+          t: [],
+        }),
+      );
+
+      expect(parseShareCode(invalidCode)).toBeNull();
     });
 
     it("should return null for invalid share code", () => {
