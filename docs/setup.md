@@ -69,7 +69,7 @@ npm run build && npm run preview
 
 ### Instant demo mode
 
-If Supabase credentials are missing or the fetch fails, the app automatically falls back to `data/sample-games.json`. This guarantees that first-time contributors still see a populated UI while backend access is being configured.
+If Supabase credentials are missing or the fetch fails, the app automatically falls back to `data/sample-games.json` and surfaces the reason in an info banner. This guarantees that first-time contributors still see a populated UI while backend access is being configured.
 Append `?sample=1` to the URL (or set `window.__SANDGRAAL_FORCE_SAMPLE__ = true` before loading) to force the sample dataset even when real credentials are present—useful for demos and automated testing.
 
 ## Price data (optional)
