@@ -442,3 +442,392 @@
   color: var(--accent-secondary);
   text-decoration: underline;
 }
+
+/* ==========================================
+   ENHANCED MODAL STYLES
+   ========================================== */
+
+/* Modal Info Container */
+.modal-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Status Badge */
+.modal-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  width: fit-content;
+  margin-bottom: var(--spacing-md);
+}
+
+.modal-status-badge.status-none {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+}
+
+.modal-status-badge.status-owned {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.modal-status-badge.status-wishlist {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.modal-status-badge.status-backlog {
+  background: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+}
+
+.modal-status-badge.status-trade {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+/* Info Grid */
+.modal-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.modal-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--bg-glass);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.modal-info-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.modal-info-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.modal-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modal-info-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.modal-info-value {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Status Buttons in Cover Area */
+.modal-status-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.modal-status-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.modal-status-btn .status-icon {
+  font-size: 1.25rem;
+  transition: transform var(--duration-fast) var(--easing-default);
+}
+
+.modal-status-btn .status-label {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.modal-status-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.modal-status-btn:hover .status-icon {
+  transform: scale(1.1);
+}
+
+.modal-status-btn.active {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.modal-status-btn.active[data-status="owned"] {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #34d399;
+}
+
+.modal-status-btn.active[data-status="wishlist"] {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+
+.modal-status-btn.active[data-status="backlog"] {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: #8b5cf6;
+  color: #a78bfa;
+}
+
+.modal-status-btn.active[data-status="trade"] {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: #60a5fa;
+}
+
+/* Notes Section */
+.modal-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.modal-notes-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.modal-notes-icon {
+  font-size: 1rem;
+}
+
+.modal-notes-input {
+  width: 100%;
+  min-height: 80px;
+  padding: var(--spacing-md);
+  background: var(--bg-primary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  resize: vertical;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.modal-notes-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+  outline: none;
+}
+
+.modal-notes-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* External Links */
+.modal-links {
+  margin-top: auto;
+}
+
+.modal-external-link {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--bg-glass);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.modal-external-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.modal-external-link .link-icon {
+  font-size: 1.25rem;
+}
+
+.modal-external-link .link-text {
+  flex: 1;
+  font-size: var(--font-size-sm);
+}
+
+.modal-external-link .link-arrow {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.modal-external-link:hover .link-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Guides Section in Modal */
+.modal-guides {
+  margin-top: var(--spacing-md);
+}
+
+.modal-guides-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-guides-icon {
+  font-size: 1.25rem;
+}
+
+.modal-guides-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.modal-guides-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.modal-guide-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.modal-guide-card:hover {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(139, 92, 246, 0.1));
+  border-color: var(--accent-primary);
+  transform: translateX(4px);
+}
+
+.guide-card-icon {
+  font-size: 1.5rem;
+}
+
+.guide-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guide-card-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.guide-card-type {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.guide-card-arrow {
+  color: var(--accent-primary);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.modal-guide-card:hover .guide-card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* No Cover State */
+.modal-cover-image.no-cover {
+  background: var(--bg-glass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 3 / 4;
+  min-height: 300px;
+}
+
+.modal-cover-image.no-cover::before {
+  content: "🎮";
+  font-size: 4rem;
+  opacity: 0.3;
+}
+
+/* Mobile Responsive Enhancements */
+@media (max-width: 768px) {
+  .modal-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modal-status-buttons {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .modal-status-btn {
+    padding: var(--spacing-sm);
+  }
+
+  .modal-status-btn .status-label {
+    display: none;
+  }
+
+  .modal-guides-list {
+    gap: var(--spacing-xs);
+  }
+
+  .modal-guide-card {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+}

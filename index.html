@@ -139,6 +139,26 @@
 
       <!-- Main Content -->
       <main id="mainContent" class="app-main" tabindex="-1">
+        <!-- Guides Banner -->
+        <section
+          class="guides-banner"
+          id="guidesBanner"
+          aria-label="Collecting guides promo"
+        >
+          <div class="guides-banner-content">
+            <div class="guides-banner-icon" aria-hidden="true">📖</div>
+            <div class="guides-banner-text">
+              <h2 class="guides-banner-title">Collecting Guides</h2>
+              <p class="guides-banner-subtitle">
+                Expert guides for 16 consoles • Tips, pricing & hidden gems
+              </p>
+            </div>
+            <button type="button" class="guides-banner-btn" id="guidesBannerBtn">
+              Explore Guides →
+            </button>
+          </div>
+        </section>
+
         <!-- Hero Dashboard - Stats First -->
         <section class="hero-dashboard" aria-label="Collection dashboard">
           <div class="dashboard-hero-content">
@@ -482,8 +502,13 @@
               <!-- Status buttons populated by JS -->
             </div>
           </div>
-          <div class="modal-details" id="gameModalDetails">
-            <!-- Game details populated by JS -->
+          <div class="modal-info">
+            <div class="modal-details" id="gameModalDetails">
+              <!-- Game details populated by JS -->
+            </div>
+            <div class="modal-guides" id="gameModalGuides">
+              <!-- Relevant guides populated by JS -->
+            </div>
           </div>
         </div>
       </div>
