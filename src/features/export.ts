@@ -245,8 +245,10 @@ function isCollectionEntry(value: unknown): value is CollectionEntry {
   return true;
 }
 
+const COLLECTION_STATUSES: CollectionStatus[] = ["none", "owned", "wishlist", "backlog", "trade"];
+
 function isCollectionStatus(value: unknown): value is CollectionStatus {
-  return value === "none" || value === "owned" || value === "wishlist" || value === "backlog" || value === "trade";
+  return typeof value === "string" && COLLECTION_STATUSES.includes(value as CollectionStatus);
 }
 
 function parseStringArray(value: unknown): string[] | null {
