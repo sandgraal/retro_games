@@ -56,3 +56,11 @@ Use `--filter "chrono trigger"` for targeted refreshes or `--dry-run` to validat
 ## Automated price refresh workflow
 
 The repository ships `.github/workflows/price-refresh.yml`, which installs dependencies, restores the cached `data/ebay-price-cache.json`, and runs `npm run prices:update -- --limit 25` twice per day. Configure the `EBAY_APP_ID`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` secrets (plus optional `EBAY_REFRESH_HOURS`) in GitHub to enable the job. Trigger it manually when you need an ad-hoc update, override the default limit/filter via `workflow_dispatch` inputs, or pass `dry_run=true` to verify credentials without writing snapshots.
+
+## Catalog ingest worker
+
+- **Location:** `services/catalog-ingest/` (Node.js, ESM). Run with `node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.example.json --once` for ad-hoc pulls or `--serve` to expose `/api/v1/catalog` as a cache-friendly read API.
+- **Normalization:** Every source record is mapped into a unified shape (game/platform/release_date/regions/genres/ESRB/PEGI/assets/external_ids) before being written to the catalog store.
+- **De-duplication:** Deterministic keys (`title + platform + release_year`) are paired with fuzzy string matching; merge decisions persist in `data/merge-decisions.json` so future runs reuse the same mapping.
+- **Change detection:** Records carry a SHA-256 hash and version counter; only changed payloads are upserted. Release snapshots are emitted to `data/snapshots/` for CDN caching.
+- **Scheduling & metrics:** `scheduleMinutes` controls run cadence, while `data/ingestion-log.json` captures per-run metrics for dashboards and alerting hooks.
