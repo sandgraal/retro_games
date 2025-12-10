@@ -100,13 +100,19 @@ describe("data loader", () => {
     const fetchMock = mockFetchWithData(sampleGames);
     vi.stubGlobal("fetch", fetchMock);
 
-    vi.spyOn(supabaseModule, "waitForSupabaseReady").mockResolvedValue(true);
-    vi.spyOn(supabaseModule, "fetchGames").mockResolvedValue([] as any);
+    const waitForSupabaseReadySpy = vi
+      .spyOn(supabaseModule, "waitForSupabaseReady")
+      .mockResolvedValue(true);
+    const fetchGamesSpy = vi
+      .spyOn(supabaseModule, "fetchGames")
+      .mockResolvedValue([] as any);
 
     const result = await loadGames();
 
     expect(result.source).toBe("sample");
     expect(result.reason).toContain("forced");
     expect(fetchMock).toHaveBeenCalledOnce();
+    expect(waitForSupabaseReadySpy).not.toHaveBeenCalled();
+    expect(fetchGamesSpy).not.toHaveBeenCalled();
   });
 });
