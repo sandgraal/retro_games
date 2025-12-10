@@ -136,12 +136,29 @@ export function parseShareCode(code: string): SharePayload | null {
     const json = atob(code);
     const compact = JSON.parse(json);
 
+    if (!isObject(compact)) {
+      console.warn("Failed to parse share code");
+      return null;
+    }
+
+    const owned = parseStringArray(compact.o);
+    const wishlist = parseStringArray(compact.w);
+    const backlog = parseStringArray(compact.b);
+    const trade = parseStringArray(compact.t);
+
+    if (!owned || !wishlist || !backlog || !trade) {
+      console.warn("Invalid share code structure");
+      return null;
+    }
+
+    const version = typeof compact.v === "number" ? compact.v : 1;
+
     return {
-      version: compact.v ?? 1,
-      owned: compact.o ?? [],
-      wishlist: compact.w ?? [],
-      backlog: compact.b ?? [],
-      trade: compact.t ?? [],
+      version,
+      owned,
+      wishlist,
+      backlog,
+      trade,
     };
   } catch {
     console.warn("Failed to parse share code");
@@ -156,16 +173,45 @@ export function parseBackup(json: string): BackupPayload | null {
   try {
     const data = JSON.parse(json);
 
-    if (!data.version || !data.collection) {
+    if (!isObject(data)) {
       console.warn("Invalid backup format");
       return null;
     }
 
-    return data as BackupPayload;
+    const version = typeof data.version === "number" ? data.version : null;
+    const collection = isObject(data.collection) ? data.collection : null;
+
+    if (version === null || !collection) {
+      console.warn("Invalid backup format");
+      return null;
+    }
+
+    const notes = isObject(data.notes)
+      ? Object.fromEntries(Object.entries(data.notes).filter(([, value]) => typeof value === "string"))
+      : {};
+
+    return {
+      version,
+      timestamp: typeof data.timestamp === "number" ? data.timestamp : Date.now(),
+      collection: Object.fromEntries(
+        Object.entries(collection).filter(([, entry]) => isObject(entry) && typeof entry.status === "string"),
+      ),
+      notes,
+      filters: data.filters,
+    } satisfies BackupPayload;
   } catch {
     console.warn("Failed to parse backup");
     return null;
   }
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseStringArray(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  return value.every((item) => typeof item === "string") ? (value as string[]) : null;
 }
 
 /**

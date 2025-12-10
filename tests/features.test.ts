@@ -159,6 +159,17 @@ describe("features/export", () => {
       expect(parseBackup("invalid json")).toBeNull();
       expect(parseBackup("{}")).toBeNull();
     });
+
+    it("should return null when collection is not an object", () => {
+      const backup = {
+        version: 2,
+        timestamp: Date.now(),
+        collection: [],
+        notes: {},
+      };
+
+      expect(parseBackup(JSON.stringify(backup))).toBeNull();
+    });
   });
 
   describe("createShareCode / parseShareCode", () => {
@@ -225,6 +236,115 @@ describe("features/export", () => {
       expect(parsed?.wishlist).toContain("g2___snes");
       expect(parsed?.backlog).toContain("g3___snes");
       expect(parsed?.trade).toContain("g4___snes");
+    });
+
+    it("should return null when payload arrays are invalid", () => {
+      const invalidCode = btoa(
+        JSON.stringify({
+          v: 2,
+          o: "not-an-array",
+          w: [],
+          b: [],
+          t: [],
+        }),
+      );
+
+      expect(parseShareCode(invalidCode)).toBeNull();
+    });
+
+    it("should return null when decoded payload is not an object", () => {
+      const nonObjectPayloads = [
+        null,
+        ["not", "an", "object"],
+        "string-payload",
+        123,
+        true,
+      ] as const;
+
+      for (const payload of nonObjectPayloads) {
+        const code = btoa(JSON.stringify(payload));
+        expect(parseShareCode(code)).toBeNull();
+      }
+    });
+
+    it("should return null when payload arrays contain non-string values", () => {
+      const payloadsWithBadArrayValues = [
+        // non-string in o
+        {
+          v: 2,
+          o: ["ok", 1],
+          w: [],
+          b: [],
+          t: [],
+        },
+        // non-string in w
+        {
+          v: 2,
+          o: [],
+          w: ["ok", { foo: "bar" }],
+          b: [],
+          t: [],
+        },
+        // non-string in b
+        {
+          v: 2,
+          o: [],
+          w: [],
+          b: ["ok", null],
+          t: [],
+        },
+        // non-string in t
+        {
+          v: 2,
+          o: [],
+          w: [],
+          b: [],
+          t: ["ok", 42],
+        },
+      ];
+
+      for (const payload of payloadsWithBadArrayValues) {
+        const code = btoa(JSON.stringify(payload));
+        expect(parseShareCode(code)).toBeNull();
+      }
+    });
+
+    it("should return null when a required array field is missing", () => {
+      const payloadsMissingArrays = [
+        // missing o
+        {
+          v: 2,
+          w: [],
+          b: [],
+          t: [],
+        } as any,
+        // missing w
+        {
+          v: 2,
+          o: [],
+          b: [],
+          t: [],
+        } as any,
+        // missing b
+        {
+          v: 2,
+          o: [],
+          w: [],
+          t: [],
+        } as any,
+        // missing t
+        {
+          v: 2,
+          o: [],
+          w: [],
+          b: [],
+        } as any,
+      ];
+
+      for (const payload of payloadsMissingArrays) {
+        const code = btoa(JSON.stringify(payload));
+        expect(parseShareCode(code)).toBeNull();
+      }
     });
 
     it("should return null for invalid share code", () => {
