@@ -91,7 +91,15 @@ async function init(): Promise<void> {
 
     // Show status if using sample data
     if (gamesResult.source === "sample") {
-      showStatus("Showing sample dataset. Configure Supabase for cloud sync.", "info");
+      const fallbackDetails = gamesResult.reason
+        ? `${gamesResult.reason}. `
+        : "";
+      showStatus(
+        `${fallbackDetails}Showing sample dataset. Configure Supabase for cloud sync.`,
+        "info"
+      );
+    } else if (gamesResult.reason) {
+      showStatus(gamesResult.reason, "info");
     }
 
     // Check for share code in URL

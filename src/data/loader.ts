@@ -15,6 +15,7 @@ const PRICE_DATA_PATH = "./data/sample-price-history.json";
 export async function loadGames(): Promise<DataLoadResult> {
   // Check for force sample mode
   const forceSample = checkForceSampleMode();
+  let fallbackReason: string | undefined;
 
   if (!forceSample) {
     const supabaseReady = await supabase.waitForSupabaseReady();
@@ -29,22 +30,35 @@ export async function loadGames(): Promise<DataLoadResult> {
             timestamp: Date.now(),
           };
         }
+        fallbackReason = "Supabase returned no games";
       } catch (error) {
         console.warn("Supabase fetch failed, falling back to sample:", error);
+        const message =
+          error instanceof Error ? error.message : "Unknown Supabase error";
+        fallbackReason = `Supabase fetch failed (${message})`;
       }
     } else {
-      console.warn("Supabase config unavailable before timeout, using sample data");
+      console.warn(
+        "Supabase config unavailable before timeout, using sample data"
+      );
+      fallbackReason = "Supabase config unavailable before timeout";
     }
   }
 
+  if (forceSample) {
+    fallbackReason = "Sample mode forced via flag or query parameter";
+  }
+
   // Fallback to sample data
-  return loadSampleGames();
+  return loadSampleGames(fallbackReason);
 }
 
 /**
  * Load sample games from JSON
  */
-export async function loadSampleGames(): Promise<DataLoadResult> {
+export async function loadSampleGames(
+  reason?: string
+): Promise<DataLoadResult> {
   try {
     const response = await fetch(SAMPLE_DATA_PATH);
     if (!response.ok) {
@@ -58,6 +72,7 @@ export async function loadSampleGames(): Promise<DataLoadResult> {
       games,
       source: "sample",
       timestamp: Date.now(),
+      reason,
     };
   } catch (error) {
     console.error("Failed to load sample games:", error);
@@ -65,6 +80,7 @@ export async function loadSampleGames(): Promise<DataLoadResult> {
       games: [],
       source: "sample",
       timestamp: Date.now(),
+      reason: reason ?? "Sample games unavailable",
     };
   }
 }

@@ -112,6 +112,10 @@ export interface DataLoadResult {
   games: Game[];
   source: DataSource;
   timestamp: number;
+  /**
+   * Optional context describing how the data was loaded or why a fallback occurred
+   */
+  reason?: string;
 }
 
 // === Event Types ===
