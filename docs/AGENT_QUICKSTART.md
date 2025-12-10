@@ -9,7 +9,7 @@ _Last updated: February 2026_
 | Application   | TypeScript + Vite SPA with custom signals; sample data by default, Supabase when configured |
 | Language      | TypeScript (strict)                                                                         |
 | Build         | Vite 7                                                                                      |
-| Tests         | 201 Vitest unit tests + 14 Playwright e2e tests                                             |
+| Tests         | 204 Vitest unit tests + 14 Playwright e2e tests                                             |
 | Data          | `data/sample-games.json` (8 games) + optional Supabase `games_consolidated` view            |
 | Documentation | README, architecture, and current-state kept in sync                                        |
 
