@@ -26,6 +26,7 @@ import {
   mountGuides,
   showGuidesView,
   hideGuidesView,
+  navigateToGuide,
 } from "./ui";
 import {
   exportCollectionToCSV,
@@ -118,6 +119,9 @@ async function init(): Promise<void> {
 
   // Setup dashboard quick actions
   setupDashboardActions();
+
+  // Setup guide navigation from modal
+  setupGuideNavigation();
 }
 
 /**
@@ -258,6 +262,17 @@ function setupDashboardActions(): void {
   importBtn?.addEventListener("click", handleImport);
   backupBtn?.addEventListener("click", handleBackup);
   contributeBtn?.addEventListener("click", handleContribute);
+}
+
+/**
+ * Setup guide navigation from modal
+ */
+function setupGuideNavigation(): void {
+  window.addEventListener("navigateToGuide", ((event: CustomEvent<{ slug: string }>) => {
+    const { slug } = event.detail;
+    switchToView("guides");
+    navigateToGuide(slug);
+  }) as EventListener);
 }
 
 /**

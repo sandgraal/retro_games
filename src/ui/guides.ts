@@ -33,7 +33,7 @@ let scrollListener: (() => void) | null = null;
 // === Guide Index Component ===
 
 function renderGuideIndex(): HTMLElement {
-  const container = el.div({ class: "guides-container" });
+  const container = el.div({ class: "guides-index" });
 
   // Header
   const header = el.div({ class: "guides-header" });
