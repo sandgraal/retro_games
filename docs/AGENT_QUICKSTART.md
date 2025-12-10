@@ -1,143 +1,97 @@
 # Agent Quickstart Guide
 
-_Last updated: December 2025_
+_Last updated: February 2026_
 
-👋 **Welcome, AI Agent!** This guide helps you quickly understand Dragon's Hoard Atlas and start contributing effectively.
+## Project Snapshot
 
-## 🎯 Project Status at a Glance
+| Area          | Status                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------- |
+| Application   | TypeScript + Vite SPA with custom signals; sample data by default, Supabase when configured |
+| Language      | TypeScript (strict)                                                                         |
+| Build         | Vite 7                                                                                      |
+| Tests         | 201 Vitest unit tests + 14 Playwright e2e tests                                             |
+| Data          | `data/sample-games.json` (8 games) + optional Supabase `games_consolidated` view            |
+| Documentation | README, architecture, and current-state kept in sync                                        |
 
-| Area          | Status                                 |
-| ------------- | -------------------------------------- |
-| Application   | ⭐ Feature-complete & production-ready |
-| Language      | **TypeScript** (strict mode)           |
-| Build         | **Vite 7.x**                           |
-| Tests         | ✅ **214 total** (200 unit + 14 E2E)   |
-| CI/CD         | ✅ Automated (lint, test, security)    |
-| Documentation | ✅ Current and synchronized            |
+## Required Reading
 
-## 📚 Required Reading (Priority Order)
+1. `README.md`
+2. `docs/architecture.md`
+3. `docs/current-state.md`
 
-1. **This document** - Project overview (5 min)
-2. **[.github/copilot-instructions.md](../.github/copilot-instructions.md)** - Architecture & patterns (10 min)
-3. **[current-state.md](./current-state.md)** - Current status & next steps (5 min)
+## Quick Commands
 
-## ⚡ Quick Commands
+```bash
+npm install
+npm run dev           # http://localhost:3000
+npm run build         # tsc --noEmit + vite build
+npm test              # Vitest
+npm run test:e2e      # Playwright (after `npx playwright install --with-deps`)
+npm run lint          # ESLint
+npm run build:config  # Emit config.js from .env
+```
 
-\`\`\`bash
-npm install # Install dependencies
-npm run dev # Dev server at localhost:3000
-npm run build # TypeScript check + production build
-npm test # Run unit tests
-npm run test:e2e # Run Playwright E2E tests
-\`\`\`
+## Architecture Overview
 
-## 🏗️ Architecture Overview
-
-### Source Structure
-
-\`\`\`
+```
 src/
-├── core/ # Reactive primitives
-│ ├── signals.ts # createSignal, computed, effect
-│ ├── types.ts # TypeScript type definitions
-│ └── keys.ts # Game key generation
-├── state/ # Centralized reactive state
-│ └── store.ts # Signal-based state management
-├── data/ # Data layer
-│ ├── supabase.ts # Type-safe Supabase client
-│ └── loader.ts # Data loading & processing
-├── features/ # Business logic
-│ └── export.ts # CSV export, backup, sharing
-├── ui/ # Component system
-│ ├── game-card.ts
-│ ├── game-grid.ts
-│ ├── dashboard.ts
-│ ├── filters.ts
-│ └── modal.ts
-├── utils/ # Pure utility functions
-│ └── format.ts # Formatting helpers
-└── main.ts # Application entry point
-\`\`\`
+├── core/        # signals, types, keys, experimental helpers (events/router/storage/worker)
+├── state/       # signal-based store, computed filters, persistence
+├── data/        # Supabase client + loader with sample fallback
+├── features/    # export/share/backup logic
+├── ui/          # components (cards, grid, dashboard, filters, modal, settings)
+├── utils/       # formatting helpers
+└── main.ts      # entry point
+```
 
-### Core Concepts
+**Data flow**
 
-**Reactive Signals**: The app uses custom signals for fine-grained reactivity:
+1. `main.ts` loads persisted local state, mounts UI, then fetches games/prices.
+2. `data/loader.ts` tries Supabase (waiting up to 4s for `config.js` + CDN client) and falls back to `data/sample-games.json`.
+3. `state/store.ts` enriches games with keys, tracks collection/notes/preferences in `localStorage`, and exposes computed `filteredGames` and `collectionStats`.
+4. UI components subscribe to signals for the dashboard, grid (virtualized at ≥100 cards), modal, filters, and settings modal.
+5. Export/share/backup helpers live in `src/features/export.ts` and are wired through header/settings actions.
 
-\`\`\`typescript
-const count = createSignal(0);
-count.get(); // Read value
-count.set(5); // Update value
-const doubled = computed(() => count.get() \* 2); // Auto-tracks deps
-effect(() => console.log(count.get())); // Runs on change
-\`\`\`
+**Styling**
 
-**Game Keys**: Games are identified by compound keys: \`gamename\_\_\_platform\` (lowercase, triple underscore)
+- CSS uses kebab-case classes (e.g., `.game-card-cover`, `.game-card-overlay`).
+- `style.css` pulls tokens, base styles, utilities, and component sheets from `style/`.
 
-### Style Classes
+## Tests
 
-CSS uses **kebab-case** class names (not BEM):
+| Test File                            | Tests | Notes                                         |
+| ------------------------------------ | ----- | --------------------------------------------- |
+| `tests/core.test.ts`                 | 26    | Signals, keys, types                          |
+| `tests/state.test.ts`                | 28    | Store, filters, sorting (includes value sort) |
+| `tests/features.test.ts`             | 12    | Export/share/backup                           |
+| `tests/format.test.ts`               | 36    | Formatting helpers                            |
+| `tests/fetch-covers.test.js`         | 48    | Cover fetching script                         |
+| `tests/audit-missing-covers.test.js` | 26    | Cover audit script                            |
+| `tests/archive-media.test.js`        | 14    | Media archival script                         |
+| `tests/build-css.test.js`            | 11    | CSS bundler script                            |
+| `tests/e2e/*.spec.js`                | 14    | Playwright smoke/filters/aria specs           |
 
-- \`.game-card-cover\` (not \`.game-card\_\_cover\`)
-- \`.game-card-status\` (not \`.game-card\_\_status\`)
-- \`.game-card-overlay\` (not \`.game-card\_\_overlay\`)
+## Working Features
 
-## ⚠️ Important Notes
+- Virtualized card grid with hover overlays, keyboard focus, and placeholder covers.
+- Filters: platform + genre checkboxes, search input, sorts for name/rating/year/value/platform.
+- Collection status and notes stored locally; modal updates them in-place.
+- Settings modal handles theme/view selection, backup/restore, and clearing local data.
+- CSV export, JSON backups, and share codes (`?share=`) for imports.
+- Dashboard stats and price displays driven by `data/sample-price-history.json` (values in cents).
+- Service worker and manifest for basic offline support.
 
-### DO
+## Known Gaps / Priorities
 
-- Use TypeScript with proper types
-- Use signals for reactive state
-- Run \`npm run lint && npm test\` before commits
-- Match CSS class naming conventions (kebab-case)
+- Price data only comes from the local snapshot; there is no live pricing fetch.
+- Supabase usage depends on `config.js` being present and the CDN client loading; ensure that script exists in deployments that expect cloud data.
+- Extra helpers in `src/core` (events/router/storage/worker) are experimental and not wired into the UI.
+- Sample dataset is tiny (8 games), so UX under large data sets relies on Supabase providing volume.
 
-### DON'T
+## DO / DON’T
 
-- Modify `archive/` directory (legacy reference only)
-- Commit `config.js` with real credentials
-- Use innerHTML with user data (XSS risk)
-
-## 🧪 Test Structure
-
-| Test File                              | Tests | Purpose                 |
-| -------------------------------------- | ----- | ----------------------- |
-| \`tests/core.test.ts\`                 | 26    | Signals, keys, types    |
-| \`tests/state.test.ts\`                | 27    | Store, collection       |
-| \`tests/features.test.ts\`             | 12    | Export, backup, sharing |
-| `tests/format.test.ts`                 | 36    | Formatting utilities    |
-| \`tests/fetch-covers.test.js\`         | 48    | Cover fetching script   |
-| \`tests/audit-missing-covers.test.js\` | 26    | Cover audit script      |
-| \`tests/archive-media.test.js\`        | 14    | Media archival script   |
-| \`tests/build-css.test.js\`            | 11    | CSS bundler script      |
-| \`tests/e2e/\*.spec.js\`               | 14    | E2E tests               |
-
-## 🎯 What to Work On
-
-### Current Priorities
-
-1. **Expand test coverage** - Add integration tests for UI components
-2. **Media workflow automation** - Improve cover import and archival tooling
-3. **User Growth features** - Blocked on analytics/email service decisions
-
-### Completed ✅
-
-- TypeScript migration from vanilla JS
-- Reactive signals architecture
-- Game grid with masonry layout
-- Modal with collection management
-- Filters (platform, genre, region, status, search)
-- Export/import (CSV, JSON backup, share codes)
-- All E2E tests passing
-- Documentation synchronized with codebase
-- V3 experimental files cleaned up
-
-## 📁 Legacy Code Warning
-
-The \`archive/legacy-app/\` directory contains the **original vanilla JavaScript implementation** (~9,800 lines).
-
-**Do NOT**:
-
-- Import from \`archive/\`
-- Modify files in \`archive/\`
-- Reference \`archive/\` code for new features
-
-It exists only for historical reference.
+- **DO** keep CSS class names in kebab-case and prefer the existing component primitives.
+- **DO** respect `archive/` as read-only legacy reference.
+- **DO** regenerate `config.js` locally instead of committing secrets.
+- **DON’T** assume Supabase is available; code must tolerate sample fallback.
+- **DON’T** add dependencies without a concrete need.

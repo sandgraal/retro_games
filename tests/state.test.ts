@@ -57,6 +57,7 @@ describe("state/store", () => {
     localStorageMock.clear();
     // Reset state to defaults
     setGames([]);
+    setPrices({});
     setLoading(false);
     setError(null);
     resetFilters();
@@ -258,6 +259,20 @@ describe("state/store", () => {
       setSort("rating", "desc");
       const result = filteredGames.get();
       expect(result[0].game_name).toBe("Chrono Trigger");
+    });
+
+    it("should sort by value when prices are available", () => {
+      setPrices({
+        "chrono trigger___snes": { loose: 2000, currency: "USD" },
+        "super mario world___snes": { loose: 5000, currency: "USD" },
+        "final fantasy vii___ps1": { loose: 1000, currency: "USD" },
+      });
+
+      setSort("value", "desc");
+      const result = filteredGames.get();
+
+      expect(result[0].game_name).toBe("Super Mario World");
+      expect(result[2].game_name).toBe("Final Fantasy VII");
     });
   });
 

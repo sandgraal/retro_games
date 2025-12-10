@@ -1,110 +1,50 @@
 # Current State Overview
 
-_Last updated: December 2025_
+_Last updated: February 2026_
 
 ## Architecture
 
-- **TypeScript single-page application** built with Vite 7.x
-- **Reactive signals architecture** with custom signals implementation for fine-grained reactivity
-- Production build creates optimized bundles (~33KB JS, ~43KB CSS gzipped)
-- Supabase backend with graceful fallback to `data/sample-games.json`
-- Museum-quality design with glassmorphism, masonry grid, and PS2-era aesthetic
-
-### Tech Stack
-
-| Component | Technology                                 |
-| --------- | ------------------------------------------ |
-| Language  | TypeScript (strict mode)                   |
-| Build     | Vite 7.x                                   |
-| Testing   | Vitest (unit), Playwright (e2e)            |
-| Runtime   | Vanilla JS/CSS/HTML - no frameworks        |
-| Database  | Supabase (optional, localStorage fallback) |
-
-### Source Structure
-
-\`\`\`
-src/
-├── core/ # Reactive primitives (signals, types, keys)
-├── state/ # Centralized reactive state (store.ts)
-├── data/ # Data layer (supabase.ts, loader.ts)
-├── features/ # Business logic (export.ts)
-├── ui/ # Component system (game-card, grid, modal, filters)
-├── utils/ # Pure utility functions
-└── main.ts # Application entry point
-\`\`\`
-
-### Legacy Code
-
-The \`archive/legacy-app/\` directory contains the original vanilla JavaScript implementation. This is kept for historical reference only and should not be modified or imported.
+- **TypeScript SPA** built with **Vite 7**; no framework.
+- **Custom signals** drive state and computed views (`src/core/signals.ts`).
+- **State store** in `src/state/store.ts` enriches games with keys, persists collection/notes/preferences to `localStorage`, and exposes `filteredGames` + `collectionStats`.
+- **Data layer** in `src/data/loader.ts` tries Supabase (`games_consolidated` view) when `config.js` + the Supabase CDN client are present, otherwise falls back to `data/sample-games.json` (8 games).
+- **UI** lives in `src/ui/` (grid with virtualization at ≥100 cards, modal, filters, dashboard, settings modal).
+- **Exports** handled by `src/features/export.ts` (CSV, backup, share codes).
+- **Pricing** currently reads only `data/sample-price-history.json` (cents).
 
 ## Data Flow
 
-1. \`main.ts\` initializes the app, loads persisted state from localStorage
-2. \`loadGames()\` attempts Supabase, falls back to sample JSON
-3. Games are stored via \`setGames()\` which adds compound keys (\`gamename\_\_\_platform\`)
-4. UI components subscribe to \`filteredGames\` computed signal
-5. Filter changes trigger automatic UI updates via reactive signals
+1. `main.ts` loads persisted state, mounts UI components, then fetches games and price data in parallel.
+2. Loader waits up to 4 seconds for Supabase globals before using sample data; `?sample=1` or `__SANDGRAAL_FORCE_SAMPLE__` force the fallback.
+3. Collection status and notes updates persist immediately to `localStorage` and feed the dashboard and modal.
+4. Export/share/backup actions surface through header/settings controls and use `src/features/export.ts`.
 
-## Test Coverage
+## Tests
 
-**Total: 200 unit tests + 14 E2E tests = 214 tests**
+- **Vitest**: 201 unit tests across core, state, features, formatting, and build scripts.
+- **Playwright**: 14 tests across smoke, filters, and aria checks (`tests/e2e/*.spec.js`).
+- Commands: `npm test`, `npm run test:e2e` (after `npx playwright install --with-deps`).
 
-| Test File                              | Tests | Purpose                    |
-| -------------------------------------- | ----- | -------------------------- |
-| \`tests/core.test.ts\`                 | 26    | Signals, keys, types       |
-| \`tests/state.test.ts\`                | 27    | Store, collection, filters |
-| \`tests/features.test.ts\`             | 12    | Export, backup, sharing    |
-| `tests/format.test.ts`                 | 36    | Formatting utilities       |
-| \`tests/fetch-covers.test.js\`         | 48    | Cover fetching script      |
-| \`tests/audit-missing-covers.test.js\` | 26    | Cover audit script         |
-| \`tests/archive-media.test.js\`        | 14    | Media archival script      |
-| \`tests/build-css.test.js\`            | 11    | CSS bundler script         |
-| \`tests/e2e/\*.spec.js\`               | 14    | Playwright E2E tests       |
+## Working
 
-## Current Focus Areas
+- Virtualized game grid with keyboard navigation and hover overlays.
+- Filters: platform + genre checkboxes, search input, and sorts for name/rating/year/value/platform.
+- Modal for viewing details plus updating status and notes.
+- Settings modal: theme/view switches, backup/restore, clear collection.
+- CSV export, JSON backups, and share-code import via `?share=`.
+- Dashboard stats and price display backed by the local price snapshot.
+- Service worker + manifest provide basic offline support.
 
-### Working
+## Known Gaps / Risks
 
-- ✅ Game grid with masonry layout and card interactions
-- ✅ Modal with game details, collection status, and notes
-- ✅ Filters (platform, genre, region, status, search)
-- ✅ Collection management (owned, wishlist, backlog, trade)
-- ✅ Export/import (CSV, JSON backup, share codes)
-- ✅ Service worker for offline support
-- ✅ Responsive design (mobile-first)
-- ✅ Keyboard navigation and accessibility
-- ✅ All E2E tests passing
-
-### Technical Debt
-
-- ✅ ~~Documentation referenced outdated `app/` directory structure~~ (fixed December 2025)
-- ✅ ~~V3 experimental files~~ (removed December 2025)
-- ✅ ~~CSS naming inconsistency~~ (aligned to kebab-case)
-- Virtual list could benefit from more tests
-
-### Data & Security
-
-- Supabase anon key rotation process documented
-- Gitleaks in CI prevents secret commits
-- Data integrity relies on manual Supabase updates
-
-## Development Commands
-
-\`\`\`bash
-npm install # Install dependencies
-npm run dev # Start Vite dev server (port 3000)
-npm run build # TypeScript check + Vite build
-npm test # Run unit tests (Vitest)
-npm run test:e2e # Run Playwright E2E tests
-npm run lint # ESLint check
-npm run format # Prettier format
-\`\`\`
+- Pricing is local-only; there is no live fetch or Supabase-backed price table.
+- Supabase usage depends on `config.js` existing in production and the CDN client loading; deployments missing either silently fall back to the sample data.
+- Auxiliary helpers in `src/core` (events/router/storage/worker) are unused by the UI today.
+- Sample dataset is tiny; large-list performance relies on Supabase returning volume.
 
 ## Next Steps
 
-1. **Expand test coverage** - Add integration tests for UI components
-2. **Media workflow automation** - Improve cover import and archival tooling
-3. **User Growth features** - Blocked on analytics/email service decisions (see Phase 3)
-4. **Monetization** - Blocked on business decisions (see Phase 4)
-
-See [`docs/implementation-plan.md`](./implementation-plan.md) for comprehensive roadmap.
+1. Exercise Supabase path end-to-end (config.js + CDN) in automation to prevent silent sample fallback.
+2. Replace the local price snapshot with a real source (Supabase table or API) or expose a clear toggle when prices are unavailable.
+3. Add coverage for the virtualized grid and sorting behavior under larger datasets.
+4. Grow the sample dataset so local development and tests better mirror production shape.

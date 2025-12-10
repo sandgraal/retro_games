@@ -1,190 +1,49 @@
 # Dragon's Hoard Atlas
 
-A fast, private, and beautifully designed tracker for classic and retro games. Built for serious collectors, archivists, and retro fans who want control over their library.
+A TypeScript + Vite single-page app for tracking retro games. It uses a lightweight custom signal system, renders a virtualized card grid, and keeps your collection data local-first with an optional Supabase source for metadata.
 
-**Project Status**: ⭐ **v2.0 Architecture Rebuild** | 🔧 **TypeScript + Vite + Reactive Signals**
+## What’s shipping today
 
-## Architecture (v2.0)
+- Custom signals with dashboard, filters, modal, and settings built without a framework.
+- Game grid with hover overlays, keyboard navigation, and virtualization when lists exceed 100 cards.
+- Filters: platform + genre checkboxes, search, and sort (name, rating, year, value, platform).
+- Collection status (owned/wishlist/backlog/trade) and notes persisted to `localStorage`; the settings modal handles theme/view/backup/restore/clear actions.
+- Export: CSV, JSON backup, and share codes that can be imported via the URL `?share=...`.
+- Data sources: Supabase `games_consolidated` view when `config.js` provides credentials; otherwise `data/sample-games.json` (8 games). Prices currently come from `data/sample-price-history.json` (cents) and feed the dashboard/modal value displays.
+- Offline basics via `public/sw.js` + `public/manifest.json`.
 
-The application has been rebuilt with a modern reactive architecture:
+## Data sources & configuration
 
-```
-src/
-├── core/           # Reactive primitives
-│   ├── signals.ts  # createSignal, computed, effect
-│   ├── types.ts    # TypeScript type definitions
-│   └── keys.ts     # Game key generation
-├── state/          # Centralized reactive state
-│   └── store.ts    # Signal-based state management
-├── data/           # Data layer
-│   ├── supabase.ts # Type-safe Supabase client
-│   └── loader.ts   # Data loading & processing
-├── ui/             # Component system
-│   ├── game-card.ts
-│   ├── game-grid.ts
-│   ├── dashboard.ts
-│   ├── filters.ts
-│   └── modal.ts
-└── main.ts         # Application entry point
-```
-
-**Key Features:**
-
-- **Reactive signals** - Fine-grained reactivity with automatic dependency tracking
-- **Type safety** - Full TypeScript with strict mode
-- **Vite build** - Lightning-fast HMR, optimized production bundles
-- **20 KB gzipped** - Dramatically smaller than legacy codebase
-
-The application features a museum-quality interface with modular architecture, glassmorphism design system, and PS2-era aesthetic sophistication (see [`docs/architecture.md`](docs/architecture.md)).
-
-**Features:**
-
-- Instantly search, sort, and filter (platform, genre, status, rating, release-year range) a growing database of console classics
-- Assign Owned/Wishlist/Backlog/Trade statuses (stored locally for privacy)
-- Attach personal notes to every game—synced with share codes for easy collaboration
-- One-click JSON backups to move statuses/notes/filters across devices
-- Share your collection with anyone via code—no registration required
-- Choose between infinite scroll batches or paginated pages (with adjustable batch sizes and shareable `?page=` links) so both humans and crawlers can browse huge lists
-- Virtualized grid keeps the DOM lean by only rendering what's in (or near) the viewport, so even five-digit libraries stay silky smooth
-- Supabase data streams in 400-row pages (configurable), so the UI becomes interactive instantly while new chunks hydrate the grid on-demand
-- Filters/search now execute directly against Supabase, so you only download the rows you actually need—even for massive, high-cardinality queries
-- Collection status totals and dashboard charts (top genres, release timeline) hydrate lazily from Supabase, keeping insights accurate without pulling the entire dataset
-- Live valuations powered by PriceCharting snapshots show loose/CIB/new totals per status plus per-game price history sparklines inside the modal
-- See box art, details, and direct links to gameplay videos or GameFAQs
-- Fully mobile and desktop compatible
-- Supabase-powered typeahead search with a local fallback so you can jump to titles instantly
-- Optional PriceCharting integration surfaces loose/CIB/new valuations per game, keeps a price-history sparkline in the modal, and estimates total collection value by status.
-
-This is not another bloated ROM launcher or subscription service.
-It’s a clean, modern tool for serious collectors, archivists, and retro fans who want control over their library.
-
-## Setup
-
-1. Install dependencies: `npm install`.
-2. Start dev server: `npm run dev` (Vite on http://localhost:3000).
-3. Optional: create `.env` and run `npm run build:config` to generate `config.js` for Supabase; repeat on credential rotation.
-
-No Supabase? The app auto-falls back to `data/sample-games.json` so it runs immediately.
-
-See `docs/setup.md` for details.
-
-Supabase schema + migration workflow lives in `docs/data-pipeline.md`.
-
-For artwork guidance, see [`docs/image-sourcing.md`](docs/image-sourcing.md) for vetted cover-image sources, seeding tips, and hosting best practices. The UI now falls back to Wikipedia box art when a record lacks a `cover` URL, but seeding explicit links keeps Supabase exports and offline mode deterministic.
-
-## Price data (optional)
-
-Want the Collection Value card and modal price panel to light up with real valuations?
-
-**Option A: PriceCharting API (existing)**
-
-1. Request a token from [PriceCharting](https://www.pricecharting.com/api) and add the following to `.env` (alongside your Supabase values):
-
-   ```
-   PRICECHARTING_TOKEN=your-token
-   SUPABASE_SERVICE_ROLE_KEY=service-role-key
-   # Optional overrides:
-   # PRICECHARTING_BASE_URL=https://www.pricecharting.com/api
-   # PRICECHARTING_REFRESH_HOURS=24
-   ```
-
-2. Run the ingestion helper to fetch the latest prices and upsert them into Supabase:
-
-   ```bash
-   npm run prices:update -- --limit 25
-   ```
-
-   Use `--filter "chrono trigger"` for targeted refreshes or `--dry-run` to verify credentials without writing. Snapshots land in the `game_price_snapshots` table (surfaceable via the `game_price_latest` view), and the client automatically consumes them without further configuration.
-
-**Option B: eBay sold listings (free alternative)**
-
-1. Create an [eBay developer application](https://developer.ebay.com/) and add the following to `.env`:
-
-   ```
-   EBAY_APP_ID=your-ebay-app-id
-   EBAY_GLOBAL_ID=EBAY-US
-   SUPABASE_SERVICE_ROLE_KEY=service-role-key
-   ```
-
-   Set `EBAY_GLOBAL_ID` to another marketplace (e.g., `EBAY-GB`) if you want region-specific comps. Adjust `EBAY_REFRESH_HOURS` if you need a different recrawl window (defaults to 24 hours).
-
-2. Run the eBay ingestion helper to compute the median sold price from recent completed listings and write a snapshot per game:
-
-   ```bash
-   npm run prices:update:ebay -- --limit 25
-   ```
-
-   Use `--filter "chrono trigger"` for targeted refreshes or `--dry-run` to validate credentials without writing. Results persist to `game_price_snapshots` (plus regional variants) using the same schema the UI already understands, and the helper keeps a local cache at `data/ebay-price-cache.json`.
-
-When Supabase or API credentials are unavailable, the UI falls back to `data/sample-price-history.json` so contributors can still see how the experience behaves.
-
-### Automated refresh via GitHub Actions
-
-Once your Supabase project and API token are configured, you can let GitHub keep valuations fresh automatically:
-
-- Populate the `PRICECHARTING_TOKEN`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` secrets in your repository (optionally add `PRICECHARTING_REFRESH_HOURS` to fine-tune the minimum refresh window).
-- The scheduled workflow at `.github/workflows/price-refresh.yml` runs twice per day (and can be triggered manually) to execute `npm run prices:update` with a default limit of 25 titles per run, persisting its progress in `data/pricecharting-cache.json` via the GitHub Actions cache.
-- Use the manual `workflow_dispatch` inputs to override the limit, target games via substring filter, force a refresh regardless of cache age, or perform a dry run before enabling production secrets.
+- **Supabase**: copy `.env.example` to `.env`, populate `SUPABASE_URL` and `SUPABASE_ANON_KEY`, then run `npm run build:config` to emit `config.js`. The loader waits up to 4s for `window.supabase` and `window.__SUPABASE_CONFIG__` before falling back to the sample file. Set `window.__SANDGRAAL_FORCE_SAMPLE__ = true` or append `?sample=1` to force the sample dataset.
+- **Pricing**: only the local snapshot at `data/sample-price-history.json` is read. Values are stored in cents and are summed/sorted using the loose price when present.
+- **Persistence**: collection statuses, notes, preferences, and filters live in `localStorage` (`dragonshoard_*` keys).
 
 ## Development
 
-- `npm run lint` / `npm run lint:fix` – Run ESLint (with Prettier compat) across the main app file and build scripts.
-- `npm run format:check` / `npm run format` – Validate or rewrite formatting for JS/JSON/Markdown/CSS/HTML files.
-- `npm test` / `npm run test:watch` – Execute the Vitest suite (jsdom) that covers filter logic and table rendering.
-- `npm run test:e2e` – Playwright smoke test that spins up a static server, forces the sample dataset, and verifies the modal workflow (run `npx playwright install --with-deps` once after cloning).
+```
+npm install
+npm run dev           # Vite dev server on http://localhost:3000
+npm run build         # TypeScript check + Vite build
+npm run lint          # ESLint over src + scripts
+npm test              # Vitest (201 tests)
+npm run test:e2e      # Playwright (14 tests); run `npx playwright install --with-deps` once
+npm run build:config  # Generate config.js from .env
+```
 
-## Performance Instrumentation
+## Project layout
 
-- Rendering and data-load steps emit lightweight metrics. Inspect them via `window.__SANDGRAAL_PERF__.buffer` in DevTools.
-- Enable verbose console logs by running `window.__SANDGRAAL_DEBUG_METRICS__ = true` in DevTools _before_ refreshing (or set it on `globalThis` in tests).
-- Metrics currently captured: Supabase vs. sample data load times and every table re-render (search/filter, sort, share import, etc.) with row counts and sort state.
-- The new virtualized grid windows cards in and out of the DOM (with spacer paddings) so the browse controls can request thousands of games without forcing the browser to mount every card at once.
-- Supabase hydration now occurs via paginated `.range()` queries (default 400 rows). The first page renders immediately, while subsequent pages stream in when you approach the end of the list (or switch pages), keeping bandwidth predictable for huge libraries.
-- Filter/search changes are executed server-side; the client only hydrates the rows returned by the Supabase query, which prevents runaway downloads for giant result sets.
-- Collection status totals and aggregate widgets (top genres, release timeline) hydrate lazily from Supabase—only the rows tied to your Owned/Wishlist/Backlog/Trade entries or the required aggregates are fetched, so dashboard stats stay accurate without pulling the full games table.
-
-## SEO & Discoverability
-
-- The UI now emits JSON-LD `VideoGame` + `Review` structured data for the highest-rated titles as soon as the dataset loads, improving search result richness without manual exports.
-- Generate an XML sitemap anytime you deploy by running `SITE_BASE_URL="https://yourdomain.example" npm run sitemap`. The script scans every HTML entry point (currently just `index.html`) and writes `sitemap.xml` at the repo root with fresh timestamps.
-- Submit the generated sitemap to Google Search Console/Bing Webmaster Tools after each production deploy so crawlers pick up collection changes quickly.
-- Use the new browse controls (or manually append `?view=paged&page=2&pageSize=60`) to expose crawlable, deterministic routes when you need static snapshots for SEO audits or content campaigns.
-
-## Continuous Integration
-
-All pull requests run through `.github/workflows/ci.yml`, which:
-
-- Installs dependencies with `npm ci` on Node 20.19+.
-- Runs `npm run lint`, `npm run format:check`, and `npm test`.
-- Executes a `gitleaks` scan to block accidental secret commits.
-- Audits the built site with Lighthouse CI (`npm run lighthouse`), enforcing performance, accessibility, best-practices, and SEO thresholds.
-- (optional future step) Add `npm run test:e2e` to the workflow when headless browsers are available in CI runners.
-
-Keep these commands green locally before pushing to avoid CI failures.
+- `src/core` – signals, types, keys, and experimental helpers (events/router/storage/worker).
+- `src/state` – signal-based store, computed filters, persistence helpers.
+- `src/data` – Supabase client wrapper and loader with sample fallback.
+- `src/ui` – component primitives, game grid, cards, dashboard, filters, modal, settings modal.
+- `src/features` – export/share/backup logic.
+- `style/` – tokens, base styles, utilities, and component CSS; `style.css` composes them.
+- `data/` – sample games and price history used when Supabase is unavailable.
+- `public/` – service worker and manifest.
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup tips, coding standards, and the pull-request checklist.
-
-**Important for new contributors**: We're currently in Phase 0 refactoring to modularize the codebase. See [`docs/implementation-plan.md`](docs/implementation-plan.md#phase-0--architecture-redesign--complete) for details. Feature development is paused during this period—only bug fixes accepted until refactoring completes (est. 4 weeks).
-
-## Documentation
-
-**New contributors start here**: [`docs/AGENT_QUICKSTART.md`](docs/AGENT_QUICKSTART.md) 🎯
-
-### Core Documentation
-
-- [`README.md`](README.md) - This file (features & quick start)
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) - Contributor guide & feature freeze notice
-- [`docs/AGENT_QUICKSTART.md`](docs/AGENT_QUICKSTART.md) - Fast onboarding for AI agents
-- [`docs/implementation-plan.md`](docs/implementation-plan.md#phase-0--architecture-redesign--complete) - **Phase 0 architecture refactoring** 🔴
-- [`docs/implementation-plan.md`](docs/implementation-plan.md) - Complete roadmap (Phases 0-4)
-- [`docs/current-state.md`](docs/current-state.md) - Current architecture & status
-
-### Technical Documentation
-
-- [`docs/setup.md`](docs/setup.md) - Detailed setup instructions
-- [`docs/data-pipeline.md`](docs/data-pipeline.md) - Supabase schema & migrations
-- [`docs/image-sourcing.md`](docs/image-sourcing.md) - Cover art guidelines
-- [`docs/recovery-playbook.md`](docs/recovery-playbook.md) - Backup & recovery
-- [`.github/copilot-instructions.md`](.github/copilot-instructions.md) - AI coding guidelines
+- Keep `archive/` untouched (legacy reference).
+- Do not commit real credentials; regenerate `config.js` locally when secrets rotate.
+- Prefer kebab-case CSS classes to match the existing styles.
+- Run `npm test` (and Playwright if you touch the UI) before sending changes.

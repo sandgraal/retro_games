@@ -2,6 +2,8 @@
 
 _Last updated: January 2025_
 
+> ⚠️ **Note:** This plan predates the current TypeScript/Vite implementation and overstates shipped scope. Use `docs/current-state.md` and `docs/architecture.md` for an accurate view of what exists today. Treat the sections below as historical context, not a live roadmap.
+
 ## Purpose
 
 This document operationalizes the high-level implementation plan into actionable, bite-sized tasks so any contributor (human or AI agent) can understand what to build next. It should be read alongside [`docs/current-state.md`](./current-state.md) for baseline architecture details and the Phase 0 section below for the critical modularization work.

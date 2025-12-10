@@ -71,6 +71,7 @@ export const filteredGames: ComputedSignal<GameWithKey[]> = computed(() => {
   const games = gamesSignal.get();
   const filters = filterStateSignal.get();
   const collection = collectionSignal.get();
+  const prices = pricesSignal.get();
 
   let result = [...games];
 
@@ -155,6 +156,15 @@ export const filteredGames: ComputedSignal<GameWithKey[]> = computed(() => {
         const yearA = parseInt(String(a.release_year), 10) || 0;
         const yearB = parseInt(String(b.release_year), 10) || 0;
         comparison = yearA - yearB; // ascending by default
+        break;
+      }
+      case "value": {
+        const valueFor = (key: string) => {
+          const price = prices.get(key);
+          const raw = price?.loose ?? price?.cib ?? price?.new ?? 0;
+          return Number(raw) || 0;
+        };
+        comparison = valueFor(a.key) - valueFor(b.key);
         break;
       }
       case "platform":
