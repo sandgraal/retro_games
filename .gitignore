@@ -4,7 +4,6 @@ Thumbs.db
 
 # Local configuration overrides
 config.local.js
-.env
 config.js
 public/config.js
 

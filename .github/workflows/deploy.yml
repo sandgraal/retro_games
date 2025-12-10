@@ -42,10 +42,9 @@ jobs:
               run: npm ci
 
             - name: Generate config.js
-              run: |
-                  echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
-                  echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
-                  node scripts/generate-config.js
+              run: npm run build:config
+              env:
+                  DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 
             - name: Build
               run: npm run build
