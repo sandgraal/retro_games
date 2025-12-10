@@ -182,13 +182,11 @@ function switchToView(view: "collection" | "guides"): void {
   const heroDashboard = document.querySelector<HTMLElement>(".hero-dashboard");
   const collectionSection = document.querySelector<HTMLElement>(".collection-container");
   const guidesContainer = document.getElementById("guidesContainer");
-  const guidesBanner = document.getElementById("guidesBanner");
 
   if (view === "guides") {
     // Hide collection view
     if (heroDashboard) heroDashboard.hidden = true;
     if (collectionSection) collectionSection.hidden = true;
-    if (guidesBanner) guidesBanner.hidden = true;
     // Show guides
     if (guidesContainer) {
       guidesContainer.hidden = false;
@@ -199,7 +197,6 @@ function switchToView(view: "collection" | "guides"): void {
     // Show collection view
     if (heroDashboard) heroDashboard.hidden = false;
     if (collectionSection) collectionSection.hidden = false;
-    if (guidesBanner) guidesBanner.hidden = false;
     // Hide guides
     if (guidesContainer) {
       guidesContainer.hidden = true;
@@ -257,12 +254,10 @@ function setupDashboardActions(): void {
   const importBtn = document.getElementById("importBtn");
   const backupBtn = document.getElementById("backupBtn");
   const contributeBtn = document.getElementById("contributeBtn");
-  const guidesBannerBtn = document.getElementById("guidesBannerBtn");
 
   importBtn?.addEventListener("click", handleImport);
   backupBtn?.addEventListener("click", handleBackup);
   contributeBtn?.addEventListener("click", handleContribute);
-  guidesBannerBtn?.addEventListener("click", () => switchToView("guides"));
 }
 
 /**
