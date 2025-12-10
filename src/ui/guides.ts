@@ -23,6 +23,7 @@ let currentGuide: Guide | null = null;
 let guideIndex: GuideMetadata[] = [];
 let filterCategory: "all" | "console" | "genre" = "all";
 let filterPlatform = "all";
+let searchQuery = "";
 let containerElement: HTMLElement | null = null;
 
 // Interactive features state
@@ -35,30 +36,74 @@ let scrollListener: (() => void) | null = null;
 function renderGuideIndex(): HTMLElement {
   const container = el.div({ class: "guides-index" });
 
-  // Header
-  const header = el.div({ class: "guides-header" });
-  header.innerHTML = `
-    <h1 class="guides-title">Collector's Guides</h1>
-    <p class="guides-subtitle">Expert guides for building your retro game collection</p>
-  `;
-  container.appendChild(header);
+  // Hero Section
+  const hero = el.div({ class: "guides-hero" });
+  const totalGuides = guideIndex.length;
+  const consoleCount = guideIndex.filter((g) => g.category === "console").length;
+  const genreCount = guideIndex.filter((g) => g.category === "genre").length;
 
-  // Filters
+  hero.innerHTML = `
+    <div class="guides-hero-content">
+      <div class="guides-hero-badge">📚 Expert Knowledge Base</div>
+      <h1 class="guides-hero-title">
+        <span class="guides-hero-title-icon">🐉</span>
+        Collector's Guides
+      </h1>
+      <p class="guides-hero-subtitle">
+        Your treasure map to the world of retro gaming. Expert guides for finding, identifying, 
+        and valuing games across ${consoleCount} console platforms and ${genreCount} genre categories.
+      </p>
+      <div class="guides-hero-stats">
+        <div class="guides-hero-stat">
+          <span class="guides-hero-stat-value">${totalGuides}</span>
+          <span class="guides-hero-stat-label">Total Guides</span>
+        </div>
+        <div class="guides-hero-stat">
+          <span class="guides-hero-stat-value">${consoleCount}</span>
+          <span class="guides-hero-stat-label">Platforms</span>
+        </div>
+        <div class="guides-hero-stat">
+          <span class="guides-hero-stat-value">${genreCount}</span>
+          <span class="guides-hero-stat-label">Genre Guides</span>
+        </div>
+      </div>
+    </div>
+    <div class="guides-hero-decoration">
+      <div class="guides-hero-orb"></div>
+      <div class="guides-hero-orb guides-hero-orb-2"></div>
+      <div class="guides-hero-orb guides-hero-orb-3"></div>
+    </div>
+  `;
+  container.appendChild(hero);
+
+  // Filters Bar
   const filters = el.div({ class: "guides-filters" });
   filters.innerHTML = `
-    <div class="guides-filter-group">
-      <label class="guides-filter-label">Category</label>
-      <select class="guides-filter-select" id="guideCategoryFilter">
-        <option value="all">All Guides</option>
-        <option value="console">Console Guides</option>
-        <option value="genre">Genre Guides</option>
-      </select>
-    </div>
-    <div class="guides-filter-group">
-      <label class="guides-filter-label">Platform</label>
-      <select class="guides-filter-select" id="guidePlatformFilter">
-        <option value="all">All Platforms</option>
-      </select>
+    <div class="guides-filters-inner">
+      <div class="guides-filter-group">
+        <label class="guides-filter-label">
+          <span class="guides-filter-icon">🏷️</span>
+          Category
+        </label>
+        <select class="guides-filter-select" id="guideCategoryFilter">
+          <option value="all">All Guides</option>
+          <option value="console">🎮 Console Guides</option>
+          <option value="genre">⚔️ Genre Guides</option>
+        </select>
+      </div>
+      <div class="guides-filter-group">
+        <label class="guides-filter-label">
+          <span class="guides-filter-icon">🕹️</span>
+          Platform
+        </label>
+        <select class="guides-filter-select" id="guidePlatformFilter">
+          <option value="all">All Platforms</option>
+        </select>
+      </div>
+      <div class="guides-filter-search">
+        <span class="guides-search-icon">🔍</span>
+        <input type="text" class="guides-search-input" id="guideSearchInput" placeholder="Search guides..." />
+      </div>
     </div>
   `;
   container.appendChild(filters);
@@ -73,7 +118,7 @@ function renderGuideIndex(): HTMLElement {
   platforms.forEach((platform) => {
     const option = document.createElement("option");
     option.value = platform;
-    option.textContent = platform;
+    option.textContent = `${getPlatformIcon(platform)} ${platform}`;
     platformSelect.appendChild(option);
   });
 
@@ -93,6 +138,16 @@ function renderGuideIndex(): HTMLElement {
     updateGuideGrid();
   });
 
+  // Search functionality
+  const searchInput = filters.querySelector("#guideSearchInput") as HTMLInputElement;
+  let searchTimeout: ReturnType<typeof setTimeout>;
+  searchInput?.addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      updateGuideGrid(searchInput.value);
+    }, 150);
+  });
+
   // Guide grid
   const grid = el.div({ class: "guides-grid", id: "guidesGrid" });
   container.appendChild(grid);
@@ -106,9 +161,21 @@ function renderGuideIndex(): HTMLElement {
 function renderGuideCards(grid: HTMLElement): void {
   grid.innerHTML = "";
 
+  const searchLower = searchQuery.toLowerCase();
   const filteredGuides = guideIndex.filter((guide) => {
     if (filterCategory !== "all" && guide.category !== filterCategory) return false;
     if (filterPlatform !== "all" && guide.platform !== filterPlatform) return false;
+    if (searchQuery) {
+      const searchFields = [
+        guide.title,
+        guide.description,
+        guide.platform || "",
+        guide.genre || "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      if (!searchFields.includes(searchLower)) return false;
+    }
     return true;
   });
 
@@ -164,20 +231,46 @@ function renderGuideCards(grid: HTMLElement): void {
 }
 
 function createGuideCard(platform: string, platformGuides: GuideMetadata[]): HTMLElement {
-  const card = el.div({ class: "guide-card" });
+  const card = el.div({ class: "guide-card guide-card-platform" });
 
   const platformIcon = getPlatformIcon(platform);
   const reference = platformGuides.find((g) => g.type === "reference");
   const collecting = platformGuides.find((g) => g.type === "collecting-guide");
+  const platformColor = getPlatformColor(platform);
 
   card.innerHTML = `
+    <div class="guide-card-glow" style="--platform-color: ${platformColor}"></div>
     <div class="guide-card-header">
-      <span class="guide-card-icon">${platformIcon}</span>
-      <h3 class="guide-card-title">${escapeHtml(platform)}</h3>
+      <div class="guide-card-icon-wrapper" style="--platform-color: ${platformColor}">
+        <span class="guide-card-icon">${platformIcon}</span>
+      </div>
+      <div class="guide-card-info">
+        <h3 class="guide-card-title">${escapeHtml(platform)}</h3>
+        <span class="guide-card-count">${platformGuides.length} guide${platformGuides.length > 1 ? "s" : ""}</span>
+      </div>
+    </div>
+    <div class="guide-card-content">
+      <p class="guide-card-desc">${getConsoleDescription(platform)}</p>
     </div>
     <div class="guide-card-links">
-      ${reference ? `<button class="guide-card-link" data-slug="${reference.slug}">📖 Reference</button>` : ""}
-      ${collecting ? `<button class="guide-card-link guide-card-link-primary" data-slug="${collecting.slug}">💎 Collecting Guide</button>` : ""}
+      ${
+        reference
+          ? `<button class="guide-card-link guide-card-link-secondary" data-slug="${reference.slug}">
+        <span class="guide-link-icon">📖</span>
+        <span class="guide-link-text">Reference</span>
+        <span class="guide-link-arrow">→</span>
+      </button>`
+          : ""
+      }
+      ${
+        collecting
+          ? `<button class="guide-card-link guide-card-link-primary" data-slug="${collecting.slug}">
+        <span class="guide-link-icon">💎</span>
+        <span class="guide-link-text">Collecting Guide</span>
+        <span class="guide-link-arrow">→</span>
+      </button>`
+          : ""
+      }
     </div>
   `;
 
@@ -193,18 +286,31 @@ function createGuideCard(platform: string, platformGuides: GuideMetadata[]): HTM
 }
 
 function createSingleGuideCard(guide: GuideMetadata): HTMLElement {
-  const card = el.div({ class: "guide-card" });
+  const card = el.div({ class: "guide-card guide-card-genre" });
 
   const icon = guide.genre === "RPG" ? "⚔️" : "🎮";
+  const genreColor = getGenreColor(guide.genre || "Other");
 
   card.innerHTML = `
+    <div class="guide-card-glow" style="--platform-color: ${genreColor}"></div>
     <div class="guide-card-header">
-      <span class="guide-card-icon">${icon}</span>
-      <h3 class="guide-card-title">${escapeHtml(guide.genre || guide.title)}</h3>
+      <div class="guide-card-icon-wrapper" style="--platform-color: ${genreColor}">
+        <span class="guide-card-icon">${icon}</span>
+      </div>
+      <div class="guide-card-info">
+        <h3 class="guide-card-title">${escapeHtml(guide.genre || guide.title)}</h3>
+        <span class="guide-card-count">Genre Guide</span>
+      </div>
     </div>
-    <p class="guide-card-desc">${escapeHtml(guide.description)}</p>
+    <div class="guide-card-content">
+      <p class="guide-card-desc">${escapeHtml(guide.description)}</p>
+    </div>
     <div class="guide-card-links">
-      <button class="guide-card-link guide-card-link-primary" data-slug="${guide.slug}">💎 Collecting Guide</button>
+      <button class="guide-card-link guide-card-link-primary" data-slug="${guide.slug}">
+        <span class="guide-link-icon">💎</span>
+        <span class="guide-link-text">View Guide</span>
+        <span class="guide-link-arrow">→</span>
+      </button>
     </div>
   `;
 
@@ -237,7 +343,76 @@ function getPlatformIcon(platform: string): string {
   return icons[platform] || "🎮";
 }
 
-function updateGuideGrid(): void {
+function getPlatformColor(platform: string): string {
+  const colors: Record<string, string> = {
+    "Atari 2600/7800": "#e34a2e",
+    Dreamcast: "#0066cc",
+    "Game Boy": "#8a9a5b",
+    GameCube: "#6b4ea6",
+    Genesis: "#1a73e8",
+    "Master System": "#cc0000",
+    "Nintendo 64": "#e60012",
+    "Neo Geo": "#ffd700",
+    NES: "#e4000f",
+    PlayStation: "#003087",
+    "PlayStation 2": "#00439c",
+    PSP: "#68217a",
+    Saturn: "#00a4e4",
+    SNES: "#7b68ee",
+    "TurboGrafx-16": "#ff7f00",
+    Wii: "#8b8b8b",
+  };
+  return colors[platform] || "#00d4ff";
+}
+
+function getGenreColor(genre: string): string {
+  const colors: Record<string, string> = {
+    RPG: "#9333ea",
+    Action: "#ef4444",
+    Adventure: "#10b981",
+    Sports: "#f59e0b",
+    Racing: "#06b6d4",
+    Fighting: "#f97316",
+    Puzzle: "#ec4899",
+    Shooter: "#6366f1",
+    Platformer: "#84cc16",
+  };
+  return colors[genre] || "#00d4ff";
+}
+
+function getConsoleDescription(platform: string): string {
+  const descriptions: Record<string, string> = {
+    "Atari 2600/7800":
+      "The pioneering home console that started it all. Learn about rare variants and valuable cartridges.",
+    Dreamcast:
+      "SEGA's final console, beloved for innovation. Discover the gems before discontinuation.",
+    "Game Boy":
+      "Nintendo's handheld revolution. Complete guides to building your portable collection.",
+    GameCube:
+      "Mini-disc magic from Nintendo. Find the hidden treasures and rare variants.",
+    Genesis:
+      "SEGA's 16-bit powerhouse. Master the extensive library and regional differences.",
+    "Master System":
+      "SEGA's 8-bit challenger. European gems and rare US releases explained.",
+    "Nintendo 64":
+      "The 64-bit legend. Cartridge collecting tips and variant identification.",
+    "Neo Geo": "The premium arcade experience. Navigate the high-end collector's market.",
+    NES: "The console that saved gaming. Essential knowledge for every collector.",
+    PlayStation:
+      "Sony's disc-based revolution. CD collecting and long box identification.",
+    "PlayStation 2":
+      "The best-selling console ever. Hidden gems among thousands of titles.",
+    PSP: "Portable PlayStation gaming. UMD collecting and digital considerations.",
+    Saturn: "SEGA's 2D powerhouse. Japanese imports and rare Western releases.",
+    SNES: "Nintendo's 16-bit masterpiece. Box condition and variant value guide.",
+    "TurboGrafx-16": "NEC's underdog contender. HuCard and CD-ROM collecting essentials.",
+    Wii: "Motion control innovation. Finding value in the massive library.",
+  };
+  return descriptions[platform] || "Expert collecting guidance for this platform.";
+}
+
+function updateGuideGrid(search?: string): void {
+  if (search !== undefined) searchQuery = search;
   const grid = document.getElementById("guidesGrid");
   if (grid) renderGuideCards(grid);
 }
@@ -524,7 +699,7 @@ async function renderGuideViewer(slug: string): Promise<HTMLElement> {
   container.innerHTML = `
     <div class="guide-loading">
       <div class="guide-loading-spinner"></div>
-      <p>Loading guide...</p>
+      <p class="guide-loading-text">Loading guide...</p>
     </div>
   `;
 
@@ -548,27 +723,43 @@ async function renderGuideViewer(slug: string): Promise<HTMLElement> {
 
   // Back button
   const backBtn = el.button({ class: "guide-back-btn" });
-  backBtn.innerHTML = `← Back to Guides`;
+  backBtn.innerHTML = `<span class="guide-back-icon">←</span> Back to Guides`;
   backBtn.addEventListener("click", () => {
     cleanup();
     navigateToIndex();
   });
   container.appendChild(backBtn);
 
-  // Guide header with search
+  // Guide header with beautiful design
+  const platformColor =
+    guide.category === "console"
+      ? getPlatformColor(guide.platform || "")
+      : getGenreColor(guide.genre || "");
+
   const header = el.div({ class: "guide-header" });
   header.innerHTML = `
-    <div class="guide-meta">
-      <span class="guide-category-badge">${guide.category === "console" ? guide.platform : guide.genre}</span>
-      <span class="guide-type-badge">${guide.type === "reference" ? "Reference" : "Collecting Guide"}</span>
-    </div>
-    <h1 class="guide-title">${escapeHtml(guide.title)}</h1>
-    <p class="guide-description">${escapeHtml(guide.description)}</p>
-    <div class="guide-header-row">
-      <div class="guide-updated">Last updated: ${guide.updated || guide.date}</div>
-      <div class="guide-search">
-        <input type="text" class="guide-search-input" placeholder="🔍 Search in guide..." />
-        <span class="guide-search-results"></span>
+    <div class="guide-header-glow" style="--guide-color: ${platformColor}"></div>
+    <div class="guide-header-content">
+      <div class="guide-meta">
+        <span class="guide-category-badge" style="--badge-color: ${platformColor}">
+          ${guide.category === "console" ? getPlatformIcon(guide.platform || "") + " " + guide.platform : "⚔️ " + guide.genre}
+        </span>
+        <span class="guide-type-badge">
+          ${guide.type === "reference" ? "📖 Reference" : "💎 Collecting Guide"}
+        </span>
+      </div>
+      <h1 class="guide-title">${escapeHtml(guide.title)}</h1>
+      <p class="guide-description">${escapeHtml(guide.description)}</p>
+      <div class="guide-header-footer">
+        <div class="guide-updated">
+          <span class="guide-updated-icon">📅</span>
+          Last updated: ${guide.updated || guide.date}
+        </div>
+        <div class="guide-search">
+          <span class="guide-search-icon">🔍</span>
+          <input type="text" class="guide-search-input" placeholder="Search in guide..." />
+          <span class="guide-search-results"></span>
+        </div>
       </div>
     </div>
   `;
