@@ -1,6 +1,7 @@
 /**
  * Guides UI Components
  * Index view and guide viewer with collection integration
+ * Features: TOC navigation, search, collection progress, reading indicator
  */
 
 import { el, escapeHtml } from "./components";
@@ -23,6 +24,11 @@ let guideIndex: GuideMetadata[] = [];
 let filterCategory: "all" | "console" | "genre" = "all";
 let filterPlatform = "all";
 let containerElement: HTMLElement | null = null;
+
+// Interactive features state
+let readingProgress = 0;
+let tocActiveId = "";
+let scrollListener: (() => void) | null = null;
 
 // === Guide Index Component ===
 
@@ -236,6 +242,272 @@ function updateGuideGrid(): void {
   if (grid) renderGuideCards(grid);
 }
 
+// === Table of Contents ===
+
+interface TocItem {
+  id: string;
+  text: string;
+  level: number;
+}
+
+function extractTableOfContents(content: HTMLElement): TocItem[] {
+  const headings = content.querySelectorAll("h1, h2, h3");
+  const toc: TocItem[] = [];
+
+  headings.forEach((heading, index) => {
+    const text = heading.textContent?.trim() || "";
+    const level = parseInt(heading.tagName.charAt(1));
+    const id = `toc-${index}-${text.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+    // Add id to heading for scroll targeting
+    heading.id = id;
+
+    toc.push({ id, text, level });
+  });
+
+  return toc;
+}
+
+function renderTableOfContents(toc: TocItem[]): HTMLElement {
+  const tocContainer = el.div({ class: "guide-toc" });
+
+  tocContainer.innerHTML = `
+    <div class="guide-toc-header">
+      <span class="guide-toc-icon">📑</span>
+      <span class="guide-toc-title">Contents</span>
+    </div>
+    <nav class="guide-toc-nav">
+      ${toc
+        .map(
+          (item) => `
+        <a href="#${item.id}" 
+           class="guide-toc-link guide-toc-level-${item.level}" 
+           data-toc-id="${item.id}">
+          ${escapeHtml(item.text)}
+        </a>
+      `
+        )
+        .join("")}
+    </nav>
+  `;
+
+  // Smooth scroll on click
+  tocContainer.querySelectorAll<HTMLElement>(".guide-toc-link").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const targetId = link.getAttribute("data-toc-id");
+      if (targetId) {
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Update URL without scroll
+          history.replaceState(null, "", `#${targetId}`);
+        }
+      }
+    });
+  });
+
+  return tocContainer;
+}
+
+function updateTocHighlight(toc: TocItem[]): void {
+  const headings = toc.map((item) => ({
+    id: item.id,
+    element: document.getElementById(item.id),
+  }));
+
+  let currentId = toc[0]?.id || "";
+
+  for (const { id, element } of headings) {
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      if (rect.top <= 150) {
+        currentId = id;
+      }
+    }
+  }
+
+  if (currentId !== tocActiveId) {
+    tocActiveId = currentId;
+
+    // Update active state
+    document.querySelectorAll(".guide-toc-link").forEach((link) => {
+      link.classList.toggle("active", link.getAttribute("data-toc-id") === currentId);
+    });
+  }
+}
+
+// === Reading Progress ===
+
+function updateReadingProgress(): void {
+  const content = document.querySelector(".guide-content");
+  const progressBar = document.querySelector(".guide-progress-bar") as HTMLElement;
+
+  if (!content || !progressBar) return;
+
+  const rect = content.getBoundingClientRect();
+  const contentTop = rect.top;
+  const contentHeight = rect.height;
+  const windowHeight = window.innerHeight;
+
+  // Calculate progress (0-100)
+  const scrolled = Math.max(0, -contentTop + 100);
+  const total = contentHeight - windowHeight + 200;
+  readingProgress = Math.min(100, Math.max(0, (scrolled / total) * 100));
+
+  progressBar.style.width = `${readingProgress}%`;
+
+  // Update percentage display
+  const progressText = document.querySelector(".guide-progress-text");
+  if (progressText) {
+    progressText.textContent = `${Math.round(readingProgress)}%`;
+  }
+}
+
+// === Search Within Guide ===
+
+function createSearchHighlighter(content: HTMLElement): (query: string) => number {
+  // Store original HTML
+  const originalHTML = content.innerHTML;
+
+  return (query: string): number => {
+    // Reset to original
+    content.innerHTML = originalHTML;
+
+    if (!query || query.length < 2) {
+      // Re-enhance tables after reset
+      enhanceGuideTables(content);
+      return 0;
+    }
+
+    const regex = new RegExp(`(${escapeRegExp(query)})`, "gi");
+    let matchCount = 0;
+
+    // Walk text nodes and highlight matches
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, null);
+    const textNodes: Text[] = [];
+
+    while (walker.nextNode()) {
+      textNodes.push(walker.currentNode as Text);
+    }
+
+    textNodes.forEach((node) => {
+      const text = node.textContent || "";
+      if (regex.test(text)) {
+        const span = document.createElement("span");
+        span.innerHTML = text.replace(regex, (match) => {
+          matchCount++;
+          return `<mark class="guide-search-highlight">${escapeHtml(match)}</mark>`;
+        });
+        node.parentNode?.replaceChild(span, node);
+      }
+      // Reset regex lastIndex
+      regex.lastIndex = 0;
+    });
+
+    // Re-enhance tables after modification
+    enhanceGuideTables(content);
+
+    return matchCount;
+  };
+}
+
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// === Collection Stats ===
+
+function calculateCollectionStats(content: HTMLElement): {
+  total: number;
+  owned: number;
+  wishlist: number;
+  backlog: number;
+} {
+  const allGames = games.get();
+  const userCollection = collection.get();
+  const tables = content.querySelectorAll("table");
+
+  let total = 0;
+  let owned = 0;
+  let wishlist = 0;
+  let backlog = 0;
+
+  tables.forEach((table) => {
+    const headers = Array.from(table.querySelectorAll("th")).map(
+      (th) => th.textContent?.toLowerCase() || ""
+    );
+    const titleIndex = headers.findIndex(
+      (h) => h.includes("title") || h.includes("game")
+    );
+
+    if (titleIndex === -1) return;
+
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach((row) => {
+      const cells = row.querySelectorAll("td");
+      if (cells.length <= titleIndex) return;
+
+      const gameName = cells[titleIndex].textContent?.trim() || "";
+      const platform = currentGuide?.platform;
+
+      const matchedGame = findMatchingGame(allGames, gameName, platform || "");
+      if (matchedGame) {
+        total++;
+        const status = userCollection.get(matchedGame.key)?.status || "none";
+        if (status === "owned") owned++;
+        if (status === "wishlist") wishlist++;
+        if (status === "backlog") backlog++;
+      }
+    });
+  });
+
+  return { total, owned, wishlist, backlog };
+}
+
+function renderCollectionStats(stats: {
+  total: number;
+  owned: number;
+  wishlist: number;
+  backlog: number;
+}): HTMLElement {
+  const container = el.div({ class: "guide-collection-stats" });
+  const percent = stats.total > 0 ? Math.round((stats.owned / stats.total) * 100) : 0;
+
+  container.innerHTML = `
+    <div class="guide-stats-header">
+      <span class="guide-stats-icon">🎮</span>
+      <span class="guide-stats-title">Your Progress</span>
+    </div>
+    <div class="guide-stats-progress">
+      <div class="guide-stats-bar">
+        <div class="guide-stats-fill" style="width: ${percent}%"></div>
+      </div>
+      <span class="guide-stats-percent">${percent}%</span>
+    </div>
+    <div class="guide-stats-breakdown">
+      <div class="guide-stats-item owned">
+        <span class="guide-stats-count">${stats.owned}</span>
+        <span class="guide-stats-label">Owned</span>
+      </div>
+      <div class="guide-stats-item wishlist">
+        <span class="guide-stats-count">${stats.wishlist}</span>
+        <span class="guide-stats-label">Wishlist</span>
+      </div>
+      <div class="guide-stats-item backlog">
+        <span class="guide-stats-count">${stats.backlog}</span>
+        <span class="guide-stats-label">Backlog</span>
+      </div>
+      <div class="guide-stats-item total">
+        <span class="guide-stats-count">${stats.total}</span>
+        <span class="guide-stats-label">Listed</span>
+      </div>
+    </div>
+  `;
+
+  return container;
+}
+
 // === Guide Viewer Component ===
 
 async function renderGuideViewer(slug: string): Promise<HTMLElement> {
@@ -249,7 +521,12 @@ async function renderGuideViewer(slug: string): Promise<HTMLElement> {
   }
 
   // Loading state
-  container.innerHTML = `<div class="guide-loading">Loading guide...</div>`;
+  container.innerHTML = `
+    <div class="guide-loading">
+      <div class="guide-loading-spinner"></div>
+      <p>Loading guide...</p>
+    </div>
+  `;
 
   // Load full guide
   const guide = await loadGuide(meta.path);
@@ -259,17 +536,26 @@ async function renderGuideViewer(slug: string): Promise<HTMLElement> {
   }
 
   currentGuide = guide;
-
-  // Render guide
   container.innerHTML = "";
+
+  // Reading progress bar (fixed at top)
+  const progressContainer = el.div({ class: "guide-progress" });
+  progressContainer.innerHTML = `
+    <div class="guide-progress-bar"></div>
+    <span class="guide-progress-text">0%</span>
+  `;
+  container.appendChild(progressContainer);
 
   // Back button
   const backBtn = el.button({ class: "guide-back-btn" });
   backBtn.innerHTML = `← Back to Guides`;
-  backBtn.addEventListener("click", () => navigateToIndex());
+  backBtn.addEventListener("click", () => {
+    cleanup();
+    navigateToIndex();
+  });
   container.appendChild(backBtn);
 
-  // Guide header
+  // Guide header with search
   const header = el.div({ class: "guide-header" });
   header.innerHTML = `
     <div class="guide-meta">
@@ -278,17 +564,91 @@ async function renderGuideViewer(slug: string): Promise<HTMLElement> {
     </div>
     <h1 class="guide-title">${escapeHtml(guide.title)}</h1>
     <p class="guide-description">${escapeHtml(guide.description)}</p>
-    <div class="guide-updated">Last updated: ${guide.updated || guide.date}</div>
+    <div class="guide-header-row">
+      <div class="guide-updated">Last updated: ${guide.updated || guide.date}</div>
+      <div class="guide-search">
+        <input type="text" class="guide-search-input" placeholder="🔍 Search in guide..." />
+        <span class="guide-search-results"></span>
+      </div>
+    </div>
   `;
   container.appendChild(header);
+
+  // Main layout: sidebar + content
+  const layout = el.div({ class: "guide-layout" });
+
+  // Sidebar with TOC and stats
+  const sidebar = el.div({ class: "guide-sidebar" });
 
   // Guide content
   const content = el.div({ class: "guide-content" });
   content.innerHTML = guide.htmlContent;
-  container.appendChild(content);
 
-  // Post-process: enhance tables with collection integration
+  // Extract TOC from content (must be done after content is set)
+  const toc = extractTableOfContents(content);
+  if (toc.length > 2) {
+    sidebar.appendChild(renderTableOfContents(toc));
+  }
+
+  // Collection stats
   enhanceGuideTables(content);
+  const stats = calculateCollectionStats(content);
+  if (stats.total > 0) {
+    sidebar.appendChild(renderCollectionStats(stats));
+  }
+
+  layout.appendChild(sidebar);
+  layout.appendChild(content);
+  container.appendChild(layout);
+
+  // Search functionality
+  const searchInput = header.querySelector(".guide-search-input") as HTMLInputElement;
+  const searchResults = header.querySelector(".guide-search-results") as HTMLElement;
+  const highlight = createSearchHighlighter(content);
+
+  let searchTimeout: ReturnType<typeof setTimeout>;
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      const count = highlight(searchInput.value);
+      if (searchInput.value.length >= 2) {
+        searchResults.textContent = `${count} match${count !== 1 ? "es" : ""}`;
+        searchResults.classList.add("visible");
+
+        // Scroll to first match
+        const firstMatch = content.querySelector(".guide-search-highlight");
+        if (firstMatch) {
+          firstMatch.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      } else {
+        searchResults.classList.remove("visible");
+      }
+    }, 200);
+  });
+
+  // Scroll handlers for TOC and reading progress
+  const handleScroll = (): void => {
+    updateReadingProgress();
+    if (toc.length > 2) {
+      updateTocHighlight(toc);
+    }
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  scrollListener = handleScroll;
+
+  // Cleanup function
+  function cleanup(): void {
+    if (scrollListener) {
+      window.removeEventListener("scroll", scrollListener);
+      scrollListener = null;
+    }
+    readingProgress = 0;
+    tocActiveId = "";
+  }
+
+  // Initial update
+  setTimeout(handleScroll, 100);
 
   return container;
 }
@@ -365,7 +725,144 @@ function enhanceGuideTables(container: HTMLElement): void {
 
     // Add class for styling
     table.classList.add("guide-enhanced-table");
+
+    // Add quick-add toolbar if there are matched games
+    const tableGames = collectTableGames(table, allGames, titleIndex, platformIndex);
+    if (tableGames.length > 0) {
+      const toolbar = createQuickAddToolbar(tableGames, userCollection, table);
+      table.parentNode?.insertBefore(toolbar, table);
+    }
   });
+}
+
+// Collect all matched games from a table
+function collectTableGames(
+  table: Element,
+  allGames: GameWithKey[],
+  titleIndex: number,
+  platformIndex: number
+): GameWithKey[] {
+  const matchedGames: GameWithKey[] = [];
+  const rows = table.querySelectorAll("tbody tr");
+
+  rows.forEach((row) => {
+    const cells = row.querySelectorAll("td");
+    if (cells.length <= titleIndex) return;
+
+    const gameName = cells[titleIndex].textContent?.trim() || "";
+    const platform =
+      platformIndex >= 0 && cells[platformIndex]
+        ? cells[platformIndex].textContent?.trim()
+        : currentGuide?.platform;
+
+    const matchedGame = findMatchingGame(allGames, gameName, platform || "");
+    if (matchedGame) {
+      matchedGames.push(matchedGame);
+    }
+  });
+
+  return matchedGames;
+}
+
+// Create quick-add toolbar for batch operations
+function createQuickAddToolbar(
+  tableGames: GameWithKey[],
+  userCollection: Map<string, { status: CollectionStatus }>,
+  table: Element
+): HTMLElement {
+  const toolbar = el.div({ class: "guide-table-toolbar" });
+
+  // Count current statuses
+  let ownedCount = 0;
+  let wishlistCount = 0;
+  tableGames.forEach((game) => {
+    const status = userCollection.get(game.key)?.status || "none";
+    if (status === "owned") ownedCount++;
+    if (status === "wishlist") wishlistCount++;
+  });
+
+  const notOwnedCount = tableGames.length - ownedCount;
+
+  toolbar.innerHTML = `
+    <div class="guide-toolbar-info">
+      <span class="guide-toolbar-count">${tableGames.length} games in list</span>
+      <span class="guide-toolbar-status">
+        <span class="owned">${ownedCount} owned</span>
+        <span class="wishlist">${wishlistCount} wishlist</span>
+      </span>
+    </div>
+    <div class="guide-toolbar-actions">
+      <button class="guide-toolbar-btn wishlist-all" ${notOwnedCount === 0 ? "disabled" : ""}>
+        ★ Add ${notOwnedCount} to Wishlist
+      </button>
+      <button class="guide-toolbar-btn owned-all" ${notOwnedCount === 0 ? "disabled" : ""}>
+        ✓ Mark ${notOwnedCount} as Owned
+      </button>
+    </div>
+  `;
+
+  // Add wishlist handler
+  const wishlistBtn = toolbar.querySelector(".wishlist-all");
+  wishlistBtn?.addEventListener("click", () => {
+    tableGames.forEach((game) => {
+      const status = userCollection.get(game.key)?.status || "none";
+      if (status !== "owned") {
+        setGameStatus(game.key, "wishlist");
+      }
+    });
+    // Update table UI
+    updateTableStatuses(table);
+    // Refresh toolbar
+    const newToolbar = createQuickAddToolbar(tableGames, collection.get(), table);
+    toolbar.replaceWith(newToolbar);
+    // Update stats widget
+    updateStatsWidget();
+  });
+
+  // Add owned handler
+  const ownedBtn = toolbar.querySelector(".owned-all");
+  ownedBtn?.addEventListener("click", () => {
+    tableGames.forEach((game) => {
+      setGameStatus(game.key, "owned");
+    });
+    // Update table UI
+    updateTableStatuses(table);
+    // Refresh toolbar
+    const newToolbar = createQuickAddToolbar(tableGames, collection.get(), table);
+    toolbar.replaceWith(newToolbar);
+    // Update stats widget
+    updateStatsWidget();
+  });
+
+  return toolbar;
+}
+
+// Update table row status buttons
+function updateTableStatuses(table: Element): void {
+  const userCollection = collection.get();
+
+  table.querySelectorAll<HTMLElement>(".guide-collection-controls").forEach((controls) => {
+    const gameKey = controls.getAttribute("data-game-key");
+    if (!gameKey) return;
+
+    const status = userCollection.get(gameKey)?.status || "none";
+    controls.querySelectorAll(".guide-status-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.getAttribute("data-status") === status);
+    });
+  });
+}
+
+// Update the stats widget in sidebar
+function updateStatsWidget(): void {
+  const content = document.querySelector(".guide-content");
+  if (!content) return;
+
+  const stats = calculateCollectionStats(content as HTMLElement);
+  const statsWidget = document.querySelector(".guide-collection-stats");
+  if (statsWidget) {
+    const newWidget = renderCollectionStats(stats);
+    statsWidget.replaceWith(newWidget);
+  }
 }
 
 function findMatchingGame(
