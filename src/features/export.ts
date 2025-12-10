@@ -186,18 +186,15 @@ export function parseBackup(json: string): BackupPayload | null {
       return null;
     }
 
-    const notes = isObject(data.notes)
-      ? Object.fromEntries(Object.entries(data.notes).filter(([, value]) => typeof value === "string"))
-      : {};
+    const notes = normalizeNotes(data.notes);
+    const filters = isObject(data.filters) ? (data.filters as Record<string, unknown>) : undefined;
 
     return {
       version,
       timestamp: typeof data.timestamp === "number" ? data.timestamp : Date.now(),
-      collection: Object.fromEntries(
-        Object.entries(collection).filter(([, entry]) => isObject(entry) && typeof entry.status === "string"),
-      ),
+      collection: normalizeCollectionEntries(collection),
       notes,
-      filters: data.filters,
+      filters,
     } satisfies BackupPayload;
   } catch {
     console.warn("Failed to parse backup");
@@ -207,6 +204,51 @@ export function parseBackup(json: string): BackupPayload | null {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeCollectionEntries(value: Record<string, unknown>): Record<string, CollectionEntry> {
+  const entries: Record<string, CollectionEntry> = {};
+
+  Object.entries(value).forEach(([key, entry]) => {
+    if (!isCollectionEntry(entry)) return;
+
+    entries[key] = {
+      gameKey: entry.gameKey,
+      status: entry.status,
+      addedAt: entry.addedAt,
+      ...(entry.notes !== undefined ? { notes: entry.notes } : {}),
+    };
+  });
+
+  return entries;
+}
+
+function normalizeNotes(value: unknown): Record<string, string> {
+  if (!isObject(value)) return {};
+
+  return Object.entries(value).reduce<Record<string, string>>((acc, [key, note]) => {
+    if (typeof note === "string") acc[key] = note;
+    return acc;
+  }, {});
+}
+
+function isCollectionEntry(value: unknown): value is CollectionEntry {
+  if (!isObject(value)) return false;
+
+  const entry = value as Record<string, unknown>;
+  const { gameKey, status, addedAt, notes } = entry;
+
+  if (typeof gameKey !== "string" || typeof addedAt !== "number") return false;
+  if (!isCollectionStatus(status)) return false;
+  if (notes !== undefined && typeof notes !== "string") return false;
+
+  return true;
+}
+
+const COLLECTION_STATUSES: CollectionStatus[] = ["none", "owned", "wishlist", "backlog", "trade"];
+
+function isCollectionStatus(value: unknown): value is CollectionStatus {
+  return typeof value === "string" && COLLECTION_STATUSES.includes(value as CollectionStatus);
 }
 
 function parseStringArray(value: unknown): string[] | null {
