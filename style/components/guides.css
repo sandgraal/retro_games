@@ -699,6 +699,8 @@
   color: var(--text-primary);
   font-size: 1rem;
   line-height: 1.8;
+  min-width: 0; /* Prevent flex/grid overflow */
+  overflow-wrap: break-word;
 }
 
 .guide-content h1,
@@ -778,31 +780,73 @@
 }
 
 /* Enhanced Tables (game lists with collection controls) */
+.guide-content table,
 .guide-enhanced-table {
   width: 100%;
   border-collapse: collapse;
   margin: var(--spacing-lg) 0;
   font-size: 0.875rem;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
+/* Table wrapper for horizontal scroll on small screens */
+.guide-content .table-wrapper {
+  overflow-x: auto;
+  margin: var(--spacing-lg) 0;
+  border-radius: var(--radius-lg);
+}
+
+/* Dynamic table wrapper added by JS */
+.guide-table-wrapper {
+  overflow-x: auto;
+  margin: var(--spacing-lg) 0;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--bg-glass);
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.guide-table-wrapper table {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.guide-content table th,
+.guide-content table td,
 .guide-enhanced-table th,
 .guide-enhanced-table td {
   padding: var(--spacing-sm) var(--spacing-md);
   text-align: left;
   border-bottom: 1px solid var(--border-color);
+  vertical-align: top;
 }
 
+.guide-content table th,
 .guide-enhanced-table th {
-  background: var(--bg-glass);
+  background: rgba(0, 0, 0, 0.3);
   color: var(--text-secondary);
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
+.guide-content table tr:hover,
 .guide-enhanced-table tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+.guide-content table tr:last-child td,
+.guide-enhanced-table tr:last-child td {
+  border-bottom: none;
 }
 
 .guide-table-status-header {
@@ -1098,9 +1142,11 @@
 /* Guide Layout with Sidebar */
 .guide-layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 260px minmax(0, 1fr);
   gap: var(--spacing-xl);
   align-items: start;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 /* Sticky Sidebar */
@@ -1134,6 +1180,8 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: var(--spacing-md);
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
 }
 
 .guide-toc-header {

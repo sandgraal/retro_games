@@ -854,6 +854,14 @@ function enhanceGuideTables(container: HTMLElement): void {
   const tables = container.querySelectorAll("table");
 
   tables.forEach((table) => {
+    // Wrap table in scrollable container if not already wrapped
+    if (!table.parentElement?.classList.contains("guide-table-wrapper")) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "guide-table-wrapper";
+      table.parentNode?.insertBefore(wrapper, table);
+      wrapper.appendChild(table);
+    }
+
     const headers = Array.from(table.querySelectorAll("th")).map(
       (th) => th.textContent?.toLowerCase() || ""
     );
