@@ -96,16 +96,17 @@ This project maintains comprehensive documentation for developers, contributors,
 
 - **[tests/](../tests/)** - Test files
   - `core.test.ts` - Signals, keys, types (26 tests)
-  - `state.test.ts` - Store, collection, filters (27 tests)
+  - `state.test.ts` - Store, collection, filters (28 tests)
   - `features.test.ts` - Export, backup, sharing (12 tests)
   - `format.test.ts` - Formatting utilities (36 tests)
+  - `data-loader.test.ts` - Data loader with Supabase fallback (3 tests)
   - `fetch-covers.test.js` - Cover fetching script (48 tests)
   - `audit-missing-covers.test.js` - Cover audit script (26 tests)
   - `archive-media.test.js` - Media archival script (14 tests)
   - `build-css.test.js` - CSS bundler script (11 tests)
   - `e2e/*.spec.js` - Playwright E2E tests (14 tests)
 
-**Total: 200 unit tests + 14 E2E tests = 214 tests**
+**Total: 204 unit tests + 14 E2E tests = 218 tests**
 
 ## Context & History
 

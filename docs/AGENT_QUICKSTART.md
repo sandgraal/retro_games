@@ -65,11 +65,14 @@ src/
 | `tests/state.test.ts`                | 28    | Store, filters, sorting (includes value sort) |
 | `tests/features.test.ts`             | 12    | Export/share/backup                           |
 | `tests/format.test.ts`               | 36    | Formatting helpers                            |
+| `tests/data-loader.test.ts`          | 3     | Data loader with Supabase fallback            |
 | `tests/fetch-covers.test.js`         | 48    | Cover fetching script                         |
 | `tests/audit-missing-covers.test.js` | 26    | Cover audit script                            |
 | `tests/archive-media.test.js`        | 14    | Media archival script                         |
 | `tests/build-css.test.js`            | 11    | CSS bundler script                            |
 | `tests/e2e/*.spec.js`                | 14    | Playwright smoke/filters/aria specs           |
+
+**Total: 204 unit tests + 14 E2E tests = 218 tests**
 
 ## Working Features
 
