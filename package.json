@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:legacy": "npm run build:config && npm run build:css",
-    "build:config": "node scripts/generate-config.js",
+    "build:config": "dotenvx run -- node scripts/generate-config.js",
     "build:css": "node scripts/build-css.js",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
@@ -27,10 +27,10 @@
     "serve:dist": "vite preview --port 4173",
     "lighthouse": "npx @lhci/cli autorun --config=lighthouserc.json",
     "sitemap": "node scripts/generate-sitemap.js",
-    "prices:update": "node scripts/update-ebay-prices.js",
-    "archive:media": "node scripts/archive-media.js",
-    "audit:covers": "node scripts/audit-missing-covers.js",
-    "enrich:data": "node scripts/enrich-game-data.js",
+    "prices:update": "dotenvx run -- node scripts/update-ebay-prices.js",
+    "archive:media": "dotenvx run -- node scripts/archive-media.js",
+    "audit:covers": "dotenvx run -- node scripts/audit-missing-covers.js",
+    "enrich:data": "dotenvx run -- node scripts/enrich-game-data.js",
     "prepare": "husky"
   },
   "repository": {
@@ -54,6 +54,7 @@
     "node": ">=20.19.0"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.51.1",
     "@eslint/js": "^9.39.1",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.57.0",

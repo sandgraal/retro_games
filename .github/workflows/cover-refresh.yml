@@ -53,8 +53,7 @@ jobs:
 
       - name: Fetch covers from Wikipedia
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
         run: |
           ARGS="--limit $REFRESH_LIMIT --output data/cover-fetch-results.json"
           if [ "$REFRESH_FORCE" = "true" ]; then
@@ -63,8 +62,8 @@ jobs:
           if [ "$REFRESH_DRY_RUN" = "true" ]; then
             ARGS="$ARGS --dry-run"
           fi
-          echo "Running: node scripts/fetch-covers.js $ARGS"
-          node scripts/fetch-covers.js $ARGS
+          echo "Running: npx dotenvx run -- node scripts/fetch-covers.js $ARGS"
+          npx dotenvx run -- node scripts/fetch-covers.js $ARGS
 
       - name: Save cover cache
         if: success()

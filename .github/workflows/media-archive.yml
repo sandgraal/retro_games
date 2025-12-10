@@ -43,18 +43,16 @@ jobs:
       - name: Archive media from Supabase Storage
         if: env.ARCHIVE_DRY_RUN != 'true'
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
         run: |
-          node scripts/archive-media.js \
+          npx dotenvx run -- node scripts/archive-media.js \
             --bucket "$ARCHIVE_BUCKET" \
             --output backups/media-archive
 
       - name: List objects (dry run)
         if: env.ARCHIVE_DRY_RUN == 'true'
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
         run: |
           echo "Dry run mode - listing objects in bucket: $ARCHIVE_BUCKET"
           # In future, could add a --list-only flag to archive-media.js

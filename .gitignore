@@ -42,3 +42,5 @@ __pycache__/
 # Build output
 dist/
 
+
+.env.keys
