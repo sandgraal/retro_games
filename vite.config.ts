@@ -3,7 +3,8 @@ import { resolve } from "path";
 
 export default defineConfig({
   root: ".",
-  base: "./",
+  // Use relative paths for GitHub Pages compatibility
+  base: "/retro-games/",
   publicDir: "public",
 
   build: {

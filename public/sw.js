@@ -7,7 +7,8 @@
  */
 
 const CACHE_NAME = "dragons-hoard-v3";
-const STATIC_ASSETS = ["/", "/index.html", "/data/sample-games.json"];
+// Use relative paths from the service worker scope (base path on GitHub Pages)
+const STATIC_ASSETS = ["./", "./index.html", "./data/sample-games.json"];
 
 // Install event - cache essential assets
 self.addEventListener("install", (event) => {
