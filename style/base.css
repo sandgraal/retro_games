@@ -12,6 +12,11 @@
   padding: 0;
 }
 
+/* Ensure hidden attribute works globally */
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

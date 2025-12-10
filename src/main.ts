@@ -209,6 +209,9 @@ function switchToView(view: "collection" | "guides"): void {
     currentAppView = "collection";
   }
 
+  // Scroll to top when switching views
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
   // Update header button state
   const guidesBtn = document.getElementById("guidesBtn");
   if (guidesBtn) {
