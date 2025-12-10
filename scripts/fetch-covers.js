@@ -589,16 +589,11 @@ async function main() {
   }
 }
 
-// Export for testing
-module.exports = {
-  parseArgs,
-  normalizeGameName,
-  buildSearchQueries,
-  isValidCoverUrl,
-};
+// Export for testing (ESM)
+export { parseArgs, normalizeGameName, buildSearchQueries, isValidCoverUrl };
 
-// Run if executed directly
-if (require.main === module) {
+// Run if executed directly (ESM)
+if (process.argv[1] === __filename) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);
