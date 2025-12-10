@@ -1,111 +1,138 @@
 name: Cover Art Refresh
 
 on:
-    schedule:
-        # Run daily at 3:30 AM UTC to refresh missing covers
-        - cron: "30 3 * * *"
-    workflow_dispatch:
-        inputs:
-            limit:
-                description: "Maximum number of games to process (defaults to 50)"
-                required: false
-                default: "50"
-            force:
-                description: "Set to true to re-fetch covers even if already present"
-                required: false
-                default: "false"
-            dry_run:
-                description: "Set to true to preview changes without updating Supabase"
-                required: false
-                default: "false"
+  schedule:
+    # Run daily at 3:30 AM UTC to refresh missing covers
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Maximum number of games to process (defaults to 50)"
+        required: false
+        default: "50"
+      force:
+        description: "Set to true to re-fetch covers even if already present"
+        required: false
+        default: "false"
+      dry_run:
+        description: "Set to true to preview changes without updating Supabase"
+        required: false
+        default: "false"
 
 env:
-    REFRESH_LIMIT: ${{ github.event.inputs.limit || '50' }}
-    REFRESH_FORCE: ${{ github.event.inputs.force || 'false' }}
-    REFRESH_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+  REFRESH_LIMIT: ${{ github.event.inputs.limit || '50' }}
+  REFRESH_FORCE: ${{ github.event.inputs.force || 'false' }}
+  REFRESH_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
 
 jobs:
-    refresh-covers:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-        steps:
-            - uses: actions/checkout@v4
+  refresh-covers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
 
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: "20.19"
-                  cache: npm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19"
+          cache: npm
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Restore cover cache
-              id: cover-cache
-              uses: actions/cache/restore@v4
-              with:
-                  path: data/cover-cache.json
-                  key: cover-cache-${{ hashFiles('data/cover-cache.json') }}
-                  restore-keys: |
-                      cover-cache-
+      - name: Restore cover cache
+        id: cover-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/cover-cache.json
+          key: cover-cache-${{ hashFiles('data/cover-cache.json') }}
+          restore-keys: |
+            cover-cache-
 
-            - name: Fetch covers from Wikipedia
-              env:
-                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-                  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-              run: |
-                  ARGS="--limit $REFRESH_LIMIT --output data/cover-fetch-results.json"
-                  if [ "$REFRESH_FORCE" = "true" ]; then
-                    ARGS="$ARGS --force"
-                  fi
-                  if [ "$REFRESH_DRY_RUN" = "true" ]; then
-                    ARGS="$ARGS --dry-run"
-                  fi
-                  echo "Running: node scripts/fetch-covers.js $ARGS"
-                  node scripts/fetch-covers.js $ARGS
+      - name: Fetch covers from Wikipedia
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          ARGS="--limit $REFRESH_LIMIT --output data/cover-fetch-results.json"
+          if [ "$REFRESH_FORCE" = "true" ]; then
+            ARGS="$ARGS --force"
+          fi
+          if [ "$REFRESH_DRY_RUN" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          echo "Running: node scripts/fetch-covers.js $ARGS"
+          node scripts/fetch-covers.js $ARGS
 
-            - name: Save cover cache
-              if: always()
-              uses: actions/cache/save@v4
-              with:
-                  path: data/cover-cache.json
-                  key: cover-cache-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Save cover cache
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: data/cover-cache.json
+          key: cover-cache-v1-${{ hashFiles('data/cover-cache.json') }}
 
-            - name: Upload results artifact
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: cover-fetch-results
-                  path: |
-                      data/cover-fetch-results.json
-                      data/cover-updates.sql
-                  retention-days: 30
-                  if-no-files-found: ignore
+      - name: Upload results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cover-fetch-results
+          path: |
+            data/cover-fetch-results.json
+            data/cover-updates.sql
+          retention-days: 30
+          if-no-files-found: ignore
 
-            - name: Report summary
-              if: always()
-              run: |
-                  if [ -f data/cover-fetch-results.json ]; then
-                    echo "## Cover Fetch Results" >> $GITHUB_STEP_SUMMARY
-                    echo "" >> $GITHUB_STEP_SUMMARY
-                    PROCESSED=$(jq -r '.processed // 0' data/cover-fetch-results.json)
-                    FOUND=$(jq -r '.found // 0' data/cover-fetch-results.json)
-                    NOT_FOUND=$(jq -r '.notFound // 0' data/cover-fetch-results.json)
-                    UPDATED=$(jq -r '.updated // 0' data/cover-fetch-results.json)
-                    ERRORS=$(jq -r '.errors // 0' data/cover-fetch-results.json)
-                    SKIPPED=$(jq -r '.skipped // 0' data/cover-fetch-results.json)
-                    echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
-                    echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-                    echo "| Processed | $PROCESSED |" >> $GITHUB_STEP_SUMMARY
-                    echo "| Found | $FOUND |" >> $GITHUB_STEP_SUMMARY
-                    echo "| Not Found | $NOT_FOUND |" >> $GITHUB_STEP_SUMMARY
-                    echo "| Updated | $UPDATED |" >> $GITHUB_STEP_SUMMARY
-                    echo "| Errors | $ERRORS |" >> $GITHUB_STEP_SUMMARY
-                    echo "| Skipped | $SKIPPED |" >> $GITHUB_STEP_SUMMARY
-                    echo "" >> $GITHUB_STEP_SUMMARY
-                    if [ "$REFRESH_DRY_RUN" = "true" ]; then
-                      echo "_This was a dry run - no changes were made to Supabase._" >> $GITHUB_STEP_SUMMARY
-                    fi
-                  else
-                    echo "No results file generated." >> $GITHUB_STEP_SUMMARY
-                  fi
+      - name: Report summary
+        if: always()
+        run: |
+          if [ -f data/cover-fetch-results.json ]; then
+            echo "## Cover Fetch Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            PROCESSED=$(jq -r '.processed // 0' data/cover-fetch-results.json)
+            FOUND=$(jq -r '.found // 0' data/cover-fetch-results.json)
+            NOT_FOUND=$(jq -r '.notFound // 0' data/cover-fetch-results.json)
+            UPDATED=$(jq -r '.updated // 0' data/cover-fetch-results.json)
+            ERRORS=$(jq -r '.errors // 0' data/cover-fetch-results.json)
+            SKIPPED=$(jq -r '.skipped // 0' data/cover-fetch-results.json)
+            echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Processed | $PROCESSED |" >> $GITHUB_STEP_SUMMARY
+            echo "| Found | $FOUND |" >> $GITHUB_STEP_SUMMARY
+            echo "| Not Found | $NOT_FOUND |" >> $GITHUB_STEP_SUMMARY
+            echo "| Updated | $UPDATED |" >> $GITHUB_STEP_SUMMARY
+            echo "| Errors | $ERRORS |" >> $GITHUB_STEP_SUMMARY
+            echo "| Skipped | $SKIPPED |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if [ "$REFRESH_DRY_RUN" = "true" ]; then
+              echo "_This was a dry run - no changes were made to Supabase._" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "No results file generated." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Create failure issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🔴 Cover Art Refresh Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## Workflow Failure\n\n**Workflow:** Cover Art Refresh\n**Run:** [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n**Triggered by:** ${context.eventName}\n\n### Likely Causes\n- Missing \`SUPABASE_URL\` secret\n- Missing \`SUPABASE_SERVICE_ROLE_KEY\` secret\n- Wikipedia API issues\n\nPlease check the workflow logs for details.`;
+
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'workflow-failure,cover-refresh'
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['workflow-failure', 'cover-refresh', 'automated']
+              });
+            }
