@@ -3,8 +3,6 @@ const path = require("path");
 const {
   loadEnv,
   ensureFileExists,
-  buildGameKey,
-  resolveRegionCodes,
   readGames,
   readCache,
   writeCache,

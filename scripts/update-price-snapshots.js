@@ -8,8 +8,6 @@ const require = createRequire(import.meta.url);
 const {
   loadEnv,
   ensureFileExists,
-  buildGameKey,
-  resolveRegionCodes,
   readGames,
   readCache,
   writeCache,
