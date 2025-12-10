@@ -243,11 +243,17 @@ function handleGuidesToggle(): void {
  * Setup header action buttons
  */
 function setupHeaderActions(): void {
+  const homeBtn = document.getElementById("homeBtn");
   const guidesBtn = document.getElementById("guidesBtn");
   const exportBtn = document.getElementById("exportBtn");
   const shareBtn = document.getElementById("shareBtn");
   const settingsBtn = document.getElementById("settingsBtn");
 
+  homeBtn?.addEventListener("click", () => {
+    switchToView("collection");
+    // Clear URL params
+    window.history.pushState({}, "", window.location.pathname);
+  });
   guidesBtn?.addEventListener("click", handleGuidesToggle);
   exportBtn?.addEventListener("click", handleExport);
   shareBtn?.addEventListener("click", handleShare);

@@ -79,10 +79,15 @@
       <!-- Sticky Header -->
       <header class="app-header" role="banner">
         <div class="header-content">
-          <div class="app-logo">
+          <button
+            type="button"
+            class="app-logo"
+            id="homeBtn"
+            aria-label="Go to home page"
+          >
             <span class="app-logo-icon" aria-hidden="true">🎮</span>
             <span>Dragon's Hoard Atlas</span>
-          </div>
+          </button>
 
           <div class="header-search">
             <span class="header-search-icon" aria-hidden="true">🔍</span>
@@ -429,21 +434,9 @@
           <span class="mobile-nav-icon" aria-hidden="true">🎮</span>
           <span>Collection</span>
         </button>
-        <button type="button" class="mobile-nav-item" data-nav="guides">
-          <span class="mobile-nav-icon" aria-hidden="true">📖</span>
-          <span>Guides</span>
-        </button>
-        <button type="button" class="mobile-nav-item" data-nav="stats">
-          <span class="mobile-nav-icon" aria-hidden="true">📊</span>
-          <span>Stats</span>
-        </button>
         <button type="button" class="mobile-nav-item filters-toggle" id="filtersToggle">
           <span class="mobile-nav-icon" aria-hidden="true">🔧</span>
           <span>Filters</span>
-        </button>
-        <button type="button" class="mobile-nav-item" data-nav="more">
-          <span class="mobile-nav-icon" aria-hidden="true">⋯</span>
-          <span>More</span>
         </button>
       </nav>
 

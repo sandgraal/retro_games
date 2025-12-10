@@ -55,6 +55,9 @@ jobs:
             - name: Copy config.js to dist
               run: cp config.js dist/config.js
 
+            - name: Copy guides folder to dist
+              run: cp -r docs/guides dist/docs/guides
+
             - name: Copy covers folder to dist
               run: |
                   if [ -d "covers" ]; then
