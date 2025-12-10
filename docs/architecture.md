@@ -25,11 +25,7 @@ src/
 │   ├── signals.ts   # createSignal, computed, effect, batch
 │   ├── types.ts     # shared types
 │   ├── keys.ts      # game key helpers
-│   ├── events.ts    # experimental event-store (unused by UI)
-│   ├── router.ts    # lightweight route helper (unused)
-│   ├── runtime.ts   # alternate signal API surface
-│   ├── storage.ts   # simple storage wrapper
-│   └── worker.ts    # worker helper
+│   └── index.ts     # re-exports
 ├── state/           # centralized state
 │   └── store.ts     # signals, computed filteredGames/collectionStats, persistence
 ├── data/            # data access
@@ -83,9 +79,9 @@ UI components subscribe via `effect` and rely on the store's computed values:
 - `vite.config.ts` sets `base: "./"` for GitHub Pages compatibility.
 - Supabase requires both `config.js` (generated via `npm run build:config`) and the CDN client script declared in `index.html`.
 - Service worker and manifest live in `public/`.
+- Experimental modules (event sourcing, router, IndexedDB storage, web worker) live in `archive/experimental/`.
 
 ## Gaps
 
 - Live pricing is not implemented; only the local snapshot is read.
-- Experimental helpers in `src/core` are not wired into the UI.
 - Sample data is minimal; large-data behavior depends on Supabase providing volume.

@@ -39,12 +39,10 @@ _Last updated: December 2025_
 
 - Pricing is local-only; there is no live fetch or Supabase-backed price table.
 - Supabase usage depends on `config.js` existing in production and the CDN client loading; deployments missing either silently fall back to the sample data.
-- Auxiliary helpers in `src/core` (events/router/storage/worker) are unused by the UI today.
 - Sample dataset is tiny; large-list performance relies on Supabase returning volume.
 
 ## Next Steps
 
 1. Exercise Supabase path end-to-end (config.js + CDN) in automation to prevent silent sample fallback.
 2. Replace the local price snapshot with a real source (Supabase table or API) or expose a clear toggle when prices are unavailable.
-3. Add coverage for the virtualized grid and sorting behavior under larger datasets.
-4. Grow the sample dataset so local development and tests better mirror production shape.
+3. Grow the sample dataset so local development and tests better mirror production shape.

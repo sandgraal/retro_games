@@ -35,7 +35,7 @@ npm run build:config  # Emit config.js from .env
 
 ```
 src/
-├── core/        # signals, types, keys, experimental helpers (events/router/storage/worker)
+├── core/        # signals, types, keys
 ├── state/       # signal-based store, computed filters, persistence
 ├── data/        # Supabase client + loader with sample fallback
 ├── features/    # export/share/backup logic
@@ -88,8 +88,8 @@ src/
 
 - Price data only comes from the local snapshot; there is no live pricing fetch.
 - Supabase usage depends on `config.js` being present and the CDN client loading; ensure that script exists in deployments that expect cloud data.
-- Extra helpers in `src/core` (events/router/storage/worker) are experimental and not wired into the UI.
 - Sample dataset is tiny (8 games), so UX under large data sets relies on Supabase providing volume.
+- Experimental modules (event sourcing, router, IndexedDB, web worker, virtual list) are archived in `archive/experimental/`.
 
 ## DO / DON’T
 
