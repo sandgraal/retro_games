@@ -33,6 +33,7 @@
 ## known_constraints_and_feature_flags
 
 - Supabase path requires `config.js` and the CDN client; loader waits ~4s before falling back to sample data (or when `?sample=1`/`__SANDGRAAL_FORCE_SAMPLE__`).
+- `config.js` is generated from `.env` and now gitignored; run `npm run build:config` locally and avoid committing generated secrets.
 - Collection + notes persist to `localStorage`; schema should remain backward compatible to avoid data loss.
 - Pricing uses only the bundled snapshot; no live updates currently exist.
 - Node >=20.19.0 enforced via `package.json` engines; lockfile updates should be minimal unless required.
