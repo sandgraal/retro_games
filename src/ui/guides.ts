@@ -976,6 +976,8 @@ export function mountGuides(selector: string): () => void {
   // Check URL for initial state
   const params = new URLSearchParams(window.location.search);
   const guideSlug = params.get("guide");
+  const shouldShowGuides = guideSlug || params.get("view") === "guides";
+
   if (guideSlug) {
     currentView = { view: "guide", slug: guideSlug };
   } else if (params.get("view") === "guides") {
@@ -993,7 +995,10 @@ export function mountGuides(selector: string): () => void {
     }
   });
 
-  updateView();
+  // Only render if URL indicates guides view should be active
+  if (shouldShowGuides) {
+    updateView();
+  }
 
   // Cleanup function
   return () => {
