@@ -94,6 +94,15 @@
             <button
               type="button"
               class="header-action-btn"
+              id="guidesBtn"
+              aria-label="Collecting guides"
+              title="Collecting Guides"
+            >
+              <span aria-hidden="true">📖</span>
+            </button>
+            <button
+              type="button"
+              class="header-action-btn"
               id="exportBtn"
               aria-label="Export collection"
               title="Export Owned Games"
@@ -396,6 +405,16 @@
             </div>
           </div>
         </section>
+
+        <!-- Guides Section (hidden by default) -->
+        <section
+          class="guides-container"
+          id="guidesContainer"
+          hidden
+          aria-label="Collecting guides"
+        >
+          <!-- Populated by JS -->
+        </section>
       </main>
 
       <!-- Mobile Navigation -->
@@ -403,6 +422,10 @@
         <button type="button" class="mobile-nav-item active" data-nav="collection">
           <span class="mobile-nav-icon" aria-hidden="true">🎮</span>
           <span>Collection</span>
+        </button>
+        <button type="button" class="mobile-nav-item" data-nav="guides">
+          <span class="mobile-nav-icon" aria-hidden="true">📖</span>
+          <span>Guides</span>
         </button>
         <button type="button" class="mobile-nav-item" data-nav="stats">
           <span class="mobile-nav-icon" aria-hidden="true">📊</span>

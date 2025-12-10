@@ -1,0 +1,517 @@
+/**
+ * Guides UI Components
+ * Index view and guide viewer with collection integration
+ */
+
+import { el, escapeHtml } from "./components";
+import {
+  buildGuideIndex,
+  loadGuide,
+  type GuideMetadata,
+  type Guide,
+} from "../data/guides";
+import { games, collection, setGameStatus, openGameModal } from "../state";
+import type { CollectionStatus, GameWithKey } from "../core/types";
+
+// === State ===
+
+type ViewState = { view: "index" } | { view: "guide"; slug: string };
+
+let currentView: ViewState = { view: "index" };
+let currentGuide: Guide | null = null;
+let guideIndex: GuideMetadata[] = [];
+let filterCategory: "all" | "console" | "genre" = "all";
+let filterPlatform = "all";
+let containerElement: HTMLElement | null = null;
+
+// === Guide Index Component ===
+
+function renderGuideIndex(): HTMLElement {
+  const container = el.div({ class: "guides-container" });
+
+  // Header
+  const header = el.div({ class: "guides-header" });
+  header.innerHTML = `
+    <h1 class="guides-title">Collector's Guides</h1>
+    <p class="guides-subtitle">Expert guides for building your retro game collection</p>
+  `;
+  container.appendChild(header);
+
+  // Filters
+  const filters = el.div({ class: "guides-filters" });
+  filters.innerHTML = `
+    <div class="guides-filter-group">
+      <label class="guides-filter-label">Category</label>
+      <select class="guides-filter-select" id="guideCategoryFilter">
+        <option value="all">All Guides</option>
+        <option value="console">Console Guides</option>
+        <option value="genre">Genre Guides</option>
+      </select>
+    </div>
+    <div class="guides-filter-group">
+      <label class="guides-filter-label">Platform</label>
+      <select class="guides-filter-select" id="guidePlatformFilter">
+        <option value="all">All Platforms</option>
+      </select>
+    </div>
+  `;
+  container.appendChild(filters);
+
+  // Populate platform filter
+  const platformSelect = filters.querySelector(
+    "#guidePlatformFilter"
+  ) as HTMLSelectElement;
+  const platforms = [
+    ...new Set(guideIndex.filter((g) => g.platform).map((g) => g.platform!)),
+  ].sort();
+  platforms.forEach((platform) => {
+    const option = document.createElement("option");
+    option.value = platform;
+    option.textContent = platform;
+    platformSelect.appendChild(option);
+  });
+
+  // Filter event listeners
+  const categorySelect = filters.querySelector(
+    "#guideCategoryFilter"
+  ) as HTMLSelectElement;
+  categorySelect.value = filterCategory;
+  categorySelect.addEventListener("change", () => {
+    filterCategory = categorySelect.value as typeof filterCategory;
+    updateGuideGrid();
+  });
+
+  platformSelect.value = filterPlatform;
+  platformSelect.addEventListener("change", () => {
+    filterPlatform = platformSelect.value;
+    updateGuideGrid();
+  });
+
+  // Guide grid
+  const grid = el.div({ class: "guides-grid", id: "guidesGrid" });
+  container.appendChild(grid);
+
+  // Render initial grid
+  renderGuideCards(grid);
+
+  return container;
+}
+
+function renderGuideCards(grid: HTMLElement): void {
+  grid.innerHTML = "";
+
+  const filteredGuides = guideIndex.filter((guide) => {
+    if (filterCategory !== "all" && guide.category !== filterCategory) return false;
+    if (filterPlatform !== "all" && guide.platform !== filterPlatform) return false;
+    return true;
+  });
+
+  // Group by category then by platform/genre
+  const consoleGuides = filteredGuides.filter((g) => g.category === "console");
+  const genreGuides = filteredGuides.filter((g) => g.category === "genre");
+
+  if (
+    consoleGuides.length > 0 &&
+    (filterCategory === "all" || filterCategory === "console")
+  ) {
+    const section = el.div({ class: "guides-section" });
+    section.innerHTML = `<h2 class="guides-section-title">Console Guides</h2>`;
+    const cards = el.div({ class: "guides-cards" });
+
+    // Group by platform
+    const byPlatform = new Map<string, GuideMetadata[]>();
+    consoleGuides.forEach((g) => {
+      const platform = g.platform || "Other";
+      if (!byPlatform.has(platform)) byPlatform.set(platform, []);
+      byPlatform.get(platform)!.push(g);
+    });
+
+    byPlatform.forEach((platformGuides, platform) => {
+      const card = createGuideCard(platform, platformGuides);
+      cards.appendChild(card);
+    });
+
+    section.appendChild(cards);
+    grid.appendChild(section);
+  }
+
+  if (
+    genreGuides.length > 0 &&
+    (filterCategory === "all" || filterCategory === "genre")
+  ) {
+    const section = el.div({ class: "guides-section" });
+    section.innerHTML = `<h2 class="guides-section-title">Genre Guides</h2>`;
+    const cards = el.div({ class: "guides-cards" });
+
+    genreGuides.forEach((guide) => {
+      const card = createSingleGuideCard(guide);
+      cards.appendChild(card);
+    });
+
+    section.appendChild(cards);
+    grid.appendChild(section);
+  }
+
+  if (filteredGuides.length === 0) {
+    grid.innerHTML = `<div class="guides-empty">No guides match your filters</div>`;
+  }
+}
+
+function createGuideCard(platform: string, platformGuides: GuideMetadata[]): HTMLElement {
+  const card = el.div({ class: "guide-card" });
+
+  const platformIcon = getPlatformIcon(platform);
+  const reference = platformGuides.find((g) => g.type === "reference");
+  const collecting = platformGuides.find((g) => g.type === "collecting-guide");
+
+  card.innerHTML = `
+    <div class="guide-card-header">
+      <span class="guide-card-icon">${platformIcon}</span>
+      <h3 class="guide-card-title">${escapeHtml(platform)}</h3>
+    </div>
+    <div class="guide-card-links">
+      ${reference ? `<button class="guide-card-link" data-slug="${reference.slug}">📖 Reference</button>` : ""}
+      ${collecting ? `<button class="guide-card-link guide-card-link-primary" data-slug="${collecting.slug}">💎 Collecting Guide</button>` : ""}
+    </div>
+  `;
+
+  // Event listeners
+  card.querySelectorAll<HTMLElement>(".guide-card-link").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const slug = btn.getAttribute("data-slug");
+      if (slug) navigateToGuide(slug);
+    });
+  });
+
+  return card;
+}
+
+function createSingleGuideCard(guide: GuideMetadata): HTMLElement {
+  const card = el.div({ class: "guide-card" });
+
+  const icon = guide.genre === "RPG" ? "⚔️" : "🎮";
+
+  card.innerHTML = `
+    <div class="guide-card-header">
+      <span class="guide-card-icon">${icon}</span>
+      <h3 class="guide-card-title">${escapeHtml(guide.genre || guide.title)}</h3>
+    </div>
+    <p class="guide-card-desc">${escapeHtml(guide.description)}</p>
+    <div class="guide-card-links">
+      <button class="guide-card-link guide-card-link-primary" data-slug="${guide.slug}">💎 Collecting Guide</button>
+    </div>
+  `;
+
+  card.querySelector(".guide-card-link")?.addEventListener("click", () => {
+    navigateToGuide(guide.slug);
+  });
+
+  return card;
+}
+
+function getPlatformIcon(platform: string): string {
+  const icons: Record<string, string> = {
+    "Atari 2600/7800": "🕹️",
+    Dreamcast: "💿",
+    "Game Boy": "🎮",
+    GameCube: "🟣",
+    Genesis: "🔵",
+    "Master System": "🔴",
+    "Nintendo 64": "🎯",
+    "Neo Geo": "🏆",
+    NES: "🎮",
+    PlayStation: "⚪",
+    "PlayStation 2": "🔷",
+    PSP: "📱",
+    Saturn: "🪐",
+    SNES: "🟢",
+    "TurboGrafx-16": "🟠",
+    Wii: "🎳",
+  };
+  return icons[platform] || "🎮";
+}
+
+function updateGuideGrid(): void {
+  const grid = document.getElementById("guidesGrid");
+  if (grid) renderGuideCards(grid);
+}
+
+// === Guide Viewer Component ===
+
+async function renderGuideViewer(slug: string): Promise<HTMLElement> {
+  const container = el.div({ class: "guide-viewer" });
+
+  // Find guide metadata
+  const meta = guideIndex.find((g) => g.slug === slug);
+  if (!meta) {
+    container.innerHTML = `<div class="guide-error">Guide not found</div>`;
+    return container;
+  }
+
+  // Loading state
+  container.innerHTML = `<div class="guide-loading">Loading guide...</div>`;
+
+  // Load full guide
+  const guide = await loadGuide(meta.path);
+  if (!guide) {
+    container.innerHTML = `<div class="guide-error">Failed to load guide</div>`;
+    return container;
+  }
+
+  currentGuide = guide;
+
+  // Render guide
+  container.innerHTML = "";
+
+  // Back button
+  const backBtn = el.button({ class: "guide-back-btn" });
+  backBtn.innerHTML = `← Back to Guides`;
+  backBtn.addEventListener("click", () => navigateToIndex());
+  container.appendChild(backBtn);
+
+  // Guide header
+  const header = el.div({ class: "guide-header" });
+  header.innerHTML = `
+    <div class="guide-meta">
+      <span class="guide-category-badge">${guide.category === "console" ? guide.platform : guide.genre}</span>
+      <span class="guide-type-badge">${guide.type === "reference" ? "Reference" : "Collecting Guide"}</span>
+    </div>
+    <h1 class="guide-title">${escapeHtml(guide.title)}</h1>
+    <p class="guide-description">${escapeHtml(guide.description)}</p>
+    <div class="guide-updated">Last updated: ${guide.updated || guide.date}</div>
+  `;
+  container.appendChild(header);
+
+  // Guide content
+  const content = el.div({ class: "guide-content" });
+  content.innerHTML = guide.htmlContent;
+  container.appendChild(content);
+
+  // Post-process: enhance tables with collection integration
+  enhanceGuideTables(content);
+
+  return container;
+}
+
+// === Collection Integration ===
+
+function enhanceGuideTables(container: HTMLElement): void {
+  const allGames = games.get();
+  const userCollection = collection.get();
+
+  // Find tables that look like game lists
+  const tables = container.querySelectorAll("table");
+
+  tables.forEach((table) => {
+    const headers = Array.from(table.querySelectorAll("th")).map(
+      (th) => th.textContent?.toLowerCase() || ""
+    );
+
+    // Check if this is a game table (has Title or Game Name column)
+    const titleIndex = headers.findIndex(
+      (h) => h.includes("title") || h.includes("game")
+    );
+    const platformIndex = headers.findIndex((h) => h.includes("platform"));
+
+    if (titleIndex === -1) return;
+
+    // Add collection status column header
+    const headerRow = table.querySelector("tr");
+    if (headerRow) {
+      const statusHeader = document.createElement("th");
+      statusHeader.textContent = "Your Collection";
+      statusHeader.className = "guide-table-status-header";
+      headerRow.appendChild(statusHeader);
+    }
+
+    // Process each row
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach((row) => {
+      const cells = row.querySelectorAll("td");
+      if (cells.length <= titleIndex) return;
+
+      const gameName = cells[titleIndex].textContent?.trim() || "";
+      const platform =
+        platformIndex >= 0 && cells[platformIndex]
+          ? cells[platformIndex].textContent?.trim()
+          : currentGuide?.platform;
+
+      // Try to find matching game in collection
+      const matchedGame = findMatchingGame(allGames, gameName, platform || "");
+      const status = matchedGame
+        ? userCollection.get(matchedGame.key)?.status || "none"
+        : "none";
+
+      // Add status cell
+      const statusCell = document.createElement("td");
+      statusCell.className = "guide-table-status-cell";
+
+      if (matchedGame) {
+        statusCell.innerHTML = createCollectionControls(matchedGame, status);
+        attachCollectionEvents(statusCell, matchedGame);
+      } else {
+        statusCell.innerHTML = `<span class="guide-game-not-found">—</span>`;
+      }
+
+      row.appendChild(statusCell);
+
+      // Make game name clickable if we found a match
+      if (matchedGame) {
+        const titleCell = cells[titleIndex];
+        titleCell.classList.add("guide-game-link");
+        titleCell.addEventListener("click", () => openGameModal(matchedGame));
+      }
+    });
+
+    // Add class for styling
+    table.classList.add("guide-enhanced-table");
+  });
+}
+
+function findMatchingGame(
+  allGames: GameWithKey[],
+  gameName: string,
+  platform: string
+): GameWithKey | null {
+  const normalizedName = gameName.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  return (
+    allGames.find((game) => {
+      const gameNameNorm = game.game_name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const platformMatch =
+        !platform ||
+        game.platform.toLowerCase().includes(platform.toLowerCase()) ||
+        platform.toLowerCase().includes(game.platform.toLowerCase());
+      return gameNameNorm === normalizedName && platformMatch;
+    }) || null
+  );
+}
+
+function createCollectionControls(game: GameWithKey, status: CollectionStatus): string {
+  const buttons = [
+    { status: "owned", icon: "✓", label: "Owned", class: "owned" },
+    { status: "wishlist", icon: "★", label: "Wishlist", class: "wishlist" },
+    { status: "backlog", icon: "📋", label: "Backlog", class: "backlog" },
+  ];
+
+  return `
+    <div class="guide-collection-controls" data-game-key="${game.key}">
+      ${buttons
+        .map(
+          (btn) => `
+        <button 
+          class="guide-status-btn ${btn.class} ${status === btn.status ? "active" : ""}" 
+          data-status="${btn.status}"
+          title="${btn.label}"
+        >${btn.icon}</button>
+      `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function attachCollectionEvents(cell: HTMLElement, game: GameWithKey): void {
+  cell.querySelectorAll<HTMLElement>(".guide-status-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const newStatus = btn.getAttribute("data-status") as CollectionStatus;
+      const currentStatus = collection.get().get(game.key)?.status || "none";
+
+      // Toggle off if clicking same status
+      const finalStatus = currentStatus === newStatus ? "none" : newStatus;
+      setGameStatus(game.key, finalStatus);
+
+      // Update UI
+      const controls = cell.querySelector(".guide-collection-controls");
+      if (controls) {
+        controls.querySelectorAll(".guide-status-btn").forEach((b) => {
+          b.classList.toggle("active", b.getAttribute("data-status") === finalStatus);
+        });
+      }
+    });
+  });
+}
+
+// === Navigation ===
+
+function navigateToGuide(slug: string): void {
+  currentView = { view: "guide", slug };
+  updateView();
+  // Update URL without page reload
+  window.history.pushState({ view: "guide", slug }, "", `?guide=${slug}`);
+}
+
+function navigateToIndex(): void {
+  currentView = { view: "index" };
+  currentGuide = null;
+  updateView();
+  window.history.pushState({ view: "index" }, "", "?view=guides");
+}
+
+async function updateView(): Promise<void> {
+  if (!containerElement) return;
+
+  containerElement.innerHTML = "";
+
+  if (currentView.view === "index") {
+    containerElement.appendChild(renderGuideIndex());
+  } else {
+    const viewer = await renderGuideViewer(currentView.slug);
+    containerElement.appendChild(viewer);
+  }
+}
+
+// === Mount Function ===
+
+export function mountGuides(selector: string): () => void {
+  const element = document.querySelector(selector);
+  if (!element) {
+    console.warn(`Guides container not found: ${selector}`);
+    return () => {};
+  }
+
+  containerElement = element as HTMLElement;
+  guideIndex = buildGuideIndex();
+
+  // Check URL for initial state
+  const params = new URLSearchParams(window.location.search);
+  const guideSlug = params.get("guide");
+  if (guideSlug) {
+    currentView = { view: "guide", slug: guideSlug };
+  } else if (params.get("view") === "guides") {
+    currentView = { view: "index" };
+  }
+
+  // Handle browser back/forward
+  window.addEventListener("popstate", (event) => {
+    if (event.state?.view === "guide" && event.state.slug) {
+      currentView = { view: "guide", slug: event.state.slug };
+      updateView();
+    } else if (event.state?.view === "index") {
+      currentView = { view: "index" };
+      updateView();
+    }
+  });
+
+  updateView();
+
+  // Cleanup function
+  return () => {
+    containerElement = null;
+  };
+}
+
+// === Public API ===
+
+export function showGuidesView(): void {
+  navigateToIndex();
+}
+
+export function hideGuidesView(): void {
+  if (containerElement) {
+    containerElement.innerHTML = "";
+  }
+}
+
+export { navigateToGuide, guideIndex };

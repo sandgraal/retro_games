@@ -80,5 +80,8 @@
     "*.{js,json,md,css,html}": [
       "prettier --write"
     ]
+  },
+  "dependencies": {
+    "marked": "^17.0.1"
   }
 }

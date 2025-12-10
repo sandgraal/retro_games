@@ -23,6 +23,9 @@ import {
   mountModal,
   mountSettingsModal,
   openSettings,
+  mountGuides,
+  showGuidesView,
+  hideGuidesView,
 } from "./ui";
 import {
   exportCollectionToCSV,
@@ -70,7 +73,8 @@ async function init(): Promise<void> {
       mountGameGrid("#gameGrid"),
       mountFilters("#filtersSidebar"),
       mountModal("#gameModalBackdrop"),
-      mountSettingsModal()
+      mountSettingsModal(),
+      mountGuides("#guidesContainer")
     );
 
     // Load game data
@@ -92,6 +96,9 @@ async function init(): Promise<void> {
 
     // Check for share code in URL
     checkUrlShareCode();
+
+    // Check for guides view in URL
+    checkUrlGuidesView();
   } catch (error) {
     console.error("❌ Initialization failed:", error);
     setError(error instanceof Error ? error.message : "Unknown error");
@@ -140,16 +147,97 @@ function setupMobileNav(): void {
       backdrop.classList.remove("visible");
     });
   }
+
+  // Setup main navigation tabs
+  const navItems = document.querySelectorAll<HTMLElement>(".mobile-nav-item[data-nav]");
+  navItems.forEach((item) => {
+    item.addEventListener("click", () => {
+      const nav = item.dataset.nav;
+      if (nav === "guides") {
+        switchToView("guides");
+      } else if (nav === "collection") {
+        switchToView("collection");
+      }
+
+      // Update active state
+      navItems.forEach((n) => n.classList.remove("active"));
+      item.classList.add("active");
+    });
+  });
+}
+
+/**
+ * Track current view state
+ */
+let currentAppView: "collection" | "guides" = "collection";
+
+/**
+ * Switch between main views
+ */
+function switchToView(view: "collection" | "guides"): void {
+  const heroDashboard = document.querySelector<HTMLElement>(".hero-dashboard");
+  const collectionSection = document.querySelector<HTMLElement>(".collection-container");
+  const guidesContainer = document.getElementById("guidesContainer");
+
+  if (view === "guides") {
+    // Hide collection view
+    if (heroDashboard) heroDashboard.hidden = true;
+    if (collectionSection) collectionSection.hidden = true;
+    // Show guides
+    if (guidesContainer) {
+      guidesContainer.hidden = false;
+      showGuidesView();
+    }
+    currentAppView = "guides";
+  } else {
+    // Show collection view
+    if (heroDashboard) heroDashboard.hidden = false;
+    if (collectionSection) collectionSection.hidden = false;
+    // Hide guides
+    if (guidesContainer) {
+      guidesContainer.hidden = true;
+      hideGuidesView();
+    }
+    currentAppView = "collection";
+  }
+
+  // Update header button state
+  const guidesBtn = document.getElementById("guidesBtn");
+  if (guidesBtn) {
+    guidesBtn.classList.toggle("active", view === "guides");
+  }
+}
+
+/**
+ * Handle guides toggle from header button
+ */
+function handleGuidesToggle(): void {
+  if (currentAppView === "guides") {
+    switchToView("collection");
+  } else {
+    switchToView("guides");
+  }
+
+  // Update mobile nav active state
+  const navItems = document.querySelectorAll<HTMLElement>(".mobile-nav-item[data-nav]");
+  navItems.forEach((item) => {
+    const isActive =
+      (currentAppView === "guides" && item.dataset.nav === "guides") ||
+      (currentAppView === "collection" && item.dataset.nav === "collection");
+    item.classList.toggle("active", isActive);
+  });
 }
 
 /**
  * Setup header action buttons
  */
 function setupHeaderActions(): void {
+  const guidesBtn = document.getElementById("guidesBtn");
   const exportBtn = document.getElementById("exportBtn");
   const shareBtn = document.getElementById("shareBtn");
   const settingsBtn = document.getElementById("settingsBtn");
 
+  guidesBtn?.addEventListener("click", handleGuidesToggle);
   exportBtn?.addEventListener("click", handleExport);
   shareBtn?.addEventListener("click", handleShare);
   settingsBtn?.addEventListener("click", handleSettings);
@@ -328,6 +416,24 @@ async function handleShare(): Promise<void> {
  */
 function handleSettings(): void {
   openSettings();
+}
+
+/**
+ * Check URL for guides view and switch if present
+ */
+function checkUrlGuidesView(): void {
+  const params = new URLSearchParams(window.location.search);
+  const viewParam = params.get("view");
+  const guideParam = params.get("guide");
+
+  if (viewParam === "guides" || guideParam) {
+    switchToView("guides");
+    // Update mobile nav active state
+    const navItems = document.querySelectorAll<HTMLElement>(".mobile-nav-item[data-nav]");
+    navItems.forEach((item) => {
+      item.classList.toggle("active", item.dataset.nav === "guides");
+    });
+  }
 }
 
 /**
