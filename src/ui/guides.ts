@@ -841,15 +841,17 @@ function createQuickAddToolbar(
 function updateTableStatuses(table: Element): void {
   const userCollection = collection.get();
 
-  table.querySelectorAll<HTMLElement>(".guide-collection-controls").forEach((controls) => {
-    const gameKey = controls.getAttribute("data-game-key");
-    if (!gameKey) return;
+  table
+    .querySelectorAll<HTMLElement>(".guide-collection-controls")
+    .forEach((controls) => {
+      const gameKey = controls.getAttribute("data-game-key");
+      if (!gameKey) return;
 
-    const status = userCollection.get(gameKey)?.status || "none";
-    controls.querySelectorAll(".guide-status-btn").forEach((btn) => {
-      btn.classList.toggle("active", btn.getAttribute("data-status") === status);
+      const status = userCollection.get(gameKey)?.status || "none";
+      controls.querySelectorAll(".guide-status-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-status") === status);
+      });
     });
-  });
 }
 
 // Update the stats widget in sidebar
