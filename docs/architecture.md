@@ -1,6 +1,6 @@
 # Architecture Overview
 
-_Last updated: February 2026_
+_Last updated: December 2025_
 
 ## Overview
 
