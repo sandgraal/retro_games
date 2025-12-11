@@ -2,7 +2,8 @@
  * Data Module Exports
  */
 
-export { loadGames, loadSampleGames, loadPrices } from "./loader";
+export { loadGames, loadSampleGames } from "./loader";
+export { loadPrices } from "./pricing-provider";
 export {
   getClient as getSupabaseClient,
   isAvailable as isSupabaseAvailable,

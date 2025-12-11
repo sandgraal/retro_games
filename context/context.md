@@ -5,6 +5,7 @@
 - TypeScript + Vite single-page app for tracking retro game collections with a custom signal system and virtualized card grid.
 - Local-first data powered by `localStorage` (collection, notes, preferences) with optional Supabase metadata when `config.js` + CDN client are present.
 - Pricing and dashboard value displays read from the bundled `data/sample-price-history.json` snapshot (values in cents).
+- Pricing now flows through a provider that prefers live API endpoints and falls back to the bundled `data/sample-price-history.json` snapshot (values in cents) while surfacing last-updated metadata.
 - Backend worker `services/catalog-ingest/` normalizes external sources into versioned catalog snapshots and serves a read API for caching.
 - Community submissions land in `data/suggestions.json` with moderation decisions in `data/audit-log.json`; approved patches are re-applied during ingest runs.
 - Offline-friendly delivery via `public/manifest.json` and `public/sw.js`; GH Pages deployment is supported via Vite base path configuration.
@@ -39,6 +40,6 @@
 - Supabase path requires `config.js` and the CDN client; loader waits ~4s before falling back to sample data (or when `?sample=1`/`__SANDGRAAL_FORCE_SAMPLE__`).
 - `config.js` is generated from `.env` and now gitignored; run `npm run build:config` locally and avoid committing generated secrets.
 - Collection + notes persist to `localStorage`; schema should remain backward compatible to avoid data loss.
-- Pricing uses only the bundled snapshot; no live updates currently exist.
+- Pricing attempts live endpoints before falling back to the bundled snapshot; the UI now displays the last-updated timestamp when available.
 - Node >=20.19.0 enforced via `package.json` engines; lockfile updates should be minimal unless required.
 - Service worker caches assets; consider cache-busting if altering resource paths or base URL.

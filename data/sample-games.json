@@ -12,6 +12,11 @@
     "player_count": "Single",
     "cover": "https://upload.wikimedia.org/wikipedia/en/2/24/Chrono_Trigger.jpg",
     "Details": "https://en.wikipedia.org/wiki/Chrono_Trigger",
+    "external_links": {
+      "wiki": "https://en.wikipedia.org/wiki/Chrono_Trigger",
+      "store": "https://example.com/chrono-trigger",
+      "community": "https://www.reddit.com/r/chronotrigger/"
+    },
     "screenshots": [
       "https://upload.wikimedia.org/wikipedia/en/2/24/Chrono_Trigger.jpg",
       "https://i.imgur.com/EEePhGQ.jpg"

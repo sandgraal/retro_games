@@ -10,6 +10,7 @@ import { getAuthSession } from "./data/auth";
 import {
   setGames,
   setPrices,
+  setPriceMeta,
   setLoading,
   setError,
   setDataSource,
@@ -93,7 +94,12 @@ async function init(): Promise<void> {
     ]);
 
     setGames(gamesResult.games);
-    setPrices(priceData);
+    setPrices(priceData.prices);
+    setPriceMeta({
+      lastUpdated: priceData.lastUpdated,
+      source: priceData.source,
+      reason: priceData.reason,
+    });
     setDataSource(gamesResult.source);
     setLoading(false);
 
