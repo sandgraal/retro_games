@@ -1577,3 +1577,746 @@ describe("POST /api/v1/games/new - new game suggestions", () => {
     expect(json.suggestion.submittedAt <= afterRequest).toBe(true);
   });
 });
+
+describe("POST /api/v1/moderation/suggestions/:id/decision endpoint", () => {
+  let server: http.Server | null = null;
+
+  afterEach(async () => {
+    if (server) {
+      await new Promise<void>((resolve) => {
+        server!.close(() => {
+          server = null;
+          resolve();
+        });
+      });
+    }
+  });
+
+  async function makePostRequest(
+    port: number,
+    path: string,
+    body: any,
+    headers: Record<string, string> = {}
+  ): Promise<{ statusCode: number; headers: http.IncomingHttpHeaders; body: string }> {
+    return new Promise((resolve, reject) => {
+      const postData = JSON.stringify(body);
+      const options = {
+        hostname: "localhost",
+        port,
+        path,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(postData),
+          ...headers,
+        },
+      };
+
+      const req = http.request(options, (res) => {
+        let responseBody = "";
+        res.on("data", (chunk) => {
+          responseBody += chunk;
+        });
+        res.on("end", () => {
+          resolve({
+            statusCode: res.statusCode || 0,
+            headers: res.headers,
+            body: responseBody,
+          });
+        });
+      });
+
+      req.on("error", reject);
+      req.setTimeout(5000, () => {
+        req.destroy();
+        reject(new Error("Request timeout"));
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  }
+
+  async function makeGetRequest(
+    port: number,
+    path: string,
+    headers: Record<string, string> = {}
+  ): Promise<{ statusCode: number; headers: http.IncomingHttpHeaders; body: string }> {
+    return new Promise((resolve, reject) => {
+      const options = {
+        hostname: "localhost",
+        port,
+        path,
+        method: "GET",
+        headers,
+      };
+
+      const req = http.request(options, (res) => {
+        let body = "";
+        res.on("data", (chunk) => {
+          body += chunk;
+        });
+        res.on("end", () => {
+          resolve({
+            statusCode: res.statusCode || 0,
+            headers: res.headers,
+            body,
+          });
+        });
+      });
+
+      req.on("error", reject);
+      req.setTimeout(5000, () => {
+        req.destroy();
+        reject(new Error("Request timeout"));
+      });
+
+      req.end();
+    });
+  }
+
+  test("rejects request with 403 for anonymous role", async () => {
+    // Setup: Create a suggestion
+    const { suggestionsPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-1";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+
+    const port = 9900;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "approved" },
+      { "x-role": "anonymous" }
+    );
+
+    expect(response.statusCode).toBe(403);
+    const json = JSON.parse(response.body);
+    expect(json.error).toBe("Moderator access required");
+  });
+
+  test("rejects request with 403 for contributor role", async () => {
+    // Setup: Create a suggestion
+    const { suggestionsPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-2";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+
+    const port = 9901;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "approved" },
+      { "x-role": "contributor" }
+    );
+
+    expect(response.statusCode).toBe(403);
+    const json = JSON.parse(response.body);
+    expect(json.error).toBe("Moderator access required");
+  });
+
+  test("accepts request with 200 for moderator role", async () => {
+    // Setup: Create a suggestion and audit log
+    const { suggestionsPath, auditLogPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+      auditLogPath: path.join(tempDir, "audit-log.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-3";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+    await fs.writeFile(auditLogPath, JSON.stringify([]));
+
+    const port = 9902;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "approved", notes: "Looks good" },
+      { "x-role": "moderator", "x-user-email": "mod@example.com" }
+    );
+
+    expect(response.statusCode).toBe(200);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion).toBeDefined();
+    expect(json.audit).toBeDefined();
+  });
+
+  test("accepts request with 200 for admin role", async () => {
+    // Setup: Create a suggestion and audit log
+    const { suggestionsPath, auditLogPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+      auditLogPath: path.join(tempDir, "audit-log.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-4";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+    await fs.writeFile(auditLogPath, JSON.stringify([]));
+
+    const port = 9903;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "approved" },
+      { "x-role": "admin", "x-user-email": "admin@example.com" }
+    );
+
+    expect(response.statusCode).toBe(200);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion).toBeDefined();
+    expect(json.audit).toBeDefined();
+  });
+
+  test("rejects request with 400 for invalid status value", async () => {
+    // Setup: Create a suggestion
+    const { suggestionsPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-5";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+
+    const port = 9904;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "invalid-status" },
+      { "x-role": "moderator" }
+    );
+
+    expect(response.statusCode).toBe(400);
+    const json = JSON.parse(response.body);
+    expect(json.error).toBe("Decision status must be approved or rejected");
+  });
+
+  test("rejects request with 400 for missing status field", async () => {
+    // Setup: Create a suggestion
+    const { suggestionsPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-6";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+
+    const port = 9905;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { notes: "Some notes without status" },
+      { "x-role": "moderator" }
+    );
+
+    expect(response.statusCode).toBe(400);
+    const json = JSON.parse(response.body);
+    expect(json.error).toBe("Decision status must be approved or rejected");
+  });
+
+  test("accepts 'approved' as valid status value", async () => {
+    // Setup: Create a suggestion and audit log
+    const { suggestionsPath, auditLogPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+      auditLogPath: path.join(tempDir, "audit-log.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-7";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+    await fs.writeFile(auditLogPath, JSON.stringify([]));
+
+    const port = 9906;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "approved" },
+      { "x-role": "moderator" }
+    );
+
+    expect(response.statusCode).toBe(200);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.status).toBe("approved");
+  });
+
+  test("accepts 'rejected' as valid status value", async () => {
+    // Setup: Create a suggestion and audit log
+    const { suggestionsPath, auditLogPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+      auditLogPath: path.join(tempDir, "audit-log.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-8";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+    await fs.writeFile(auditLogPath, JSON.stringify([]));
+
+    const port = 9907;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "rejected" },
+      { "x-role": "moderator" }
+    );
+
+    expect(response.statusCode).toBe(200);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.status).toBe("rejected");
+  });
+
+  test("returns 404 for non-existent suggestion", async () => {
+    // Setup: Create an empty suggestions file
+    const { suggestionsPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [],
+      })
+    );
+
+    const port = 9908;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/non-existent-id/decision`,
+      { status: "approved" },
+      { "x-role": "moderator" }
+    );
+
+    expect(response.statusCode).toBe(404);
+    const json = JSON.parse(response.body);
+    expect(json.error).toBe("Suggestion not found");
+  });
+
+  test("creates audit log entry with correct structure", async () => {
+    // Setup: Create a suggestion and audit log
+    const { suggestionsPath, auditLogPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+      auditLogPath: path.join(tempDir, "audit-log.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-9";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+    await fs.writeFile(auditLogPath, JSON.stringify([]));
+
+    const port = 9909;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "approved", notes: "Approved after review" },
+      { "x-role": "moderator", "x-user-email": "mod@example.com" }
+    );
+
+    expect(response.statusCode).toBe(200);
+    const json = JSON.parse(response.body);
+    
+    // Verify audit entry structure
+    expect(json.audit).toBeDefined();
+    expect(json.audit.suggestionId).toBe(suggestionId);
+    expect(json.audit.decision).toBe("approved");
+    expect(json.audit.notes).toBe("Approved after review");
+    expect(json.audit.moderator).toBeDefined();
+    expect(json.audit.moderator.role).toBe("moderator");
+    expect(json.audit.moderator.email).toBe("mod@example.com");
+    expect(json.audit.timestamp).toBeDefined();
+
+    // Verify audit entry was persisted to file
+    const auditLog = JSON.parse(await fs.readFile(auditLogPath, "utf-8"));
+    expect(auditLog).toHaveLength(1);
+    expect(auditLog[0].suggestionId).toBe(suggestionId);
+    expect(auditLog[0].decision).toBe("approved");
+  });
+
+  test("updates suggestion status and adds decidedAt timestamp", async () => {
+    // Setup: Create a suggestion and audit log
+    const { suggestionsPath, auditLogPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+      auditLogPath: path.join(tempDir, "audit-log.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-10";
+    const submittedAt = new Date().toISOString();
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt,
+          },
+        ],
+      })
+    );
+    await fs.writeFile(auditLogPath, JSON.stringify([]));
+
+    const port = 9910;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const beforeTimestamp = new Date().toISOString();
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "rejected", notes: "Duplicate entry" },
+      { "x-role": "admin" }
+    );
+    const afterTimestamp = new Date().toISOString();
+
+    expect(response.statusCode).toBe(200);
+    const json = JSON.parse(response.body);
+
+    // Verify suggestion was updated
+    expect(json.suggestion.status).toBe("rejected");
+    expect(json.suggestion.moderationNotes).toBe("Duplicate entry");
+    expect(json.suggestion.decidedAt).toBeDefined();
+    
+    // Verify timestamp is reasonable (between before and after)
+    expect(json.suggestion.decidedAt >= beforeTimestamp).toBe(true);
+    expect(json.suggestion.decidedAt <= afterTimestamp).toBe(true);
+
+    // Verify original fields are preserved
+    expect(json.suggestion.id).toBe(suggestionId);
+    expect(json.suggestion.gameName).toBe("Test Game");
+    expect(json.suggestion.submittedAt).toBe(submittedAt);
+
+    // Verify suggestion was persisted to file
+    const suggestions = JSON.parse(await fs.readFile(suggestionsPath, "utf-8"));
+    expect(suggestions.suggestions[0].status).toBe("rejected");
+    expect(suggestions.suggestions[0].decidedAt).toBeDefined();
+  });
+
+  test("handles notes field when not provided (sets to null)", async () => {
+    // Setup: Create a suggestion and audit log
+    const { suggestionsPath, auditLogPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+      auditLogPath: path.join(tempDir, "audit-log.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-11";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Test Game",
+            platform: "Test Platform",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+    await fs.writeFile(auditLogPath, JSON.stringify([]));
+
+    const port = 9911;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "approved" },
+      { "x-role": "moderator" }
+    );
+
+    expect(response.statusCode).toBe(200);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.moderationNotes).toBe(null);
+    expect(json.audit.notes).toBe(null);
+  });
+
+  test("returns both suggestion and audit data in response", async () => {
+    // Setup: Create a suggestion and audit log
+    const { suggestionsPath, auditLogPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+      auditLogPath: path.join(tempDir, "audit-log.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    const suggestionId = "test-suggestion-12";
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestionId,
+            gameName: "Final Fantasy VII",
+            platform: "PlayStation",
+            genre: "RPG",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+            submittedBy: "user@example.com",
+          },
+        ],
+      })
+    );
+    await fs.writeFile(auditLogPath, JSON.stringify([]));
+
+    const port = 9912;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+      { status: "approved", notes: "Classic title, approved" },
+      { "x-role": "moderator", "x-user-email": "mod@example.com" }
+    );
+
+    expect(response.statusCode).toBe(200);
+    const json = JSON.parse(response.body);
+
+    // Verify both top-level keys exist
+    expect(json.suggestion).toBeDefined();
+    expect(json.audit).toBeDefined();
+
+    // Verify suggestion data is complete
+    expect(json.suggestion.id).toBe(suggestionId);
+    expect(json.suggestion.gameName).toBe("Final Fantasy VII");
+    expect(json.suggestion.platform).toBe("PlayStation");
+    expect(json.suggestion.genre).toBe("RPG");
+    expect(json.suggestion.status).toBe("approved");
+    expect(json.suggestion.moderationNotes).toBe("Classic title, approved");
+    expect(json.suggestion.decidedAt).toBeDefined();
+    expect(json.suggestion.submittedAt).toBeDefined();
+    expect(json.suggestion.submittedBy).toBe("user@example.com");
+
+    // Verify audit data is complete
+    expect(json.audit.suggestionId).toBe(suggestionId);
+    expect(json.audit.decision).toBe("approved");
+    expect(json.audit.notes).toBe("Classic title, approved");
+    expect(json.audit.moderator).toBeDefined();
+    expect(json.audit.moderator.role).toBe("moderator");
+    expect(json.audit.moderator.email).toBe("mod@example.com");
+    expect(json.audit.timestamp).toBeDefined();
+
+    // Verify audit and suggestion timestamps match
+    expect(json.audit.timestamp).toBe(json.suggestion.decidedAt);
+  });
+
+  test("handles multiple audit entries correctly", async () => {
+    // Setup: Create suggestions and existing audit log
+    const { suggestionsPath, auditLogPath } = {
+      suggestionsPath: path.join(tempDir, "suggestions.json"),
+      auditLogPath: path.join(tempDir, "audit-log.json"),
+    };
+    await fs.mkdir(tempDir, { recursive: true });
+    
+    const suggestion1Id = "test-suggestion-13a";
+    const suggestion2Id = "test-suggestion-13b";
+    
+    await fs.writeFile(
+      suggestionsPath,
+      JSON.stringify({
+        suggestions: [
+          {
+            id: suggestion1Id,
+            gameName: "Game 1",
+            platform: "Platform 1",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+          {
+            id: suggestion2Id,
+            gameName: "Game 2",
+            platform: "Platform 2",
+            status: "pending",
+            submittedAt: new Date().toISOString(),
+          },
+        ],
+      })
+    );
+    
+    // Start with existing audit entry
+    await fs.writeFile(
+      auditLogPath,
+      JSON.stringify([
+        {
+          suggestionId: "old-suggestion",
+          decision: "approved",
+          notes: "Old decision",
+          moderator: { role: "admin", email: "old@example.com" },
+          timestamp: new Date().toISOString(),
+        },
+      ])
+    );
+
+    const port = 9913;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Make first decision
+    const response1 = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestion1Id}/decision`,
+      { status: "approved" },
+      { "x-role": "moderator", "x-user-email": "mod1@example.com" }
+    );
+    expect(response1.statusCode).toBe(200);
+
+    // Make second decision
+    const response2 = await makePostRequest(
+      port,
+      `/api/v1/moderation/suggestions/${suggestion2Id}/decision`,
+      { status: "rejected" },
+      { "x-role": "admin", "x-user-email": "admin@example.com" }
+    );
+    expect(response2.statusCode).toBe(200);
+
+    // Verify audit log has all three entries
+    const auditLog = JSON.parse(await fs.readFile(auditLogPath, "utf-8"));
+    expect(auditLog).toHaveLength(3);
+    expect(auditLog[0].suggestionId).toBe("old-suggestion");
+    expect(auditLog[1].suggestionId).toBe(suggestion1Id);
+    expect(auditLog[2].suggestionId).toBe(suggestion2Id);
+  });
+});
