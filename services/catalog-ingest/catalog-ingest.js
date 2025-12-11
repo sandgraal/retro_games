@@ -283,6 +283,21 @@ function sendJson(res, status, payload) {
  * - esrb: esrb, rating, esrb_rating
  * - genres: genres, genre (array or single value)
  * - regions: regions, region (array or single value)
+ *
+ * Fallback and coupling behavior:
+ *   - For `platform` and `platform_slug`, if only one of these fields is provided in the input,
+ *     both `platform` and `platform_slug` in the output will be set to that value.
+ *   - If both are provided, their respective values are used.
+ *   - The fallback order for `platform` is: platform, platform_name, platform_slug.
+ *   - The fallback order for `platform_slug` is: platform_slug, platform.
+ *
+ * Example:
+ *   If input is { platform_slug: "snes" }, then output will have
+ *     platform: "snes", platform_slug: "snes"
+ *   If input is { platform: "snes" }, then output will have
+ *     platform: "snes", platform_slug: "snes"
+ *   If input is { platform: "snes", platform_slug: "super-nintendo" }, then output will have
+ *     platform: "snes", platform_slug: "super-nintendo"
  */
 function normalizeRecord(raw, sourceName) {
   return {
