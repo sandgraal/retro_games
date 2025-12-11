@@ -441,7 +441,7 @@ function buildPricingSection(
   gameName: string
 ): string {
   const updated = price?.lastUpdated ?? price?.snapshotDate ?? meta.lastUpdated;
-  const updatedLabel = formatUpdatedLabel(updated);
+  const updatedLabel = formatPricingTimestamp(updated);
   const fallbackLabel = updatedLabel
     ? `Updated ${escapeHtml(updatedLabel)}`
     : "No recent pricing timestamp";
@@ -509,7 +509,7 @@ function renderOffers(offers?: PriceData["offers"]): string {
     .flatMap(([region, regionOffers]) =>
       regionOffers.map((offer) => {
         const label = offer.label ?? "Offer";
-        const updatedLabel = formatUpdatedLabel(offer.lastUpdated);
+        const updatedLabel = formatPricingTimestamp(offer.lastUpdated);
         const retailerText = offer.retailer ? ` • ${escapeHtml(offer.retailer)}` : "";
         const updatedText = updatedLabel ? ` (Updated ${escapeHtml(updatedLabel)})` : "";
         const sanitizedUrl = offer.url ? sanitizeUrl(offer.url) : "";
@@ -539,7 +539,7 @@ function renderOffers(offers?: PriceData["offers"]): string {
   `;
 }
 
-function formatUpdatedLabel(updated?: string): string {
+function formatPricingTimestamp(updated?: string): string {
   if (!updated) return "";
   const relative = formatRelativeDate(updated);
   const absolute = formatAbsoluteDate(updated);
