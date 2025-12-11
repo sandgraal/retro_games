@@ -104,7 +104,7 @@ export async function moderateSuggestion(
   notes?: string
 ): Promise<{ suggestion: SuggestionRecord; audit: AuditLogEntry }> {
   const session = await getAuthSession();
-  const response = await fetch(`/moderation/suggestions/${suggestionId}/decision`, {
+  const response = await fetch(`/api/v1/moderation/suggestions/${suggestionId}/decision`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
