@@ -10,6 +10,7 @@ import {
   createShareCode,
   parseShareCode,
   parseBackup,
+  parseCSVImport,
   getExportStats,
 } from "../src/features";
 import { setGames, setGameStatus, resetFilters, resetCollection } from "../src/state";
@@ -391,6 +392,86 @@ describe("features/export", () => {
       expect(stats.total).toBe(3);
       expect(stats.owned).toBe(2);
       expect(stats.wishlist).toBe(1);
+    });
+  });
+
+  describe("parseCSVImport", () => {
+    it("should parse valid CSV with headers", () => {
+      const csv = `Game Name,Platform,Genre,Rating,Year,Status,Notes
+Chrono Trigger,SNES,RPG,9.6,1995,owned,Great game
+Super Mario 64,N64,Platformer,9.8,1996,wishlist,`;
+      const result = parseCSVImport(csv);
+      expect(result.imported).toBe(2);
+      expect(result.skipped).toBe(0);
+      expect(result.errors).toHaveLength(0);
+      expect(result.data[0].key).toBe("chrono trigger___snes");
+      expect(result.data[0].status).toBe("owned");
+      expect(result.data[0].notes).toBe("Great game");
+      expect(result.data[1].key).toBe("super mario 64___n64");
+      expect(result.data[1].status).toBe("wishlist");
+    });
+
+    it("should handle quoted values with commas", () => {
+      const csv = `Game Name,Platform,Status
+"Game, With Comma",SNES,owned`;
+      const result = parseCSVImport(csv);
+      expect(result.imported).toBe(1);
+      expect(result.data[0].key).toBe("game, with comma___snes");
+    });
+
+    it("should handle escaped quotes", () => {
+      const csv = `Game Name,Platform,Status
+"Game ""Quoted"" Name",SNES,owned`;
+      const result = parseCSVImport(csv);
+      expect(result.imported).toBe(1);
+      expect(result.data[0].key).toBe('game "quoted" name___snes');
+    });
+
+    it("should skip rows with missing game name or platform", () => {
+      const csv = `Game Name,Platform,Status
+,SNES,owned
+Chrono Trigger,,owned
+Zelda,N64,owned`;
+      const result = parseCSVImport(csv);
+      expect(result.imported).toBe(1);
+      expect(result.skipped).toBe(2);
+      expect(result.data[0].key).toBe("zelda___n64");
+    });
+
+    it("should default to owned status when missing", () => {
+      const csv = `Game Name,Platform
+Chrono Trigger,SNES`;
+      const result = parseCSVImport(csv);
+      expect(result.data[0].status).toBe("owned");
+    });
+
+    it("should error on missing required headers", () => {
+      const csv = `Name,System,Status
+Chrono Trigger,SNES,owned`;
+      const result = parseCSVImport(csv);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.imported).toBe(0);
+    });
+
+    it("should handle empty CSV", () => {
+      const csv = "";
+      const result = parseCSVImport(csv);
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.imported).toBe(0);
+    });
+
+    it("should handle headers only", () => {
+      const csv = "Game Name,Platform,Status";
+      const result = parseCSVImport(csv);
+      expect(result.imported).toBe(0);
+      expect(result.skipped).toBe(0);
+    });
+
+    it("should normalize invalid status to owned", () => {
+      const csv = `Game Name,Platform,Status
+Chrono Trigger,SNES,invalid_status`;
+      const result = parseCSVImport(csv);
+      expect(result.data[0].status).toBe("owned");
     });
   });
 });

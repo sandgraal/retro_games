@@ -8,6 +8,7 @@ export {
   createShareCode,
   parseShareCode,
   parseBackup,
+  parseCSVImport,
   downloadFile,
   copyToClipboard,
   getExportStats,

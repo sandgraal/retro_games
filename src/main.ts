@@ -43,6 +43,7 @@ import {
   createShareCode,
   parseShareCode,
   parseBackup,
+  parseCSVImport,
   downloadFile,
   copyToClipboard,
   getExportStats,
@@ -452,8 +453,34 @@ function handleImport(): void {
         } else {
           showStatus("Invalid backup file format.", "error");
         }
+      } else if (file.name.endsWith(".csv")) {
+        // Parse CSV import
+        const result = parseCSVImport(content);
+        if (result.errors.length > 0) {
+          showStatus(result.errors[0], "error");
+          return;
+        }
+        if (result.imported === 0) {
+          showStatus("No valid games found in CSV.", "info");
+          return;
+        }
+        if (
+          confirm(
+            `Import ${result.imported} games from CSV?${result.skipped > 0 ? ` (${result.skipped} rows skipped)` : ""}`
+          )
+        ) {
+          result.data.forEach(({ key, status, notes }) => {
+            if (status !== "none") {
+              setGameStatus(key, status);
+            }
+            if (notes) {
+              setGameNotes(key, notes);
+            }
+          });
+          showStatus(`Imported ${result.imported} games from CSV!`, "success");
+        }
       } else {
-        showStatus("CSV import coming soon!", "info");
+        showStatus("Unsupported file format. Use .json or .csv", "error");
       }
     } catch {
       showStatus("Failed to read file.", "error");

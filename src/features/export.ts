@@ -330,3 +330,125 @@ export function getExportStats(): {
 
   return stats;
 }
+
+// === CSV Import ===
+
+interface CSVImportResult {
+  imported: number;
+  skipped: number;
+  errors: string[];
+}
+
+/**
+ * Parse a CSV string into rows
+ */
+function parseCSV(csv: string): string[][] {
+  const rows: string[][] = [];
+  const lines = csv.split(/\r?\n/);
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+
+    const row: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      const next = line[i + 1];
+
+      if (inQuotes) {
+        if (char === '"' && next === '"') {
+          current += '"';
+          i++; // Skip escaped quote
+        } else if (char === '"') {
+          inQuotes = false;
+        } else {
+          current += char;
+        }
+      } else {
+        if (char === '"') {
+          inQuotes = true;
+        } else if (char === ",") {
+          row.push(current.trim());
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+    }
+    row.push(current.trim());
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+/**
+ * Parse a CSV file and return import data
+ * Expected format: Game Name, Platform, Genre, Rating, Year, Status, Notes
+ */
+export function parseCSVImport(csv: string): CSVImportResult & {
+  data: Array<{ key: string; status: CollectionStatus; notes: string }>;
+} {
+  const rows = parseCSV(csv);
+  if (rows.length < 2) {
+    return {
+      imported: 0,
+      skipped: 0,
+      errors: ["CSV file is empty or has no data rows"],
+      data: [],
+    };
+  }
+
+  // Validate headers (case-insensitive)
+  const headers = rows[0].map((h) => h.toLowerCase());
+  const nameIdx = headers.findIndex((h) => h.includes("game") && h.includes("name"));
+  const platformIdx = headers.findIndex((h) => h === "platform");
+  const statusIdx = headers.findIndex((h) => h === "status");
+  const notesIdx = headers.findIndex((h) => h === "notes");
+
+  if (nameIdx === -1 || platformIdx === -1) {
+    return {
+      imported: 0,
+      skipped: 0,
+      errors: ["CSV must have 'Game Name' and 'Platform' columns"],
+      data: [],
+    };
+  }
+
+  const data: Array<{ key: string; status: CollectionStatus; notes: string }> = [];
+  const errors: string[] = [];
+  let skipped = 0;
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    const gameName = row[nameIdx]?.trim();
+    const platform = row[platformIdx]?.trim();
+    const statusRaw = statusIdx >= 0 ? row[statusIdx]?.trim().toLowerCase() : "owned";
+    const notes = notesIdx >= 0 ? (row[notesIdx]?.trim() ?? "") : "";
+
+    if (!gameName || !platform) {
+      skipped++;
+      continue;
+    }
+
+    // Validate status
+    const validStatuses = ["owned", "wishlist", "backlog", "trade", "none"];
+    const status = validStatuses.includes(statusRaw)
+      ? (statusRaw as CollectionStatus)
+      : "owned";
+
+    // Generate key
+    const key = `${gameName.toLowerCase()}___${platform.toLowerCase()}`;
+
+    data.push({ key, status, notes });
+  }
+
+  return {
+    imported: data.length,
+    skipped,
+    errors,
+    data,
+  };
+}
