@@ -16,6 +16,7 @@ import type {
   ViewMode,
   PriceData,
   CollectionStats,
+  PricingSource,
 } from "../core/types";
 import { withGameKeys } from "../core/keys";
 
@@ -45,6 +46,11 @@ const DEFAULT_FILTER_STATE: FilterState = {
 // Games data
 const gamesSignal = createSignal<GameWithKey[]>([]);
 const pricesSignal = createSignal<Map<GameKey, PriceData>>(new Map());
+const priceMetaSignal = createSignal<{
+  lastUpdated?: string;
+  source: PricingSource;
+  reason?: string;
+}>({ source: "none" });
 const isLoadingSignal = createSignal<boolean>(true);
 const errorSignal = createSignal<string | null>(null);
 const dataSourceSignal = createSignal<"supabase" | "sample" | "cache">("sample");
@@ -289,6 +295,14 @@ export function setGames(games: Game[]): void {
  */
 export function setPrices(prices: Record<string, PriceData>): void {
   pricesSignal.set(new Map(Object.entries(prices)));
+}
+
+export function setPriceMeta(meta: {
+  lastUpdated?: string;
+  source: PricingSource;
+  reason?: string;
+}): void {
+  priceMetaSignal.set(meta);
 }
 
 /**
@@ -545,6 +559,10 @@ export function loadPersistedState(): void {
 
 export const games = { get: gamesSignal.get, subscribe: gamesSignal.subscribe };
 export const prices = { get: pricesSignal.get, subscribe: pricesSignal.subscribe };
+export const priceMeta = {
+  get: priceMetaSignal.get,
+  subscribe: priceMetaSignal.subscribe,
+};
 export const isLoading = {
   get: isLoadingSignal.get,
   subscribe: isLoadingSignal.subscribe,

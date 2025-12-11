@@ -15,7 +15,7 @@ A TypeScript + Vite single-page app for tracking retro games. It uses a lightwei
 ## Data sources & configuration
 
 - **Supabase**: copy `.env.example` to `.env`, populate `SUPABASE_URL` and `SUPABASE_ANON_KEY`, then run `npm run build:config` to emit `config.js`. The loader waits up to 4s for `window.supabase` and `window.__SUPABASE_CONFIG__` before falling back to the sample file. Set `window.__SANDGRAAL_FORCE_SAMPLE__ = true` or append `?sample=1` to force the sample dataset.
-- **Pricing**: only the local snapshot at `data/sample-price-history.json` is read. Values are stored in cents and are summed/sorted using the loose price when present.
+- **Pricing**: a provider first attempts live API endpoints and falls back to the bundled snapshot at `data/sample-price-history.json`. Values are stored in cents and are summed/sorted using the loose price when present; the UI surfaces the last updated timestamp when available.
 - **Persistence**: collection statuses, notes, preferences, and filters live in `localStorage` (`dragonshoard_*` keys).
 - **Catalog ingest**: a Node-based worker in `services/catalog-ingest/` can normalize external APIs into versioned snapshots; run it with `node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.example.json --once` to seed data and `--serve` to expose `/api/v1/catalog`.
 

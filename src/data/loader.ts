@@ -7,7 +7,6 @@ import type { Game, DataLoadResult } from "../core/types";
 import * as supabase from "./supabase";
 
 const SAMPLE_DATA_PATH = "./data/sample-games.json";
-const PRICE_DATA_PATH = "./data/sample-price-history.json";
 
 /**
  * Load games from Supabase with fallback to sample data
@@ -77,51 +76,6 @@ export async function loadSampleGames(reason?: string): Promise<DataLoadResult> 
       timestamp: Date.now(),
       reason: reason ?? "Sample games unavailable",
     };
-  }
-}
-
-/**
- * Load price data
- */
-export async function loadPrices(): Promise<
-  Record<
-    string,
-    {
-      loose?: number;
-      cib?: number;
-      new?: number;
-      currency: string;
-      snapshotDate?: string;
-    }
-  >
-> {
-  try {
-    const response = await fetch(PRICE_DATA_PATH);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    const prices: Record<string, any> = {};
-
-    if (data.latest && Array.isArray(data.latest)) {
-      data.latest.forEach((p: any) => {
-        if (p.game_key) {
-          prices[p.game_key] = {
-            loose: p.loose_price_cents,
-            cib: p.cib_price_cents,
-            new: p.new_price_cents,
-            currency: p.currency ?? "USD",
-            snapshotDate: p.snapshot_date,
-          };
-        }
-      });
-    }
-
-    return prices;
-  } catch (error) {
-    console.warn("Price data unavailable:", error);
-    return {};
   }
 }
 
