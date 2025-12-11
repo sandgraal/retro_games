@@ -1088,7 +1088,11 @@ describe("startReadApiServer", () => {
               targetId: gameKey,
               delta: { genres: ["RPG", "Updated"] },
               status: "pending",
-              author: { role: "contributor", email: "user@example.com", sessionId: "sess_123" },
+              author: {
+                role: "contributor",
+                email: "user@example.com",
+                sessionId: "sess_123",
+              },
               submittedAt: "2024-01-01T00:00:00.000Z",
               notes: "Updating genres",
             },
@@ -1129,7 +1133,11 @@ describe("startReadApiServer", () => {
               genres: ["Adventure"],
             },
             status: "pending",
-            author: { role: "contributor", email: "user@example.com", sessionId: "sess_789" },
+            author: {
+              role: "contributor",
+              email: "user@example.com",
+              sessionId: "sess_789",
+            },
             submittedAt: "2024-01-03T00:00:00.000Z",
             notes: "Submitting new game",
           },
@@ -1163,7 +1171,11 @@ describe("startReadApiServer", () => {
             targetId: null,
             delta: { title: "Pending Game", platform: "PS5" },
             status: "pending",
-            author: { role: "contributor", email: "user1@example.com", sessionId: "sess_1" },
+            author: {
+              role: "contributor",
+              email: "user1@example.com",
+              sessionId: "sess_1",
+            },
             submittedAt: "2024-01-01T00:00:00.000Z",
           },
           {
@@ -1172,7 +1184,11 @@ describe("startReadApiServer", () => {
             targetId: null,
             delta: { title: "Approved Game", platform: "Xbox" },
             status: "approved",
-            author: { role: "contributor", email: "user2@example.com", sessionId: "sess_2" },
+            author: {
+              role: "contributor",
+              email: "user2@example.com",
+              sessionId: "sess_2",
+            },
             submittedAt: "2024-01-02T00:00:00.000Z",
           },
           {
@@ -1181,7 +1197,11 @@ describe("startReadApiServer", () => {
             targetId: null,
             delta: { title: "Rejected Game", platform: "PC" },
             status: "rejected",
-            author: { role: "contributor", email: "user3@example.com", sessionId: "sess_3" },
+            author: {
+              role: "contributor",
+              email: "user3@example.com",
+              sessionId: "sess_3",
+            },
             submittedAt: "2024-01-03T00:00:00.000Z",
           },
         ],
@@ -1233,7 +1253,7 @@ describe("startReadApiServer", () => {
 describe("applyApprovedSuggestions", () => {
   test("applies approved update suggestion to existing record", () => {
     const records = {
-      "sonic___genesis": {
+      sonic___genesis: {
         record: {
           title: "Sonic",
           platform: "Genesis",
@@ -1300,7 +1320,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("increments version for updated records", () => {
     const records = {
-      "mario___nes": {
+      mario___nes: {
         record: {
           title: "Mario",
           platform: "NES",
@@ -1345,7 +1365,7 @@ describe("applyApprovedSuggestions", () => {
     };
 
     const records = {
-      "zelda___nes": {
+      zelda___nes: {
         record: originalRecord,
         hash: computeRecordHash(originalRecord),
         version: 1,
@@ -1377,7 +1397,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("skips pending suggestions", () => {
     const records = {
-      "metroid___nes": {
+      metroid___nes: {
         record: {
           title: "Metroid",
           platform: "NES",
@@ -1411,7 +1431,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("skips rejected suggestions", () => {
     const records = {
-      "castlevania___nes": {
+      castlevania___nes: {
         record: {
           title: "Castlevania",
           platform: "NES",
@@ -1445,13 +1465,13 @@ describe("applyApprovedSuggestions", () => {
 
   test("properly counts applied suggestions", () => {
     const records = {
-      "game1___platform1": {
+      game1___platform1: {
         record: { title: "Game1", platform: "Platform1", source: ["src1"] },
         hash: "hash4",
         version: 1,
         lastSeen: "2024-01-01T00:00:00.000Z",
       },
-      "game2___platform2": {
+      game2___platform2: {
         record: { title: "Game2", platform: "Platform2", source: ["src2"] },
         hash: "hash5",
         version: 1,
@@ -1499,7 +1519,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("handles suggestions with missing delta/payload", () => {
     const records = {
-      "game___platform": {
+      game___platform: {
         record: { title: "Game", platform: "Platform", source: ["src"] },
         hash: "hash6",
         version: 1,
@@ -1526,7 +1546,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("handles update suggestions with non-existent targetId", () => {
     const records = {
-      "existing___game": {
+      existing___game: {
         record: { title: "Existing", platform: "Game", source: ["src"] },
         hash: "hash7",
         version: 1,
@@ -1555,7 +1575,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("handles new suggestions with existing keys", () => {
     const records = {
-      "duplicate___game": {
+      duplicate___game: {
         record: { title: "Duplicate", platform: "Game", source: ["original"] },
         hash: "hash8",
         version: 1,
@@ -1632,7 +1652,7 @@ describe("applyApprovedSuggestions", () => {
     };
 
     const records = {
-      "unchanged___platform": {
+      unchanged___platform: {
         record: originalRecord,
         hash: computeRecordHash(originalRecord),
         version: 2,
@@ -1666,7 +1686,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("uses delta field for updates", () => {
     const records = {
-      "game___platform": {
+      game___platform: {
         record: { title: "Game", platform: "Platform", source: ["src"] },
         hash: "hash9",
         version: 1,
@@ -1692,7 +1712,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("uses payload field for updates when delta is missing", () => {
     const records = {
-      "game2___platform": {
+      game2___platform: {
         record: { title: "Game2", platform: "Platform", source: ["src"] },
         hash: "hash10",
         version: 1,
