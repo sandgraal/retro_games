@@ -966,7 +966,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
       res.end(
         JSON.stringify({
           error: "Failed to load catalog snapshot",
-          detail: error.message,
+          detail: "Internal server error",
         })
       );
     }

@@ -26,15 +26,114 @@ let filterPlatform = "all";
 let searchQuery = "";
 let containerElement: HTMLElement | null = null;
 
+const GUIDES_WELCOME_DISMISS_KEY = "guidesWelcomeDismissed";
+
 // Interactive features state
 let readingProgress = 0;
 let tocActiveId = "";
 let scrollListener: (() => void) | null = null;
 
+function hasDismissedWelcomePanel(): boolean {
+  try {
+    return localStorage.getItem(GUIDES_WELCOME_DISMISS_KEY) === "true";
+  } catch (error) {
+    console.warn("Unable to read welcome panel state", error);
+    return false;
+  }
+}
+
+function dismissWelcomePanel(panel?: HTMLElement | null): void {
+  try {
+    localStorage.setItem(GUIDES_WELCOME_DISMISS_KEY, "true");
+  } catch (error) {
+    console.warn("Unable to persist welcome panel dismissal", error);
+  }
+
+  if (panel) {
+    panel.classList.add("guides-welcome--dismissed");
+    setTimeout(() => panel.remove(), 150);
+  }
+}
+
+function renderWelcomePanel(): HTMLElement | null {
+  if (hasDismissedWelcomePanel()) return null;
+
+  const panel = el.div({ class: "guides-welcome", id: "guidesWelcome" });
+  panel.innerHTML = `
+    <div class="guides-welcome-header">
+      <div class="guides-welcome-meta">
+        <span class="guides-welcome-eyebrow">Welcome & FAQ</span>
+        <h2 class="guides-welcome-title">Quick tour of Dragon's Hoard Atlas</h2>
+      </div>
+      <button type="button" class="guides-welcome-close" aria-label="Dismiss welcome panel">
+        <span aria-hidden="true">×</span>
+      </button>
+    </div>
+    <ul class="guides-welcome-list">
+      <li class="guides-welcome-item">
+        <span class="guides-welcome-icon" aria-hidden="true">🧭</span>
+        <div>
+          <div class="guides-welcome-item-title">Explore and track fast</div>
+          <p class="guides-welcome-copy">Use filters, dashboards, and exports/share codes to manage and share your collection.</p>
+        </div>
+      </li>
+      <li class="guides-welcome-item">
+        <span class="guides-welcome-icon" aria-hidden="true">🔒</span>
+        <div>
+          <div class="guides-welcome-item-title">No sign-in required for most tools</div>
+          <p class="guides-welcome-copy">Browse, filter, export, and save progress locally. Sign in only if you want to submit updates.</p>
+        </div>
+      </li>
+      <li class="guides-welcome-item">
+        <span class="guides-welcome-icon" aria-hidden="true">🛡️</span>
+        <div>
+          <div class="guides-welcome-item-title">How submissions are moderated</div>
+          <p class="guides-welcome-copy">Every community submission — anonymous or signed-in — enters the same review queue before going live.</p>
+        </div>
+      </li>
+      <li class="guides-welcome-item">
+        <span class="guides-welcome-icon" aria-hidden="true">📚</span>
+        <div>
+          <div class="guides-welcome-item-title">Collecting guides at the ready</div>
+          <p class="guides-welcome-copy">Jump into platform and genre collecting tips below whenever you need deeper advice.</p>
+        </div>
+      </li>
+    </ul>
+    <div class="guides-welcome-actions">
+      <a class="guides-welcome-link" href="#guidesGrid">Browse collecting guides</a>
+      <button type="button" class="guides-welcome-link guides-welcome-link--secondary" data-scroll-target="guidesGrid">
+        View guide library
+      </button>
+    </div>
+  `;
+
+  const closeBtn = panel.querySelector<HTMLButtonElement>(".guides-welcome-close");
+  closeBtn?.addEventListener("click", () => dismissWelcomePanel(panel));
+
+  panel.querySelectorAll<HTMLElement>("[data-scroll-target]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-scroll-target");
+      if (!targetId) return;
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+
+  return panel;
+}
+
 // === Guide Index Component ===
 
 function renderGuideIndex(): HTMLElement {
   const container = el.div({ class: "guides-index" });
+
+  const welcomePanel = renderWelcomePanel();
+
+  if (welcomePanel) {
+    container.appendChild(welcomePanel);
+  }
 
   // Hero Section
   const hero = el.div({ class: "guides-hero" });
@@ -50,8 +149,9 @@ function renderGuideIndex(): HTMLElement {
         Collector's Guides
       </h1>
       <p class="guides-hero-subtitle">
-        Your treasure map to the world of retro gaming. Expert guides for finding, identifying, 
-        and valuing games across ${consoleCount} console platforms and ${genreCount} genre categories.
+        Your treasure map to the world of retro gaming. Discover expert tips for finding and
+        identifying games, plus clear guidance on valuing titles across ${consoleCount} console
+        platforms and ${genreCount} genre categories.
       </p>
       <div class="guides-hero-stats">
         <div class="guides-hero-stat">
