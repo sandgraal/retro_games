@@ -187,10 +187,6 @@ export function mountModerationPanel(selector: string): () => void {
           const card = renderSuggestionCard(suggestion, async (status, notes) => {
             statusEl.textContent = "Submitting decision...";
             const session = await getAuthSession();
-            const decision: ModerationDecision = {
-              action: status === "approved" ? "approve" : "reject",
-              reason: notes,
-            };
 
             try {
                 await moderateSuggestion(suggestion.id, status, notes);
