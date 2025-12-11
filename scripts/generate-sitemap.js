@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const OUTPUT_PATH = path.join(ROOT_DIR, "sitemap.xml");
-const DEFAULT_BASE_URL = "https://sandgraal.github.io/retro_games";
+const DEFAULT_BASE_URL = "https://sandgraal.github.io/retro-games";
 const BASE_URL = (process.env.SITE_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, "");
 const IGNORE_DIRS = new Set([
   "node_modules",

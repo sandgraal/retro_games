@@ -36,7 +36,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sandgraal/retro_games.git"
+    "url": "git+https://github.com/sandgraal/retro-games.git"
   },
   "keywords": [
     "retro-games",
@@ -48,9 +48,9 @@
   "author": "Dragon's Hoard Atlas",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sandgraal/retro_games/issues"
+    "url": "https://github.com/sandgraal/retro-games/issues"
   },
-  "homepage": "https://github.com/sandgraal/retro_games#readme",
+  "homepage": "https://github.com/sandgraal/retro-games#readme",
   "engines": {
     "node": ">=20.19.0"
   },

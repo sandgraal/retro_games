@@ -10,7 +10,7 @@
 You are an AI software development agent working on the Retro Games List project. Your mission is to pick up where the previous agent left off and make continuous autonomous progress.
 
 **PROJECT CONTEXT:**
-- Repository: retro_games (privacy-first retro game collection tracker)
+- Repository: retro-games (privacy-first retro game collection tracker)
 - Stack: Vanilla JS, Supabase, no build step
 - Current Status: Feature-complete but needs Phase 0 refactoring (5,940-line monolithic app.js)
 
