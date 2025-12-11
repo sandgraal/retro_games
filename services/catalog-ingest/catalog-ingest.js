@@ -730,6 +730,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
           sendJson(res, 403, { error: "Moderator access required" });
           return;
         }
+
         // Extract suggestionId using regex for robustness
         const match = url.pathname.match(
           /^\/api\/v1\/moderation\/suggestions\/([^/]+)\/decision$/
@@ -739,6 +740,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
           return;
         }
         const suggestionId = match[1];
+
         const body = await parseJsonBody(req);
         if (!body?.status || !["approved", "rejected"].includes(body.status)) {
           sendJson(res, 400, { error: "Decision status must be approved or rejected" });
