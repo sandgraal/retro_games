@@ -48,8 +48,8 @@ function ensureFileExists(filePath, friendlyName) {
 }
 
 function buildConfig({ envPath, outputPath }) {
-  const resolvedEnv = envPath || path.join(ROOT_DIR, ".env");
-  const resolvedOut = outputPath || path.join(ROOT_DIR, "config.js");
+  const resolvedEnv = envPath || resolveWithinRoot(".env");
+  const resolvedOut = outputPath || resolveWithinRoot("config.js");
 
   ensureFileExists(resolvedEnv, ".env file");
   const result = dotenv.config({ path: resolvedEnv });

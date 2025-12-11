@@ -14,6 +14,32 @@ const BACKUP_ROOT = path.join(PROJECT_ROOT, "backups");
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 const DEFAULT_BUCKET = process.env.SUPABASE_STORAGE_ARCHIVE_BUCKET || "media-archive";
+const PROJECT_ROOT = path.resolve(process.cwd());
+const BACKUP_ROOT = path.resolve(PROJECT_ROOT, "backups");
+
+function resolveWithinBase(baseDir, targetPath) {
+  const normalizedBase = path.resolve(baseDir);
+  const resolved = path.resolve(normalizedBase, targetPath);
+  if (resolved !== normalizedBase && !resolved.startsWith(normalizedBase + path.sep)) {
+    throw new Error(`Invalid path outside of ${normalizedBase}: ${targetPath}`);
+  }
+  return resolved;
+}
+
+function assertSafeObjectName(name) {
+  if (typeof name !== "string" || path.isAbsolute(name)) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+  const segments = name.split("/");
+  if (
+    segments.some(
+      (segment) =>
+        !segment || segment === "." || segment === ".." || !/^[\w.-]+$/.test(segment)
+    )
+  ) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+}
 
 function resolveOutput(targetPath = path.join("backups", DEFAULT_BUCKET)) {
   return resolveWithinBase(BACKUP_ROOT, targetPath, {
@@ -161,7 +187,7 @@ async function main() {
       console.warn(`⚠️  Failed to archive ${object.name}: ${error.message}`);
     }
   }
-  const manifestPath = path.join(options.output, "manifest.json");
+  const manifestPath = resolveWithinBase(options.output, "manifest.json");
   fs.writeFileSync(
     manifestPath,
     JSON.stringify(
