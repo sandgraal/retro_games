@@ -1,7 +1,7 @@
 import type { SuggestionRecord } from "../core/types";
 import { getAuthSession } from "../data/auth";
 import {
-  decideSuggestion,
+  moderateSuggestion,
   fetchSuggestionsForModeration,
 } from "../data/suggestions";
 import { el, mount } from "./components";
@@ -166,7 +166,7 @@ export function mountModerationPanel(selector: string): () => void {
           const card = renderSuggestionCard(suggestion, async (status, notes) => {
             statusEl.textContent = "Submitting decision...";
             try {
-              await decideSuggestion(suggestion.id, status, notes);
+              await moderateSuggestion(suggestion.id, status, notes);
               statusEl.textContent = "";
               await loadSuggestions();
             } catch (error) {

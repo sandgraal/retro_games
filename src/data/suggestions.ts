@@ -4,6 +4,8 @@
  */
 
 import type { SuggestionRecord, AuditLogEntry } from "../core/types";
+import { getAuthSession, buildAuthHeaders } from "./auth";
+
 export interface ModerationDecision {
   action: "approve" | "reject";
   reason?: string;
@@ -95,3 +97,34 @@ export async function submitSuggestion(
 
   return response.json();
 }
+
+/**
+ * Submit a moderation decision with authentication
+ * Used by the moderation UI - authenticates the moderator and logs the decision
+ */
+export async function moderateSuggestion(
+  suggestionId: string,
+  status: "approved" | "rejected",
+  notes?: string
+): Promise<{ suggestion: SuggestionRecord; audit: AuditLogEntry }> {
+  const session = await getAuthSession();
+  const response = await fetch(`/moderation/suggestions/${suggestionId}/decision`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(session),
+    },
+    body: JSON.stringify({ status, notes }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Alias for fetchPendingSuggestions - used by moderation UI
+ */
+export const fetchSuggestionsForModeration = fetchPendingSuggestions;
