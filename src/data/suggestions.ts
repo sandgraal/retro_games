@@ -93,23 +93,5 @@ export async function submitSuggestion(
     throw new Error(`Failed to submit suggestion: ${response.statusText}`);
   }
 
-export async function decideSuggestion(
-  suggestionId: string,
-  status: "approved" | "rejected",
-  notes?: string
-): Promise<{ suggestion: SuggestionRecord; audit: AuditLogEntry }> {
-  const session = await getAuthSession();
-  const payload = JSON.stringify({ status, notes });
-  const response = await send<{ suggestion: SuggestionRecord; audit: AuditLogEntry }>(
-    `/moderation/suggestions/${suggestionId}/decision`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...buildAuthHeaders(session),
-      },
-      body: payload,
-    }
-  );
-  return { suggestion: response.suggestion, audit: response.audit };
+  return response.json();
 }
