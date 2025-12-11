@@ -307,17 +307,17 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
         }
         
         ${
-          !isNaN(rating)
-            ? `
-        <div class="modal-info-item">
-          <span class="modal-info-icon">⭐</span>
-          <div class="modal-info-content">
-            <span class="modal-info-label">Rating</span>
-            <span class="modal-info-value">${rating.toFixed(1)} / 10</span>
-          </div>
-        </div>
-        `
-            : ""
+          isNaN(rating)
+            ? ""
+            : `
+                  <div class="modal-info-item">
+                    <span class="modal-info-icon">⭐</span>
+                    <div class="modal-info-content">
+                      <span class="modal-info-label">Rating</span>
+                      <span class="modal-info-value">${rating.toFixed(1)} / 10</span>
+                    </div>
+                  </div>
+                  `
         }
         
         ${
@@ -437,7 +437,7 @@ function buildPricingSection(
   gameName: string
 ): string {
   const updated = price?.lastUpdated ?? price?.snapshotDate ?? meta.lastUpdated;
-  const updatedLabel = formatUpdatedLabel(updated);
+  const updatedLabel = formatPricingTimestamp(updated);
   const fallbackLabel = updatedLabel
     ? `Updated ${escapeHtml(updatedLabel)}`
     : "No recent pricing timestamp";
@@ -505,11 +505,12 @@ function renderOffers(offers?: PriceData["offers"]): string {
     .flatMap(([region, regionOffers]) =>
       regionOffers.map((offer) => {
         const label = offer.label ?? "Offer";
-        const updatedLabel = formatUpdatedLabel(offer.lastUpdated);
+        const updatedLabel = formatPricingTimestamp(offer.lastUpdated);
         const retailerText = offer.retailer ? ` • ${escapeHtml(offer.retailer)}` : "";
         const updatedText = updatedLabel ? ` (Updated ${escapeHtml(updatedLabel)})` : "";
-        const link = offer.url
-          ? `<a class="modal-offers__cta" href="${escapeHtml(offer.url)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(label)} offer link">View</a>`
+        const sanitizedUrl = offer.url ? sanitizeUrl(offer.url) : "";
+        const link = sanitizedUrl
+          ? `<a class="modal-offers__cta" href="${escapeHtml(sanitizedUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(label)} offer link">View</a>`
           : "";
         return `
           <div class="modal-offers__row" role="listitem">
@@ -534,7 +535,7 @@ function renderOffers(offers?: PriceData["offers"]): string {
   `;
 }
 
-function formatUpdatedLabel(updated?: string): string {
+function formatPricingTimestamp(updated?: string): string {
   if (!updated) return "";
   const relative = formatRelativeDate(updated);
   const absolute = formatAbsoluteDate(updated);
@@ -562,8 +563,9 @@ function buildExternalLinks(game: GameWithKey): string {
           <span aria-hidden="true">${link.icon}</span>
           <span class="modal-link-chip__label">${escapeHtml(link.label)}</span>
         </a>
-      `
-    )
+      `;
+    })
+    .filter((chip) => chip !== "") // Remove invalid URLs
     .join("");
 
   return `
@@ -651,10 +653,8 @@ function buildExtendedMetadata(game: GameWithKey): string {
     .filter((entry) => entry.value)
     .map(
       (entry) => `
-        <div class="modal-metadata__row">
-          <dt>${escapeHtml(entry.label)}</dt>
-          <dd>${escapeHtml(String(entry.value))}</dd>
-        </div>
+        <dt class="modal-metadata__row">${escapeHtml(entry.label)}</dt>
+        <dd class="modal-metadata__row">${escapeHtml(String(entry.value))}</dd>
       `
     )
     .join("");

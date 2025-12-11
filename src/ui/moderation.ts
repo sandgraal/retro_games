@@ -175,16 +175,21 @@ export function mountModerationPanel(selector: string): () => void {
       element.hidden = false;
       statusEl.textContent = "Loading suggestions...";
       try {
-        const suggestions = await fetchSuggestionsForModeration();
+        const suggestions = await fetchPendingSuggestions();
         list.innerHTML = "";
         if (!suggestions.length) {
           list.append(el.div({ class: "moderation-empty" }, "No pending submissions"));
           statusEl.textContent = "All caught up.";
           return;
         }
-        suggestions.forEach((suggestion) => {
+        suggestions.forEach((suggestion: SuggestionRecord) => {
           const card = renderSuggestionCard(suggestion, async (status, notes) => {
             statusEl.textContent = "Submitting decision...";
+            const session = await getAuthSession();
+            const decision: ModerationDecision = {
+              action: status === "approved" ? "approve" : "reject",
+              reason: notes,
+            };
             try {
               await moderateSuggestion(suggestion.id, status, notes);
               statusEl.textContent = "";
