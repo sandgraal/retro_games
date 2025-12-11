@@ -294,7 +294,7 @@ describe('ingestion pipeline', () => {
     // Keys should be normalized and deterministic
     const keys = Object.keys(run.records);
     keys.forEach(key => {
-      expect(key).toMatch(/^[a-z0-9 ]+___[a-z0-9 ]+___[0-9unknown]+$/);
+      expect(key).toMatch(/^[a-z0-9 ]+___[a-z0-9 ]+___([0-9]{4}|unknown)$/);
     });
   });
 
