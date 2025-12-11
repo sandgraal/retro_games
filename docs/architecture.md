@@ -68,6 +68,13 @@ UI components subscribe via `effect` and rely on the store's computed values:
 4. Collection updates (status/notes) persist to `localStorage` immediately and are reflected across dashboard, grid badges, and modal.
 5. Export/share/backup functions live in `features/export.ts` and are wired to header/settings actions.
 
+## Ingestion, moderation, and pricing overview
+
+- **Catalog ingestion**: `services/catalog-ingest/catalog-ingest.js` normalizes external sources defined in `config.example.json` (headers per-source for auth), de-duplicates on `title + platform + release_year`, and emits versioned snapshots under `data/snapshots/`. Runs can be scheduled with `scheduleMinutes` or executed ad hoc with `--once`; metrics land in `data/ingestion-log.json` for dashboards and alerting hooks.
+- **Submission moderation**: the ingest service exposes `POST /api/v1/games/:id/suggestions` and `POST /api/v1/games/new` for anonymous or authenticated contributors. Moderators access `GET /api/v1/moderation/suggestions` and approve/reject via `POST .../decision`, writing audit entries to `audit-log.json`. Approved patches flow into the next ingest run so the catalog stays immutable between snapshots.
+- **Pricing pipeline**: `scripts/update-ebay-prices.js` fetches median sold listings from the eBay Finding API (`EBAY_APP_ID`, `EBAY_GLOBAL_ID`), writes snapshots into Supabase (`game_price_snapshots` / `game_price_latest`) when a service role key is present, and refreshes the fallback `data/sample-price-history.json` for offline demos. The GitHub Actions job `price-refresh.yml` runs twice daily with configurable limits/filters.
+- **Frontend consumption**: `src/data/loader.ts` waits up to 4 seconds for Supabase (`config.js` + CDN client). When available, it pulls the consolidated view plus price snapshots; otherwise it serves `data/sample-games.json` and the cached price history. UI components render the catalog, surface moderation-driven notes/statuses, and feed price totals into the dashboard and modal displays.
+
 ## Styling
 
 - CSS lives under `style/` with tokens, base styles, utilities, and component sheets (`cards`, `grid`, `dashboard`, `filters`, `modal`, `settings`).

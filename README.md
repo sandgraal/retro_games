@@ -19,6 +19,30 @@ A TypeScript + Vite single-page app for tracking retro games. It uses a lightwei
 - **Persistence**: collection statuses, notes, preferences, and filters live in `localStorage` (`dragonshoard_*` keys).
 - **Catalog ingest**: a Node-based worker in `services/catalog-ingest/` can normalize external APIs into versioned snapshots; run it with `node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.example.json --once` to seed data and `--serve` to expose `/api/v1/catalog`.
 
+## Services quickstart
+
+1. **Configure environment**: copy `.env.example` to `.env`, set Supabase + eBay credentials, and run `npm run build:config` to emit `config.js` for the frontend.
+2. **Seed/serve catalog**: `npm run ingest:catalog` performs a one-off pull based on `services/catalog-ingest/config.example.json`; keep it warm with `node services/catalog-ingest/catalog-ingest.js --config ... --serve` when exposing `/api/v1/catalog` + moderation endpoints.
+3. **Refresh prices**: run `npm run prices:update -- --limit 25` to push snapshots into Supabase (requires `SUPABASE_SERVICE_ROLE_KEY`) and update the fallback dataset.
+4. **Launch the app**: `npm run dev` for the SPA, or `npm run preview` after building to verify the Supabase/Sandbox paths.
+
+### Data flow diagram
+
+```mermaid
+flowchart LR
+  subgraph Sources
+    A[External catalog APIs]
+    B[eBay sold listings]
+  end
+  A --> C[Catalog ingest worker]\n(normalize + snapshots)
+  B --> D[Price refresher]\n(eBay API -> Supabase)
+  C --> E[Supabase catalog views]\n(games_consolidated)
+  D --> F[Supabase price views]\n(game_price_latest)
+  E --> G[Frontend loader]
+  F --> G
+  G --> H[UI grid, dashboard, modal]\n(sample JSON fallback when Supabase missing)
+```
+
 ## Community submissions & moderation
 
 - Auth roles: `anonymous`, `contributor`, and `moderator`/`admin` (Supabase Auth when configured, otherwise session-based fallbacks).

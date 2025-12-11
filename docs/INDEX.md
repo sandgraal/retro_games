@@ -33,6 +33,10 @@ This project maintains comprehensive documentation for developers, contributors,
   - Table structure
   - Migrations
   - Data seeding
+- **[docs/operations.md](./operations.md)** - Environment, schedules, and runbooks
+  - Env vars for Supabase, pricing, and ingest
+  - Cron/scheduled workflows
+  - Retry, rate-limit, and rollback steps
 
 ### Planning & Roadmap
 
