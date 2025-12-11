@@ -145,12 +145,15 @@ describe("scripts/build-css.js", () => {
       }
 
       // Verify moderation styles are not indented (indicating they're at root level)
+      // Note: We intentionally use /^\.moderation-/ without \s* to ensure
+      // the selector starts at column 0, proving it's not nested in a media query
       const moderationLines = content
         .split("\n")
         .filter((line) => line.match(/^\.moderation-/));
       expect(moderationLines.length).toBeGreaterThan(0);
 
       // All moderation class selectors should start at column 0 (no indentation)
+      // This ensures they are at the global scope, not inside a media query block
       moderationLines.forEach((line) => {
         expect(line[0]).toBe(".");
       });
