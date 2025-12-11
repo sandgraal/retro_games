@@ -654,10 +654,8 @@ function buildExtendedMetadata(game: GameWithKey): string {
     .filter((entry) => entry.value)
     .map(
       (entry) => `
-        <div class="modal-metadata__row">
-          <dt>${escapeHtml(entry.label)}</dt>
-          <dd>${escapeHtml(String(entry.value))}</dd>
-        </div>
+        <dt class="modal-metadata__row">${escapeHtml(entry.label)}</dt>
+        <dd class="modal-metadata__row">${escapeHtml(String(entry.value))}</dd>
       `
     )
     .join("");
