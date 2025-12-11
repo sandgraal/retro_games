@@ -48,9 +48,19 @@ export function buildDeterministicKey(record) {
   const normalizedPlatform = normalizeTitle(record.platform || record.platform_slug);
   return `${normalizedTitle}___${normalizedPlatform}`;
 }
+/**
+ * Creates a set of bigrams (2-character pairs) from the given value.
+ * Edge cases:
+ * - Empty strings or strings with only whitespace return an empty set
+ * - Single-character strings return an empty set
+ * - This means very short titles will have zero similarity with any other title
+ * @param {string} value - The string to create bigrams from
+ * @returns {Set<string>} A set of 2-character bigrams
+ */
 function bigramSet(value) {
   const normalized = normalizeTitle(value);
   const grams = new Set();
+  // Strings with length < 2 will have no bigrams, resulting in fuzzy score of 0
   for (let i = 0; i < normalized.length - 1; i += 1) {
     grams.add(normalized.slice(i, i + 2));
   }
@@ -131,12 +141,12 @@ function normalizeRecord(raw, sourceName) {
     genres: Array.isArray(raw.genres)
       ? raw.genres
       : raw.genres
-      ? [raw.genres]
-      : Array.isArray(raw.genre)
-      ? raw.genre
-      : raw.genre
-      ? [raw.genre]
-      : [],
+        ? [raw.genres]
+        : Array.isArray(raw.genre)
+          ? raw.genre
+          : raw.genre
+            ? [raw.genre]
+            : [],
     esrb: raw.esrb || raw.rating || null,
     pegi: raw.pegi || null,
     assets: raw.assets || {
@@ -397,10 +407,7 @@ async function runCli() {
   if (args.includes("--config")) {
     const configIndex = args.indexOf("--config");
     const nextArg = args[configIndex + 1];
-    if (
-      nextArg === undefined ||
-      nextArg.startsWith("--")
-    ) {
+    if (nextArg === undefined || nextArg.startsWith("--")) {
       console.error("Error: --config flag must be followed by a valid path.");
       process.exit(1);
     }
@@ -411,10 +418,7 @@ async function runCli() {
   const portIndex = args.indexOf("--port");
   let port = portIndex !== -1 ? args[portIndex + 1] : undefined;
   if (port !== undefined) {
-    if (
-      !/^\d+$/.test(port) ||
-      (Number(port) < 1 || Number(port) > 65535)
-    ) {
+    if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535) {
       console.error(
         `[ingest] Invalid port: "${port}". Port must be an integer between 1 and 65535.`
       );
