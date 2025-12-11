@@ -700,6 +700,53 @@ describe("startReadApiServer", () => {
     });
   }
 
+  async function makePostRequest(
+    port: number,
+    path: string,
+    payload?: object,
+    headers?: Record<string, string>
+  ): Promise<{ statusCode: number; headers: http.IncomingHttpHeaders; body: string }> {
+    return new Promise((resolve, reject) => {
+      const data = payload ? JSON.stringify(payload) : "";
+      const options = {
+        hostname: "localhost",
+        port,
+        path,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(data),
+          ...headers,
+        },
+      };
+
+      const req = http.request(options, (res) => {
+        let body = "";
+        res.on("data", (chunk) => {
+          body += chunk;
+        });
+        res.on("end", () => {
+          resolve({
+            statusCode: res.statusCode || 0,
+            headers: res.headers,
+            body,
+          });
+        });
+      });
+
+      req.on("error", reject);
+      req.setTimeout(5000, () => {
+        req.destroy();
+        reject(new Error("Request timeout"));
+      });
+
+      if (data) {
+        req.write(data);
+      }
+      req.end();
+    });
+  }
+
   test("starts server and listens on specified port", async () => {
     const port = 9876;
     server = startReadApiServer({ port });
@@ -891,5 +938,269 @@ describe("startReadApiServer", () => {
 
     const json = JSON.parse(response.body);
     expect(json.error).toBeDefined();
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - successful submission with valid auth", async () => {
+    const port = 9883;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const targetId = "chrono-trigger___snes";
+    const delta = {
+      release_date: "1995-03-11",
+      genres: ["RPG", "Adventure"],
+    };
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/${targetId}/suggestions`,
+      { delta, notes: "Updating release date" },
+      {
+        "x-role": "contributor",
+        "x-user-email": "test@example.com",
+        "x-session-id": "test-session-123",
+      }
+    );
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion).toBeDefined();
+    expect(json.suggestion.id).toBeDefined();
+    expect(json.suggestion.type).toBe("update");
+    expect(json.suggestion.targetId).toBe(targetId);
+    expect(json.suggestion.delta).toEqual(delta);
+    expect(json.suggestion.status).toBe("pending");
+    expect(json.suggestion.author).toEqual({
+      role: "contributor",
+      email: "test@example.com",
+      sessionId: "test-session-123",
+    });
+    expect(json.suggestion.submittedAt).toBeDefined();
+    expect(json.suggestion.notes).toBe("Updating release date");
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - rejects invalid delta payload (null)", async () => {
+    const port = 9884;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/test-game___platform/suggestions`,
+      { delta: null }
+    );
+
+    expect(response.statusCode).toBe(400);
+    const json = JSON.parse(response.body);
+    expect(json.error).toBe("Missing suggestion payload");
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - rejects invalid delta payload (not object)", async () => {
+    const port = 9885;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/test-game___platform/suggestions`,
+      { delta: "string instead of object" }
+    );
+
+    expect(response.statusCode).toBe(400);
+    const json = JSON.parse(response.body);
+    expect(json.error).toBe("Missing suggestion payload");
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - handles missing delta key and uses body directly", async () => {
+    const port = 9886;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const delta = {
+      title: "Final Fantasy VII",
+      platform: "PlayStation",
+    };
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/ff7___ps1/suggestions`,
+      delta // Sending delta directly without wrapping
+    );
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.delta).toEqual(delta);
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - stores author metadata correctly", async () => {
+    const port = 9887;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/game___platform/suggestions`,
+      { delta: { title: "Updated" } },
+      {
+        "x-role": "admin",
+        "x-user-email": "admin@example.com",
+        "x-session-id": "admin-session",
+      }
+    );
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.author.role).toBe("admin");
+    expect(json.suggestion.author.email).toBe("admin@example.com");
+    expect(json.suggestion.author.sessionId).toBe("admin-session");
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - defaults to anonymous auth when headers missing", async () => {
+    const port = 9888;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/game___platform/suggestions`,
+      { delta: { title: "Test" } }
+      // No auth headers
+    );
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.author.role).toBe("anonymous");
+    expect(json.suggestion.author.email).toBeNull();
+    expect(json.suggestion.author.sessionId).toMatch(/^sess_/); // Auto-generated
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - handles targetId with special characters", async () => {
+    const port = 9889;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const targetId = "pokémon red & blue___game boy";
+    const encodedTargetId = encodeURIComponent(targetId);
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/${encodedTargetId}/suggestions`,
+      { delta: { region: "EU" } }
+    );
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.targetId).toBe(targetId);
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - stores timestamp in ISO format", async () => {
+    const port = 9890;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const beforeSubmit = new Date();
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/test___platform/suggestions`,
+      { delta: { rating: "E" } }
+    );
+    const afterSubmit = new Date();
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    const submittedAt = new Date(json.suggestion.submittedAt);
+
+    expect(submittedAt.getTime()).toBeGreaterThanOrEqual(beforeSubmit.getTime());
+    expect(submittedAt.getTime()).toBeLessThanOrEqual(afterSubmit.getTime());
+    expect(json.suggestion.submittedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - handles notes field correctly", async () => {
+    const port = 9891;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/test___platform/suggestions`,
+      {
+        delta: { title: "Updated Title" },
+        notes: "This is a correction based on official release",
+      }
+    );
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.notes).toBe("This is a correction based on official release");
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - handles missing notes field", async () => {
+    const port = 9892;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      `/api/v1/games/test___platform/suggestions`,
+      { delta: { title: "Updated" } }
+      // No notes field
+    );
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.notes).toBeNull();
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - persists suggestions to file", async () => {
+    const port = 9893;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    await makePostRequest(
+      port,
+      `/api/v1/games/game1___platform1/suggestions`,
+      { delta: { title: "First" } }
+    );
+
+    await makePostRequest(
+      port,
+      `/api/v1/games/game2___platform2/suggestions`,
+      { delta: { title: "Second" } }
+    );
+
+    // Read suggestions file directly from tempDir
+    const suggestionsPath = path.join(tempDir, "suggestions.json");
+    const suggestionsData = JSON.parse(
+      await fs.readFile(suggestionsPath, "utf-8")
+    );
+
+    expect(suggestionsData.suggestions).toHaveLength(2);
+    expect(suggestionsData.suggestions[0].targetId).toBe("game1___platform1");
+    expect(suggestionsData.suggestions[1].targetId).toBe("game2___platform2");
+  });
+
+  test("POST /api/v1/games/:targetId/suggestions - generates unique IDs for each submission", async () => {
+    const port = 9894;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response1 = await makePostRequest(
+      port,
+      `/api/v1/games/test___platform/suggestions`,
+      { delta: { title: "First" } }
+    );
+
+    const response2 = await makePostRequest(
+      port,
+      `/api/v1/games/test___platform/suggestions`,
+      { delta: { title: "Second" } }
+    );
+
+    const json1 = JSON.parse(response1.body);
+    const json2 = JSON.parse(response2.body);
+
+    expect(json1.suggestion.id).toBeDefined();
+    expect(json2.suggestion.id).toBeDefined();
+    expect(json1.suggestion.id).not.toBe(json2.suggestion.id);
   });
 });
