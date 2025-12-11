@@ -62,6 +62,7 @@ function renderSuggestionCard(
   const retryBtn = el.button({ class: "btn btn-retry", style: "display: none;" }, "Retry");
 
   let isProcessing = false;
+  let currentRetryHandler: (() => void) | null = null;
 
   const setLoading = (loading: boolean) => {
     isProcessing = loading;
@@ -83,9 +84,15 @@ function renderSuggestionCard(
     errorEl.textContent = message;
     errorEl.style.display = "block";
     retryBtn.style.display = "inline-block";
-    retryBtn.onclick = () => {
-      retryAction();
-    };
+    
+    // Remove old handler if it exists
+    if (currentRetryHandler) {
+      retryBtn.removeEventListener("click", currentRetryHandler);
+    }
+    
+    // Store and add new handler
+    currentRetryHandler = retryAction;
+    retryBtn.addEventListener("click", currentRetryHandler);
   };
 
   const handleDecision = async (status: "approved" | "rejected") => {
@@ -94,9 +101,13 @@ function renderSuggestionCard(
     setLoading(true);
     try {
       await onDecision(status, notesInput.value);
+      // Note: setLoading(false) not needed here because the card will be removed from DOM
+      // when loadSuggestions() is called after successful decision
     } catch (error) {
       setLoading(false);
-      const message = error instanceof Error ? error.message : "Action failed";
+      const message = error instanceof Error 
+        ? error.message 
+        : "Unable to submit decision. Please try again.";
       showError(message, () => handleDecision(status));
     }
   };
