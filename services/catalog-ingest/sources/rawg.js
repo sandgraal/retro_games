@@ -38,7 +38,7 @@ const PLATFORM_MAP = {
   26: "Game Boy",
   79: "SNES",
   49: "NES",
-  105: "GameCube",
+  // Note: GameCube ID varies; use config.platforms to pass correct name
   // Sega
   167: "Genesis",
   107: "Dreamcast",
