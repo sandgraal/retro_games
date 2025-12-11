@@ -3,6 +3,7 @@ import { promises as fs } from "fs";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import * as jose from "jose";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -160,19 +161,82 @@ function normalizeRole(rawRole) {
   return allowed.includes(role) ? role : "anonymous";
 }
 
-function resolveAuth(req) {
-  const role = normalizeRole(req.headers["x-role"] || "anonymous");
-  const emailHeader = req.headers["x-user-email"];
-  const sessionIdHeader = req.headers["x-session-id"];
-  const sessionId =
-    typeof sessionIdHeader === "string" && sessionIdHeader.trim()
-      ? sessionIdHeader
-      : `sess_${randomUUID()}`;
-  return {
-    role,
-    email: typeof emailHeader === "string" ? emailHeader : null,
-    sessionId,
-  };
+/**
+ * Validate and extract authentication info from request
+ * Validates JWT from Authorization header and extracts role from token claims
+ * @param {http.IncomingMessage} req - HTTP request object
+ * @returns {Promise<{role: string, email: string|null, sessionId: string}>}
+ */
+async function resolveAuth(req) {
+  // Extract JWT from Authorization header
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+
+  // If no authorization header, return anonymous
+  if (!authHeader || typeof authHeader !== "string") {
+    return {
+      role: "anonymous",
+      email: null,
+      sessionId: `sess_${randomUUID()}`,
+    };
+  }
+
+  // Extract Bearer token
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0] !== "Bearer") {
+    return {
+      role: "anonymous",
+      email: null,
+      sessionId: `sess_${randomUUID()}`,
+    };
+  }
+
+  const token = parts[1];
+
+  try {
+    // Get JWT secret from environment
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+    if (!jwtSecret) {
+      console.warn("SUPABASE_JWT_SECRET not configured - authentication disabled");
+      return {
+        role: "anonymous",
+        email: null,
+        sessionId: `sess_${randomUUID()}`,
+      };
+    }
+
+    // Verify JWT signature
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jose.jwtVerify(token, secret, {
+      algorithms: ["HS256"],
+    });
+
+    // Extract role from token claims (check both app_metadata and user_metadata)
+    const role = normalizeRole(
+      payload.app_metadata?.role ||
+        payload.user_metadata?.role ||
+        (payload.sub ? "contributor" : "anonymous")
+    );
+
+    // Extract email from token
+    const email = payload.email || null;
+
+    // Use sub (subject) as session ID if available
+    const sessionId = payload.sub || `sess_${randomUUID()}`;
+
+    return {
+      role,
+      email,
+      sessionId,
+    };
+  } catch (error) {
+    // JWT validation failed - return anonymous
+    console.warn("JWT validation failed:", error.message);
+    return {
+      role: "anonymous",
+      email: null,
+      sessionId: `sess_${randomUUID()}`,
+    };
+  }
 }
 
 async function parseJsonBody(req) {
@@ -568,7 +632,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         /^\/api\/v1\/games\/[^/]+\/suggestions$/.test(url.pathname)
       ) {
         const targetId = decodeURIComponent(url.pathname.split("/").at(-2));
-        const auth = resolveAuth(req);
+        const auth = await resolveAuth(req);
         const body = await parseJsonBody(req);
         const delta = body.delta || body;
         if (!delta || typeof delta !== "object") {
@@ -593,7 +657,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
       }
 
       if (req.method === "POST" && url.pathname === "/api/v1/games/new") {
-        const auth = resolveAuth(req);
+        const auth = await resolveAuth(req);
         const body = await parseJsonBody(req);
         const delta = body.delta || body;
         if (!delta?.title && !delta?.game_name) {
@@ -618,7 +682,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
       }
 
       if (req.method === "GET" && url.pathname === "/api/v1/moderation/suggestions") {
-        const auth = resolveAuth(req);
+        const auth = await resolveAuth(req);
         if (!["moderator", "admin"].includes(auth.role)) {
           sendJson(res, 403, { error: "Moderator access required" });
           return;
@@ -650,7 +714,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         url.pathname.startsWith("/api/v1/moderation/suggestions/") &&
         url.pathname.endsWith("/decision")
       ) {
-        const auth = resolveAuth(req);
+        const auth = await resolveAuth(req);
         if (!["moderator", "admin"].includes(auth.role)) {
           sendJson(res, 403, { error: "Moderator access required" });
           return;
