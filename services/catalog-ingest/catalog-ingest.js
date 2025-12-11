@@ -351,9 +351,19 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
 
 async function runCli() {
   const args = process.argv.slice(2);
-  const configPath = args.includes("--config")
-    ? args[args.indexOf("--config") + 1]
-    : null;
+  let configPath = null;
+  if (args.includes("--config")) {
+    const configIndex = args.indexOf("--config");
+    const nextArg = args[configIndex + 1];
+    if (
+      nextArg === undefined ||
+      nextArg.startsWith("--")
+    ) {
+      console.error("Error: --config flag must be followed by a valid path.");
+      process.exit(1);
+    }
+    configPath = nextArg;
+  }
   const once = args.includes("--once");
   const serve = args.includes("--serve");
   const portIndex = args.indexOf("--port");
