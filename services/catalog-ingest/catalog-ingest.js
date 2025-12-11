@@ -48,9 +48,19 @@ export function buildDeterministicKey(record) {
   const normalizedPlatform = normalizeTitle(record.platform || record.platform_slug);
   return `${normalizedTitle}___${normalizedPlatform}`;
 }
+/**
+ * Creates a set of bigrams (2-character pairs) from the given value.
+ * Edge cases:
+ * - Empty strings or strings with only whitespace return an empty set
+ * - Single-character strings return an empty set
+ * - This means very short titles will have zero similarity with any other title
+ * @param {string} value - The string to create bigrams from
+ * @returns {Set<string>} A set of 2-character bigrams
+ */
 function bigramSet(value) {
   const normalized = normalizeTitle(value);
   const grams = new Set();
+  // Strings with length < 2 will have no bigrams, resulting in fuzzy score of 0
   for (let i = 0; i < normalized.length - 1; i += 1) {
     grams.add(normalized.slice(i, i + 2));
   }
