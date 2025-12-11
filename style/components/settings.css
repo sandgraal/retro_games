@@ -230,9 +230,42 @@
   margin-bottom: 0;
 }
 
+.settings-about-card {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-about-title {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
+}
+
+.settings-about-list {
+  margin: 0 0 var(--spacing-sm) 1.2rem;
+  padding: 0;
+  color: var(--text-secondary);
+}
+
+.settings-about-list li + li {
+  margin-top: var(--spacing-xs);
+}
+
 .settings-about-note {
   font-style: italic;
-  opacity: 0.8;
+  opacity: 0.9;
+}
+
+.settings-about-link {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+.settings-about-link:hover {
+  color: var(--accent-secondary);
 }
 
 /* Toast Notifications */
