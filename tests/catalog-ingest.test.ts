@@ -676,22 +676,27 @@ describe("startReadApiServer", () => {
 
   async function makeRequest(
     port: number,
-    path: string
+    path: string,
+    options: { headers?: Record<string, string> } = {}
   ): Promise<{ statusCode: number; headers: http.IncomingHttpHeaders; body: string }> {
     return new Promise((resolve, reject) => {
-      const req = http.get(`http://localhost:${port}${path}`, (res) => {
-        let body = "";
-        res.on("data", (chunk) => {
-          body += chunk;
-        });
-        res.on("end", () => {
-          resolve({
-            statusCode: res.statusCode || 0,
-            headers: res.headers,
-            body,
+      const req = http.get(
+        `http://localhost:${port}${path}`,
+        { headers: options.headers || {} },
+        (res) => {
+          let body = "";
+          res.on("data", (chunk) => {
+            body += chunk;
           });
-        });
-      });
+          res.on("end", () => {
+            resolve({
+              statusCode: res.statusCode || 0,
+              headers: res.headers,
+              body,
+            });
+          });
+        }
+      );
       req.on("error", reject);
       req.setTimeout(5000, () => {
         req.destroy();
@@ -891,5 +896,289 @@ describe("startReadApiServer", () => {
 
     const json = JSON.parse(response.body);
     expect(json.error).toBeDefined();
+  });
+
+  describe("GET /api/v1/moderation/suggestions", () => {
+    test("returns 403 for anonymous user", async () => {
+      const port = 9883;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions");
+      expect(response.statusCode).toBe(403);
+      const json = JSON.parse(response.body);
+      expect(json.error).toBe("Moderator access required");
+    });
+
+    test("returns 403 for contributor role", async () => {
+      const port = 9884;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "contributor" },
+      });
+      expect(response.statusCode).toBe(403);
+      const json = JSON.parse(response.body);
+      expect(json.error).toBe("Moderator access required");
+    });
+
+    test("returns 200 with empty suggestions for moderator when no suggestions exist", async () => {
+      const port = 9885;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "moderator" },
+      });
+      expect(response.statusCode).toBe(200);
+      const json = JSON.parse(response.body);
+      expect(json.suggestions).toEqual([]);
+    });
+
+    test("returns 200 with empty suggestions for admin when no suggestions exist", async () => {
+      const port = 9886;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "admin" },
+      });
+      expect(response.statusCode).toBe(200);
+      const json = JSON.parse(response.body);
+      expect(json.suggestions).toEqual([]);
+    });
+
+    test("enriches suggestions with canonical data from catalog-store for moderator", async () => {
+      // First, create a game in the catalog
+      await runIngestion({
+        sources: [
+          {
+            name: "test-source",
+            records: [
+              {
+                title: "Chrono Trigger",
+                platform: "SNES",
+                release_date: "1995-03-11",
+                genres: ["RPG"],
+              },
+            ],
+          },
+        ],
+      });
+
+      // Get the game key to use as targetId
+      const catalogStorePath = path.join(tempDir, "catalog-store.json");
+      const suggestionsPath = path.join(tempDir, "suggestions.json");
+      const catalogStoreData = await fs.readFile(catalogStorePath, "utf-8");
+      const catalogStore = JSON.parse(catalogStoreData);
+      const gameKey = Object.keys(catalogStore.records)[0];
+
+      // Create a suggestion
+      const suggestions = {
+        suggestions: [
+          {
+            id: "test-suggestion-1",
+            type: "update",
+            targetId: gameKey,
+            delta: { genres: ["RPG", "JRPG"] },
+            status: "pending",
+            author: { role: "contributor", email: "user@example.com", sessionId: "sess_123" },
+            submittedAt: "2024-01-01T00:00:00.000Z",
+            notes: "Adding JRPG genre",
+          },
+        ],
+      };
+      await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
+
+      const port = 9887;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "moderator" },
+      });
+      expect(response.statusCode).toBe(200);
+      const json = JSON.parse(response.body);
+      expect(json.suggestions).toHaveLength(1);
+      expect(json.suggestions[0].id).toBe("test-suggestion-1");
+      expect(json.suggestions[0].canonical).toBeDefined();
+      expect(json.suggestions[0].canonical.title).toBe("Chrono Trigger");
+      expect(json.suggestions[0].canonical.platform).toBe("SNES");
+    });
+
+    test("enriches suggestions with canonical data from catalog-store for admin", async () => {
+      // First, create a game in the catalog
+      await runIngestion({
+        sources: [
+          {
+            name: "test-source",
+            records: [
+              {
+                title: "Final Fantasy VII",
+                platform: "PlayStation",
+                release_date: "1997-01-31",
+                genres: ["RPG"],
+              },
+            ],
+          },
+        ],
+      });
+
+      // Get the game key to use as targetId
+      const catalogStorePath = path.join(tempDir, "catalog-store.json");
+      const suggestionsPath = path.join(tempDir, "suggestions.json");
+      const catalogStoreData = await fs.readFile(catalogStorePath, "utf-8");
+      const catalogStore = JSON.parse(catalogStoreData);
+      const gameKey = Object.keys(catalogStore.records)[0];
+
+      // Create a suggestion
+      const suggestions = {
+        suggestions: [
+          {
+            id: "test-suggestion-2",
+            type: "update",
+            targetId: gameKey,
+            delta: { genres: ["RPG", "Action"] },
+            status: "pending",
+            author: { role: "contributor", email: "user@example.com", sessionId: "sess_456" },
+            submittedAt: "2024-01-02T00:00:00.000Z",
+            notes: "Updating genres",
+          },
+        ],
+      };
+      await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
+
+      const port = 9888;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "admin" },
+      });
+      expect(response.statusCode).toBe(200);
+      const json = JSON.parse(response.body);
+      expect(json.suggestions).toHaveLength(1);
+      expect(json.suggestions[0].id).toBe("test-suggestion-2");
+      expect(json.suggestions[0].canonical).toBeDefined();
+      expect(json.suggestions[0].canonical.title).toBe("Final Fantasy VII");
+      expect(json.suggestions[0].canonical.platform).toBe("PlayStation");
+    });
+
+    test("handles suggestions with no targetId (new game suggestions)", async () => {
+      const suggestionsPath = path.join(tempDir, "suggestions.json");
+
+      // Create a new game suggestion without targetId
+      const suggestions = {
+        suggestions: [
+          {
+            id: "test-suggestion-3",
+            type: "new",
+            targetId: null,
+            delta: {
+              title: "New Game",
+              platform: "Switch",
+              release_date: "2024-01-01",
+              genres: ["Adventure"],
+            },
+            status: "pending",
+            author: { role: "contributor", email: "user@example.com", sessionId: "sess_789" },
+            submittedAt: "2024-01-03T00:00:00.000Z",
+            notes: "Submitting new game",
+          },
+        ],
+      };
+      await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
+
+      const port = 9889;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "moderator" },
+      });
+      expect(response.statusCode).toBe(200);
+      const json = JSON.parse(response.body);
+      expect(json.suggestions).toHaveLength(1);
+      expect(json.suggestions[0].id).toBe("test-suggestion-3");
+      expect(json.suggestions[0].canonical).toBeNull();
+    });
+
+    test("filters suggestions by status query parameter", async () => {
+      const suggestionsPath = path.join(tempDir, "suggestions.json");
+
+      // Create suggestions with different statuses
+      const suggestions = {
+        suggestions: [
+          {
+            id: "pending-suggestion",
+            type: "new",
+            targetId: null,
+            delta: { title: "Pending Game", platform: "PS5" },
+            status: "pending",
+            author: { role: "contributor", email: "user1@example.com", sessionId: "sess_1" },
+            submittedAt: "2024-01-01T00:00:00.000Z",
+          },
+          {
+            id: "approved-suggestion",
+            type: "new",
+            targetId: null,
+            delta: { title: "Approved Game", platform: "Xbox" },
+            status: "approved",
+            author: { role: "contributor", email: "user2@example.com", sessionId: "sess_2" },
+            submittedAt: "2024-01-02T00:00:00.000Z",
+          },
+          {
+            id: "rejected-suggestion",
+            type: "new",
+            targetId: null,
+            delta: { title: "Rejected Game", platform: "PC" },
+            status: "rejected",
+            author: { role: "contributor", email: "user3@example.com", sessionId: "sess_3" },
+            submittedAt: "2024-01-03T00:00:00.000Z",
+          },
+        ],
+      };
+      await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
+
+      const port = 9890;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Test default (pending)
+      const pendingResponse = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "moderator" },
+      });
+      expect(pendingResponse.statusCode).toBe(200);
+      const pendingJson = JSON.parse(pendingResponse.body);
+      expect(pendingJson.suggestions).toHaveLength(1);
+      expect(pendingJson.suggestions[0].id).toBe("pending-suggestion");
+
+      // Test approved filter
+      const approvedResponse = await makeRequest(
+        port,
+        "/api/v1/moderation/suggestions?status=approved",
+        {
+          headers: { "x-role": "moderator" },
+        }
+      );
+      expect(approvedResponse.statusCode).toBe(200);
+      const approvedJson = JSON.parse(approvedResponse.body);
+      expect(approvedJson.suggestions).toHaveLength(1);
+      expect(approvedJson.suggestions[0].id).toBe("approved-suggestion");
+
+      // Test rejected filter
+      const rejectedResponse = await makeRequest(
+        port,
+        "/api/v1/moderation/suggestions?status=rejected",
+        {
+          headers: { "x-role": "moderator" },
+        }
+      );
+      expect(rejectedResponse.statusCode).toBe(200);
+      const rejectedJson = JSON.parse(rejectedResponse.body);
+      expect(rejectedJson.suggestions).toHaveLength(1);
+      expect(rejectedJson.suggestions[0].id).toBe("rejected-suggestion");
+    });
   });
 });
