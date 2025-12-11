@@ -206,10 +206,10 @@ function sendJson(res, status, payload) {
 
 function normalizeRecord(raw, sourceName) {
   return {
-    title: safeString(raw.title || raw.name),
-    platform: safeString(raw.platform || raw.platform_name),
+    title: safeString(raw.title || raw.name || raw.game_name),
+    platform: safeString(raw.platform || raw.platform_name || raw.platform_slug),
     platform_slug: safeString(raw.platform_slug || raw.platform),
-    release_date: raw.release_date || raw.releaseDate || null,
+    release_date: raw.release_date || raw.releaseDate || raw.release_year || null,
     regions: raw.regions || raw.region ? [].concat(raw.regions || raw.region) : [],
     genres: Array.isArray(raw.genres)
       ? raw.genres
@@ -220,7 +220,7 @@ function normalizeRecord(raw, sourceName) {
           : raw.genre
             ? [raw.genre]
             : [],
-    esrb: raw.esrb || raw.rating || null,
+    esrb: raw.esrb || raw.rating || raw.esrb_rating || null,
     pegi: raw.pegi || null,
     assets: raw.assets || {
       cover: raw.cover_url || null,
@@ -403,27 +403,20 @@ function applyApprovedSuggestions(records, suggestions) {
         applied += 1;
       }
     } else if (suggestion.type === "new") {
-      const key =
-        suggestion.targetId ||
-        buildDeterministicKey({
-          title: delta.title || delta.game_name,
-          platform: delta.platform || delta.platform_slug,
-        });
+      // Pass delta directly to normalizeRecord which handles all field name variants
       const normalized = normalizeRecord(
         {
-          title: delta.title || delta.game_name,
-          platform: delta.platform,
-          platform_slug: delta.platform_slug,
-          release_date: delta.release_date || delta.release_year,
-          genres: delta.genres,
-          esrb: delta.esrb || delta.esrb_rating,
-          pegi: delta.pegi,
-          assets: delta.assets,
-          external_ids: delta.external_ids,
+          ...delta,
           source: "suggestion",
         },
         "community"
       );
+      const key =
+        suggestion.targetId ||
+        buildDeterministicKey({
+          title: normalized.title,
+          platform: normalized.platform,
+        });
       const hash = computeRecordHash(normalized);
       if (!records[key]) {
         records[key] = {
