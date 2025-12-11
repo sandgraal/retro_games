@@ -11,7 +11,7 @@ import type {
   PricingSource,
 } from "../core/types";
 import type { ComponentContext } from "./components";
-import { mount, escapeHtml } from "./components";
+import { mount, escapeHtml, sanitizeUrl } from "./components";
 import {
   modalGame,
   closeGameModal,
@@ -512,8 +512,9 @@ function renderOffers(offers?: PriceData["offers"]): string {
         const updatedLabel = formatPricingTimestamp(offer.lastUpdated);
         const retailerText = offer.retailer ? ` • ${escapeHtml(offer.retailer)}` : "";
         const updatedText = updatedLabel ? ` (Updated ${escapeHtml(updatedLabel)})` : "";
-        const link = offer.url
-          ? `<a class="modal-offers__cta" href="${escapeHtml(offer.url)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(label)} offer link">View</a>`
+        const sanitizedUrl = offer.url ? sanitizeUrl(offer.url) : "";
+        const link = sanitizedUrl
+          ? `<a class="modal-offers__cta" href="${escapeHtml(sanitizedUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(label)} offer link">View</a>`
           : "";
         return `
           <div class="modal-offers__row" role="listitem">
@@ -551,11 +552,13 @@ function buildExternalLinks(game: GameWithKey): string {
   if (links.length === 0) return "";
 
   const chips = links
-    .map(
-      (link) => `
+    .map((link) => {
+      const sanitizedUrl = sanitizeUrl(link.url);
+      if (!sanitizedUrl) return ""; // Skip invalid URLs
+      return `
         <a
           class="modal-link-chip"
-          href="${escapeHtml(link.url)}"
+          href="${escapeHtml(sanitizedUrl)}"
           target="_blank"
           rel="noopener noreferrer"
           role="listitem"
@@ -564,8 +567,9 @@ function buildExternalLinks(game: GameWithKey): string {
           <span aria-hidden="true">${link.icon}</span>
           <span class="modal-link-chip__label">${escapeHtml(link.label)}</span>
         </a>
-      `
-    )
+      `;
+    })
+    .filter((chip) => chip !== "") // Remove invalid URLs
     .join("");
 
   return `
