@@ -66,6 +66,42 @@ describe("deterministic key + fuzzy matcher", () => {
     expect(score2).toBeGreaterThan(0); // Partial match
     expect(score3).toBe(0); // No match
   });
+
+  test("builds key using platform_slug fallback when platform is undefined", () => {
+    const key = buildDeterministicKey({
+      title: "Chrono Trigger",
+      platform: undefined,
+      platform_slug: "snes",
+    });
+    expect(key).toBe("chrono trigger___snes");
+  });
+
+  test("builds key using platform when both platform and platform_slug are provided", () => {
+    const key = buildDeterministicKey({
+      title: "Final Fantasy VII",
+      platform: "PlayStation",
+      platform_slug: "ps1",
+    });
+    expect(key).toBe("final fantasy vii___playstation");
+  });
+
+  test("builds key with platform_slug when platform is null", () => {
+    const key = buildDeterministicKey({
+      title: "Super Mario 64",
+      platform: null,
+      platform_slug: "n64",
+    });
+    expect(key).toBe("super mario 64___n64");
+  });
+
+  test("builds key with empty string when both platform and platform_slug are missing", () => {
+    const key = buildDeterministicKey({
+      title: "Mystery Game",
+      platform: undefined,
+      platform_slug: undefined,
+    });
+    expect(key).toBe("mystery game___");
+  });
 });
 
 describe("error handling in fetchSourceRecords", () => {
@@ -1202,5 +1238,342 @@ describe("startReadApiServer", () => {
     expect(json1.suggestion.id).toBeDefined();
     expect(json2.suggestion.id).toBeDefined();
     expect(json1.suggestion.id).not.toBe(json2.suggestion.id);
+  });
+});
+
+describe("POST /api/v1/games/new - new game suggestions", () => {
+  let server: http.Server | null = null;
+
+  afterEach(async () => {
+    if (server) {
+      await new Promise<void>((resolve) => {
+        server!.close(() => {
+          server = null;
+          resolve();
+        });
+      });
+    }
+  });
+
+  async function makePostRequest(
+    port: number,
+    path: string,
+    body: unknown,
+    headers: Record<string, string> = {}
+  ): Promise<{ statusCode: number; headers: http.IncomingHttpHeaders; body: string }> {
+    return new Promise((resolve, reject) => {
+      const bodyData = JSON.stringify(body);
+      const options = {
+        hostname: "localhost",
+        port,
+        path,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(bodyData),
+          ...headers,
+        },
+      };
+
+      const req = http.request(options, (res) => {
+        let responseBody = "";
+        res.on("data", (chunk) => {
+          responseBody += chunk;
+        });
+        res.on("end", () => {
+          resolve({
+            statusCode: res.statusCode || 0,
+            headers: res.headers,
+            body: responseBody,
+          });
+        });
+      });
+
+      req.on("error", reject);
+      req.setTimeout(5000, () => {
+        req.destroy();
+        reject(new Error("Request timeout"));
+      });
+
+      req.write(bodyData);
+      req.end();
+    });
+  }
+
+  test("accepts new game with title field", async () => {
+    const port = 9883;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      "/api/v1/games/new",
+      {
+        delta: {
+          title: "New Test Game",
+          platform: "PlayStation 5",
+          release_date: "2024-01-01",
+        },
+      },
+      {
+        "x-role": "contributor",
+        "x-user-email": "test@example.com",
+      }
+    );
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion).toBeDefined();
+    expect(json.suggestion.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    );
+    expect(json.suggestion.type).toBe("new");
+    expect(json.suggestion.targetId).toBeNull();
+    expect(json.suggestion.delta.title).toBe("New Test Game");
+    expect(json.suggestion.status).toBe("pending");
+    expect(json.suggestion.author).toEqual({
+      role: "contributor",
+      email: "test@example.com",
+      sessionId: expect.any(String),
+    });
+    expect(json.suggestion.submittedAt).toBeDefined();
+  });
+
+  test("accepts new game with game_name field", async () => {
+    const port = 9884;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(port, "/api/v1/games/new", {
+      delta: {
+        game_name: "Another Test Game",
+        platform: "Xbox Series X",
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion).toBeDefined();
+    expect(json.suggestion.delta.game_name).toBe("Another Test Game");
+  });
+
+  test("rejects request when both title and game_name are missing", async () => {
+    const port = 9885;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(port, "/api/v1/games/new", {
+      delta: {
+        platform: "Nintendo Switch",
+        release_date: "2024-01-01",
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    const json = JSON.parse(response.body);
+    expect(json.error).toBe("New game submissions require a title");
+  });
+
+  test("rejects request when delta is missing title and game_name", async () => {
+    const port = 9886;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(port, "/api/v1/games/new", {
+      delta: {},
+    });
+
+    expect(response.statusCode).toBe(400);
+    const json = JSON.parse(response.body);
+    expect(json.error).toBe("New game submissions require a title");
+  });
+
+  test("generates unique UUID for each suggestion", async () => {
+    const port = 9887;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response1 = await makePostRequest(port, "/api/v1/games/new", {
+      delta: {
+        title: "Game 1",
+        platform: "PS5",
+      },
+    });
+
+    const response2 = await makePostRequest(port, "/api/v1/games/new", {
+      delta: {
+        title: "Game 2",
+        platform: "PS5",
+      },
+    });
+
+    expect(response1.statusCode).toBe(201);
+    expect(response2.statusCode).toBe(201);
+
+    const json1 = JSON.parse(response1.body);
+    const json2 = JSON.parse(response2.body);
+
+    expect(json1.suggestion.id).not.toBe(json2.suggestion.id);
+    expect(json1.suggestion.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    );
+    expect(json2.suggestion.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    );
+  });
+
+  test("captures author metadata with role from headers", async () => {
+    const port = 9888;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      "/api/v1/games/new",
+      {
+        delta: {
+          title: "Test Game",
+          platform: "PC",
+        },
+      },
+      {
+        "x-role": "moderator",
+        "x-user-email": "moderator@example.com",
+        "x-session-id": "test-session-123",
+      }
+    );
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.author).toEqual({
+      role: "moderator",
+      email: "moderator@example.com",
+      sessionId: "test-session-123",
+    });
+  });
+
+  test("defaults to anonymous role when no role header provided", async () => {
+    const port = 9889;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(port, "/api/v1/games/new", {
+      delta: {
+        title: "Anonymous Game",
+        platform: "PC",
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.author.role).toBe("anonymous");
+    expect(json.suggestion.author.email).toBeNull();
+  });
+
+  test("stores suggestion in suggestions.json file", async () => {
+    const port = 9890;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(
+      port,
+      "/api/v1/games/new",
+      {
+        delta: {
+          title: "Persistent Game",
+          platform: "GameCube",
+          release_date: "2003-01-01",
+        },
+        notes: "This is a test note",
+      },
+      {
+        "x-role": "contributor",
+        "x-user-email": "contributor@example.com",
+      }
+    );
+
+    expect(response.statusCode).toBe(201);
+
+    // Verify the suggestion was stored
+    const suggestionsPath = path.join(tempDir, "suggestions.json");
+    const suggestionsContent = await fs.readFile(suggestionsPath, "utf-8");
+    const suggestionsData = JSON.parse(suggestionsContent);
+
+    expect(suggestionsData.suggestions).toBeInstanceOf(Array);
+    expect(suggestionsData.suggestions.length).toBeGreaterThan(0);
+
+    const storedSuggestion = suggestionsData.suggestions.find(
+      (s: { delta: { title: string } }) => s.delta.title === "Persistent Game"
+    );
+
+    expect(storedSuggestion).toBeDefined();
+    expect(storedSuggestion.type).toBe("new");
+    expect(storedSuggestion.targetId).toBeNull();
+    expect(storedSuggestion.status).toBe("pending");
+    expect(storedSuggestion.notes).toBe("This is a test note");
+    expect(storedSuggestion.delta.platform).toBe("GameCube");
+  });
+
+  test("handles body without delta wrapper", async () => {
+    const port = 9891;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const response = await makePostRequest(port, "/api/v1/games/new", {
+      title: "Direct Title",
+      platform: "Dreamcast",
+    });
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+    expect(json.suggestion.delta.title).toBe("Direct Title");
+    expect(json.suggestion.delta.platform).toBe("Dreamcast");
+  });
+
+  test("stores multiple suggestions sequentially", async () => {
+    const port = 9892;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    await makePostRequest(port, "/api/v1/games/new", {
+      delta: { title: "First Game", platform: "PS5" },
+    });
+
+    await makePostRequest(port, "/api/v1/games/new", {
+      delta: { title: "Second Game", platform: "Xbox" },
+    });
+
+    await makePostRequest(port, "/api/v1/games/new", {
+      delta: { title: "Third Game", platform: "Switch" },
+    });
+
+    const suggestionsPath = path.join(tempDir, "suggestions.json");
+    const suggestionsContent = await fs.readFile(suggestionsPath, "utf-8");
+    const suggestionsData = JSON.parse(suggestionsContent);
+
+    expect(suggestionsData.suggestions).toHaveLength(3);
+    expect(suggestionsData.suggestions[0].delta.title).toBe("First Game");
+    expect(suggestionsData.suggestions[1].delta.title).toBe("Second Game");
+    expect(suggestionsData.suggestions[2].delta.title).toBe("Third Game");
+  });
+
+  test("includes submittedAt timestamp in ISO format", async () => {
+    const port = 9893;
+    server = startReadApiServer({ port });
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const beforeRequest = new Date().toISOString();
+    const response = await makePostRequest(port, "/api/v1/games/new", {
+      delta: { title: "Timed Game", platform: "PC" },
+    });
+    const afterRequest = new Date().toISOString();
+
+    expect(response.statusCode).toBe(201);
+    const json = JSON.parse(response.body);
+
+    expect(json.suggestion.submittedAt).toBeDefined();
+    expect(json.suggestion.submittedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+    expect(json.suggestion.submittedAt >= beforeRequest).toBe(true);
+    expect(json.suggestion.submittedAt <= afterRequest).toBe(true);
   });
 });
