@@ -547,12 +547,13 @@ function buildExternalLinks(game: GameWithKey): string {
   if (links.length === 0) return "";
 
   const chips = links
-    .filter((link) => sanitizeUrl(link.url) !== "") // Filter out unsafe URLs
+    .map((link) => ({ ...link, sanitizedUrl: sanitizeUrl(link.url) }))
+    .filter((link) => link.sanitizedUrl !== "") // Filter out unsafe URLs
     .map(
       (link) => `
         <a
           class="modal-link-chip"
-          href="${sanitizeUrl(link.url)}"
+          href="${link.sanitizedUrl}"
           target="_blank"
           rel="noopener noreferrer"
           role="listitem"

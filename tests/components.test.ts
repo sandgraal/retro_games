@@ -69,6 +69,7 @@ describe("escapeHtml", () => {
     expect(escapeHtml("<script>alert('xss')</script>")).toBe(
       "&lt;script&gt;alert('xss')&lt;/script&gt;"
     );
+    // Note: textContent doesn't escape quotes, which is correct for HTML text content
     expect(escapeHtml('He said "Hello"')).toBe('He said "Hello"');
     expect(escapeHtml("A & B")).toBe("A &amp; B");
   });
