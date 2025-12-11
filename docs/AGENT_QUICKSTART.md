@@ -94,13 +94,13 @@ services/
 
 ## Key Database Tables
 
-| Table                 | Purpose                        | RLS                         |
-| --------------------- | ------------------------------ | --------------------------- |
-| `games`               | Core game metadata (391 games) | Public read                 |
-| `catalog_submissions` | Community queue                | User sees own, mods see all |
-| `audit_log`           | Moderation history             | Mods only                   |
-| `game_external_ids`   | IGDB/RAWG links                | Public read                 |
-| `profiles`            | User roles                     | Own profile                 |
+| Table                 | Purpose                       | RLS                         |
+| --------------------- | ----------------------------- | --------------------------- |
+| `games_consolidated`  | Core game view (all metadata) | Public read                 |
+| `catalog_submissions` | Community queue               | User sees own, mods see all |
+| `audit_log`           | Moderation history            | Mods only                   |
+| `game_external_ids`   | IGDB/RAWG links               | Public read                 |
+| `profiles`            | User roles                    | Own profile                 |
 
 ## Tests
 
@@ -126,19 +126,24 @@ services/
 
 ## What To Work On
 
-### High Priority (Phase 5)
+### Completed (Phase 5)
 
-1. [ ] Create submission UI ("Suggest Edit" button in modal)
-2. [ ] Build `/moderation` route with queue interface
-3. [ ] Configure RAWG.io API and scheduled sync workflow
-4. [ ] Integrate Supabase Auth with GitHub OAuth
-5. [ ] Update frontend to use `search_games()` for large catalogs
+- [x] Create submission UI ("Suggest Edit" button in modal) - `src/ui/modal.ts`
+- [x] Build moderation panel with queue interface - `src/ui/moderation.ts`
+- [x] Implement catalog-ingest service - `services/catalog-ingest/`
+- [x] Add community submission REST endpoints
+
+### High Priority (Phase 5 Remaining)
+
+1. [ ] Configure RAWG.io API and scheduled sync workflow
+2. [ ] Update frontend to use `search_games()` for large catalogs
+3. [ ] Connect catalog-ingest to Supabase (currently uses local JSON storage)
 
 ### Medium Priority
 
-6. [ ] Add rate limiting to submission endpoints
-7. [ ] Build user profile page with submission history
-8. [ ] Connect catalog-ingest to Supabase (currently uses local JSON)
+4. [ ] Add rate limiting to submission endpoints
+5. [ ] Build user profile page with submission history
+6. [ ] Improve moderation workflow with batch operations
 
 ### Documentation Needed
 
@@ -149,7 +154,7 @@ services/
 
 - **DO** check `docs/implementation-plan.md` Phase 5 for current tasks
 - **DO** keep CSS class names in kebab-case
-- **DO** use Supabase RPC functions for moderation (`approve_submission`, `reject_submission`)
+- **DO** use the catalog-ingest REST API for moderation (`/api/v1/moderation/suggestions`)
 - **DO** test with `npm test` before committing
 - **DON'T** commit API keys (use `.env` and `config.js`)
 - **DON'T** modify `archive/` directory
