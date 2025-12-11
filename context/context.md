@@ -6,12 +6,14 @@
 - Local-first data powered by `localStorage` (collection, notes, preferences) with optional Supabase metadata when `config.js` + CDN client are present.
 - Pricing and dashboard value displays read from the bundled `data/sample-price-history.json` snapshot (values in cents).
 - Backend worker `services/catalog-ingest/` normalizes external sources into versioned catalog snapshots and serves a read API for caching.
+- Community submissions land in `data/suggestions.json` with moderation decisions in `data/audit-log.json`; approved patches are re-applied during ingest runs.
 - Offline-friendly delivery via `public/manifest.json` and `public/sw.js`; GH Pages deployment is supported via Vite base path configuration.
 
 ## dependency_graph
 
 - **Runtime:** Frameworkless TypeScript modules orchestrated by Vite, custom signals (`src/core/signals.ts`), and modular CSS under `style/` + `style.css`.
 - **Data/Services:** Supabase `games_consolidated` view when configured, falling back to `data/sample-games.json`; price history from `data/sample-price-history.json`; persistence in `localStorage`.
+- **Moderation API:** `services/catalog-ingest/` server exposes submission + moderation endpoints under `/api/v1` when run with `--serve` (writes to suggestions/audit logs).
 - **Tooling:** Vite 7, TypeScript 5, ESLint/Prettier, Vitest, Playwright, Lighthouse CI, csv-parse/dotenv scripts for data tasks.
 
 ## commands_map
