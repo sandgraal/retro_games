@@ -131,12 +131,12 @@ function normalizeRecord(raw, sourceName) {
     genres: Array.isArray(raw.genres)
       ? raw.genres
       : raw.genres
-      ? [raw.genres]
-      : Array.isArray(raw.genre)
-      ? raw.genre
-      : raw.genre
-      ? [raw.genre]
-      : [],
+        ? [raw.genres]
+        : Array.isArray(raw.genre)
+          ? raw.genre
+          : raw.genre
+            ? [raw.genre]
+            : [],
     esrb: raw.esrb || raw.rating || null,
     pegi: raw.pegi || null,
     assets: raw.assets || {
@@ -216,7 +216,19 @@ async function fetchSourceRecords(source) {
   return [];
 }
 
-function evaluateMatch(record, existingRecords, decisions, threshold) {
+function buildPlatformIndex(existingRecords) {
+  const index = {};
+  for (const [key, value] of Object.entries(existingRecords)) {
+    const normalizedPlatform = normalizeTitle(value.record.platform || "");
+    if (!index[normalizedPlatform]) {
+      index[normalizedPlatform] = [];
+    }
+    index[normalizedPlatform].push({ key, value });
+  }
+  return index;
+}
+
+function evaluateMatch(record, existingRecords, decisions, threshold, platformIndex) {
   const deterministicKey = buildDeterministicKey(record);
   if (existingRecords[deterministicKey]) {
     return { key: deterministicKey, deterministicKey, reason: "deterministic" };
@@ -228,7 +240,10 @@ function evaluateMatch(record, existingRecords, decisions, threshold) {
   }
 
   let best = { key: null, score: 0 };
-  for (const [key, value] of Object.entries(existingRecords)) {
+  const normalizedPlatform = normalizeTitle(record.platform || "");
+  const platformBucket = platformIndex[normalizedPlatform] || [];
+
+  for (const { key, value } of platformBucket) {
     const titleScore = fuzzyMatchScore(record.title, value.record.title);
     const platformScore = fuzzyMatchScore(record.platform, value.record.platform);
     const score = titleScore * 0.7 + platformScore * 0.3;
@@ -269,6 +284,7 @@ export async function runIngestion(configOverrides = {}) {
   };
 
   const records = { ...catalogStore.records };
+  let platformIndex = buildPlatformIndex(records);
 
   for (const source of config.sources) {
     try {
@@ -281,15 +297,25 @@ export async function runIngestion(configOverrides = {}) {
           normalized,
           records,
           mergeDecisions,
-          config.fuzzyThreshold
+          config.fuzzyThreshold,
+          platformIndex
         );
         if (!records[key]) {
-          records[key] = {
+          const newRecord = {
             record: normalized,
             hash: computeRecordHash(normalized),
             version: 1,
             lastSeen: new Date().toISOString(),
           };
+          records[key] = newRecord;
+
+          // Update platform index with new record
+          const normalizedPlatform = normalizeTitle(normalized.platform || "");
+          if (!platformIndex[normalizedPlatform]) {
+            platformIndex[normalizedPlatform] = [];
+          }
+          platformIndex[normalizedPlatform].push({ key, value: newRecord });
+
           if (reason === "fuzzy") {
             mergeDecisions[deterministicKey] = key;
           }
@@ -397,10 +423,7 @@ async function runCli() {
   if (args.includes("--config")) {
     const configIndex = args.indexOf("--config");
     const nextArg = args[configIndex + 1];
-    if (
-      nextArg === undefined ||
-      nextArg.startsWith("--")
-    ) {
+    if (nextArg === undefined || nextArg.startsWith("--")) {
       console.error("Error: --config flag must be followed by a valid path.");
       process.exit(1);
     }
@@ -411,10 +434,7 @@ async function runCli() {
   const portIndex = args.indexOf("--port");
   let port = portIndex !== -1 ? args[portIndex + 1] : undefined;
   if (port !== undefined) {
-    if (
-      !/^\d+$/.test(port) ||
-      (Number(port) < 1 || Number(port) > 65535)
-    ) {
+    if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535) {
       console.error(
         `[ingest] Invalid port: "${port}". Port must be an integer between 1 and 65535.`
       );
