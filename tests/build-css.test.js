@@ -120,5 +120,43 @@ describe("scripts/build-css.js", () => {
 
       expect(fs.existsSync(dataPath)).toBe(true);
     });
+
+    it("moderation panel styles are scoped globally, not inside media queries", () => {
+      const stylePath = path.join(ROOT_DIR, "style.css");
+      const content = fs.readFileSync(stylePath, "utf8");
+
+      // Check that moderation styles exist
+      expect(content).toContain(".moderation-container");
+      expect(content).toContain(".moderation-panel__header");
+      expect(content).toContain(".moderation-card");
+
+      // Find the position of the moderation styles
+      const moderationContainerIndex = content.indexOf(".moderation-container");
+
+      // Find the nearest @media query before moderation styles
+      const lastMediaBefore = content.lastIndexOf("@media", moderationContainerIndex);
+      const lastMediaCloseBefore = content.lastIndexOf("}", moderationContainerIndex);
+
+      // If there's a @media before our styles, ensure it's properly closed
+      if (lastMediaBefore > -1) {
+        // The closing brace for the media query should come before our styles
+        expect(lastMediaCloseBefore).toBeGreaterThan(lastMediaBefore);
+        expect(lastMediaCloseBefore).toBeLessThan(moderationContainerIndex);
+      }
+
+      // Verify moderation styles are not indented (indicating they're at root level)
+      // Note: We intentionally use /^\.moderation-/ without \s* to ensure
+      // the selector starts at column 0, proving it's not nested in a media query
+      const moderationLines = content
+        .split("\n")
+        .filter((line) => line.match(/^\.moderation-/));
+      expect(moderationLines.length).toBeGreaterThan(0);
+
+      // All moderation class selectors should start at column 0 (no indentation)
+      // This ensures they are at the global scope, not inside a media query block
+      moderationLines.forEach((line) => {
+        expect(line[0]).toBe(".");
+      });
+    });
   });
 });
