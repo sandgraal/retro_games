@@ -5,7 +5,7 @@ Use this guide to configure Supabase credentials without committing secrets.
 ## Prerequisites
 
 - Node.js 20.19+ and npm.
-- Supabase project URL and anon key with access to the table or view that holds your games (defaults to trying `games`, then `games_view`, then `games_new`).
+- Supabase project URL and anon key with access to the `games_consolidated` view.
 
 ## 1. Install dependencies
 
@@ -24,9 +24,7 @@ Edit `.env` and provide:
 ```
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=anon-key
-# Optional overrides when your dataset lives in a different table or view:
-# SUPABASE_TABLE=games_new
-# SUPABASE_TABLES=games_view,games_new
+# The client queries the `games_consolidated` view for game data.
 # Optional streaming/aggregate overrides
 # SUPABASE_STREAM_PAGE_SIZE=400
 # SUPABASE_RPC_GENRES=rpc_genre_counts

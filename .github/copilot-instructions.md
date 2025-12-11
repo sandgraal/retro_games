@@ -96,7 +96,7 @@ Games are identified by compound keys: `gamename___platform` (lowercase, triple 
 
 ```typescript
 import { generateGameKey } from "./core/keys";
-const key = generateGameKey({ game_name: "Chrono Trigger", platform: "SNES" });
+const key = generateGameKey("Chrono Trigger", "SNES");
 // "chrono trigger___snes"
 ```
 

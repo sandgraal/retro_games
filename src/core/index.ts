@@ -8,6 +8,8 @@ export {
   computed,
   effect,
   batch,
+  type Signal,
+  type ComputedSignal,
   type Subscriber,
   type Unsubscribe,
   type Getter,
@@ -16,25 +18,46 @@ export {
 
 // Type definitions
 export type {
+  // Game types
   Game,
   GameKey,
   GameWithKey,
+  // Collection types
   CollectionStatus,
   CollectionEntry,
   CollectionMap,
+  // Price types
   PriceData,
   PriceMap,
+  PricingSource,
+  PriceLoadResult,
+  RegionalOffer,
+  PricingOffers,
+  ExternalLinks,
+  // Filter types
   FilterState,
   SortOption,
+  // UI types
   ViewMode,
   Theme,
   UIState,
+  // Data types
   DataSource,
   DataLoadResult,
+  // Event types
   GameStatusChangeEvent,
   GameModalOpenEvent,
+  // Stats types
   CollectionStats,
+  // Config types
   SupabaseConfig,
+  // Auth & moderation types
+  AuthRole,
+  SuggestionAuthor,
+  SuggestionStatus,
+  SuggestionRecord,
+  AuditLogEntry,
+  // Utility types
   DeepPartial,
   NonNullableFields,
 } from "./types";
