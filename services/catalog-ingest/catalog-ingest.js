@@ -242,14 +242,19 @@ async function resolveAuth(req) {
 async function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
+    let isDone = false;
     req.on("data", (chunk) => {
+      if (isDone) return;
       data += chunk;
       // Basic guard against huge payloads
       if (data.length > 1e6) {
+        isDone = true;
+        req.destroy();
         reject(new Error("Payload too large"));
       }
     });
     req.on("end", () => {
+      if (isDone) return;
       try {
         const parsed = data ? JSON.parse(data) : {};
         resolve(parsed);
@@ -709,8 +714,13 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         return;
       }
 
-      if (
-        req.method === "POST" &&
+        // Extract suggestionId using regex for robustness
+        const match = url.pathname.match(/^\/api\/v1\/moderation\/suggestions\/([^/]+)\/decision$/);
+        if (!match) {
+          sendJson(res, 400, { error: "Invalid suggestion decision URL" });
+          return;
+        }
+        const suggestionId = match[1];
         url.pathname.startsWith("/api/v1/moderation/suggestions/") &&
         url.pathname.endsWith("/decision")
       ) {
