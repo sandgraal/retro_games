@@ -1024,8 +1024,9 @@ describe("startReadApiServer", () => {
       server = startReadApiServer({ port });
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const adminToken = getTestJwt("admin");
       const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "admin" },
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
       expect(response.statusCode).toBe(200);
       const json = JSON.parse(response.body);
