@@ -5,6 +5,7 @@
 - TypeScript + Vite single-page app for tracking retro game collections with a custom signal system and virtualized card grid.
 - Local-first data powered by `localStorage` (collection, notes, preferences) with optional Supabase metadata when `config.js` + CDN client are present.
 - Pricing and dashboard value displays read from the bundled `data/sample-price-history.json` snapshot (values in cents).
+- Backend worker `services/catalog-ingest/` normalizes external sources into versioned catalog snapshots and serves a read API for caching.
 - Offline-friendly delivery via `public/manifest.json` and `public/sw.js`; GH Pages deployment is supported via Vite base path configuration.
 
 ## dependency_graph
@@ -18,7 +19,7 @@
 - **Dev/Preview:** `npm run dev`, `npm run preview`.
 - **Build/Typecheck:** `npm run build` (tsc + Vite), `npm run typecheck`, `npm run build:config`, `npm run build:css` (legacy CSS build).
 - **Quality:** `npm run lint`, `npm run format:check`, `npm test`, `npm run test:e2e` (requires `npx playwright install --with-deps`), `npm run lighthouse`.
-- **Data/Utility:** `npm run sitemap`, `npm run prices:update`, `npm run prices:update:ebay`, `npm run archive:media`, `npm run audit:covers`, `npm run enrich:data`.
+- **Data/Utility:** `npm run sitemap`, `npm run ingest:catalog`, `npm run prices:update`, `npm run prices:update:ebay`, `npm run archive:media`, `npm run audit:covers`, `npm run enrich:data`.
 
 ## key_paths_by_feature
 
@@ -28,6 +29,7 @@
 - **UI components:** `src/ui/` for header, filters, dashboard, grid/virtualization, modal, and settings modal.
 - **Features:** `src/features/export.ts` for CSV/backup/share codes and import helpers.
 - **Samples/assets:** `data/` for games/price snapshots, `public/` for service worker + manifest, `supabase/` for SQL schemas.
+- **Backend ingest:** `services/catalog-ingest/` houses the scheduled catalog worker, snapshots, and read API helper.
 - **Scripts:** `scripts/` for config generation, CSS build, sitemap and price updates, and archival utilities.
 
 ## known_constraints_and_feature_flags

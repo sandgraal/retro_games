@@ -1,0 +1,18 @@
+{
+  "scheduleMinutes": 1440,
+  "fuzzyThreshold": 0.82,
+  "sources": [
+    {
+      "name": "igdb",
+      "url": "https://example.com/igdb/catalog.json",
+      "headers": {
+        "Client-ID": "your-client-id",
+        "Authorization": "Bearer your-token"
+      }
+    },
+    {
+      "name": "mobygames",
+      "url": "https://example.com/moby/games.json"
+    }
+  ]
+}
