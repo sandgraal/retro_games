@@ -131,12 +131,12 @@ function normalizeRecord(raw, sourceName) {
     genres: Array.isArray(raw.genres)
       ? raw.genres
       : raw.genres
-      ? [raw.genres]
-      : Array.isArray(raw.genre)
-      ? raw.genre
-      : raw.genre
-      ? [raw.genre]
-      : [],
+        ? [raw.genres]
+        : Array.isArray(raw.genre)
+          ? raw.genre
+          : raw.genre
+            ? [raw.genre]
+            : [],
     esrb: raw.esrb || raw.rating || null,
     pegi: raw.pegi || null,
     assets: raw.assets || {
@@ -397,10 +397,7 @@ async function runCli() {
   if (args.includes("--config")) {
     const configIndex = args.indexOf("--config");
     const nextArg = args[configIndex + 1];
-    if (
-      nextArg === undefined ||
-      nextArg.startsWith("--")
-    ) {
+    if (nextArg === undefined || nextArg.startsWith("--")) {
       console.error("Error: --config flag must be followed by a valid path.");
       process.exit(1);
     }
@@ -411,10 +408,7 @@ async function runCli() {
   const portIndex = args.indexOf("--port");
   let port = portIndex !== -1 ? args[portIndex + 1] : undefined;
   if (port !== undefined) {
-    if (
-      !/^\d+$/.test(port) ||
-      (Number(port) < 1 || Number(port) > 65535)
-    ) {
+    if (!/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535) {
       console.error(
         `[ingest] Invalid port: "${port}". Port must be an integer between 1 and 65535.`
       );
