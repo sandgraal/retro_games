@@ -367,7 +367,19 @@ async function runCli() {
   const once = args.includes("--once");
   const serve = args.includes("--serve");
   const portIndex = args.indexOf("--port");
-  const port = portIndex !== -1 ? Number(args[portIndex + 1]) : undefined;
+  let port = portIndex !== -1 ? args[portIndex + 1] : undefined;
+  if (port !== undefined) {
+    if (
+      !/^\d+$/.test(port) ||
+      (Number(port) < 1 || Number(port) > 65535)
+    ) {
+      console.error(
+        `[ingest] Invalid port: "${port}". Port must be an integer between 1 and 65535.`
+      );
+      process.exit(1);
+    }
+    port = Number(port);
+  }
 
   const config = configPath
     ? { ...DEFAULT_CONFIG, ...(await readJson(configPath, {})) }
