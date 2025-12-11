@@ -166,12 +166,39 @@ function mergeRecords(base, incoming) {
   };
 }
 
+// Only allow safe headers to be sent in fetch requests
+function sanitizeHeaders(headers) {
+  if (!headers || typeof headers !== "object") return undefined;
+  // Whitelist of allowed header names (case-insensitive)
+  const allowed = [
+    "accept",
+    "accept-language",
+    "content-type",
+    "user-agent",
+    "x-requested-with",
+    "referer",
+    "origin",
+  ];
+  const sanitized = {};
+  for (const [key, value] of Object.entries(headers)) {
+    if (
+      typeof key === "string" &&
+      allowed.includes(key.toLowerCase()) &&
+      typeof value === "string"
+    ) {
+      sanitized[key] = value;
+    }
+  }
+  return Object.keys(sanitized).length > 0 ? sanitized : undefined;
+}
+
 async function fetchSourceRecords(source) {
   if (source.records) {
     return source.records;
   }
   if (!source.url) return [];
-  const response = await fetch(source.url, { headers: source.headers });
+  const safeHeaders = sanitizeHeaders(source.headers);
+  const response = await fetch(source.url, { headers: safeHeaders });
   if (!response.ok) {
     throw new Error(`Failed to fetch ${source.name}: ${response.status}`);
   }
