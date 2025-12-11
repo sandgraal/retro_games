@@ -2,6 +2,8 @@
 
 _Last reviewed: 2025-11-11_
 
+> **⚠️ ARCHIVED DOCUMENT**: This audit references an earlier architecture. Some file paths and migration names are outdated. The codebase was refactored in December 2025 with new module structure under `src/`. See [`docs/current-state.md`](../current-state.md) and [`docs/architecture.md`](../architecture.md) for current details.
+
 This audit verifies roadmap items in Phases 1 and 2. Each bullet either confirms the implementation with evidence or flags remaining work that needs product guidance before engineers proceed.
 
 ## Phase 1 – Foundation Hardening

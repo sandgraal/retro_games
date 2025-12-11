@@ -1,29 +1,29 @@
 # Data Pipeline & Backend Plan
 
-This project now tracks its Supabase schema in `supabase/migrations/`. The initial migration (`20250107120000_init.sql`) creates normalized tables for:
+This project tracks its Supabase schema in `supabase/migrations/`. The current migration (`20241215000000_phase5_global_catalog.sql`) adds Phase 5 infrastructure including:
 
-- `platforms` – canonical platform list with `slug`, `manufacturer`, `release_year`.
-- `genres` – normalized genre names.
-- `games` – core metadata linked to `platforms`, including rating, release info, cover/detail URLs.
-- `game_genres` – many-to-many join between games and genres.
-- `game_media` – screenshot/box art URLs for use in the modal gallery.
-- `user_game_notes` – placeholder table for future server-side statuses/notes once auth lands.
-- `20250301100000_dashboard_aggregates.sql` layers on top with the `rpc_genre_counts` and `rpc_timeline_counts` helper functions. The frontend calls these RPCs (falling back to SQL group queries) to keep dashboard charts accurate without downloading the entire dataset.
+- `catalog_submissions` – community game suggestions with moderation workflow.
+- `audit_log` – tracks all moderation actions and data changes.
+- `game_external_ids` – links to IGDB, RAWG, MobyGames, etc.
+- `ingestion_runs` – tracks catalog ingest job history.
+- Full-text search with `pg_trgm` for fuzzy matching.
+
+> **Note:** The frontend currently uses the catalog ingest worker (`services/catalog-ingest/`) for data management rather than direct Supabase table seeding. Games flow from external APIs through the ingest pipeline into local snapshots, with optional Supabase sync when credentials are configured.
 
 ## Workflow
 
 1. Install Supabase CLI (`npm install -g supabase` or follow Supabase docs).
 2. Authenticate and link your project (`supabase login`, `supabase link --project-ref <ref>`).
 3. Apply migrations: `supabase db push` (dev) or `supabase db reset` (local Docker).
-4. Validate migrations with `scripts/run-supabase-lint.sh` (wraps `supabase db lint` but gracefully skips if the `plpgsql_check` extension is unavailable on the target database).
-5. Populate lookup tables and games via the seeding SQL generator: `npm run seed:generate` to produce `supabase/seed.sql`, then run `supabase db remote commit --file supabase/seed.sql` or `psql` against your instance.
+4. Validate migrations with `supabase db lint` (requires `plpgsql_check` extension on target database).
+5. For data seeding, use the catalog ingest worker: `npm run ingest:catalog` to pull from configured sources.
 6. Schedule backups via `.github/workflows/db-backup.yml` (requires `SUPABASE_DB_URL` secret); artifacts retain the latest dump.
 
-## Next steps
+## Status
 
-- [x] Author CSV → SQL seeding utility that loads `games.csv` into `platforms`, `games`, `game_genres`, and `game_media` (`scripts/generate-seed-sql.js`).
 - [x] Schedule automated backups (GitHub Action `.github/workflows/db-backup.yml`).
-- [x] Document recovery playbook once backup automation is in place (`docs/recovery-playbook.md`).
+- [x] Document recovery playbook (`docs/recovery-playbook.md`).
+- [ ] Build CSV → SQL seeding utility (deferred; catalog ingest worker handles data flow).
 
 Keep this document updated whenever schema/migration workflows change.
 

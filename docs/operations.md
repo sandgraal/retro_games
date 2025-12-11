@@ -15,7 +15,7 @@
 ## Scheduled jobs / cron
 
 - **Price refresh (GitHub Actions)**: `.github/workflows/price-refresh.yml` runs `npm run prices:update -- --limit 25` twice daily. Configure `EBAY_APP_ID`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`; adjust `EBAY_REFRESH_HOURS` to throttle API usage. Use the workflow dispatch inputs to change `limit`, `filter`, or `dry_run` during incidents.
-- **Database backups**: `.github/workflows/db-backup.yml` captures `pg_dump` artifacts daily at 06:00 UTC using `SUPABASE_DB_URL` and retains the last seven days.
+- **Database backups**: `.github/workflows/db-backup.yml` captures `pg_dump` artifacts daily at 06:00 UTC using `SUPABASE_DB_URL` and retains the last 30 days.
 - **Catalog ingest**: run `npm run ingest:catalog` locally or via a scheduler. The `scheduleMinutes` field in `services/catalog-ingest/config.example.json` controls cadence when the worker is kept warm with `--serve`.
 
 ## Runbooks

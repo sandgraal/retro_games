@@ -12,10 +12,10 @@ The Retro Games List frontend expects every game entry to provide an absolute im
 
 ## How to Populate Cover Art
 
-1. **Update the seed data**  
-   Add the desired image URL to the `Cover` column in `games.csv` (or whichever dataset you load into Supabase). The `npm run seed:generate` script mirrors this value into both the `games.cover_url` column and the `game_media` gallery table when reseeding.
+1. **Update sample data**  
+   Add the desired image URL to the `cover` field in `data/sample-games.json` for local development. For production, covers flow through the catalog ingest worker from external APIs (IGDB, RAWG, etc.).
 2. **Maintain gallery entries**  
-   If you manage additional screenshots, extend the CSV columns or append rows to `supabase/seed.sql` so that modal galleries stay in sync.
+   Screenshots can be added to the `screenshots` array in each game object. The modal gallery displays these alongside the cover.
 3. **Sync the offline fallback**
    When Supabase is disabled, the UI relies on `data/sample-games.json`. Mirror `cover` and `screenshots` entries there to keep local mode visually consistent.
 
