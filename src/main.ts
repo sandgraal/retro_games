@@ -183,7 +183,7 @@ function setupMobileNav(): void {
   const navItems = document.querySelectorAll<HTMLElement>(".mobile-nav-item[data-nav]");
   navItems.forEach((item) => {
     item.addEventListener("click", () => {
-      const nav = item.dataset.nav;
+      const { nav } = item.dataset;
       if (nav === "guides") {
         switchToView("guides");
       } else if (nav === "collection") {

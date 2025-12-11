@@ -3,26 +3,66 @@ import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
 import http from "http";
+import crypto from "crypto";
 import {
   buildDeterministicKey,
   fuzzyMatchScore,
   runIngestion,
   startReadApiServer,
   applyApprovedSuggestions,
-  normalizeRecord,
   computeRecordHash,
 } from "../services/catalog-ingest/catalog-ingest.js";
 
 const originalDataDir = process.env.CATALOG_DATA_DIR;
+const originalJwtSecret = process.env.SUPABASE_JWT_SECRET;
+const TEST_JWT_SECRET = "test-secret-for-catalog-ingest-tests-32chars";
 let tempDir: string;
+
+/**
+ * Creates a test JWT token for the given role using Node's crypto module
+ * This avoids issues with jose's webapi in jsdom environment
+ */
+function getTestJwt(role: string, options: { email?: string } = {}): string {
+  const header = { alg: "HS256", typ: "JWT" };
+  const payload = {
+    app_metadata: { role },
+    email: options.email || `${role}@test.example.com`,
+    sub: `test-user-${role}`,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  };
+
+  const base64UrlEncode = (obj: object): string =>
+    Buffer.from(JSON.stringify(obj))
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+  const headerBase64 = base64UrlEncode(header);
+  const payloadBase64 = base64UrlEncode(payload);
+  const data = `${headerBase64}.${payloadBase64}`;
+
+  const signature = crypto
+    .createHmac("sha256", TEST_JWT_SECRET)
+    .update(data)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+
+  return `${data}.${signature}`;
+}
 
 beforeEach(async () => {
   tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "catalog-ingest-"));
   process.env.CATALOG_DATA_DIR = tempDir;
+  process.env.SUPABASE_JWT_SECRET = TEST_JWT_SECRET;
 });
 
 afterEach(async () => {
   process.env.CATALOG_DATA_DIR = originalDataDir;
+  process.env.SUPABASE_JWT_SECRET = originalJwtSecret;
   await fs.rm(tempDir, { recursive: true, force: true });
 });
 
@@ -322,7 +362,7 @@ describe("ingestion pipeline", () => {
 
     const entries = Object.values(run.records);
     expect(entries).toHaveLength(1);
-    const [record] = entries;
+    const [record] = entries as any[];
     expect(record.version).toBe(2);
     expect(record.record.regions.sort()).toEqual(["EU", "NA"]);
     expect(new Set(record.record.genres)).toEqual(new Set(["FPS", "Shooter"]));
@@ -694,8 +734,8 @@ describe("ingestion pipeline", () => {
     );
     expect(entries[0].record.source).toHaveLength(2);
     // Verify no string concatenation occurred (would break comma-containing names)
-    expect(typeof entries[0].record.source).toBe("object");
-    expect(Array.isArray(entries[0].record.source)).toBe(true);
+    expect(typeof (entries[0] as any).record.source).toBe("object");
+    expect(Array.isArray((entries[0] as any).record.source)).toBe(true);
   });
 });
 
@@ -798,7 +838,7 @@ describe("startReadApiServer", () => {
     // Wait for server to start
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const listening = server.listening;
+    const { listening } = server;
     expect(listening).toBe(true);
 
     const address = server.address();
@@ -939,7 +979,9 @@ describe("startReadApiServer", () => {
     expect(snapshots.length).toBe(2);
 
     const port = 9881;
-    server = startReadApiServer({ port, preferredSnapshot: firstSnapshot });
+    // Use preferredSnapshot option to serve the first snapshot
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    server = startReadApiServer({ port, preferredSnapshot: firstSnapshot } as any);
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     const response = await makeRequest(port, "/api/v1/catalog");
@@ -1001,8 +1043,9 @@ describe("startReadApiServer", () => {
       server = startReadApiServer({ port });
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const contributorToken = getTestJwt("contributor");
       const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "contributor" },
+        headers: { Authorization: `Bearer ${contributorToken}` },
       });
       expect(response.statusCode).toBe(403);
       const json = JSON.parse(response.body);
@@ -1014,8 +1057,9 @@ describe("startReadApiServer", () => {
       server = startReadApiServer({ port });
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const moderatorToken = getTestJwt("moderator");
       const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "moderator" },
+        headers: { Authorization: `Bearer ${moderatorToken}` },
       });
       expect(response.statusCode).toBe(200);
       const json = JSON.parse(response.body);
@@ -1103,8 +1147,9 @@ describe("startReadApiServer", () => {
         server = startReadApiServer({ port });
         await new Promise((resolve) => setTimeout(resolve, 100));
 
+        const roleToken = getTestJwt(role);
         const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-          headers: { "x-role": role },
+          headers: { Authorization: `Bearer ${roleToken}` },
         });
         expect(response.statusCode).toBe(200);
         const json = JSON.parse(response.body);
@@ -1149,8 +1194,9 @@ describe("startReadApiServer", () => {
       server = startReadApiServer({ port });
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const moderatorToken = getTestJwt("moderator");
       const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "moderator" },
+        headers: { Authorization: `Bearer ${moderatorToken}` },
       });
       expect(response.statusCode).toBe(200);
       const json = JSON.parse(response.body);
@@ -1212,9 +1258,11 @@ describe("startReadApiServer", () => {
       server = startReadApiServer({ port });
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const moderatorToken = getTestJwt("moderator");
+
       // Test default (pending)
       const pendingResponse = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "moderator" },
+        headers: { Authorization: `Bearer ${moderatorToken}` },
       });
       expect(pendingResponse.statusCode).toBe(200);
       const pendingJson = JSON.parse(pendingResponse.body);
@@ -1226,7 +1274,7 @@ describe("startReadApiServer", () => {
         port,
         "/api/v1/moderation/suggestions?status=approved",
         {
-          headers: { "x-role": "moderator" },
+          headers: { Authorization: `Bearer ${moderatorToken}` },
         }
       );
       expect(approvedResponse.statusCode).toBe(200);
@@ -1239,7 +1287,7 @@ describe("startReadApiServer", () => {
         port,
         "/api/v1/moderation/suggestions?status=rejected",
         {
-          headers: { "x-role": "moderator" },
+          headers: { Authorization: `Bearer ${moderatorToken}` },
         }
       );
       expect(rejectedResponse.statusCode).toBe(200);
