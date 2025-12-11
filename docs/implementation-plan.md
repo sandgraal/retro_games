@@ -31,7 +31,7 @@ This document operationalizes the high-level implementation plan into actionable
 
 Work is organized into six build phases plus operational cadences. Each phase is subdivided into tracks with goal statements, exit criteria, and granular tasks. Tracks can run in parallel when dependencies are satisfied.
 
-**✅ UPDATE: Phase 0-3 Complete, Phase 5 Started (December 2025)** - All module extraction finished with 325 tests passing (311 unit + 14 e2e). New global catalog and community features in progress.
+**✅ UPDATE: Phase 0-3 Complete, Phase 5 Started (December 2025)** - All module extraction finished with 327 tests passing (313 unit + 14 e2e). New global catalog and community features in progress.
 
 ---
 
@@ -39,7 +39,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 
 | Phase                           | Status      | Progress                                        |
 | ------------------------------- | ----------- | ----------------------------------------------- |
-| Phase 0: Architecture           | ✅ COMPLETE | TypeScript, Vite, signals, 325 tests            |
+| Phase 0: Architecture           | ✅ COMPLETE | TypeScript, Vite, signals, 327 tests            |
 | Phase 1: Foundation             | ✅ COMPLETE | CI/CD, secrets, migrations                      |
 | Phase 2: UX & Features          | ✅ COMPLETE | Virtualization, pricing, media                  |
 | Phase 3: SEO & Web Vitals       | ✅ COMPLETE | JSON-LD, sitemap, Lighthouse CI                 |
@@ -60,7 +60,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 
 - **29 TypeScript modules** extracted from 5,940-line `app-legacy.js`
 - **7,100+ total lines** across all modules
-- **325 tests passing** (311 unit + 14 e2e)
+- **327 tests passing** (313 unit + 14 e2e)
 - **No file exceeds 850 lines** (largest: `ui/modal.ts` at 842 lines)
 - **All 5 tracks complete** with full test coverage
 
@@ -92,7 +92,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 | **Extract Data Layer**         | Isolate all external I/O        | Clean API boundary, Supabase logic isolated, tests mock easily       | `data/supabase.ts`, `data/loader.ts`, `data/auth.ts`, `data/pricing-provider.ts`, `data/suggestions.ts`, `data/guides.ts`                           | ✅     |
 | **Extract UI Modules**         | Separate rendering from logic   | Each UI component in own file, clean interfaces                      | `ui/game-grid.ts`, `ui/game-card.ts`, `ui/modal.ts`, `ui/filters.ts`, `ui/dashboard.ts`, `ui/settings-modal.ts`, `ui/guides.ts`, `ui/moderation.ts` | ✅     |
 | **Extract Feature Modules**    | Isolate complex feature logic   | Features independently testable, clear boundaries                    | `features/export.ts` (CSV, backup, share codes)                                                                                                     | ✅     |
-| **Update Test Infrastructure** | Tests work with new structure   | All tests passing, coverage maintained/improved                      | Module-specific tests, integration tests, 325 tests passing                                                                                         | ✅     |
+| **Update Test Infrastructure** | Tests work with new structure   | All tests passing, coverage maintained/improved                      | Module-specific tests, integration tests, 327 tests passing                                                                                         | ✅     |
 | **Documentation & Cleanup**    | Clear handoff to next phase     | Architecture documented, old code archived, migration guide complete | `docs/architecture.md`, updated contributing docs, `archive/legacy-app/`                                                                            | ✅     |
 
 **Success Metrics for Phase 0** (All achieved ✅):
@@ -100,7 +100,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 - ✅ No file exceeds 850 lines (largest: `ui/modal.ts` at 842 lines)
 - ✅ No function exceeds 50 lines
 - ✅ ESLint completes in <10 seconds
-- ✅ Test coverage: 325 tests passing (311 unit + 14 e2e)
+- ✅ Test coverage: 327 tests passing (313 unit + 14 e2e)
 - ✅ All existing tests passing
 - ✅ Zero regressions in functionality
 - ✅ Documentation complete

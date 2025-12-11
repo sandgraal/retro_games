@@ -432,6 +432,36 @@ export function toggleGenreFilter(genre: string): void {
 }
 
 /**
+ * Toggle region filter
+ */
+export function toggleRegionFilter(region: string): void {
+  filterStateSignal.set((current) => {
+    const regions = new Set(current.regions);
+    if (regions.has(region)) {
+      regions.delete(region);
+    } else {
+      regions.add(region);
+    }
+    return { ...current, regions };
+  });
+}
+
+/**
+ * Toggle status filter
+ */
+export function toggleStatusFilter(status: string): void {
+  filterStateSignal.set((current) => {
+    const statuses = new Set(current.statuses);
+    if (statuses.has(status as any)) {
+      statuses.delete(status as any);
+    } else {
+      statuses.add(status as any);
+    }
+    return { ...current, statuses };
+  });
+}
+
+/**
  * Set search query
  */
 export function setSearchQuery(query: string): void {

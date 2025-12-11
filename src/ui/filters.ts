@@ -11,6 +11,8 @@ import {
   filterState,
   togglePlatformFilter,
   toggleGenreFilter,
+  toggleRegionFilter,
+  toggleStatusFilter,
   setSearchQuery,
   setSort,
   resetFilters,
@@ -187,15 +189,20 @@ function setupClearButton(cleanup: (() => void)[]): void {
  */
 function handleFilterChange(e: Event): void {
   const target = e.target as HTMLInputElement;
-  if (target.type !== "checkbox" || !target.dataset.filter) return;
+  if (target.type !== "checkbox") return;
 
   const filterType = target.dataset.filter;
-  const value = target.value;
+  const { value } = target;
 
   if (filterType === "platform") {
     togglePlatformFilter(value);
   } else if (filterType === "genre") {
     toggleGenreFilter(value);
+  } else if (filterType === "region") {
+    toggleRegionFilter(value);
+  } else if (filterType === "status" || target.closest("#statusFilters")) {
+    // Status filters may not have data-filter attribute in HTML
+    toggleStatusFilter(value);
   }
 }
 

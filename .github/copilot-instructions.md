@@ -142,7 +142,7 @@ npm run build:config # Generate config.js from .env
 
 - **Unit tests**: `tests/*.test.ts` - Vitest with jsdom
 - **E2E tests**: `tests/e2e/*.spec.js` - Playwright
-- Current: 311 unit tests + 14 e2e tests = 325 total
+- Current: 313 unit tests + 14 e2e tests = 327 total
 
 ```bash
 npm test                    # Run all unit tests

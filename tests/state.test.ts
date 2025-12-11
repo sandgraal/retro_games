@@ -17,6 +17,8 @@ import {
   resetFilters,
   togglePlatformFilter,
   toggleGenreFilter,
+  toggleRegionFilter,
+  toggleStatusFilter,
   setSearchQuery,
   setSort,
   setTheme,
@@ -167,6 +169,22 @@ describe("state/store", () => {
 
       toggleGenreFilter("RPG");
       expect(filterState.get().genres.has("RPG")).toBe(false);
+    });
+
+    it("should toggle region filter", () => {
+      toggleRegionFilter("NTSC");
+      expect(filterState.get().regions.has("NTSC")).toBe(true);
+
+      toggleRegionFilter("NTSC");
+      expect(filterState.get().regions.has("NTSC")).toBe(false);
+    });
+
+    it("should toggle status filter", () => {
+      toggleStatusFilter("owned");
+      expect(filterState.get().statuses.has("owned")).toBe(true);
+
+      toggleStatusFilter("owned");
+      expect(filterState.get().statuses.has("owned")).toBe(false);
     });
 
     it("should set search query", () => {

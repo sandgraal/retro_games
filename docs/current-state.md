@@ -21,7 +21,7 @@ _Last updated: December 2025_
 
 ## Tests
 
-- **Vitest**: 311 unit tests across core, state, features, formatting, suggestions, and build scripts.
+- **Vitest**: 313 unit tests across core, state, features, formatting, suggestions, and build scripts.
 - **Playwright**: 14 tests across smoke, filters, and aria checks (`tests/e2e/*.spec.js`).
 - Commands: `npm test`, `npm run test:e2e` (after `npx playwright install --with-deps`).
 

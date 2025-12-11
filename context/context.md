@@ -1,4 +1,4 @@
-# Repository Context Snapshot (2026-01)
+# Repository Context Snapshot (2025-12)
 
 ## project_summary
 

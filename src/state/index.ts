@@ -40,6 +40,8 @@ export {
   resetCollection,
   togglePlatformFilter,
   toggleGenreFilter,
+  toggleRegionFilter,
+  toggleStatusFilter,
   setSearchQuery,
   setSort,
   setTheme,

@@ -61,7 +61,7 @@ npm install
 npm run dev           # Vite dev server on http://localhost:3000
 npm run build         # TypeScript check + Vite build
 npm run lint          # ESLint over src + scripts
-npm test              # Vitest (311 tests)
+npm test              # Vitest (313 tests)
 npm run test:e2e      # Playwright (14 tests); run `npx playwright install --with-deps` once
 npm run build:config  # Generate config.js from .env
 ```

@@ -11,7 +11,7 @@ _Last updated: December 2025_
 | Application | TypeScript + Vite SPA with custom signals; Supabase backend with local fallback |
 | Language    | TypeScript (strict)                                                             |
 | Build       | Vite 7                                                                          |
-| Tests       | 309 Vitest unit tests + 14 Playwright e2e tests                                 |
+| Tests       | 313 Vitest unit tests + 14 Playwright e2e tests                                 |
 | Data        | Supabase (391 games) + `data/sample-games.json` fallback                        |
 | Phase       | **Phase 5: Global Catalog & Community Submissions** (active)                    |
 
@@ -48,7 +48,7 @@ _Last updated: December 2025_
 npm install
 npm run dev           # http://localhost:3000
 npm run build         # tsc --noEmit + vite build
-npm test              # Vitest (309 tests)
+npm test              # Vitest (313 tests)
 npm run test:e2e      # Playwright (after `npx playwright install --with-deps`)
 npm run lint          # ESLint
 npm run build:config  # Emit config.js from .env
@@ -107,18 +107,22 @@ services/
 | Test File                            | Tests | Notes                                  |
 | ------------------------------------ | ----- | -------------------------------------- |
 | `tests/core.test.ts`                 | 26    | Signals, keys, types                   |
-| `tests/state.test.ts`                | 28    | Store, filters, sorting                |
-| `tests/features.test.ts`             | 12    | Export/share/backup                    |
+| `tests/state.test.ts`                | 30    | Store, filters, sorting                |
+| `tests/features.test.ts`             | 17    | Export/share/backup                    |
 | `tests/format.test.ts`               | 36    | Formatting helpers                     |
+| `tests/components.test.ts`           | 15    | UI component utilities                 |
+| `tests/modal.test.ts`                | 7     | Modal component                        |
+| `tests/suggestions.test.ts`          | 9     | Community suggestions                  |
+| `tests/pricing-provider.test.ts`     | 9     | Pricing data provider                  |
 | `tests/catalog-ingest.test.ts`       | 60    | Ingestion, submissions, moderation API |
-| `tests/data-loader.test.ts`          | 3     | Data loader with Supabase fallback     |
+| `tests/data-loader.test.ts`          | 4     | Data loader with Supabase fallback     |
 | `tests/fetch-covers.test.js`         | 48    | Cover fetching script                  |
 | `tests/audit-missing-covers.test.js` | 26    | Cover audit script                     |
 | `tests/archive-media.test.js`        | 14    | Media archival script                  |
-| `tests/build-css.test.js`            | 11    | CSS bundler script                     |
+| `tests/build-css.test.js`            | 12    | CSS bundler script                     |
 | `tests/e2e/*.spec.js`                | 14    | Playwright smoke/filters/aria specs    |
 
-**Total: 309 unit tests + 14 E2E tests = 323 tests**
+**Total: 313 unit tests + 14 E2E tests = 327 tests**
 
 ## What To Work On
 
