@@ -71,3 +71,6 @@ export {
   keyMatchesGame,
   createGameLookup,
 } from "./keys";
+
+// Storage helpers
+export { safeStorage, isStorageAvailable } from "./storage";

@@ -176,6 +176,7 @@ select:focus {
   :root {
     --bg-primary: #000000;
     --bg-elevated: #1a1a1a;
+    --bg-elevated-rgb: 26, 26, 26;
     --text-primary: #ffffff;
     --accent-primary: #00ffff;
   }
