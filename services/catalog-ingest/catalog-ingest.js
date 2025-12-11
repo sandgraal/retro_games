@@ -645,7 +645,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         }
         const auth = await resolveAuth(req);
         const body = await parseJsonBody(req);
-        const delta = body.delta || body;
+        const delta = "delta" in body ? body.delta : body;
         if (!delta || typeof delta !== "object") {
           sendJson(res, 400, { error: "Missing suggestion payload" });
           return;
@@ -740,7 +740,6 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
           return;
         }
         const suggestionId = match[1];
-
         const body = await parseJsonBody(req);
         if (!body?.status || !["approved", "rejected"].includes(body.status)) {
           sendJson(res, 400, { error: "Decision status must be approved or rejected" });
