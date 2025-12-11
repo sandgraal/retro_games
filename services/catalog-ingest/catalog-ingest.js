@@ -325,13 +325,25 @@ export async function runIngestion(configOverrides = {}) {
         const merged = mergeRecords(records[key].record, normalized);
         const hash = computeRecordHash(merged);
         if (hash !== records[key].hash) {
-          records[key] = {
+          const updatedRecord = {
             ...records[key],
             record: merged,
             hash,
             version: records[key].version + 1,
             lastSeen: new Date().toISOString(),
           };
+          records[key] = updatedRecord;
+
+          // Update platform index with new record version
+          const normalizedPlatform = normalizeTitle(merged.platform || "");
+          const bucket = platformIndex[normalizedPlatform];
+          if (bucket) {
+            const indexEntry = bucket.find((entry) => entry.key === key);
+            if (indexEntry) {
+              indexEntry.value = updatedRecord;
+            }
+          }
+
           metrics.upserted += 1;
         } else {
           metrics.unchanged += 1;
