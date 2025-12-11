@@ -35,7 +35,11 @@ function resolveRegionCodes(raw) {
 function readGames(csvPath, filter) {
   ensureFileExists(csvPath, "games.csv");
   const csvContent = fs.readFileSync(csvPath, "utf8");
-  const records = parse(csvContent, { columns: true, skip_empty_lines: true });
+  const records = parse(csvContent, {
+    columns: true,
+    skip_empty_lines: true,
+    relax_column_count: true,
+  });
   const unique = new Map();
   records.forEach((row) => {
     const name = row["Game Name"]?.trim();

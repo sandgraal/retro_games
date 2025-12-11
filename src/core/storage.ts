@@ -15,8 +15,6 @@ const noopStorage: Storage = {
   setItem: () => {},
 };
 
-export const safeStorage: Storage = hasBrowserStorage
-  ? window.localStorage
-  : noopStorage;
+export const safeStorage: Storage = hasBrowserStorage ? window.localStorage : noopStorage;
 
 export const isStorageAvailable = hasBrowserStorage;

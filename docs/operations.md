@@ -2,15 +2,15 @@
 
 ## Environment variables
 
-| Variable                                              | Purpose                                                                                                                            |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY`                   | Frontend + scripts connect to Supabase for catalog + price views. Required when serving live data.                                 |
-| `SUPABASE_SERVICE_ROLE_KEY`                           | Enables price snapshot inserts from `scripts/update-ebay-prices.js` and variant price upserts. Omit to run in read-only/demo mode. |
-| `SUPABASE_JWT_SECRET`                                 | Lets the catalog ingest service validate contributor roles when Supabase Auth is enabled.                                          |
-| `SUPABASE_STORAGE_*_BUCKET`                           | Bucket names for public/auth/archive/pending media used by moderation decisions.                                                   |
-| `EBAY_APP_ID`, `EBAY_GLOBAL_ID`, `EBAY_REFRESH_HOURS` | Credentials + cadence for the pricing fetcher. `EBAY_REFRESH_HOURS` controls staleness before a refresh.                           |
-| `DOTENV_PRIVATE_KEY`                                  | Needed in CI to decrypt `.env` when generating `config.js`.                                                                        |
-| `CATALOG_DATA_DIR`                                    | Override where catalog snapshots/metrics land when running the ingest worker.                                                      |
+| Variable                                              | Purpose                                                                                                                             |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`                   | Frontend + scripts connect to Supabase for catalog + price views. Required when serving live data.                                  |
+| `SUPABASE_SERVICE_ROLE_KEY`                           | Enables price snapshot inserts from `scripts/update-ebay-prices.cjs` and variant price upserts. Omit to run in read-only/demo mode. |
+| `SUPABASE_JWT_SECRET`                                 | Lets the catalog ingest service validate contributor roles when Supabase Auth is enabled.                                           |
+| `SUPABASE_STORAGE_*_BUCKET`                           | Bucket names for public/auth/archive/pending media used by moderation decisions.                                                    |
+| `EBAY_APP_ID`, `EBAY_GLOBAL_ID`, `EBAY_REFRESH_HOURS` | Credentials + cadence for the pricing fetcher. `EBAY_REFRESH_HOURS` controls staleness before a refresh.                            |
+| `DOTENV_PRIVATE_KEY`                                  | Needed in CI to decrypt `.env` when generating `config.js`.                                                                         |
+| `CATALOG_DATA_DIR`                                    | Override where catalog snapshots/metrics land when running the ingest worker.                                                       |
 
 ## Scheduled jobs / cron
 

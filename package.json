@@ -28,7 +28,7 @@
     "lighthouse": "npx @lhci/cli autorun --config=lighthouserc.json",
     "sitemap": "node scripts/generate-sitemap.js",
     "ingest:catalog": "node services/catalog-ingest/catalog-ingest.js --once",
-    "prices:update": "dotenvx run -- node scripts/update-ebay-prices.js",
+    "prices:update": "dotenvx run -- node scripts/update-ebay-prices.cjs",
     "archive:media": "dotenvx run -- node scripts/archive-media.js",
     "audit:covers": "dotenvx run -- node scripts/audit-missing-covers.js",
     "enrich:data": "dotenvx run -- node scripts/enrich-game-data.js",

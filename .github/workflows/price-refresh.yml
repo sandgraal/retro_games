@@ -84,7 +84,7 @@ jobs:
           fi
 
           echo "Running eBay price refresh with args: ${ARGS[*]}"
-          npx dotenvx run -- node scripts/update-ebay-prices.js "${ARGS[@]}"
+          npx dotenvx run -- node scripts/update-ebay-prices.cjs "${ARGS[@]}"
 
       - name: Save price cache
         if: ${{ success() }}

@@ -38,7 +38,7 @@ Price valuations now feed the app via the `game_price_snapshots` table (and the 
 
 Row Level Security allows public read access while inserts/deletes are restricted to the service role. The ingestion script is:
 
-- `scripts/update-ebay-prices.js` (eBay Finding API; median sold price from completed listings)
+- `scripts/update-ebay-prices.cjs` (eBay Finding API; median sold price from completed listings)
 
 1. Read `games.csv` to build a de-duped list of `game_name + platform`.
 2. Fetch the latest price for the next stale title from eBay (`EBAY_APP_ID`, `EBAY_GLOBAL_ID`).
