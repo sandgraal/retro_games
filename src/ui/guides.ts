@@ -50,8 +50,9 @@ function renderGuideIndex(): HTMLElement {
         Collector's Guides
       </h1>
       <p class="guides-hero-subtitle">
-        Your treasure map to the world of retro gaming. Expert guides for finding, identifying, 
-        and valuing games across ${consoleCount} console platforms and ${genreCount} genre categories.
+        Your treasure map to the world of retro gaming. Discover expert tips for finding and
+        identifying games, plus clear guidance on valuing titles across ${consoleCount} console
+        platforms and ${genreCount} genre categories.
       </p>
       <div class="guides-hero-stats">
         <div class="guides-hero-stat">
