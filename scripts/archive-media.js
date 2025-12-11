@@ -3,15 +3,30 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { resolveWithinBase } from "./utils/path-utils.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const PROJECT_ROOT = path.resolve(__dirname, "..");
+const BACKUP_ROOT = path.join(PROJECT_ROOT, "backups");
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 const DEFAULT_BUCKET = process.env.SUPABASE_STORAGE_ARCHIVE_BUCKET || "media-archive";
 
+function resolveOutput(targetPath = path.join("backups", DEFAULT_BUCKET)) {
+  return resolveWithinBase(BACKUP_ROOT, targetPath, {
+    allowBase: true,
+    resolveFrom: PROJECT_ROOT,
+    errorMessage: `Invalid path: ${targetPath}`,
+  });
+}
+
 function parseArgs(argv) {
   const options = {
     bucket: DEFAULT_BUCKET,
-    output: path.resolve(process.cwd(), "backups", "media-archive"),
+    output: resolveOutput(),
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -19,7 +34,7 @@ function parseArgs(argv) {
       options.bucket = argv[i + 1];
       i += 1;
     } else if ((arg === "--out" || arg === "--output") && argv[i + 1]) {
-      options.output = path.resolve(argv[i + 1]);
+      options.output = resolveOutput(argv[i + 1]);
       i += 1;
     }
   }
@@ -74,8 +89,26 @@ async function listObjects(bucket, fetchImpl) {
   return results;
 }
 
+function assertSafeObjectName(name) {
+  if (typeof name !== "string" || !name.trim()) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+  if (path.isAbsolute(name) || name.startsWith("/")) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+  const segments = name.split("/");
+  if (segments.some((segment) => !segment || segment === "." || segment === "..")) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+}
+
 async function downloadObject(bucket, object, outputDir, fetchImpl) {
-  const targetPath = path.join(outputDir, object.name);
+  assertSafeObjectName(object.name);
+  const resolvedOutput = path.resolve(outputDir);
+  const targetPath = resolveWithinBase(resolvedOutput, object.name, {
+    resolveFrom: resolvedOutput,
+    errorMessage: `Invalid path for object: ${object.name}`,
+  });
   fs.mkdirSync(path.dirname(targetPath), { recursive: true });
   const response = await fetchImpl(
     `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/${bucket}/${encodePath(object.name)}`,
@@ -145,15 +178,11 @@ async function main() {
 }
 
 // Run if executed directly
-if (require.main === module) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error("❌ Archive failed", error);
     process.exit(1);
   });
 }
 
-// Export for testing
-module.exports = {
-  parseArgs,
-  encodePath,
-};
+export { parseArgs, encodePath, downloadObject, resolveOutput, assertSafeObjectName };

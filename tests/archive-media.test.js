@@ -1,5 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
-import { parseArgs, encodePath } from "../scripts/archive-media.js";
+import { afterAll, describe, it, expect, vi } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { parseArgs, encodePath, downloadObject } from "../scripts/archive-media.js";
 
 describe("archive-media script", () => {
   describe("parseArgs", () => {
@@ -15,20 +18,21 @@ describe("archive-media script", () => {
       expect(options.bucket).toBe("game-covers");
     });
 
-    it("parses --output option", () => {
-      const options = parseArgs(["--output", "/tmp/archive"]);
-      expect(options.output).toContain("archive");
+    it("rejects invalid --output paths", () => {
+      expect(() => parseArgs(["--output", "/tmp/archive"])).toThrow(/Invalid path/);
+      expect(() => parseArgs(["--output", "../outside"])).toThrow(/Invalid path/);
+      expect(() => parseArgs(["--output", "backups/../outside"])).toThrow(/Invalid path/);
     });
 
     it("parses --out shorthand", () => {
-      const options = parseArgs(["--out", "/tmp/backup"]);
-      expect(options.output).toContain("backup");
+      const options = parseArgs(["--out", "backups/backup"]);
+      expect(options.output).toContain(path.join("backups", "backup"));
     });
 
     it("parses multiple options", () => {
-      const options = parseArgs(["--bucket", "covers", "--output", "/tmp/out"]);
+      const options = parseArgs(["--bucket", "covers", "--output", "backups/out"]);
       expect(options.bucket).toBe("covers");
-      expect(options.output).toContain("out");
+      expect(options.output).toContain(path.join("backups", "out"));
     });
   });
 
@@ -167,6 +171,41 @@ describe("archive-media script", () => {
       expect(callArgs.headers).toHaveProperty("apikey", "test-service-key");
       expect(callArgs.headers).toHaveProperty("Authorization", "Bearer test-service-key");
       expect(callArgs.headers).toHaveProperty("Content-Type", "application/json");
+    });
+  });
+
+  describe("downloadObject", () => {
+    const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "archive-media-"));
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new TextEncoder().encode("file-contents").buffer,
+    });
+
+    afterAll(() => {
+      fs.rmSync(outputDir, { recursive: true, force: true });
+    });
+
+    it("rejects unsafe object names", async () => {
+      const unsafeNames = ["../escape", "/abs/path", "", ".", "..", "nested//file.jpg"];
+
+      for (const name of unsafeNames) {
+        await expect(
+          downloadObject("bucket", { name }, outputDir, mockFetch)
+        ).rejects.toThrow(/Unsafe object name/);
+      }
+    });
+
+    it("writes nested objects within the output directory", async () => {
+      const entry = await downloadObject(
+        "bucket",
+        { name: "covers/box art.png" },
+        outputDir,
+        mockFetch
+      );
+
+      expect(entry.name).toBe("covers/box art.png");
+      const expectedPath = path.join(outputDir, "covers", "box art.png");
+      expect(fs.existsSync(expectedPath)).toBe(true);
     });
   });
 });
