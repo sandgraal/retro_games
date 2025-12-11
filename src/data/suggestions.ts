@@ -44,14 +44,10 @@ export async function decideSuggestion(
   decision: ModerationDecision,
   moderatorEmail: string
 ): Promise<{ suggestion: SuggestionRecord; audit?: AuditLogEntry }> {
-  const response = await send(
-    `/api/suggestions/${suggestionId}/decide`,
-    "POST",
-    {
-      ...decision,
-      moderator_email: moderatorEmail,
-    }
-  );
+  const response = await send(`/api/suggestions/${suggestionId}/decide`, "POST", {
+    ...decision,
+    moderator_email: moderatorEmail,
+  });
 
   // Return response as-is, audit may be undefined which is now correctly typed
   return {
