@@ -645,7 +645,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         }
         const auth = await resolveAuth(req);
         const body = await parseJsonBody(req);
-        const delta = body.delta || body;
+        const delta = "delta" in body ? body.delta : body;
         if (!delta || typeof delta !== "object") {
           sendJson(res, 400, { error: "Missing suggestion payload" });
           return;
@@ -730,6 +730,7 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
           sendJson(res, 403, { error: "Moderator access required" });
           return;
         }
+
         // Extract suggestionId using regex for robustness
         const match = url.pathname.match(
           /^\/api\/v1\/moderation\/suggestions\/([^/]+)\/decision$/
