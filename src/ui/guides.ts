@@ -11,6 +11,7 @@ import {
   type GuideMetadata,
   type Guide,
 } from "../data/guides";
+import { safeStorage } from "../core/storage";
 import { games, collection, setGameStatus, openGameModal } from "../state";
 import type { CollectionStatus, GameWithKey } from "../core/types";
 import { safeStorage } from "../utils/safe-storage";
@@ -65,6 +66,7 @@ function setupScrollTriggers(container: HTMLElement): void {
 let readingProgress = 0;
 let tocActiveId = "";
 let scrollListener: (() => void) | null = null;
+let scrollTriggerCleanup: (() => void) | null = null;
 
 function hasDismissedWelcomePanel(): boolean {
   return safeStorage.getItem(WELCOME_PANEL_STORAGE_KEY) === "true";
@@ -1320,6 +1322,10 @@ export function mountGuides(selector: string): () => void {
       scrollTriggerCleanup();
     }
     containerElement = null;
+    if (scrollTriggerCleanup) {
+      scrollTriggerCleanup();
+      scrollTriggerCleanup = null;
+    }
   };
 }
 

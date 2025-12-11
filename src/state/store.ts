@@ -19,6 +19,7 @@ import type {
   PricingSource,
 } from "../core/types";
 import { withGameKeys } from "../core/keys";
+import { safeStorage } from "../core/storage";
 
 // === Storage Keys ===
 const STORAGE_KEYS = {
@@ -526,7 +527,7 @@ function persistCollection(): void {
   try {
     const collection = collectionSignal.get();
     const data = Object.fromEntries(collection);
-    localStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(data));
+    safeStorage.setItem(STORAGE_KEYS.collection, JSON.stringify(data));
   } catch {
     console.warn("Failed to persist collection");
   }
@@ -536,7 +537,7 @@ function persistNotes(): void {
   try {
     const notes = notesSignal.get();
     const data = Object.fromEntries(notes);
-    localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(data));
+    safeStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(data));
   } catch {
     console.warn("Failed to persist notes");
   }
@@ -548,7 +549,7 @@ function persistPreferences(): void {
       theme: themeSignal.get(),
       viewMode: viewModeSignal.get(),
     };
-    localStorage.setItem(STORAGE_KEYS.preferences, JSON.stringify(prefs));
+    safeStorage.setItem(STORAGE_KEYS.preferences, JSON.stringify(prefs));
   } catch {
     console.warn("Failed to persist preferences");
   }
@@ -560,21 +561,21 @@ function persistPreferences(): void {
 export function loadPersistedState(): void {
   try {
     // Load collection
-    const collectionRaw = localStorage.getItem(STORAGE_KEYS.collection);
+    const collectionRaw = safeStorage.getItem(STORAGE_KEYS.collection);
     if (collectionRaw) {
       const data = JSON.parse(collectionRaw);
       collectionSignal.set(new Map(Object.entries(data)));
     }
 
     // Load notes
-    const notesRaw = localStorage.getItem(STORAGE_KEYS.notes);
+    const notesRaw = safeStorage.getItem(STORAGE_KEYS.notes);
     if (notesRaw) {
       const data = JSON.parse(notesRaw);
       notesSignal.set(new Map(Object.entries(data)));
     }
 
     // Load preferences
-    const prefsRaw = localStorage.getItem(STORAGE_KEYS.preferences);
+    const prefsRaw = safeStorage.getItem(STORAGE_KEYS.preferences);
     if (prefsRaw) {
       const prefs = JSON.parse(prefsRaw);
       if (prefs.theme) themeSignal.set(prefs.theme);
