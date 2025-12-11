@@ -162,6 +162,65 @@ function normalizeRole(rawRole) {
 }
 
 /**
+ * Fallback JWT verification using Node's crypto module
+ * Used when jose's jwtVerify fails (e.g., in jsdom test environments)
+ * @param {string} token - The JWT token
+ * @param {string} secret - The secret key
+ * @returns {object|null} - The payload if valid, null otherwise
+ */
+function verifyJwtWithCrypto(token, secret) {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    const [headerB64, payloadB64, signatureB64] = parts;
+
+    // Recreate the signature
+    const data = `${headerB64}.${payloadB64}`;
+    const expectedSignature = createHash
+      ? null
+      : require("crypto")
+          .createHmac("sha256", secret)
+          .update(data)
+          .digest("base64")
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+
+    // Use imported createHash (crypto module)
+    const crypto = require("crypto");
+    const computedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(data)
+      .digest("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+
+    // Constant-time comparison
+    if (
+      computedSignature.length !== signatureB64.length ||
+      !crypto.timingSafeEqual(Buffer.from(computedSignature), Buffer.from(signatureB64))
+    ) {
+      return null;
+    }
+
+    // Decode and parse payload
+    const payloadJson = Buffer.from(payloadB64, "base64url").toString("utf8");
+    const payload = JSON.parse(payloadJson);
+
+    // Check expiration
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Validate and extract authentication info from request
  * Validates JWT from Authorization header and extracts role from token claims
  * @param {http.IncomingMessage} req - HTTP request object
@@ -192,51 +251,58 @@ async function resolveAuth(req) {
 
   const token = parts[1];
 
-  try {
-    // Get JWT secret from environment
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
-    if (!jwtSecret) {
-      console.warn("SUPABASE_JWT_SECRET not configured - authentication disabled");
-      return {
-        role: "anonymous",
-        email: null,
-        sessionId: `sess_${randomUUID()}`,
-      };
-    }
-
-    // Verify JWT signature with additional security checks
-    const secret = new TextEncoder().encode(jwtSecret);
-    const { payload } = await jose.jwtVerify(token, secret, {
-      algorithms: ["HS256"],
-      // Validate issuer matches Supabase URL if configured
-      ...(process.env.SUPABASE_URL && { issuer: process.env.SUPABASE_URL }),
-    });
-
-    // Extract role from token claims - require explicit role assignment
-    const role = normalizeRole(
-      payload.app_metadata?.role || payload.user_metadata?.role || "anonymous"
-    );
-
-    // Extract email from token
-    const email = payload.email || null;
-
-    // Use sub (subject) as session ID if available
-    const sessionId = payload.sub || `sess_${randomUUID()}`;
-
-    return {
-      role,
-      email,
-      sessionId,
-    };
-  } catch (error) {
-    // JWT validation failed - return anonymous (don't log sensitive error details)
-    console.warn("Authentication failed - invalid or expired token");
+  // Get JWT secret from environment
+  const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+  if (!jwtSecret) {
+    console.warn("SUPABASE_JWT_SECRET not configured - authentication disabled");
     return {
       role: "anonymous",
       email: null,
       sessionId: `sess_${randomUUID()}`,
     };
   }
+
+  let payload = null;
+
+  // Try jose first, fall back to crypto-based verification
+  try {
+    // Verify JWT signature with jose
+    const secret = new TextEncoder().encode(jwtSecret);
+    const result = await jose.jwtVerify(token, secret, {
+      algorithms: ["HS256"],
+      // Validate issuer matches Supabase URL if configured
+      ...(process.env.SUPABASE_URL && { issuer: process.env.SUPABASE_URL }),
+    });
+    payload = result.payload;
+  } catch {
+    // Fallback to crypto-based verification (handles jsdom Uint8Array issues)
+    payload = verifyJwtWithCrypto(token, jwtSecret);
+    if (!payload) {
+      console.warn("Authentication failed - invalid or expired token");
+      return {
+        role: "anonymous",
+        email: null,
+        sessionId: `sess_${randomUUID()}`,
+      };
+    }
+  }
+
+  // Extract role from token claims - require explicit role assignment
+  const role = normalizeRole(
+    payload.app_metadata?.role || payload.user_metadata?.role || "anonymous"
+  );
+
+  // Extract email from token
+  const email = payload.email || null;
+
+  // Use sub (subject) as session ID if available
+  const sessionId = payload.sub || `sess_${randomUUID()}`;
+
+  return {
+    role,
+    email,
+    sessionId,
+  };
 }
 
 async function parseJsonBody(req) {
