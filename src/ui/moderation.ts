@@ -186,7 +186,6 @@ export function mountModerationPanel(selector: string): () => void {
         suggestions.forEach((suggestion: SuggestionRecord) => {
           const card = renderSuggestionCard(suggestion, async (status, notes) => {
             statusEl.textContent = "Submitting decision...";
-            const session = await getAuthSession();
 
             try {
                 await moderateSuggestion(suggestion.id, status, notes);
