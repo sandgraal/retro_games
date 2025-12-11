@@ -98,88 +98,194 @@ function renderSettings(container: HTMLElement): void {
   const currentViewMode = viewMode.get();
   const stats = collectionStats.get();
 
-  container.innerHTML = `
-    <div class="modal__dialog settings-dialog" role="document">
-      <button type="button" class="modal__close" aria-label="Close settings">×</button>
-      
-      <h2 id="settingsTitle" class="modal__title">⚙️ Settings</h2>
-      
-      <div class="settings-content">
-        <!-- Appearance Section -->
-        <section class="settings-section">
-          <h3 class="settings-section-title">Appearance</h3>
-          
-          <div class="settings-option">
-            <label for="themeSelect">Theme</label>
-            <select id="themeSelect" class="settings-select">
-              <option value="dark" ${currentTheme === "dark" ? "selected" : ""}>🌙 Dark</option>
-              <option value="light" ${currentTheme === "light" ? "selected" : ""}>☀️ Light</option>
-              <option value="system" ${currentTheme === "system" ? "selected" : ""}>🖥️ System</option>
-            </select>
-          </div>
-          
-          <div class="settings-option">
-            <label for="viewModeSelect">Default View</label>
-            <select id="viewModeSelect" class="settings-select">
-              <option value="grid" ${currentViewMode === "grid" ? "selected" : ""}>🔲 Grid</option>
-              <option value="list" ${currentViewMode === "list" ? "selected" : ""}>📋 List</option>
-              <option value="table" ${currentViewMode === "table" ? "selected" : ""}>📊 Table</option>
-            </select>
-          </div>
-        </section>
-        
-        <!-- Data Management Section -->
-        <section class="settings-section">
-          <h3 class="settings-section-title">Data Management</h3>
-          
-          <div class="settings-stats">
-            <div class="settings-stat">
-              <span class="settings-stat-value">${stats.ownedCount}</span>
-              <span class="settings-stat-label">Owned</span>
-            </div>
-            <div class="settings-stat">
-              <span class="settings-stat-value">${stats.wishlistCount}</span>
-              <span class="settings-stat-label">Wishlist</span>
-            </div>
-            <div class="settings-stat">
-              <span class="settings-stat-value">${stats.backlogCount}</span>
-              <span class="settings-stat-label">Backlog</span>
-            </div>
-            <div class="settings-stat">
-              <span class="settings-stat-value">${stats.tradeCount}</span>
-              <span class="settings-stat-label">For Trade</span>
-            </div>
-          </div>
-          
-          <div class="settings-actions">
-            <button type="button" class="settings-btn settings-btn--primary" id="backupSettingsBtn">
-              📦 Create Backup
-            </button>
-            <button type="button" class="settings-btn" id="restoreBtn">
-              📥 Restore Backup
-            </button>
-            <button type="button" class="settings-btn settings-btn--danger" id="clearDataBtn">
-              🗑️ Clear Collection
-            </button>
-          </div>
-          
-          <input type="file" id="restoreFileInput" accept=".json" style="display: none" />
-        </section>
-        
-        <!-- About Section -->
-        <section class="settings-section">
-          <h3 class="settings-section-title">About</h3>
-          <div class="settings-about">
-            <p><strong>Dragon's Hoard Atlas</strong> v2.0</p>
-            <p>A privacy-first retro game collection tracker.</p>
-            <p class="settings-about-note">
-              All data stored locally in your browser. No account required.
-            </p>
-          </div>
-        </section>
-      </div>
-    </div>
-  `;
+  const dialog = document.createElement("div");
+  dialog.className = "modal__dialog settings-dialog";
+  dialog.setAttribute("role", "document");
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "modal__close";
+  closeBtn.setAttribute("aria-label", "Close settings");
+  closeBtn.textContent = "×";
+  dialog.appendChild(closeBtn);
+
+  const title = document.createElement("h2");
+  title.id = "settingsTitle";
+  title.className = "modal__title";
+  title.textContent = "⚙️ Settings";
+  dialog.appendChild(title);
+
+  const content = document.createElement("div");
+  content.className = "settings-content";
+
+  const appearanceSection = document.createElement("section");
+  appearanceSection.className = "settings-section";
+
+  const appearanceTitle = document.createElement("h3");
+  appearanceTitle.className = "settings-section-title";
+  appearanceTitle.textContent = "Appearance";
+  appearanceSection.appendChild(appearanceTitle);
+
+  const themeOption = document.createElement("div");
+  themeOption.className = "settings-option";
+
+  const themeLabel = document.createElement("label");
+  themeLabel.htmlFor = "themeSelect";
+  themeLabel.textContent = "Theme";
+  themeOption.appendChild(themeLabel);
+
+  const themeSelect = document.createElement("select");
+  themeSelect.id = "themeSelect";
+  themeSelect.className = "settings-select";
+
+  [
+    { value: "dark", label: "🌙 Dark" },
+    { value: "light", label: "☀️ Light" },
+    { value: "system", label: "🖥️ System" },
+  ].forEach(({ value, label }) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    option.selected = currentTheme === value;
+    themeSelect.appendChild(option);
+  });
+
+  themeOption.appendChild(themeSelect);
+  appearanceSection.appendChild(themeOption);
+
+  const viewOption = document.createElement("div");
+  viewOption.className = "settings-option";
+
+  const viewLabel = document.createElement("label");
+  viewLabel.htmlFor = "viewModeSelect";
+  viewLabel.textContent = "Default View";
+  viewOption.appendChild(viewLabel);
+
+  const viewSelect = document.createElement("select");
+  viewSelect.id = "viewModeSelect";
+  viewSelect.className = "settings-select";
+
+  [
+    { value: "grid", label: "🔲 Grid" },
+    { value: "list", label: "📋 List" },
+    { value: "table", label: "📊 Table" },
+  ].forEach(({ value, label }) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    option.selected = currentViewMode === value;
+    viewSelect.appendChild(option);
+  });
+
+  viewOption.appendChild(viewSelect);
+  appearanceSection.appendChild(viewOption);
+
+  const dataSection = document.createElement("section");
+  dataSection.className = "settings-section";
+
+  const dataTitle = document.createElement("h3");
+  dataTitle.className = "settings-section-title";
+  dataTitle.textContent = "Data Management";
+  dataSection.appendChild(dataTitle);
+
+  const statsGrid = document.createElement("div");
+  statsGrid.className = "settings-stats";
+
+  const statEntries: Array<[number, string]> = [
+    [stats.ownedCount, "Owned"],
+    [stats.wishlistCount, "Wishlist"],
+    [stats.backlogCount, "Backlog"],
+    [stats.tradeCount, "For Trade"],
+  ];
+
+  statEntries.forEach(([value, label]) => {
+    const stat = document.createElement("div");
+    stat.className = "settings-stat";
+
+    const statValue = document.createElement("span");
+    statValue.className = "settings-stat-value";
+    statValue.textContent = String(value);
+
+    const statLabel = document.createElement("span");
+    statLabel.className = "settings-stat-label";
+    statLabel.textContent = label;
+
+    stat.append(statValue, statLabel);
+    statsGrid.appendChild(stat);
+  });
+
+  dataSection.appendChild(statsGrid);
+
+  const actions = document.createElement("div");
+  actions.className = "settings-actions";
+
+  const backupBtn = document.createElement("button");
+  backupBtn.type = "button";
+  backupBtn.className = "settings-btn settings-btn--primary";
+  backupBtn.id = "backupSettingsBtn";
+  backupBtn.textContent = "📦 Create Backup";
+
+  const restoreBtn = document.createElement("button");
+  restoreBtn.type = "button";
+  restoreBtn.className = "settings-btn";
+  restoreBtn.id = "restoreBtn";
+  restoreBtn.textContent = "📥 Restore Backup";
+
+  const clearBtn = document.createElement("button");
+  clearBtn.type = "button";
+  clearBtn.className = "settings-btn settings-btn--danger";
+  clearBtn.id = "clearDataBtn";
+  clearBtn.textContent = "🗑️ Clear Collection";
+
+  actions.append(backupBtn, restoreBtn, clearBtn);
+  dataSection.appendChild(actions);
+
+  const restoreInput = document.createElement("input");
+  restoreInput.type = "file";
+  restoreInput.id = "restoreFileInput";
+  restoreInput.accept = ".json";
+  restoreInput.style.display = "none";
+  dataSection.appendChild(restoreInput);
+
+  const aboutSection = document.createElement("section");
+  aboutSection.className = "settings-section";
+
+  const aboutTitle = document.createElement("h3");
+  aboutTitle.className = "settings-section-title";
+  aboutTitle.textContent = "About";
+  aboutSection.appendChild(aboutTitle);
+
+  const aboutContent = document.createElement("div");
+  aboutContent.className = "settings-about";
+
+  const productLine = document.createElement("p");
+  const productStrong = document.createElement("strong");
+  productStrong.textContent = "Dragon's Hoard Atlas";
+  productLine.append(productStrong, document.createTextNode(" v2.0"));
+
+  const description = document.createElement("p");
+  description.textContent = "A privacy-first retro game collection tracker.";
+
+  const aboutNote = document.createElement("p");
+  aboutNote.className = "settings-about-note";
+  aboutNote.textContent = "All data stored locally in your browser. No account required.";
+
+  const privacyLink = document.createElement("a");
+  privacyLink.className = "settings-about-link";
+  privacyLink.href = "./privacy-faq.html";
+  privacyLink.textContent = "Read the privacy & data FAQ";
+
+  const privacyNote = document.createElement("p");
+  privacyNote.className = "settings-about-note";
+  privacyNote.appendChild(privacyLink);
+
+  aboutContent.append(productLine, description, aboutNote, privacyNote);
+  aboutSection.appendChild(aboutContent);
+
+  content.append(appearanceSection, dataSection, aboutSection);
+  dialog.appendChild(content);
+
+  container.replaceChildren(dialog);
 
   // Setup event handlers
   setupSettingsHandlers(container);
