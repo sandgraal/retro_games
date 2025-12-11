@@ -106,32 +106,30 @@ describe("pricing provider", () => {
   });
 
   it("normalizes different field name variants (loose_price_cents, loose, loosePriceCents)", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        mockResponse({
-          prices: {
-            "Game A___SNES": {
-              loose_price_cents: 1000,
-              cib: 2000,
-              newPriceCents: 3000,
-              currency: "USD",
-            },
-            "Game B___NES": {
-              loose: 1500,
-              cib_price_cents: 2500,
-              new: 3500,
-              currency: "USD",
-            },
-            "Game C___Genesis": {
-              loosePriceCents: 2000,
-              cibPriceCents: 3000,
-              new_price_cents: 4000,
-              currency: "USD",
-            },
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockResponse({
+        prices: {
+          "Game A___SNES": {
+            loose_price_cents: 1000,
+            cib: 2000,
+            newPriceCents: 3000,
+            currency: "USD",
           },
-        })
-      );
+          "Game B___NES": {
+            loose: 1500,
+            cib_price_cents: 2500,
+            new: 3500,
+            currency: "USD",
+          },
+          "Game C___Genesis": {
+            loosePriceCents: 2000,
+            cibPriceCents: 3000,
+            new_price_cents: 4000,
+            currency: "USD",
+          },
+        },
+      })
+    );
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -150,24 +148,22 @@ describe("pricing provider", () => {
   });
 
   it("extracts regional offer data with buildOffers", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        mockResponse({
-          prices: {
-            "Super Mario 64___N64": {
-              loose_price_cents: 5500,
-              cib_price_cents: 12000,
-              new_price_cents: 25000,
-              currency: "USD",
-              region: "US",
-              retailer: "GameStop",
-              url: "https://example.com/mario64",
-              last_updated: "2025-01-15T14:00:00Z",
-            },
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockResponse({
+        prices: {
+          "Super Mario 64___N64": {
+            loose_price_cents: 5500,
+            cib_price_cents: 12000,
+            new_price_cents: 25000,
+            currency: "USD",
+            region: "US",
+            retailer: "GameStop",
+            url: "https://example.com/mario64",
+            last_updated: "2025-01-15T14:00:00Z",
           },
-        })
-      );
+        },
+      })
+    );
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -178,18 +174,18 @@ describe("pricing provider", () => {
     expect(priceData.offers).toBeDefined();
     expect(priceData.offers?.US).toBeDefined();
     expect(priceData.offers?.US.length).toBe(3);
-    
-    const looseOffer = priceData.offers?.US.find(o => o.condition === "loose");
+
+    const looseOffer = priceData.offers?.US.find((o) => o.condition === "loose");
     expect(looseOffer).toBeDefined();
     expect(looseOffer?.amountCents).toBe(5500);
     expect(looseOffer?.currency).toBe("USD");
     expect(looseOffer?.retailer).toBe("GameStop");
     expect(looseOffer?.url).toBe("https://example.com/mario64");
-    
-    const cibOffer = priceData.offers?.US.find(o => o.condition === "cib");
+
+    const cibOffer = priceData.offers?.US.find((o) => o.condition === "cib");
     expect(cibOffer?.amountCents).toBe(12000);
-    
-    const newOffer = priceData.offers?.US.find(o => o.condition === "new");
+
+    const newOffer = priceData.offers?.US.find((o) => o.condition === "new");
     expect(newOffer?.amountCents).toBe(25000);
   });
 
@@ -260,22 +256,20 @@ describe("pricing provider", () => {
   });
 
   it("builds offers with alternative field names (country, vendor, store_url)", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        mockResponse({
-          prices: {
-            "Pokemon Red___GB": {
-              loose_price_cents: 4500,
-              currency: "USD",
-              country: "UK", // Alternative to "region"
-              vendor: "RetroStore", // Alternative to "retailer"
-              store_url: "https://example.com/pokemon", // Alternative to "url"
-              fetched_at: "2025-01-20T09:00:00Z",
-            },
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockResponse({
+        prices: {
+          "Pokemon Red___GB": {
+            loose_price_cents: 4500,
+            currency: "USD",
+            country: "UK", // Alternative to "region"
+            vendor: "RetroStore", // Alternative to "retailer"
+            store_url: "https://example.com/pokemon", // Alternative to "url"
+            fetched_at: "2025-01-20T09:00:00Z",
           },
-        })
-      );
+        },
+      })
+    );
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -285,8 +279,8 @@ describe("pricing provider", () => {
     const priceData = result.prices["Pokemon Red___GB"];
     expect(priceData.offers).toBeDefined();
     expect(priceData.offers?.UK).toBeDefined();
-    
-    const looseOffer = priceData.offers?.UK.find(o => o.condition === "loose");
+
+    const looseOffer = priceData.offers?.UK.find((o) => o.condition === "loose");
     expect(looseOffer?.retailer).toBe("RetroStore");
     expect(looseOffer?.url).toBe("https://example.com/pokemon");
   });

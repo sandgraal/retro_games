@@ -188,7 +188,7 @@ export function mountModerationPanel(selector: string): () => void {
             statusEl.textContent = "Submitting decision...";
 
             try {
-                await moderateSuggestion(suggestion.id, status, notes);
+              await moderateSuggestion(suggestion.id, status, notes);
               statusEl.textContent = "";
               await loadSuggestions();
             } catch (error) {
