@@ -193,7 +193,7 @@ export function mountModerationPanel(selector: string): () => void {
             };
 
             try {
-              await moderateSuggestion(suggestion.id, status, notes);
+                await moderateSuggestion(suggestion.id, status, notes);
               statusEl.textContent = "";
               await loadSuggestions();
             } catch (error) {
