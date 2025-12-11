@@ -8,6 +8,9 @@ import {
   fuzzyMatchScore,
   runIngestion,
   startReadApiServer,
+  applyApprovedSuggestions,
+  normalizeRecord,
+  computeRecordHash,
 } from "../services/catalog-ingest/catalog-ingest.js";
 
 const originalDataDir = process.env.CATALOG_DATA_DIR;
@@ -1224,5 +1227,632 @@ describe("startReadApiServer", () => {
       expect(rejectedJson.suggestions).toHaveLength(1);
       expect(rejectedJson.suggestions[0].id).toBe("rejected-suggestion");
     });
+  });
+});
+
+describe("applyApprovedSuggestions", () => {
+  test("applies approved update suggestion to existing record", () => {
+    const records = {
+      "sonic___genesis": {
+        record: {
+          title: "Sonic",
+          platform: "Genesis",
+          genres: ["Platformer"],
+          regions: ["NA"],
+          source: ["original"],
+        },
+        hash: "hash1",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg1",
+        type: "update",
+        targetId: "sonic___genesis",
+        status: "approved",
+        delta: {
+          regions: ["NA", "EU", "JP"],
+          genres: ["Platformer", "Action"],
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(1);
+    expect(records["sonic___genesis"].version).toBe(2);
+    expect(records["sonic___genesis"].record.regions).toEqual(["NA", "EU", "JP"]);
+    expect(records["sonic___genesis"].record.genres).toEqual(["Platformer", "Action"]);
+    expect(records["sonic___genesis"].hash).not.toBe("hash1");
+  });
+
+  test("inserts approved new game suggestion", () => {
+    const records = {};
+
+    const suggestions = [
+      {
+        id: "sugg2",
+        type: "new",
+        status: "approved",
+        payload: {
+          title: "Earthbound",
+          platform: "SNES",
+          release_date: "1994-08-27",
+          genres: ["RPG"],
+          regions: ["NA"],
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(1);
+    const key = "earthbound___snes";
+    expect(records[key]).toBeDefined();
+    expect(records[key].version).toBe(1);
+    expect(records[key].record.title).toBe("Earthbound");
+    expect(records[key].record.platform).toBe("SNES");
+    expect(records[key].hash).toBeDefined();
+  });
+
+  test("increments version for updated records", () => {
+    const records = {
+      "mario___nes": {
+        record: {
+          title: "Mario",
+          platform: "NES",
+          genres: ["Platformer"],
+          source: ["original"],
+        },
+        hash: computeRecordHash({
+          title: "Mario",
+          platform: "NES",
+          genres: ["Platformer"],
+          source: ["original"],
+        }),
+        version: 5,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg3",
+        type: "update",
+        targetId: "mario___nes",
+        status: "approved",
+        delta: {
+          regions: ["JP", "NA"],
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(1);
+    expect(records["mario___nes"].version).toBe(6);
+  });
+
+  test("recalculates hash after merging", () => {
+    const originalRecord = {
+      title: "Zelda",
+      platform: "NES",
+      genres: ["Adventure"],
+      source: ["original"],
+    };
+
+    const records = {
+      "zelda___nes": {
+        record: originalRecord,
+        hash: computeRecordHash(originalRecord),
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const originalHash = records["zelda___nes"].hash;
+
+    const suggestions = [
+      {
+        id: "sugg4",
+        type: "update",
+        targetId: "zelda___nes",
+        status: "approved",
+        delta: {
+          release_date: "1986-02-21",
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(1);
+    expect(records["zelda___nes"].hash).not.toBe(originalHash);
+    const expectedMerged = { ...originalRecord, release_date: "1986-02-21" };
+    expect(records["zelda___nes"].hash).toBe(computeRecordHash(expectedMerged));
+  });
+
+  test("skips pending suggestions", () => {
+    const records = {
+      "metroid___nes": {
+        record: {
+          title: "Metroid",
+          platform: "NES",
+          source: ["original"],
+        },
+        hash: "hash2",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg5",
+        type: "update",
+        targetId: "metroid___nes",
+        status: "pending",
+        delta: {
+          genres: ["Action", "Adventure"],
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(0);
+    expect(records["metroid___nes"].version).toBe(1);
+    expect(records["metroid___nes"].hash).toBe("hash2");
+    expect(records["metroid___nes"].record.genres).toBeUndefined();
+  });
+
+  test("skips rejected suggestions", () => {
+    const records = {
+      "castlevania___nes": {
+        record: {
+          title: "Castlevania",
+          platform: "NES",
+          genres: ["Action"],
+          source: ["original"],
+        },
+        hash: "hash3",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg6",
+        type: "update",
+        targetId: "castlevania___nes",
+        status: "rejected",
+        delta: {
+          genres: ["Horror"],
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(0);
+    expect(records["castlevania___nes"].version).toBe(1);
+    expect(records["castlevania___nes"].record.genres).toEqual(["Action"]);
+  });
+
+  test("properly counts applied suggestions", () => {
+    const records = {
+      "game1___platform1": {
+        record: { title: "Game1", platform: "Platform1", source: ["src1"] },
+        hash: "hash4",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+      "game2___platform2": {
+        record: { title: "Game2", platform: "Platform2", source: ["src2"] },
+        hash: "hash5",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg7",
+        type: "update",
+        targetId: "game1___platform1",
+        status: "approved",
+        delta: { regions: ["NA"] },
+      },
+      {
+        id: "sugg8",
+        type: "update",
+        targetId: "game2___platform2",
+        status: "approved",
+        delta: { genres: ["RPG"] },
+      },
+      {
+        id: "sugg9",
+        type: "update",
+        targetId: "game2___platform2",
+        status: "pending",
+        delta: { regions: ["EU"] },
+      },
+      {
+        id: "sugg10",
+        type: "new",
+        status: "approved",
+        payload: {
+          title: "Game3",
+          platform: "Platform3",
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(3);
+  });
+
+  test("handles suggestions with missing delta/payload", () => {
+    const records = {
+      "game___platform": {
+        record: { title: "Game", platform: "Platform", source: ["src"] },
+        hash: "hash6",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg11",
+        type: "update",
+        targetId: "game___platform",
+        status: "approved",
+        // Missing delta
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    // Should not crash, but might not apply anything meaningful
+    expect(applied).toBeGreaterThanOrEqual(0);
+    expect(records["game___platform"]).toBeDefined();
+  });
+
+  test("handles update suggestions with non-existent targetId", () => {
+    const records = {
+      "existing___game": {
+        record: { title: "Existing", platform: "Game", source: ["src"] },
+        hash: "hash7",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg12",
+        type: "update",
+        targetId: "nonexistent___game",
+        status: "approved",
+        delta: {
+          genres: ["Action"],
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(0);
+    expect(records["nonexistent___game"]).toBeUndefined();
+    expect(Object.keys(records)).toHaveLength(1);
+  });
+
+  test("handles new suggestions with existing keys", () => {
+    const records = {
+      "duplicate___game": {
+        record: { title: "Duplicate", platform: "Game", source: ["original"] },
+        hash: "hash8",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg13",
+        type: "new",
+        status: "approved",
+        payload: {
+          title: "Duplicate",
+          platform: "Game",
+          genres: ["Strategy"],
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    // Should not overwrite existing record
+    expect(applied).toBe(0);
+    expect(records["duplicate___game"].version).toBe(1);
+    expect(records["duplicate___game"].record.genres).toBeUndefined();
+  });
+
+  test("handles mixed approved and non-approved suggestions", () => {
+    const records = {};
+
+    const suggestions = [
+      {
+        id: "sugg14",
+        type: "new",
+        status: "approved",
+        payload: { title: "Approved1", platform: "PS1" },
+      },
+      {
+        id: "sugg15",
+        type: "new",
+        status: "pending",
+        payload: { title: "Pending1", platform: "PS2" },
+      },
+      {
+        id: "sugg16",
+        type: "new",
+        status: "approved",
+        payload: { title: "Approved2", platform: "PS3" },
+      },
+      {
+        id: "sugg17",
+        type: "new",
+        status: "rejected",
+        payload: { title: "Rejected1", platform: "PS4" },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(2);
+    expect(records["approved1___ps1"]).toBeDefined();
+    expect(records["approved2___ps3"]).toBeDefined();
+    expect(records["pending1___ps2"]).toBeUndefined();
+    expect(records["rejected1___ps4"]).toBeUndefined();
+  });
+
+  test("handles update with no actual changes", () => {
+    const originalRecord = {
+      title: "Unchanged",
+      platform: "Platform",
+      genres: ["Action"],
+      source: ["src"],
+    };
+
+    const records = {
+      "unchanged___platform": {
+        record: originalRecord,
+        hash: computeRecordHash(originalRecord),
+        version: 2,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const originalVersion = records["unchanged___platform"].version;
+    const originalHash = records["unchanged___platform"].hash;
+
+    const suggestions = [
+      {
+        id: "sugg18",
+        type: "update",
+        targetId: "unchanged___platform",
+        status: "approved",
+        delta: {
+          // Delta doesn't actually change anything
+          genres: ["Action"],
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    // Should not increment version if hash is unchanged
+    expect(applied).toBe(0);
+    expect(records["unchanged___platform"].version).toBe(originalVersion);
+    expect(records["unchanged___platform"].hash).toBe(originalHash);
+  });
+
+  test("uses delta field for updates", () => {
+    const records = {
+      "game___platform": {
+        record: { title: "Game", platform: "Platform", source: ["src"] },
+        hash: "hash9",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg19",
+        type: "update",
+        targetId: "game___platform",
+        status: "approved",
+        delta: { genres: ["RPG"] },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(1);
+    expect(records["game___platform"].record.genres).toEqual(["RPG"]);
+  });
+
+  test("uses payload field for updates when delta is missing", () => {
+    const records = {
+      "game2___platform": {
+        record: { title: "Game2", platform: "Platform", source: ["src"] },
+        hash: "hash10",
+        version: 1,
+        lastSeen: "2024-01-01T00:00:00.000Z",
+      },
+    };
+
+    const suggestions = [
+      {
+        id: "sugg20",
+        type: "update",
+        targetId: "game2___platform",
+        status: "approved",
+        payload: { regions: ["EU"] },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(1);
+    expect(records["game2___platform"].record.regions).toEqual(["EU"]);
+  });
+
+  test("normalizes new game suggestions correctly", () => {
+    const records = {};
+
+    const suggestions = [
+      {
+        id: "sugg21",
+        type: "new",
+        status: "approved",
+        payload: {
+          game_name: "Final Fantasy VII",
+          platform: "PlayStation",
+          platform_slug: "ps1",
+          release_year: "1997",
+          esrb_rating: "T",
+          genres: ["RPG", "Adventure"],
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(1);
+    const key = "final fantasy vii___playstation";
+    expect(records[key]).toBeDefined();
+    expect(records[key].record.title).toBe("Final Fantasy VII");
+    expect(records[key].record.platform).toBe("PlayStation");
+    expect(records[key].record.source).toEqual(["community"]);
+  });
+
+  test("uses targetId for new suggestions when provided", () => {
+    const records = {};
+
+    const suggestions = [
+      {
+        id: "sugg22",
+        type: "new",
+        targetId: "custom___key",
+        status: "approved",
+        payload: {
+          title: "Custom Key Game",
+          platform: "N64",
+        },
+      },
+    ];
+
+    const applied = applyApprovedSuggestions(records, suggestions);
+
+    expect(applied).toBe(1);
+    expect(records["custom___key"]).toBeDefined();
+    expect(records["custom___key"].record.title).toBe("Custom Key Game");
+  });
+});
+
+describe("field name variant handling in suggestions", () => {
+  test("handles various field name variants consistently", async () => {
+    const suggestionsPath = path.join(tempDir, "suggestions.json");
+
+    // Create suggestions with different field name variants
+    const suggestions = {
+      suggestions: [
+        {
+          id: "test-1",
+          type: "new",
+          status: "approved",
+          delta: {
+            title: "Game with title field",
+            platform: "SNES",
+            release_date: "1995-01-01",
+            esrb: "E",
+          },
+        },
+        {
+          id: "test-2",
+          type: "new",
+          status: "approved",
+          delta: {
+            game_name: "Game with game_name field",
+            platform_slug: "genesis",
+            release_year: "1994",
+            esrb_rating: "T",
+          },
+        },
+        {
+          id: "test-3",
+          type: "new",
+          status: "approved",
+          delta: {
+            name: "Game with name field",
+            platform_name: "PlayStation",
+            releaseDate: "1996-03-15",
+            rating: "M",
+          },
+        },
+      ],
+    };
+
+    await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
+
+    // Run ingestion which will apply the approved suggestions
+    const run = await runIngestion({ sources: [] });
+
+    // All suggestions should have been applied despite different field names
+    expect(run.metrics.suggestionsApplied).toBe(3);
+
+    // Verify the records were created with normalized field names
+    const keys = Object.keys(run.records);
+    expect(keys).toHaveLength(3);
+
+    // Check that each record has the expected normalized structure
+    for (const key of keys) {
+      const record = run.records[key].record;
+      expect(record.title).toBeDefined();
+      expect(record.platform).toBeDefined();
+      expect(record.platform_slug).toBeDefined();
+      expect(record.release_date).toBeDefined();
+      expect(record.esrb).toBeDefined();
+    }
+
+    // Verify specific records
+    const game1 = Object.values(run.records).find(
+      (r: any) => r.record.title === "Game with title field"
+    );
+    expect(game1).toBeDefined();
+    expect(game1!.record.platform).toBe("SNES");
+
+    const game2 = Object.values(run.records).find(
+      (r: any) => r.record.title === "Game with game_name field"
+    );
+    expect(game2).toBeDefined();
+    expect(game2!.record.platform).toBe("genesis");
+    expect(game2!.record.release_date).toBe("1994");
+
+    const game3 = Object.values(run.records).find(
+      (r: any) => r.record.title === "Game with name field"
+    );
+    expect(game3).toBeDefined();
+    expect(game3!.record.platform).toBe("PlayStation");
+    expect(game3!.record.esrb).toBe("M");
   });
 });

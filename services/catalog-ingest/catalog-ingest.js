@@ -273,12 +273,38 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+/**
+ * Normalizes a raw game record by standardizing field names and values.
+ * Handles various field name variants from different data sources and community submissions:
+ * - title: title, name, game_name
+ * - platform: platform, platform_name, platform_slug
+ * - platform_slug: platform_slug, platform
+ * - release_date: release_date, releaseDate, release_year
+ * - esrb: esrb, rating, esrb_rating
+ * - genres: genres, genre (array or single value)
+ * - regions: regions, region (array or single value)
+ *
+ * Fallback and coupling behavior:
+ *   - For `platform` and `platform_slug`, if only one of these fields is provided in the input,
+ *     both `platform` and `platform_slug` in the output will be set to that value.
+ *   - If both are provided, their respective values are used.
+ *   - The fallback order for `platform` is: platform, platform_name, platform_slug.
+ *   - The fallback order for `platform_slug` is: platform_slug, platform.
+ *
+ * Example:
+ *   If input is { platform_slug: "snes" }, then output will have
+ *     platform: "snes", platform_slug: "snes"
+ *   If input is { platform: "snes" }, then output will have
+ *     platform: "snes", platform_slug: "snes"
+ *   If input is { platform: "snes", platform_slug: "super-nintendo" }, then output will have
+ *     platform: "snes", platform_slug: "super-nintendo"
+ */
 function normalizeRecord(raw, sourceName) {
   return {
-    title: safeString(raw.title || raw.name),
-    platform: safeString(raw.platform || raw.platform_name),
+    title: safeString(raw.title || raw.name || raw.game_name),
+    platform: safeString(raw.platform || raw.platform_name || raw.platform_slug),
     platform_slug: safeString(raw.platform_slug || raw.platform),
-    release_date: raw.release_date || raw.releaseDate || null,
+    release_date: raw.release_date || raw.releaseDate || raw.release_year || null,
     regions: raw.regions || raw.region ? [].concat(raw.regions || raw.region) : [],
     genres: Array.isArray(raw.genres)
       ? raw.genres
@@ -289,7 +315,7 @@ function normalizeRecord(raw, sourceName) {
           : raw.genre
             ? [raw.genre]
             : [],
-    esrb: raw.esrb || raw.rating || null,
+    esrb: raw.esrb || raw.rating || raw.esrb_rating || null,
     pegi: raw.pegi || null,
     assets: raw.assets || {
       cover: raw.cover_url || null,
@@ -449,7 +475,7 @@ function buildSnapshot(records) {
   }));
 }
 
-function applyApprovedSuggestions(records, suggestions) {
+export function applyApprovedSuggestions(records, suggestions) {
   let applied = 0;
   for (const suggestion of suggestions) {
     if (suggestion.status !== "approved") continue;
@@ -472,28 +498,19 @@ function applyApprovedSuggestions(records, suggestions) {
         applied += 1;
       }
     } else if (suggestion.type === "new") {
-      const key =
-        suggestion.targetId ||
-        buildDeterministicKey({
-          title: delta.title || delta.game_name,
-          platform: delta.platform,
-          platform_slug: delta.platform_slug,
-        });
+      // Pass delta directly to normalizeRecord which handles all field name variants
       const normalized = normalizeRecord(
         {
-          title: delta.title || delta.game_name,
-          platform: delta.platform,
-          platform_slug: delta.platform_slug,
-          release_date: delta.release_date || delta.release_year,
-          genres: delta.genres,
-          esrb: delta.esrb || delta.esrb_rating,
-          pegi: delta.pegi,
-          assets: delta.assets,
-          external_ids: delta.external_ids,
-          source: "suggestion",
+          ...delta,
         },
         "community"
       );
+      const key =
+        suggestion.targetId ||
+        buildDeterministicKey({
+          title: normalized.title,
+          platform: normalized.platform,
+        });
       const hash = computeRecordHash(normalized);
       if (!records[key]) {
         records[key] = {
@@ -730,7 +747,6 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
           sendJson(res, 403, { error: "Moderator access required" });
           return;
         }
-
         // Extract suggestionId using regex for robustness
         const match = url.pathname.match(
           /^\/api\/v1\/moderation\/suggestions\/([^/]+)\/decision$/
