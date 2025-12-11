@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import path from "node:path";
 import { parseArgs, encodePath } from "../scripts/archive-media.js";
 
 describe("archive-media script", () => {
@@ -16,19 +17,17 @@ describe("archive-media script", () => {
     });
 
     it("parses --output option", () => {
-      const options = parseArgs(["--output", "/tmp/archive"]);
-      expect(options.output).toContain("archive");
+      expect(() => parseArgs(["--output", "/tmp/archive"])).toThrow(/Invalid path/);
     });
 
     it("parses --out shorthand", () => {
-      const options = parseArgs(["--out", "/tmp/backup"]);
-      expect(options.output).toContain("backup");
+      expect(() => parseArgs(["--out", "/tmp/backup"])).toThrow(/Invalid path/);
     });
 
     it("parses multiple options", () => {
-      const options = parseArgs(["--bucket", "covers", "--output", "/tmp/out"]);
+      const options = parseArgs(["--bucket", "covers", "--output", "local/out"]);
       expect(options.bucket).toBe("covers");
-      expect(options.output).toContain("out");
+      expect(options.output).toBe(path.resolve(process.cwd(), "backups", "local", "out"));
     });
   });
 

@@ -1,6 +1,15 @@
 const fs = require("fs");
 const path = require("path");
 
+function resolveGamesPath(csvPath) {
+  const baseDir = path.resolve(__dirname, "..");
+  const resolved = path.resolve(baseDir, csvPath);
+  if (!resolved.startsWith(baseDir + path.sep)) {
+    throw new Error("Games data path must remain inside the project directory.");
+  }
+  return resolved;
+}
+
 /**
  * Test Runner for Retro Game List Evaluation
  * Simulates user interactions and collects responses for evaluation
@@ -8,7 +17,7 @@ const path = require("path");
 
 class GameListTestRunner {
   constructor(gamesDataPath) {
-    this.games = this.loadGames(gamesDataPath);
+    this.games = this.loadGames(resolveGamesPath(gamesDataPath));
     this.responses = [];
   }
 

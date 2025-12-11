@@ -1,4 +1,5 @@
 import type { AuthRole } from "../core/types";
+import { safeStorage, isStorageAvailable } from "../core/storage";
 import {
   getClient,
   waitForSupabaseReady,
@@ -23,8 +24,8 @@ type AuthListener = (session: AuthSession) => void;
 const authListeners: Set<AuthListener> = new Set();
 
 function ensureSessionId(): string {
-  if (typeof window === "undefined") return "server";
-  const existing = window.localStorage.getItem(SESSION_STORAGE_KEY);
+  if (!isStorageAvailable) return "server";
+  const existing = safeStorage.getItem(SESSION_STORAGE_KEY);
   if (existing) return existing;
   let generated: string;
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -56,7 +57,7 @@ function ensureSessionId(): string {
       "Cryptographically secure random number generation is required but not available."
     );
   }
-  window.localStorage.setItem(SESSION_STORAGE_KEY, generated);
+  safeStorage.setItem(SESSION_STORAGE_KEY, generated);
   return generated;
 }
 
@@ -111,10 +112,7 @@ async function loadSupabaseRole(): Promise<{
 
 export async function getAuthSession(): Promise<AuthSession> {
   const sessionId = ensureSessionId();
-  const override =
-    typeof window !== "undefined"
-      ? sanitizeRole(window.localStorage.getItem(UNSAFE_ROLE_OVERRIDE_KEY))
-      : "anonymous";
+  const override = sanitizeRole(safeStorage.getItem(UNSAFE_ROLE_OVERRIDE_KEY));
   const supabaseAuth = await loadSupabaseRole();
 
   return {
