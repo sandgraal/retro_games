@@ -2,22 +2,45 @@
 
 _Last updated: December 2025_
 
+> 🚀 **MAJOR UPDATE**: This project is expanding from retro-only to a **Universal Games Atlas** covering ALL games with community submissions and moderation.
+
 ## Project Snapshot
 
-| Area          | Status                                                                                      |
-| ------------- | ------------------------------------------------------------------------------------------- |
-| Application   | TypeScript + Vite SPA with custom signals; sample data by default, Supabase when configured |
-| Language      | TypeScript (strict)                                                                         |
-| Build         | Vite 7                                                                                      |
-| Tests         | 204 Vitest unit tests + 14 Playwright e2e tests                                             |
-| Data          | `data/sample-games.json` (8 games) + optional Supabase `games_consolidated` view            |
-| Documentation | README, architecture, and current-state kept in sync                                        |
+| Area        | Status                                                                          |
+| ----------- | ------------------------------------------------------------------------------- |
+| Application | TypeScript + Vite SPA with custom signals; Supabase backend with local fallback |
+| Language    | TypeScript (strict)                                                             |
+| Build       | Vite 7                                                                          |
+| Tests       | 309 Vitest unit tests + 14 Playwright e2e tests                                 |
+| Data        | Supabase (391 games) + `data/sample-games.json` fallback                        |
+| Phase       | **Phase 5: Global Catalog & Community Submissions** (active)                    |
 
-## Required Reading
+## Required Reading (Priority Order)
 
-1. `README.md`
-2. `docs/architecture.md`
-3. `docs/current-state.md`
+1. `docs/implementation-plan.md` – **START HERE** for current roadmap
+2. `docs/architecture.md` – Technical architecture
+3. `docs/current-state.md` – What's working today
+4. `docs/api/README.md` – API documentation (new)
+5. `docs/guides/data-sources.md` – External API setup (new)
+6. `docs/guides/moderation.md` – Moderation workflow (new)
+
+## What's New (December 2025)
+
+### Database Schema (Deployed to Supabase)
+
+- `catalog_submissions` – Community submission queue
+- `audit_log` – Immutable moderation history
+- `game_external_ids` – Links to IGDB, RAWG, etc.
+- `ingestion_runs` – Automated sync tracking
+- Full-text search with `pg_trgm` fuzzy matching
+- `search_games()` function for server-side search
+
+### Active Work Tracks
+
+1. **Data Source Integration** – Connect RAWG.io and IGDB APIs
+2. **User Submissions** – Build "Suggest Edit" UI in modal
+3. **Moderation Queue** – Build `/moderation` route
+4. **Authentication** – Integrate Supabase Auth with GitHub OAuth
 
 ## Quick Commands
 
@@ -25,10 +48,13 @@ _Last updated: December 2025_
 npm install
 npm run dev           # http://localhost:3000
 npm run build         # tsc --noEmit + vite build
-npm test              # Vitest
+npm test              # Vitest (309 tests)
 npm run test:e2e      # Playwright (after `npx playwright install --with-deps`)
 npm run lint          # ESLint
 npm run build:config  # Emit config.js from .env
+
+# Catalog Ingestion
+node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.example.json --once
 ```
 
 ## Architecture Overview
@@ -42,6 +68,11 @@ src/
 ├── ui/          # components (cards, grid, dashboard, filters, modal, settings)
 ├── utils/       # formatting helpers
 └── main.ts      # entry point
+
+services/
+└── catalog-ingest/   # Multi-source data aggregation service
+    ├── catalog-ingest.js   # 963-line ingestion + API server
+    └── config.example.json # Source configuration template
 ```
 
 **Data flow**
@@ -52,49 +83,71 @@ src/
 4. UI components subscribe to signals for the dashboard, grid (virtualized at ≥100 cards), modal, filters, and settings modal.
 5. Export/share/backup helpers live in `src/features/export.ts` and are wired through header/settings actions.
 
-**Styling**
+**New: Catalog Ingestion Flow**
 
-- CSS uses kebab-case classes (e.g., `.game-card-cover`, `.game-card-overlay`).
-- `style.css` pulls tokens, base styles, utilities, and component sheets from `style/`.
+1. `catalog-ingest.js` fetches from configured sources (RAWG, IGDB)
+2. Records normalized into unified schema
+3. Fuzzy matching detects duplicates (bigram similarity)
+4. SHA-256 hashing enables delta updates
+5. Approved community submissions merged during sync
+6. Snapshots written for CDN caching
+
+## Key Database Tables
+
+| Table                 | Purpose                        | RLS                         |
+| --------------------- | ------------------------------ | --------------------------- |
+| `games`               | Core game metadata (391 games) | Public read                 |
+| `catalog_submissions` | Community queue                | User sees own, mods see all |
+| `audit_log`           | Moderation history             | Mods only                   |
+| `game_external_ids`   | IGDB/RAWG links                | Public read                 |
+| `profiles`            | User roles                     | Own profile                 |
 
 ## Tests
 
-| Test File                            | Tests | Notes                                         |
-| ------------------------------------ | ----- | --------------------------------------------- |
-| `tests/core.test.ts`                 | 26    | Signals, keys, types                          |
-| `tests/state.test.ts`                | 28    | Store, filters, sorting (includes value sort) |
-| `tests/features.test.ts`             | 12    | Export/share/backup                           |
-| `tests/format.test.ts`               | 36    | Formatting helpers                            |
-| `tests/data-loader.test.ts`          | 3     | Data loader with Supabase fallback            |
-| `tests/fetch-covers.test.js`         | 48    | Cover fetching script                         |
-| `tests/audit-missing-covers.test.js` | 26    | Cover audit script                            |
-| `tests/archive-media.test.js`        | 14    | Media archival script                         |
-| `tests/build-css.test.js`            | 11    | CSS bundler script                            |
-| `tests/e2e/*.spec.js`                | 14    | Playwright smoke/filters/aria specs           |
+| Test File                            | Tests | Notes                                  |
+| ------------------------------------ | ----- | -------------------------------------- |
+| `tests/core.test.ts`                 | 26    | Signals, keys, types                   |
+| `tests/state.test.ts`                | 28    | Store, filters, sorting                |
+| `tests/features.test.ts`             | 12    | Export/share/backup                    |
+| `tests/format.test.ts`               | 36    | Formatting helpers                     |
+| `tests/catalog-ingest.test.ts`       | 60    | Ingestion, submissions, moderation API |
+| `tests/data-loader.test.ts`          | 3     | Data loader with Supabase fallback     |
+| `tests/fetch-covers.test.js`         | 48    | Cover fetching script                  |
+| `tests/audit-missing-covers.test.js` | 26    | Cover audit script                     |
+| `tests/archive-media.test.js`        | 14    | Media archival script                  |
+| `tests/build-css.test.js`            | 11    | CSS bundler script                     |
+| `tests/e2e/*.spec.js`                | 14    | Playwright smoke/filters/aria specs    |
 
-**Total: 204 unit tests + 14 E2E tests = 218 tests**
+**Total: 309 unit tests + 14 E2E tests = 323 tests**
 
-## Working Features
+## What To Work On
 
-- Virtualized card grid with hover overlays, keyboard focus, and placeholder covers.
-- Filters: platform + genre checkboxes, search input, sorts for name/rating/year/value/platform.
-- Collection status and notes stored locally; modal updates them in-place.
-- Settings modal handles theme/view selection, backup/restore, and clearing local data.
-- CSV export, JSON backups, and share codes (`?share=`) for imports.
-- Dashboard stats and price displays driven by `data/sample-price-history.json` (values in cents).
-- Service worker and manifest for basic offline support.
+### High Priority (Phase 5)
 
-## Known Gaps / Priorities
+1. [ ] Create submission UI ("Suggest Edit" button in modal)
+2. [ ] Build `/moderation` route with queue interface
+3. [ ] Configure RAWG.io API and scheduled sync workflow
+4. [ ] Integrate Supabase Auth with GitHub OAuth
+5. [ ] Update frontend to use `search_games()` for large catalogs
 
-- Price data only comes from the local snapshot; there is no live pricing fetch.
-- Supabase usage depends on `config.js` being present and the CDN client loading; ensure that script exists in deployments that expect cloud data.
-- Sample dataset is tiny (8 games), so UX under large data sets relies on Supabase providing volume.
-- Experimental modules (event sourcing, router, IndexedDB, web worker, virtual list) are archived in `archive/experimental/`.
+### Medium Priority
 
-## DO / DON’T
+6. [ ] Add rate limiting to submission endpoints
+7. [ ] Build user profile page with submission history
+8. [ ] Connect catalog-ingest to Supabase (currently uses local JSON)
 
-- **DO** keep CSS class names in kebab-case and prefer the existing component primitives.
-- **DO** respect `archive/` as read-only legacy reference.
-- **DO** regenerate `config.js` locally instead of committing secrets.
-- **DON’T** assume Supabase is available; code must tolerate sample fallback.
-- **DON’T** add dependencies without a concrete need.
+### Documentation Needed
+
+- [ ] Update README.md with new scope
+- [ ] Add auth setup guide
+
+## DO / DON'T
+
+- **DO** check `docs/implementation-plan.md` Phase 5 for current tasks
+- **DO** keep CSS class names in kebab-case
+- **DO** use Supabase RPC functions for moderation (`approve_submission`, `reject_submission`)
+- **DO** test with `npm test` before committing
+- **DON'T** commit API keys (use `.env` and `config.js`)
+- **DON'T** modify `archive/` directory
+- **DON'T** bypass RLS policies in client code
+- **DON'T** assume auth is available; handle anonymous gracefully

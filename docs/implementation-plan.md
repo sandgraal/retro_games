@@ -1,43 +1,52 @@
-# Implementation Plan – World-Class Retro Games Hub
+# Implementation Plan – Universal Games Atlas
 
-_Last updated: January 2025_
+_Last updated: December 2025_
 
-> ⚠️ **Note:** This plan predates the current TypeScript/Vite implementation and overstates shipped scope. Use `docs/current-state.md` and `docs/architecture.md` for an accurate view of what exists today. Treat the sections below as historical context, not a live roadmap.
+> **🚀 MAJOR SCOPE EXPANSION (December 2025)**: This project is evolving from a retro-only catalog to a **universal games database** covering ALL games (retro, modern, indie, mobile, VR). New features include community submissions, moderation workflows, and multi-source data ingestion.
 
 ## Purpose
 
-This document operationalizes the high-level implementation plan into actionable, bite-sized tasks so any contributor (human or AI agent) can understand what to build next. It should be read alongside [`docs/current-state.md`](./current-state.md) for baseline architecture details and the Phase 0 section below for the critical modularization work.
+This document operationalizes the high-level implementation plan into actionable, bite-sized tasks so any contributor (human or AI agent) can understand what to build next. It should be read alongside:
+
+- [`docs/current-state.md`](./current-state.md) – What's working today
+- [`docs/architecture.md`](./architecture.md) – Technical architecture
+- [`docs/api/README.md`](./api/README.md) – API documentation
+- [`docs/guides/data-sources.md`](./guides/data-sources.md) – External API integration guide
+- [`docs/guides/moderation.md`](./guides/moderation.md) – Moderation workflow guide
 
 ## Guiding Principles
 
-- **Performance-first** – Prioritize sub-second interactions for datasets of 10k+ games through efficient data access, virtualized rendering, and Core Web Vitals monitoring.
-- **Local-first with optional cloud sync** – Ensure the experience works entirely offline with seamless Supabase-backed synchronization for persistence and multi-device usage.
+- **Performance-first** – Prioritize sub-second interactions for datasets of 100k+ games through efficient data access, server-side search, virtualized rendering, and Core Web Vitals monitoring.
+- **Local-first with cloud sync** – Ensure the experience works offline with seamless Supabase-backed synchronization for persistence and multi-device usage.
+- **Universal coverage** – Support ALL games: retro, modern AAA, indie, mobile, VR, and emerging platforms.
+- **Community-driven data** – Enable user contributions with robust moderation and audit trails.
 - **Collector-centric UX** – Design every feature to help collectors manage, value, and share their collections.
 - **Operational excellence** – Maintain high code quality via automated testing, CI, observability, and clear contributor workflows.
 - **Maintainable architecture** – Keep codebase modular, testable, and approachable for new contributors.
-- **Retro-inspired modern UI** – Blend nostalgic visual cues with accessible, responsive design.
-- **Preservation & archival** – Capture and safeguard rare media, metadata, and historical context for retro titles.
+- **Museum-quality design** – Blend nostalgic visual cues with accessible, responsive modern design.
+- **Preservation & archival** – Capture and safeguard rare media, metadata, and historical context.
 - **Comprehensive & unified platform** – Combine metadata, pricing, collection management, and community features into a cohesive hub.
 
 ## Roadmap Structure
 
-Work is organized into five build phases plus operational cadences. Each phase is subdivided into tracks with goal statements, exit criteria, and granular tasks. Tracks can run in parallel when dependencies are satisfied.
+Work is organized into six build phases plus operational cadences. Each phase is subdivided into tracks with goal statements, exit criteria, and granular tasks. Tracks can run in parallel when dependencies are satisfied.
 
-**✅ UPDATE: Phase 0-2 Complete, Phase 3 In Progress (January 2025)** - All module extraction finished with 991 tests passing (87% coverage). See [`docs/architecture.md`](./architecture.md) for complete module inventory.
+**✅ UPDATE: Phase 0-3 Complete, Phase 5 Started (December 2025)** - All module extraction finished with 309 tests passing. New global catalog and community features in progress.
 
 ---
 
 ## Executive Summary
 
-| Phase                      | Status      | Progress                                        |
-| -------------------------- | ----------- | ----------------------------------------------- |
-| Phase 0: Architecture      | ✅ COMPLETE | 29 modules extracted, 991 tests                 |
-| Phase 1: Foundation        | ✅ COMPLETE | CI/CD, secrets, migrations                      |
-| Phase 2: UX & Features     | ✅ COMPLETE | Virtualization, pricing, media                  |
-| Phase 3: SEO & Web Vitals  | ✅ COMPLETE | JSON-LD, sitemap, Lighthouse CI                 |
-| Phase 3: Content Marketing | ✅ COMPLETE | Guides, templates, embed widgets, outreach plan |
-| Phase 3: User Growth       | ⛔ BLOCKED  | Requires analytics/email services               |
-| Phase 4: Monetization      | ⛔ BLOCKED  | Requires business decisions                     |
+| Phase                           | Status      | Progress                                        |
+| ------------------------------- | ----------- | ----------------------------------------------- |
+| Phase 0: Architecture           | ✅ COMPLETE | TypeScript, Vite, signals, 309 tests            |
+| Phase 1: Foundation             | ✅ COMPLETE | CI/CD, secrets, migrations                      |
+| Phase 2: UX & Features          | ✅ COMPLETE | Virtualization, pricing, media                  |
+| Phase 3: SEO & Web Vitals       | ✅ COMPLETE | JSON-LD, sitemap, Lighthouse CI                 |
+| Phase 3: Content Marketing      | ✅ COMPLETE | Guides, templates, embed widgets, outreach plan |
+| Phase 4: Monetization           | ⛔ BLOCKED  | Requires business decisions                     |
+| **Phase 5: Global Catalog**     | 🚧 ACTIVE   | Multi-source ingestion, submissions, moderation |
+| **Phase 6: Social & Community** | 📋 PLANNED  | User profiles, reviews, lists, activity feeds   |
 
 ---
 
