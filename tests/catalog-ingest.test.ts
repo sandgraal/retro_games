@@ -40,47 +40,47 @@ describe("deterministic key + fuzzy matcher", () => {
     expect(dissimilar).toBeLessThan(similar);
   });
 
-  test('fuzzy score handles empty strings', () => {
-    const score1 = fuzzyMatchScore('', '');
-    const score2 = fuzzyMatchScore('', 'Some Game');
-    const score3 = fuzzyMatchScore('Some Game', '');
+  test("fuzzy score handles empty strings", () => {
+    const score1 = fuzzyMatchScore("", "");
+    const score2 = fuzzyMatchScore("", "Some Game");
+    const score3 = fuzzyMatchScore("Some Game", "");
     expect(score1).toBe(0);
     expect(score2).toBe(0);
     expect(score3).toBe(0);
   });
 
-  test('fuzzy score handles single-character strings', () => {
-    const score1 = fuzzyMatchScore('A', 'A');
-    const score2 = fuzzyMatchScore('A', 'B');
-    const score3 = fuzzyMatchScore('A', 'Another Game');
+  test("fuzzy score handles single-character strings", () => {
+    const score1 = fuzzyMatchScore("A", "A");
+    const score2 = fuzzyMatchScore("A", "B");
+    const score3 = fuzzyMatchScore("A", "Another Game");
     expect(score1).toBe(0);
     expect(score2).toBe(0);
     expect(score3).toBe(0);
   });
 
-  test('fuzzy score handles two-character strings', () => {
-    const score1 = fuzzyMatchScore('AB', 'AB');
-    const score2 = fuzzyMatchScore('AB', 'ABC');
-    const score3 = fuzzyMatchScore('AB', 'XY');
+  test("fuzzy score handles two-character strings", () => {
+    const score1 = fuzzyMatchScore("AB", "AB");
+    const score2 = fuzzyMatchScore("AB", "ABC");
+    const score3 = fuzzyMatchScore("AB", "XY");
     expect(score1).toBe(1); // Identical bigram
     expect(score2).toBeGreaterThan(0); // Partial match
     expect(score3).toBe(0); // No match
   });
 });
 
-describe('error handling in fetchSourceRecords', () => {
+describe("error handling in fetchSourceRecords", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  test('handles invalid URL gracefully', async () => {
-    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Invalid URL'));
+  test("handles invalid URL gracefully", async () => {
+    vi.spyOn(global, "fetch").mockRejectedValue(new Error("Invalid URL"));
 
     const run = await runIngestion({
       sources: [
         {
-          name: 'invalid-url-source',
-          url: 'not-a-valid-url',
+          name: "invalid-url-source",
+          url: "not-a-valid-url",
         },
       ],
     });
@@ -90,8 +90,8 @@ describe('error handling in fetchSourceRecords', () => {
     expect(Object.keys(run.records)).toHaveLength(0);
   });
 
-  test('handles HTTP 404 error', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+  test("handles HTTP 404 error", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
       ok: false,
       status: 404,
     } as Response);
@@ -99,8 +99,8 @@ describe('error handling in fetchSourceRecords', () => {
     const run = await runIngestion({
       sources: [
         {
-          name: '404-source',
-          url: 'https://example.com/not-found',
+          name: "404-source",
+          url: "https://example.com/not-found",
         },
       ],
     });
@@ -110,8 +110,8 @@ describe('error handling in fetchSourceRecords', () => {
     expect(Object.keys(run.records)).toHaveLength(0);
   });
 
-  test('handles HTTP 500 error', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+  test("handles HTTP 500 error", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
       ok: false,
       status: 500,
     } as Response);
@@ -119,8 +119,8 @@ describe('error handling in fetchSourceRecords', () => {
     const run = await runIngestion({
       sources: [
         {
-          name: '500-source',
-          url: 'https://example.com/server-error',
+          name: "500-source",
+          url: "https://example.com/server-error",
         },
       ],
     });
@@ -129,14 +129,14 @@ describe('error handling in fetchSourceRecords', () => {
     expect(Object.keys(run.records)).toHaveLength(0);
   });
 
-  test('handles network timeout/failure', async () => {
-    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network request failed'));
+  test("handles network timeout/failure", async () => {
+    vi.spyOn(global, "fetch").mockRejectedValue(new Error("Network request failed"));
 
     const run = await runIngestion({
       sources: [
         {
-          name: 'network-fail-source',
-          url: 'https://example.com/timeout',
+          name: "network-fail-source",
+          url: "https://example.com/timeout",
         },
       ],
     });
@@ -145,18 +145,18 @@ describe('error handling in fetchSourceRecords', () => {
     expect(Object.keys(run.records)).toHaveLength(0);
   });
 
-  test('handles malformed JSON response', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+  test("handles malformed JSON response", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
       status: 200,
-      json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
+      json: vi.fn().mockRejectedValue(new Error("Invalid JSON")),
     } as unknown as Response);
 
     const run = await runIngestion({
       sources: [
         {
-          name: 'malformed-json-source',
-          url: 'https://example.com/bad-json',
+          name: "malformed-json-source",
+          url: "https://example.com/bad-json",
         },
       ],
     });
@@ -165,20 +165,22 @@ describe('error handling in fetchSourceRecords', () => {
     expect(Object.keys(run.records)).toHaveLength(0);
   });
 
-  test('successfully processes valid URL with array response', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+  test("successfully processes valid URL with array response", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
       status: 200,
-      json: vi.fn().mockResolvedValue([
-        { title: 'Test Game', platform: 'Test Platform', release_date: '2020-01-01' },
-      ]),
+      json: vi
+        .fn()
+        .mockResolvedValue([
+          { title: "Test Game", platform: "Test Platform", release_date: "2020-01-01" },
+        ]),
     } as unknown as Response);
 
     const run = await runIngestion({
       sources: [
         {
-          name: 'valid-url-source',
-          url: 'https://example.com/games',
+          name: "valid-url-source",
+          url: "https://example.com/games",
         },
       ],
     });
@@ -187,13 +189,17 @@ describe('error handling in fetchSourceRecords', () => {
     expect(Object.keys(run.records)).toHaveLength(1);
   });
 
-  test('successfully processes valid URL with results wrapper', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
+  test("successfully processes valid URL with results wrapper", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
       status: 200,
       json: vi.fn().mockResolvedValue({
         results: [
-          { title: 'Wrapped Game', platform: 'Test Platform', release_date: '2021-01-01' },
+          {
+            title: "Wrapped Game",
+            platform: "Test Platform",
+            release_date: "2021-01-01",
+          },
         ],
       }),
     } as unknown as Response);
@@ -201,8 +207,8 @@ describe('error handling in fetchSourceRecords', () => {
     const run = await runIngestion({
       sources: [
         {
-          name: 'wrapped-source',
-          url: 'https://example.com/wrapped-games',
+          name: "wrapped-source",
+          url: "https://example.com/wrapped-games",
         },
       ],
     });
@@ -211,26 +217,28 @@ describe('error handling in fetchSourceRecords', () => {
     expect(Object.keys(run.records)).toHaveLength(1);
   });
 
-  test('handles mixed success and failure sources', async () => {
-    vi.spyOn(global, 'fetch')
+  test("handles mixed success and failure sources", async () => {
+    vi.spyOn(global, "fetch")
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: vi.fn().mockResolvedValue([
-          { title: 'Success Game', platform: 'PS5', release_date: '2023-01-01' },
-        ]),
+        json: vi
+          .fn()
+          .mockResolvedValue([
+            { title: "Success Game", platform: "PS5", release_date: "2023-01-01" },
+          ]),
       } as unknown as Response)
-      .mockRejectedValueOnce(new Error('Second source failed'));
+      .mockRejectedValueOnce(new Error("Second source failed"));
 
     const run = await runIngestion({
       sources: [
         {
-          name: 'success-source',
-          url: 'https://example.com/success',
+          name: "success-source",
+          url: "https://example.com/success",
         },
         {
-          name: 'fail-source',
-          url: 'https://example.com/fail',
+          name: "fail-source",
+          url: "https://example.com/fail",
         },
       ],
     });
@@ -277,21 +285,23 @@ describe("ingestion pipeline", () => {
     expect(entries).toHaveLength(1);
     const [record] = entries;
     expect(record.version).toBe(2);
-    expect(record.record.regions.sort()).toEqual(['EU', 'NA']);
-    expect(new Set(record.record.genres)).toEqual(new Set(['FPS', 'Shooter']));
+    expect(record.record.regions.sort()).toEqual(["EU", "NA"]);
+    expect(new Set(record.record.genres)).toEqual(new Set(["FPS", "Shooter"]));
     // Verify source array is properly merged and deduplicated
-    expect(record.record.source).toEqual(expect.arrayContaining(['primary', 'secondary']));
+    expect(record.record.source).toEqual(
+      expect.arrayContaining(["primary", "secondary"])
+    );
     expect(record.record.source).toHaveLength(2);
 
     const snapshots = await fs.readdir(path.join(tempDir, "snapshots"));
     expect(snapshots.length).toBeGreaterThan(0);
   });
 
-  test('handles empty source records', async () => {
+  test("handles empty source records", async () => {
     const run = await runIngestion({
       sources: [
         {
-          name: 'empty-source',
+          name: "empty-source",
           records: [],
         },
       ],
@@ -302,14 +312,14 @@ describe("ingestion pipeline", () => {
     expect(run.metrics.normalized).toBe(0);
   });
 
-  test('handles malformed input data with missing fields', async () => {
+  test("handles malformed input data with missing fields", async () => {
     const run = await runIngestion({
       sources: [
         {
-          name: 'malformed-source',
+          name: "malformed-source",
           records: [
-            { title: null, platform: undefined, release_date: '' },
-            { title: 'Valid Game', platform: 'PS2' },
+            { title: null, platform: undefined, release_date: "" },
+            { title: "Valid Game", platform: "PS2" },
           ],
         },
       ],
@@ -318,20 +328,28 @@ describe("ingestion pipeline", () => {
     const entries = Object.values(run.records);
     expect(entries.length).toBeGreaterThan(0);
     // Should handle malformed data gracefully
-    entries.forEach(entry => {
-      expect(entry.record).toHaveProperty('title');
-      expect(entry.record).toHaveProperty('platform');
+    entries.forEach((entry) => {
+      expect(entry.record).toHaveProperty("title");
+      expect(entry.record).toHaveProperty("platform");
     });
   });
 
-  test('handles special characters in titles', async () => {
+  test("handles special characters in titles", async () => {
     const run = await runIngestion({
       sources: [
         {
-          name: 'special-chars',
+          name: "special-chars",
           records: [
-            { title: 'Pokémon Red & Blue', platform: 'Game Boy', release_date: '1996-02-27' },
-            { title: 'Metal Gear Solid 2: Sons of Liberty', platform: 'PS2', release_date: '2001-11-13' },
+            {
+              title: "Pokémon Red & Blue",
+              platform: "Game Boy",
+              release_date: "1996-02-27",
+            },
+            {
+              title: "Metal Gear Solid 2: Sons of Liberty",
+              platform: "PS2",
+              release_date: "2001-11-13",
+            },
           ],
         },
       ],
@@ -341,19 +359,24 @@ describe("ingestion pipeline", () => {
     expect(entries.length).toBe(2);
     // Keys should be normalized and deterministic
     const keys = Object.keys(run.records);
-    keys.forEach(key => {
+    keys.forEach((key) => {
       expect(key).toMatch(/^[a-z0-9 ]+___[a-z0-9 ]+$/);
     });
   });
 
-  test('tracks version changes when source is re-merged', async () => {
+  test("tracks version changes when source is re-merged", async () => {
     // First ingestion
     const run1 = await runIngestion({
       sources: [
         {
-          name: 'source1',
+          name: "source1",
           records: [
-            { title: 'Zelda', platform: 'NES', release_date: '1986-02-21', regions: ['NA'] },
+            {
+              title: "Zelda",
+              platform: "NES",
+              release_date: "1986-02-21",
+              regions: ["NA"],
+            },
           ],
         },
       ],
@@ -366,9 +389,14 @@ describe("ingestion pipeline", () => {
     const run2 = await runIngestion({
       sources: [
         {
-          name: 'source1',
+          name: "source1",
           records: [
-            { title: 'Zelda', platform: 'NES', release_date: '1986-02-21', regions: ['NA'] },
+            {
+              title: "Zelda",
+              platform: "NES",
+              release_date: "1986-02-21",
+              regions: ["NA"],
+            },
           ],
         },
       ],
@@ -377,19 +405,37 @@ describe("ingestion pipeline", () => {
     // Version stays the same because source array is deduplicated (no actual change)
     expect(run2.records[key].version).toBe(1);
     // Source array should be deduplicated to contain 'source1' only once
-    expect(run2.records[key].record.source).toEqual(['source1']);
+    expect(run2.records[key].record.source).toEqual(["source1"]);
   });
 
-  test('merges duplicate records within single ingestion', async () => {
+  test("merges duplicate records within single ingestion", async () => {
     // Single ingestion with duplicate identical records
     const run = await runIngestion({
       sources: [
         {
-          name: 'test-source',
+          name: "test-source",
           records: [
-            { title: 'Duplicate Game', platform: 'Genesis', release_date: '1990-01-01', regions: ['NA'], genres: ['Action'] },
-            { title: 'Duplicate Game', platform: 'Genesis', release_date: '1990-01-01', regions: ['NA'], genres: ['Action'] },
-            { title: 'Different Game', platform: 'Genesis', release_date: '1990-01-01', regions: ['NA'], genres: ['Action'] },
+            {
+              title: "Duplicate Game",
+              platform: "Genesis",
+              release_date: "1990-01-01",
+              regions: ["NA"],
+              genres: ["Action"],
+            },
+            {
+              title: "Duplicate Game",
+              platform: "Genesis",
+              release_date: "1990-01-01",
+              regions: ["NA"],
+              genres: ["Action"],
+            },
+            {
+              title: "Different Game",
+              platform: "Genesis",
+              release_date: "1990-01-01",
+              regions: ["NA"],
+              genres: ["Action"],
+            },
           ],
         },
       ],
@@ -401,14 +447,19 @@ describe("ingestion pipeline", () => {
     expect(run.metrics.merged).toBe(1);
   });
 
-  test('increments version only when record content changes', async () => {
+  test("increments version only when record content changes", async () => {
     // First ingestion
     const run1 = await runIngestion({
       sources: [
         {
-          name: 'source1',
+          name: "source1",
           records: [
-            { title: 'Mario', platform: 'NES', release_date: '1985-09-13', regions: ['JP'] },
+            {
+              title: "Mario",
+              platform: "NES",
+              release_date: "1985-09-13",
+              regions: ["JP"],
+            },
           ],
         },
       ],
@@ -421,26 +472,36 @@ describe("ingestion pipeline", () => {
     const run2 = await runIngestion({
       sources: [
         {
-          name: 'source1',
+          name: "source1",
           records: [
-            { title: 'Mario', platform: 'NES', release_date: '1985-09-13', regions: ['JP', 'NA'] },
+            {
+              title: "Mario",
+              platform: "NES",
+              release_date: "1985-09-13",
+              regions: ["JP", "NA"],
+            },
           ],
         },
       ],
     });
 
     expect(run2.records[key].version).toBe(2);
-    expect(run2.records[key].record.regions.sort()).toEqual(['JP', 'NA']);
+    expect(run2.records[key].record.regions.sort()).toEqual(["JP", "NA"]);
   });
 
-  test('increments version correctly through multiple updates', async () => {
+  test("increments version correctly through multiple updates", async () => {
     // First ingestion
     await runIngestion({
       sources: [
         {
-          name: 'source1',
+          name: "source1",
           records: [
-            { title: 'Sonic', platform: 'Genesis', release_date: '1991-06-23', genres: ['Platformer'] },
+            {
+              title: "Sonic",
+              platform: "Genesis",
+              release_date: "1991-06-23",
+              genres: ["Platformer"],
+            },
           ],
         },
       ],
@@ -450,9 +511,15 @@ describe("ingestion pipeline", () => {
     const run2 = await runIngestion({
       sources: [
         {
-          name: 'source1',
+          name: "source1",
           records: [
-            { title: 'Sonic', platform: 'Genesis', release_date: '1991-06-23', genres: ['Platformer'], regions: ['NA'] },
+            {
+              title: "Sonic",
+              platform: "Genesis",
+              release_date: "1991-06-23",
+              genres: ["Platformer"],
+              regions: ["NA"],
+            },
           ],
         },
       ],
@@ -465,9 +532,15 @@ describe("ingestion pipeline", () => {
     const run3 = await runIngestion({
       sources: [
         {
-          name: 'source1',
+          name: "source1",
           records: [
-            { title: 'Sonic', platform: 'Genesis', release_date: '1991-06-23', genres: ['Platformer', 'Action'], regions: ['NA'] },
+            {
+              title: "Sonic",
+              platform: "Genesis",
+              release_date: "1991-06-23",
+              genres: ["Platformer", "Action"],
+              regions: ["NA"],
+            },
           ],
         },
       ],
@@ -476,14 +549,24 @@ describe("ingestion pipeline", () => {
     expect(run3.records[key].version).toBe(3);
   });
 
-  test('handles duplicate deterministic keys from same source', async () => {
+  test("handles duplicate deterministic keys from same source", async () => {
     const run = await runIngestion({
       sources: [
         {
-          name: 'duplicate-source',
+          name: "duplicate-source",
           records: [
-            { title: 'Final Fantasy VII', platform: 'PlayStation', release_date: '1997-01-31', regions: ['JP'] },
-            { title: 'Final Fantasy VII', platform: 'PlayStation', release_date: '1997-01-31', regions: ['NA'] },
+            {
+              title: "Final Fantasy VII",
+              platform: "PlayStation",
+              release_date: "1997-01-31",
+              regions: ["JP"],
+            },
+            {
+              title: "Final Fantasy VII",
+              platform: "PlayStation",
+              release_date: "1997-01-31",
+              regions: ["NA"],
+            },
           ],
         },
       ],
@@ -492,24 +575,34 @@ describe("ingestion pipeline", () => {
     // Both records should merge into one
     const entries = Object.values(run.records);
     expect(entries).toHaveLength(1);
-    expect(entries[0].record.regions.sort()).toEqual(['JP', 'NA']);
+    expect(entries[0].record.regions.sort()).toEqual(["JP", "NA"]);
     // Source array should be deduplicated to contain the source name only once
-    expect(entries[0].record.source).toEqual(['duplicate-source']);
+    expect(entries[0].record.source).toEqual(["duplicate-source"]);
   });
 
-  test('handles duplicate deterministic keys across sources', async () => {
+  test("handles duplicate deterministic keys across sources", async () => {
     const run = await runIngestion({
       sources: [
         {
-          name: 'source-a',
+          name: "source-a",
           records: [
-            { title: 'Chrono Trigger', platform: 'SNES', release_date: '1995-03-11', genres: ['RPG'] },
+            {
+              title: "Chrono Trigger",
+              platform: "SNES",
+              release_date: "1995-03-11",
+              genres: ["RPG"],
+            },
           ],
         },
         {
-          name: 'source-b',
+          name: "source-b",
           records: [
-            { title: 'Chrono Trigger', platform: 'SNES', release_date: '1995-03-11', genres: ['JRPG'] },
+            {
+              title: "Chrono Trigger",
+              platform: "SNES",
+              release_date: "1995-03-11",
+              genres: ["JRPG"],
+            },
           ],
         },
       ],
@@ -518,25 +611,37 @@ describe("ingestion pipeline", () => {
     const entries = Object.values(run.records);
     expect(entries).toHaveLength(1);
     // Should merge genres from both sources
-    expect(new Set(entries[0].record.genres)).toEqual(new Set(['RPG', 'JRPG']));
+    expect(new Set(entries[0].record.genres)).toEqual(new Set(["RPG", "JRPG"]));
     // Source should be an array containing both source names
-    expect(entries[0].record.source).toEqual(expect.arrayContaining(['source-a', 'source-b']));
+    expect(entries[0].record.source).toEqual(
+      expect.arrayContaining(["source-a", "source-b"])
+    );
     expect(entries[0].record.source).toHaveLength(2);
   });
 
-  test('handles source names containing commas correctly', async () => {
+  test("handles source names containing commas correctly", async () => {
     const run = await runIngestion({
       sources: [
         {
-          name: 'Source, with comma',
+          name: "Source, with comma",
           records: [
-            { title: 'Test Game 1', platform: 'PC', release_date: '2020-01-01', genres: ['Action'] },
+            {
+              title: "Test Game 1",
+              platform: "PC",
+              release_date: "2020-01-01",
+              genres: ["Action"],
+            },
           ],
         },
         {
-          name: 'Another, source',
+          name: "Another, source",
           records: [
-            { title: 'Test Game 1', platform: 'PC', release_date: '2020-01-01', genres: ['Adventure'] },
+            {
+              title: "Test Game 1",
+              platform: "PC",
+              release_date: "2020-01-01",
+              genres: ["Adventure"],
+            },
           ],
         },
       ],
@@ -545,10 +650,12 @@ describe("ingestion pipeline", () => {
     const entries = Object.values(run.records);
     expect(entries).toHaveLength(1);
     // Source names with commas should be preserved intact in the array
-    expect(entries[0].record.source).toEqual(expect.arrayContaining(['Source, with comma', 'Another, source']));
+    expect(entries[0].record.source).toEqual(
+      expect.arrayContaining(["Source, with comma", "Another, source"])
+    );
     expect(entries[0].record.source).toHaveLength(2);
     // Verify no string concatenation occurred (would break comma-containing names)
-    expect(typeof entries[0].record.source).toBe('object');
+    expect(typeof entries[0].record.source).toBe("object");
     expect(Array.isArray(entries[0].record.source)).toBe(true);
   });
 });
