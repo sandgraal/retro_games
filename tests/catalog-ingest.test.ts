@@ -715,22 +715,27 @@ describe("startReadApiServer", () => {
 
   async function makeRequest(
     port: number,
-    path: string
+    path: string,
+    options: { headers?: Record<string, string> } = {}
   ): Promise<{ statusCode: number; headers: http.IncomingHttpHeaders; body: string }> {
     return new Promise((resolve, reject) => {
-      const req = http.get(`http://localhost:${port}${path}`, (res) => {
-        let body = "";
-        res.on("data", (chunk) => {
-          body += chunk;
-        });
-        res.on("end", () => {
-          resolve({
-            statusCode: res.statusCode || 0,
-            headers: res.headers,
-            body,
+      const req = http.get(
+        `http://localhost:${port}${path}`,
+        { headers: options.headers },
+        (res) => {
+          let body = "";
+          res.on("data", (chunk) => {
+            body += chunk;
           });
-        });
-      });
+          res.on("end", () => {
+            resolve({
+              statusCode: res.statusCode || 0,
+              headers: res.headers,
+              body,
+            });
+          });
+        }
+      );
       req.on("error", reject);
       req.setTimeout(5000, () => {
         req.destroy();
@@ -979,1348 +984,249 @@ describe("startReadApiServer", () => {
     expect(json.error).toBeDefined();
   });
 
-  test("POST /api/v1/games/:targetId/suggestions - successful submission with valid auth", async () => {
-    const port = 9883;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+  describe("GET /api/v1/moderation/suggestions", () => {
+    test("returns 403 for anonymous user", async () => {
+      const port = 9883;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const targetId = "chrono-trigger___snes";
-    const delta = {
-      release_date: "1995-03-11",
-      genres: ["RPG", "Adventure"],
-    };
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/${targetId}/suggestions`,
-      { delta, notes: "Updating release date" },
-      {
-        "x-role": "contributor",
-        "x-user-email": "test@example.com",
-        "x-session-id": "test-session-123",
-      }
-    );
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion).toBeDefined();
-    expect(json.suggestion.id).toBeDefined();
-    expect(json.suggestion.type).toBe("update");
-    expect(json.suggestion.targetId).toBe(targetId);
-    expect(json.suggestion.delta).toEqual(delta);
-    expect(json.suggestion.status).toBe("pending");
-    expect(json.suggestion.author).toEqual({
-      role: "contributor",
-      email: "test@example.com",
-      sessionId: "test-session-123",
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions");
+      expect(response.statusCode).toBe(403);
+      const json = JSON.parse(response.body);
+      expect(json.error).toBe("Moderator access required");
     });
-    expect(json.suggestion.submittedAt).toBeDefined();
-    expect(json.suggestion.notes).toBe("Updating release date");
-  });
 
-  test("POST /api/v1/games/:targetId/suggestions - rejects invalid delta payload (null)", async () => {
-    const port = 9884;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    test("returns 403 for contributor role", async () => {
+      const port = 9884;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/test-game___platform/suggestions`,
-      { delta: null }
-    );
-
-    expect(response.statusCode).toBe(400);
-    const json = JSON.parse(response.body);
-    expect(json.error).toBe("Missing suggestion payload");
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - rejects invalid delta payload (not object)", async () => {
-    const port = 9885;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/test-game___platform/suggestions`,
-      { delta: "string instead of object" }
-    );
-
-    expect(response.statusCode).toBe(400);
-    const json = JSON.parse(response.body);
-    expect(json.error).toBe("Missing suggestion payload");
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - handles missing delta key and uses body directly", async () => {
-    const port = 9886;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const delta = {
-      title: "Final Fantasy VII",
-      platform: "PlayStation",
-    };
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/ff7___ps1/suggestions`,
-      delta // Sending delta directly without wrapping
-    );
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.delta).toEqual(delta);
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - stores author metadata correctly", async () => {
-    const port = 9887;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/game___platform/suggestions`,
-      { delta: { title: "Updated" } },
-      {
-        "x-role": "admin",
-        "x-user-email": "admin@example.com",
-        "x-session-id": "admin-session",
-      }
-    );
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.author.role).toBe("admin");
-    expect(json.suggestion.author.email).toBe("admin@example.com");
-    expect(json.suggestion.author.sessionId).toBe("admin-session");
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - defaults to anonymous auth when headers missing", async () => {
-    const port = 9888;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/game___platform/suggestions`,
-      { delta: { title: "Test" } }
-      // No auth headers
-    );
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.author.role).toBe("anonymous");
-    expect(json.suggestion.author.email).toBeNull();
-    expect(json.suggestion.author.sessionId).toMatch(/^sess_/); // Auto-generated
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - handles targetId with special characters", async () => {
-    const port = 9889;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const targetId = "pokémon red & blue___game boy";
-    const encodedTargetId = encodeURIComponent(targetId);
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/${encodedTargetId}/suggestions`,
-      { delta: { region: "EU" } }
-    );
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.targetId).toBe(targetId);
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - stores timestamp in ISO format", async () => {
-    const port = 9890;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const beforeSubmit = new Date();
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/test___platform/suggestions`,
-      { delta: { rating: "E" } }
-    );
-    const afterSubmit = new Date();
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    const submittedAt = new Date(json.suggestion.submittedAt);
-
-    expect(submittedAt.getTime()).toBeGreaterThanOrEqual(beforeSubmit.getTime());
-    expect(submittedAt.getTime()).toBeLessThanOrEqual(afterSubmit.getTime());
-    expect(json.suggestion.submittedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - handles notes field correctly", async () => {
-    const port = 9891;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/test___platform/suggestions`,
-      {
-        delta: { title: "Updated Title" },
-        notes: "This is a correction based on official release",
-      }
-    );
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.notes).toBe("This is a correction based on official release");
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - handles missing notes field", async () => {
-    const port = 9892;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/games/test___platform/suggestions`,
-      { delta: { title: "Updated" } }
-      // No notes field
-    );
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.notes).toBeNull();
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - persists suggestions to file", async () => {
-    const port = 9893;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    await makePostRequest(
-      port,
-      `/api/v1/games/game1___platform1/suggestions`,
-      { delta: { title: "First" } }
-    );
-
-    await makePostRequest(
-      port,
-      `/api/v1/games/game2___platform2/suggestions`,
-      { delta: { title: "Second" } }
-    );
-
-    // Read suggestions file directly from tempDir
-    const suggestionsPath = path.join(tempDir, "suggestions.json");
-    const suggestionsData = JSON.parse(
-      await fs.readFile(suggestionsPath, "utf-8")
-    );
-
-    expect(suggestionsData.suggestions).toHaveLength(2);
-    expect(suggestionsData.suggestions[0].targetId).toBe("game1___platform1");
-    expect(suggestionsData.suggestions[1].targetId).toBe("game2___platform2");
-  });
-
-  test("POST /api/v1/games/:targetId/suggestions - generates unique IDs for each submission", async () => {
-    const port = 9894;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response1 = await makePostRequest(
-      port,
-      `/api/v1/games/test___platform/suggestions`,
-      { delta: { title: "First" } }
-    );
-
-    const response2 = await makePostRequest(
-      port,
-      `/api/v1/games/test___platform/suggestions`,
-      { delta: { title: "Second" } }
-    );
-
-    const json1 = JSON.parse(response1.body);
-    const json2 = JSON.parse(response2.body);
-
-    expect(json1.suggestion.id).toBeDefined();
-    expect(json2.suggestion.id).toBeDefined();
-    expect(json1.suggestion.id).not.toBe(json2.suggestion.id);
-  });
-});
-
-describe("POST /api/v1/games/new - new game suggestions", () => {
-  let server: http.Server | null = null;
-
-  afterEach(async () => {
-    if (server) {
-      await new Promise<void>((resolve) => {
-        server!.close(() => {
-          server = null;
-          resolve();
-        });
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "contributor" },
       });
-    }
-  });
+      expect(response.statusCode).toBe(403);
+      const json = JSON.parse(response.body);
+      expect(json.error).toBe("Moderator access required");
+    });
 
-  async function makePostRequest(
-    port: number,
-    path: string,
-    body: unknown,
-    headers: Record<string, string> = {}
-  ): Promise<{ statusCode: number; headers: http.IncomingHttpHeaders; body: string }> {
-    return new Promise((resolve, reject) => {
-      const bodyData = JSON.stringify(body);
-      const options = {
-        hostname: "localhost",
-        port,
-        path,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Content-Length": Buffer.byteLength(bodyData),
-          ...headers,
+    test("returns 200 with empty suggestions for moderator when no suggestions exist", async () => {
+      const port = 9885;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "moderator" },
+      });
+      expect(response.statusCode).toBe(200);
+      const json = JSON.parse(response.body);
+      expect(json.suggestions).toEqual([]);
+    });
+
+    test("returns 200 with empty suggestions for admin when no suggestions exist", async () => {
+      const port = 9886;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const adminToken = getTestJwt("admin");
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      expect(response.statusCode).toBe(200);
+      const json = JSON.parse(response.body);
+      expect(json.suggestions).toEqual([]);
+    });
+
+    test.each([
+      {
+        role: "moderator",
+        port: 9887,
+        game: {
+          title: "Chrono Trigger",
+          platform: "SNES",
+          release_date: "1995-03-11",
+          genres: ["RPG"],
         },
+        suggestionId: "test-suggestion-1",
+      },
+      {
+        role: "admin",
+        port: 9888,
+        game: {
+          title: "Final Fantasy VII",
+          platform: "PlayStation",
+          release_date: "1997-01-31",
+          genres: ["RPG"],
+        },
+        suggestionId: "test-suggestion-2",
+      },
+    ])(
+      "enriches suggestions with canonical data from catalog-store for $role",
+      async ({ role, port, game, suggestionId }) => {
+        // First, create a game in the catalog
+        await runIngestion({
+          sources: [
+            {
+              name: "test-source",
+              records: [game],
+            },
+          ],
+        });
+
+        // Get the game key to use as targetId
+        const catalogStorePath = path.join(tempDir, "catalog-store.json");
+        const suggestionsPath = path.join(tempDir, "suggestions.json");
+        const catalogStoreData = await fs.readFile(catalogStorePath, "utf-8");
+        const catalogStore = JSON.parse(catalogStoreData);
+        const gameKey = Object.keys(catalogStore.records)[0];
+
+        // Create a suggestion
+        const suggestions = {
+          suggestions: [
+            {
+              id: suggestionId,
+              type: "update",
+              targetId: gameKey,
+              delta: { genres: ["RPG", "Updated"] },
+              status: "pending",
+              author: { role: "contributor", email: "user@example.com", sessionId: "sess_123" },
+              submittedAt: "2024-01-01T00:00:00.000Z",
+              notes: "Updating genres",
+            },
+          ],
+        };
+        await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
+
+        server = startReadApiServer({ port });
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+          headers: { "x-role": role },
+        });
+        expect(response.statusCode).toBe(200);
+        const json = JSON.parse(response.body);
+        expect(json.suggestions).toHaveLength(1);
+        expect(json.suggestions[0].id).toBe(suggestionId);
+        expect(json.suggestions[0].canonical).toBeDefined();
+        expect(json.suggestions[0].canonical.title).toBe(game.title);
+        expect(json.suggestions[0].canonical.platform).toBe(game.platform);
+      }
+    );
+
+    test("handles suggestions with no targetId (new game suggestions)", async () => {
+      const suggestionsPath = path.join(tempDir, "suggestions.json");
+
+      // Create a new game suggestion without targetId
+      const suggestions = {
+        suggestions: [
+          {
+            id: "test-suggestion-3",
+            type: "new",
+            targetId: null,
+            delta: {
+              title: "New Game",
+              platform: "Switch",
+              release_date: "2024-01-01",
+              genres: ["Adventure"],
+            },
+            status: "pending",
+            author: { role: "contributor", email: "user@example.com", sessionId: "sess_789" },
+            submittedAt: "2024-01-03T00:00:00.000Z",
+            notes: "Submitting new game",
+          },
+        ],
       };
+      await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
 
-      const req = http.request(options, (res) => {
-        let responseBody = "";
-        res.on("data", (chunk) => {
-          responseBody += chunk;
-        });
-        res.on("end", () => {
-          resolve({
-            statusCode: res.statusCode || 0,
-            headers: res.headers,
-            body: responseBody,
-          });
-        });
+      const port = 9889;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "moderator" },
       });
-
-      req.on("error", reject);
-      req.setTimeout(5000, () => {
-        req.destroy();
-        reject(new Error("Request timeout"));
-      });
-
-      req.write(bodyData);
-      req.end();
-    });
-  }
-
-  test("accepts new game with title field", async () => {
-    const port = 9883;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      "/api/v1/games/new",
-      {
-        delta: {
-          title: "New Test Game",
-          platform: "PlayStation 5",
-          release_date: "2024-01-01",
-        },
-      },
-      {
-        "x-role": "contributor",
-        "x-user-email": "test@example.com",
-      }
-    );
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion).toBeDefined();
-    expect(json.suggestion.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    );
-    expect(json.suggestion.type).toBe("new");
-    expect(json.suggestion.targetId).toBeNull();
-    expect(json.suggestion.delta.title).toBe("New Test Game");
-    expect(json.suggestion.status).toBe("pending");
-    expect(json.suggestion.author).toEqual({
-      role: "contributor",
-      email: "test@example.com",
-      sessionId: expect.any(String),
-    });
-    expect(json.suggestion.submittedAt).toBeDefined();
-  });
-
-  test("accepts new game with game_name field", async () => {
-    const port = 9884;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(port, "/api/v1/games/new", {
-      delta: {
-        game_name: "Another Test Game",
-        platform: "Xbox Series X",
-      },
+      expect(response.statusCode).toBe(200);
+      const json = JSON.parse(response.body);
+      expect(json.suggestions).toHaveLength(1);
+      expect(json.suggestions[0].id).toBe("test-suggestion-3");
+      expect(json.suggestions[0].canonical).toBeNull();
     });
 
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion).toBeDefined();
-    expect(json.suggestion.delta.game_name).toBe("Another Test Game");
-  });
+    test("filters suggestions by status query parameter", async () => {
+      const suggestionsPath = path.join(tempDir, "suggestions.json");
 
-  test("rejects request when both title and game_name are missing", async () => {
-    const port = 9885;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(port, "/api/v1/games/new", {
-      delta: {
-        platform: "Nintendo Switch",
-        release_date: "2024-01-01",
-      },
-    });
-
-    expect(response.statusCode).toBe(400);
-    const json = JSON.parse(response.body);
-    expect(json.error).toBe("New game submissions require a title");
-  });
-
-  test("rejects request when delta is missing title and game_name", async () => {
-    const port = 9886;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(port, "/api/v1/games/new", {
-      delta: {},
-    });
-
-    expect(response.statusCode).toBe(400);
-    const json = JSON.parse(response.body);
-    expect(json.error).toBe("New game submissions require a title");
-  });
-
-  test("generates unique UUID for each suggestion", async () => {
-    const port = 9887;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response1 = await makePostRequest(port, "/api/v1/games/new", {
-      delta: {
-        title: "Game 1",
-        platform: "PS5",
-      },
-    });
-
-    const response2 = await makePostRequest(port, "/api/v1/games/new", {
-      delta: {
-        title: "Game 2",
-        platform: "PS5",
-      },
-    });
-
-    expect(response1.statusCode).toBe(201);
-    expect(response2.statusCode).toBe(201);
-
-    const json1 = JSON.parse(response1.body);
-    const json2 = JSON.parse(response2.body);
-
-    expect(json1.suggestion.id).not.toBe(json2.suggestion.id);
-    expect(json1.suggestion.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    );
-    expect(json2.suggestion.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    );
-  });
-
-  test("captures author metadata with role from headers", async () => {
-    const port = 9888;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      "/api/v1/games/new",
-      {
-        delta: {
-          title: "Test Game",
-          platform: "PC",
-        },
-      },
-      {
-        "x-role": "moderator",
-        "x-user-email": "moderator@example.com",
-        "x-session-id": "test-session-123",
-      }
-    );
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.author).toEqual({
-      role: "moderator",
-      email: "moderator@example.com",
-      sessionId: "test-session-123",
-    });
-  });
-
-  test("defaults to anonymous role when no role header provided", async () => {
-    const port = 9889;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(port, "/api/v1/games/new", {
-      delta: {
-        title: "Anonymous Game",
-        platform: "PC",
-      },
-    });
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.author.role).toBe("anonymous");
-    expect(json.suggestion.author.email).toBeNull();
-  });
-
-  test("stores suggestion in suggestions.json file", async () => {
-    const port = 9890;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      "/api/v1/games/new",
-      {
-        delta: {
-          title: "Persistent Game",
-          platform: "GameCube",
-          release_date: "2003-01-01",
-        },
-        notes: "This is a test note",
-      },
-      {
-        "x-role": "contributor",
-        "x-user-email": "contributor@example.com",
-      }
-    );
-
-    expect(response.statusCode).toBe(201);
-
-    // Verify the suggestion was stored
-    const suggestionsPath = path.join(tempDir, "suggestions.json");
-    const suggestionsContent = await fs.readFile(suggestionsPath, "utf-8");
-    const suggestionsData = JSON.parse(suggestionsContent);
-
-    expect(suggestionsData.suggestions).toBeInstanceOf(Array);
-    expect(suggestionsData.suggestions.length).toBeGreaterThan(0);
-
-    const storedSuggestion = suggestionsData.suggestions.find(
-      (s: { delta: { title: string } }) => s.delta.title === "Persistent Game"
-    );
-
-    expect(storedSuggestion).toBeDefined();
-    expect(storedSuggestion.type).toBe("new");
-    expect(storedSuggestion.targetId).toBeNull();
-    expect(storedSuggestion.status).toBe("pending");
-    expect(storedSuggestion.notes).toBe("This is a test note");
-    expect(storedSuggestion.delta.platform).toBe("GameCube");
-  });
-
-  test("handles body without delta wrapper", async () => {
-    const port = 9891;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(port, "/api/v1/games/new", {
-      title: "Direct Title",
-      platform: "Dreamcast",
-    });
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.delta.title).toBe("Direct Title");
-    expect(json.suggestion.delta.platform).toBe("Dreamcast");
-  });
-
-  test("stores multiple suggestions sequentially", async () => {
-    const port = 9892;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    await makePostRequest(port, "/api/v1/games/new", {
-      delta: { title: "First Game", platform: "PS5" },
-    });
-
-    await makePostRequest(port, "/api/v1/games/new", {
-      delta: { title: "Second Game", platform: "Xbox" },
-    });
-
-    await makePostRequest(port, "/api/v1/games/new", {
-      delta: { title: "Third Game", platform: "Switch" },
-    });
-
-    const suggestionsPath = path.join(tempDir, "suggestions.json");
-    const suggestionsContent = await fs.readFile(suggestionsPath, "utf-8");
-    const suggestionsData = JSON.parse(suggestionsContent);
-
-    expect(suggestionsData.suggestions).toHaveLength(3);
-    expect(suggestionsData.suggestions[0].delta.title).toBe("First Game");
-    expect(suggestionsData.suggestions[1].delta.title).toBe("Second Game");
-    expect(suggestionsData.suggestions[2].delta.title).toBe("Third Game");
-  });
-
-  test("includes submittedAt timestamp in ISO format", async () => {
-    const port = 9893;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const beforeRequest = new Date().toISOString();
-    const response = await makePostRequest(port, "/api/v1/games/new", {
-      delta: { title: "Timed Game", platform: "PC" },
-    });
-    const afterRequest = new Date().toISOString();
-
-    expect(response.statusCode).toBe(201);
-    const json = JSON.parse(response.body);
-
-    expect(json.suggestion.submittedAt).toBeDefined();
-    expect(json.suggestion.submittedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
-    expect(json.suggestion.submittedAt >= beforeRequest).toBe(true);
-    expect(json.suggestion.submittedAt <= afterRequest).toBe(true);
-  });
-});
-
-describe("POST /api/v1/moderation/suggestions/:id/decision endpoint", () => {
-  let server: http.Server | null = null;
-
-  afterEach(async () => {
-    if (server) {
-      await new Promise<void>((resolve) => {
-        server!.close(() => {
-          server = null;
-          resolve();
-        });
-      });
-    }
-  });
-
-  async function makePostRequest(
-    port: number,
-    path: string,
-    body: any,
-    headers: Record<string, string> = {}
-  ): Promise<{ statusCode: number; headers: http.IncomingHttpHeaders; body: string }> {
-    return new Promise((resolve, reject) => {
-      const postData = JSON.stringify(body);
-      const options = {
-        hostname: "localhost",
-        port,
-        path,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Content-Length": Buffer.byteLength(postData),
-          ...headers,
-        },
+      // Create suggestions with different statuses
+      const suggestions = {
+        suggestions: [
+          {
+            id: "pending-suggestion",
+            type: "new",
+            targetId: null,
+            delta: { title: "Pending Game", platform: "PS5" },
+            status: "pending",
+            author: { role: "contributor", email: "user1@example.com", sessionId: "sess_1" },
+            submittedAt: "2024-01-01T00:00:00.000Z",
+          },
+          {
+            id: "approved-suggestion",
+            type: "new",
+            targetId: null,
+            delta: { title: "Approved Game", platform: "Xbox" },
+            status: "approved",
+            author: { role: "contributor", email: "user2@example.com", sessionId: "sess_2" },
+            submittedAt: "2024-01-02T00:00:00.000Z",
+          },
+          {
+            id: "rejected-suggestion",
+            type: "new",
+            targetId: null,
+            delta: { title: "Rejected Game", platform: "PC" },
+            status: "rejected",
+            author: { role: "contributor", email: "user3@example.com", sessionId: "sess_3" },
+            submittedAt: "2024-01-03T00:00:00.000Z",
+          },
+        ],
       };
+      await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
 
-      const req = http.request(options, (res) => {
-        let responseBody = "";
-        res.on("data", (chunk) => {
-          responseBody += chunk;
-        });
-        res.on("end", () => {
-          resolve({
-            statusCode: res.statusCode || 0,
-            headers: res.headers,
-            body: responseBody,
-          });
-        });
+      const port = 9890;
+      server = startReadApiServer({ port });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Test default (pending)
+      const pendingResponse = await makeRequest(port, "/api/v1/moderation/suggestions", {
+        headers: { "x-role": "moderator" },
       });
+      expect(pendingResponse.statusCode).toBe(200);
+      const pendingJson = JSON.parse(pendingResponse.body);
+      expect(pendingJson.suggestions).toHaveLength(1);
+      expect(pendingJson.suggestions[0].id).toBe("pending-suggestion");
 
-      req.on("error", reject);
-      req.setTimeout(5000, () => {
-        req.destroy();
-        reject(new Error("Request timeout"));
-      });
-
-      req.write(postData);
-      req.end();
-    });
-  }
-
-  async function makeGetRequest(
-    port: number,
-    path: string,
-    headers: Record<string, string> = {}
-  ): Promise<{ statusCode: number; headers: http.IncomingHttpHeaders; body: string }> {
-    return new Promise((resolve, reject) => {
-      const options = {
-        hostname: "localhost",
+      // Test approved filter
+      const approvedResponse = await makeRequest(
         port,
-        path,
-        method: "GET",
-        headers,
-      };
-
-      const req = http.request(options, (res) => {
-        let body = "";
-        res.on("data", (chunk) => {
-          body += chunk;
-        });
-        res.on("end", () => {
-          resolve({
-            statusCode: res.statusCode || 0,
-            headers: res.headers,
-            body,
-          });
-        });
-      });
-
-      req.on("error", reject);
-      req.setTimeout(5000, () => {
-        req.destroy();
-        reject(new Error("Request timeout"));
-      });
-
-      req.end();
-    });
-  }
-
-  test("rejects request with 403 for anonymous role", async () => {
-    // Setup: Create a suggestion
-    const { suggestionsPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-1";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-
-    const port = 9900;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "approved" },
-      { "x-role": "anonymous" }
-    );
-
-    expect(response.statusCode).toBe(403);
-    const json = JSON.parse(response.body);
-    expect(json.error).toBe("Moderator access required");
-  });
-
-  test("rejects request with 403 for contributor role", async () => {
-    // Setup: Create a suggestion
-    const { suggestionsPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-2";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-
-    const port = 9901;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "approved" },
-      { "x-role": "contributor" }
-    );
-
-    expect(response.statusCode).toBe(403);
-    const json = JSON.parse(response.body);
-    expect(json.error).toBe("Moderator access required");
-  });
-
-  test("accepts request with 200 for moderator role", async () => {
-    // Setup: Create a suggestion and audit log
-    const { suggestionsPath, auditLogPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-      auditLogPath: path.join(tempDir, "audit-log.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-3";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-    await fs.writeFile(auditLogPath, JSON.stringify([]));
-
-    const port = 9902;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "approved", notes: "Looks good" },
-      { "x-role": "moderator", "x-user-email": "mod@example.com" }
-    );
-
-    expect(response.statusCode).toBe(200);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion).toBeDefined();
-    expect(json.audit).toBeDefined();
-  });
-
-  test("accepts request with 200 for admin role", async () => {
-    // Setup: Create a suggestion and audit log
-    const { suggestionsPath, auditLogPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-      auditLogPath: path.join(tempDir, "audit-log.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-4";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-    await fs.writeFile(auditLogPath, JSON.stringify([]));
-
-    const port = 9903;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "approved" },
-      { "x-role": "admin", "x-user-email": "admin@example.com" }
-    );
-
-    expect(response.statusCode).toBe(200);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion).toBeDefined();
-    expect(json.audit).toBeDefined();
-  });
-
-  test("rejects request with 400 for invalid status value", async () => {
-    // Setup: Create a suggestion
-    const { suggestionsPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-5";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-
-    const port = 9904;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "invalid-status" },
-      { "x-role": "moderator" }
-    );
-
-    expect(response.statusCode).toBe(400);
-    const json = JSON.parse(response.body);
-    expect(json.error).toBe("Decision status must be approved or rejected");
-  });
-
-  test("rejects request with 400 for missing status field", async () => {
-    // Setup: Create a suggestion
-    const { suggestionsPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-6";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-
-    const port = 9905;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { notes: "Some notes without status" },
-      { "x-role": "moderator" }
-    );
-
-    expect(response.statusCode).toBe(400);
-    const json = JSON.parse(response.body);
-    expect(json.error).toBe("Decision status must be approved or rejected");
-  });
-
-  test("accepts 'approved' as valid status value", async () => {
-    // Setup: Create a suggestion and audit log
-    const { suggestionsPath, auditLogPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-      auditLogPath: path.join(tempDir, "audit-log.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-7";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-    await fs.writeFile(auditLogPath, JSON.stringify([]));
-
-    const port = 9906;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "approved" },
-      { "x-role": "moderator" }
-    );
-
-    expect(response.statusCode).toBe(200);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.status).toBe("approved");
-  });
-
-  test("accepts 'rejected' as valid status value", async () => {
-    // Setup: Create a suggestion and audit log
-    const { suggestionsPath, auditLogPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-      auditLogPath: path.join(tempDir, "audit-log.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-8";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-    await fs.writeFile(auditLogPath, JSON.stringify([]));
-
-    const port = 9907;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "rejected" },
-      { "x-role": "moderator" }
-    );
-
-    expect(response.statusCode).toBe(200);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.status).toBe("rejected");
-  });
-
-  test("returns 404 for non-existent suggestion", async () => {
-    // Setup: Create an empty suggestions file
-    const { suggestionsPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [],
-      })
-    );
-
-    const port = 9908;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/non-existent-id/decision`,
-      { status: "approved" },
-      { "x-role": "moderator" }
-    );
-
-    expect(response.statusCode).toBe(404);
-    const json = JSON.parse(response.body);
-    expect(json.error).toBe("Suggestion not found");
-  });
-
-  test("creates audit log entry with correct structure", async () => {
-    // Setup: Create a suggestion and audit log
-    const { suggestionsPath, auditLogPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-      auditLogPath: path.join(tempDir, "audit-log.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-9";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-    await fs.writeFile(auditLogPath, JSON.stringify([]));
-
-    const port = 9909;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "approved", notes: "Approved after review" },
-      { "x-role": "moderator", "x-user-email": "mod@example.com" }
-    );
-
-    expect(response.statusCode).toBe(200);
-    const json = JSON.parse(response.body);
-    
-    // Verify audit entry structure
-    expect(json.audit).toBeDefined();
-    expect(json.audit.suggestionId).toBe(suggestionId);
-    expect(json.audit.decision).toBe("approved");
-    expect(json.audit.notes).toBe("Approved after review");
-    expect(json.audit.moderator).toBeDefined();
-    expect(json.audit.moderator.role).toBe("moderator");
-    expect(json.audit.moderator.email).toBe("mod@example.com");
-    expect(json.audit.timestamp).toBeDefined();
-
-    // Verify audit entry was persisted to file
-    const auditLog = JSON.parse(await fs.readFile(auditLogPath, "utf-8"));
-    expect(auditLog).toHaveLength(1);
-    expect(auditLog[0].suggestionId).toBe(suggestionId);
-    expect(auditLog[0].decision).toBe("approved");
-  });
-
-  test("updates suggestion status and adds decidedAt timestamp", async () => {
-    // Setup: Create a suggestion and audit log
-    const { suggestionsPath, auditLogPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-      auditLogPath: path.join(tempDir, "audit-log.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-10";
-    const submittedAt = new Date().toISOString();
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt,
-          },
-        ],
-      })
-    );
-    await fs.writeFile(auditLogPath, JSON.stringify([]));
-
-    const port = 9910;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const beforeTimestamp = new Date().toISOString();
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "rejected", notes: "Duplicate entry" },
-      { "x-role": "admin" }
-    );
-    const afterTimestamp = new Date().toISOString();
-
-    expect(response.statusCode).toBe(200);
-    const json = JSON.parse(response.body);
-
-    // Verify suggestion was updated
-    expect(json.suggestion.status).toBe("rejected");
-    expect(json.suggestion.moderationNotes).toBe("Duplicate entry");
-    expect(json.suggestion.decidedAt).toBeDefined();
-    
-    // Verify timestamp is reasonable (between before and after)
-    expect(json.suggestion.decidedAt >= beforeTimestamp).toBe(true);
-    expect(json.suggestion.decidedAt <= afterTimestamp).toBe(true);
-
-    // Verify original fields are preserved
-    expect(json.suggestion.id).toBe(suggestionId);
-    expect(json.suggestion.gameName).toBe("Test Game");
-    expect(json.suggestion.submittedAt).toBe(submittedAt);
-
-    // Verify suggestion was persisted to file
-    const suggestions = JSON.parse(await fs.readFile(suggestionsPath, "utf-8"));
-    expect(suggestions.suggestions[0].status).toBe("rejected");
-    expect(suggestions.suggestions[0].decidedAt).toBeDefined();
-  });
-
-  test("handles notes field when not provided (sets to null)", async () => {
-    // Setup: Create a suggestion and audit log
-    const { suggestionsPath, auditLogPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-      auditLogPath: path.join(tempDir, "audit-log.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-11";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Test Game",
-            platform: "Test Platform",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-    await fs.writeFile(auditLogPath, JSON.stringify([]));
-
-    const port = 9911;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "approved" },
-      { "x-role": "moderator" }
-    );
-
-    expect(response.statusCode).toBe(200);
-    const json = JSON.parse(response.body);
-    expect(json.suggestion.moderationNotes).toBe(null);
-    expect(json.audit.notes).toBe(null);
-  });
-
-  test("returns both suggestion and audit data in response", async () => {
-    // Setup: Create a suggestion and audit log
-    const { suggestionsPath, auditLogPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-      auditLogPath: path.join(tempDir, "audit-log.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    const suggestionId = "test-suggestion-12";
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestionId,
-            gameName: "Final Fantasy VII",
-            platform: "PlayStation",
-            genre: "RPG",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-            submittedBy: "user@example.com",
-          },
-        ],
-      })
-    );
-    await fs.writeFile(auditLogPath, JSON.stringify([]));
-
-    const port = 9912;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    const response = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestionId}/decision`,
-      { status: "approved", notes: "Classic title, approved" },
-      { "x-role": "moderator", "x-user-email": "mod@example.com" }
-    );
-
-    expect(response.statusCode).toBe(200);
-    const json = JSON.parse(response.body);
-
-    // Verify both top-level keys exist
-    expect(json.suggestion).toBeDefined();
-    expect(json.audit).toBeDefined();
-
-    // Verify suggestion data is complete
-    expect(json.suggestion.id).toBe(suggestionId);
-    expect(json.suggestion.gameName).toBe("Final Fantasy VII");
-    expect(json.suggestion.platform).toBe("PlayStation");
-    expect(json.suggestion.genre).toBe("RPG");
-    expect(json.suggestion.status).toBe("approved");
-    expect(json.suggestion.moderationNotes).toBe("Classic title, approved");
-    expect(json.suggestion.decidedAt).toBeDefined();
-    expect(json.suggestion.submittedAt).toBeDefined();
-    expect(json.suggestion.submittedBy).toBe("user@example.com");
-
-    // Verify audit data is complete
-    expect(json.audit.suggestionId).toBe(suggestionId);
-    expect(json.audit.decision).toBe("approved");
-    expect(json.audit.notes).toBe("Classic title, approved");
-    expect(json.audit.moderator).toBeDefined();
-    expect(json.audit.moderator.role).toBe("moderator");
-    expect(json.audit.moderator.email).toBe("mod@example.com");
-    expect(json.audit.timestamp).toBeDefined();
-
-    // Verify audit and suggestion timestamps match
-    expect(json.audit.timestamp).toBe(json.suggestion.decidedAt);
-  });
-
-  test("handles multiple audit entries correctly", async () => {
-    // Setup: Create suggestions and existing audit log
-    const { suggestionsPath, auditLogPath } = {
-      suggestionsPath: path.join(tempDir, "suggestions.json"),
-      auditLogPath: path.join(tempDir, "audit-log.json"),
-    };
-    await fs.mkdir(tempDir, { recursive: true });
-    
-    const suggestion1Id = "test-suggestion-13a";
-    const suggestion2Id = "test-suggestion-13b";
-    
-    await fs.writeFile(
-      suggestionsPath,
-      JSON.stringify({
-        suggestions: [
-          {
-            id: suggestion1Id,
-            gameName: "Game 1",
-            platform: "Platform 1",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-          {
-            id: suggestion2Id,
-            gameName: "Game 2",
-            platform: "Platform 2",
-            status: "pending",
-            submittedAt: new Date().toISOString(),
-          },
-        ],
-      })
-    );
-    
-    // Start with existing audit entry
-    await fs.writeFile(
-      auditLogPath,
-      JSON.stringify([
+        "/api/v1/moderation/suggestions?status=approved",
         {
-          suggestionId: "old-suggestion",
-          decision: "approved",
-          notes: "Old decision",
-          moderator: { role: "admin", email: "old@example.com" },
-          timestamp: new Date().toISOString(),
-        },
-      ])
-    );
+          headers: { "x-role": "moderator" },
+        }
+      );
+      expect(approvedResponse.statusCode).toBe(200);
+      const approvedJson = JSON.parse(approvedResponse.body);
+      expect(approvedJson.suggestions).toHaveLength(1);
+      expect(approvedJson.suggestions[0].id).toBe("approved-suggestion");
 
-    const port = 9913;
-    server = startReadApiServer({ port });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-
-    // Make first decision
-    const response1 = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestion1Id}/decision`,
-      { status: "approved" },
-      { "x-role": "moderator", "x-user-email": "mod1@example.com" }
-    );
-    expect(response1.statusCode).toBe(200);
-
-    // Make second decision
-    const response2 = await makePostRequest(
-      port,
-      `/api/v1/moderation/suggestions/${suggestion2Id}/decision`,
-      { status: "rejected" },
-      { "x-role": "admin", "x-user-email": "admin@example.com" }
-    );
-    expect(response2.statusCode).toBe(200);
-
-    // Verify audit log has all three entries
-    const auditLog = JSON.parse(await fs.readFile(auditLogPath, "utf-8"));
-    expect(auditLog).toHaveLength(3);
-    expect(auditLog[0].suggestionId).toBe("old-suggestion");
-    expect(auditLog[1].suggestionId).toBe(suggestion1Id);
-    expect(auditLog[2].suggestionId).toBe(suggestion2Id);
+      // Test rejected filter
+      const rejectedResponse = await makeRequest(
+        port,
+        "/api/v1/moderation/suggestions?status=rejected",
+        {
+          headers: { "x-role": "moderator" },
+        }
+      );
+      expect(rejectedResponse.statusCode).toBe(200);
+      const rejectedJson = JSON.parse(rejectedResponse.body);
+      expect(rejectedJson.suggestions).toHaveLength(1);
+      expect(rejectedJson.suggestions[0].id).toBe("rejected-suggestion");
+    });
   });
 });
 
