@@ -407,7 +407,8 @@ function applyApprovedSuggestions(records, suggestions) {
         suggestion.targetId ||
         buildDeterministicKey({
           title: delta.title || delta.game_name,
-          platform: delta.platform || delta.platform_slug,
+          platform: delta.platform,
+          platform_slug: delta.platform_slug,
         });
       const normalized = normalizeRecord(
         {
@@ -645,13 +646,8 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         return;
       }
 
-        // Extract suggestionId using regex for robustness
-        const match = url.pathname.match(/^\/api\/v1\/moderation\/suggestions\/([^/]+)\/decision$/);
-        if (!match) {
-          sendJson(res, 400, { error: "Invalid suggestion decision URL" });
-          return;
-        }
-        const suggestionId = match[1];
+      if (
+        req.method === "POST" &&
         url.pathname.startsWith("/api/v1/moderation/suggestions/") &&
         url.pathname.endsWith("/decision")
       ) {
@@ -660,8 +656,15 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
           sendJson(res, 403, { error: "Moderator access required" });
           return;
         }
-        const parts = url.pathname.split("/");
-        const suggestionId = parts[5];
+        // Extract suggestionId using regex for robustness
+        const match = url.pathname.match(
+          /^\/api\/v1\/moderation\/suggestions\/([^/]+)\/decision$/
+        );
+        if (!match) {
+          sendJson(res, 400, { error: "Invalid suggestion decision URL" });
+          return;
+        }
+        const suggestionId = match[1];
         const body = await parseJsonBody(req);
         if (!body?.status || !["approved", "rejected"].includes(body.status)) {
           sendJson(res, 400, { error: "Decision status must be approved or rejected" });
