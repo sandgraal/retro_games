@@ -355,10 +355,7 @@ async function runCli() {
   if (args.includes("--config")) {
     const configIndex = args.indexOf("--config");
     const nextArg = args[configIndex + 1];
-    if (
-      nextArg === undefined ||
-      nextArg.startsWith("--")
-    ) {
+    if (nextArg === undefined || nextArg.startsWith("--")) {
       console.error("Error: --config flag must be followed by a valid path.");
       process.exit(1);
     }
@@ -383,11 +380,19 @@ async function runCli() {
   }
 
   if (!once && !serve) {
+    try {
+      const result = await runIngestion(config);
+      console.log("[ingest] initial run complete", result.metrics);
+    } catch (error) {
+      console.error("[ingest] initial run failed:", error.message);
+      console.error(error.stack);
+      process.exit(1);
+    }
+
     const interval = setInterval(
       () => runIngestion(config),
       config.scheduleMinutes * 60 * 1000
     );
-    await runIngestion(config);
     console.log(`[ingest] scheduled every ${config.scheduleMinutes} minutes`);
     process.on("SIGINT", () => {
       clearInterval(interval);
