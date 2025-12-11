@@ -273,7 +273,7 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-function normalizeRecord(raw, sourceName) {
+export function normalizeRecord(raw, sourceName) {
   return {
     title: safeString(raw.title || raw.name),
     platform: safeString(raw.platform || raw.platform_name),
@@ -449,7 +449,7 @@ function buildSnapshot(records) {
   }));
 }
 
-function applyApprovedSuggestions(records, suggestions) {
+export function applyApprovedSuggestions(records, suggestions) {
   let applied = 0;
   for (const suggestion of suggestions) {
     if (suggestion.status !== "approved") continue;
@@ -730,7 +730,6 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
           sendJson(res, 403, { error: "Moderator access required" });
           return;
         }
-
         // Extract suggestionId using regex for robustness
         const match = url.pathname.match(
           /^\/api\/v1\/moderation\/suggestions\/([^/]+)\/decision$/
