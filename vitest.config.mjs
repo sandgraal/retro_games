@@ -16,6 +16,10 @@ export default defineConfig({
     setupFiles: ["./tests/setup.js"],
     include: ["tests/**/*.test.js", "tests/**/*.test.ts"],
     exclude: ["tests/e2e/**"],
+    environmentMatchGlobs: [
+      // catalog-ingest tests need Node environment for jose JWT signing
+      ["tests/catalog-ingest.test.ts", "node"],
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
