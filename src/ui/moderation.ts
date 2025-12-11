@@ -58,12 +58,55 @@ function renderSuggestionCard(
   });
   const approveBtn = el.button({ class: "btn btn-primary" }, "Approve & merge");
   const rejectBtn = el.button({ class: "btn" }, "Reject");
+  const errorEl = el.div({ class: "moderation-error", role: "alert", style: "display: none;" });
+  const retryBtn = el.button({ class: "btn btn-retry", style: "display: none;" }, "Retry");
 
-  approveBtn.addEventListener("click", () => onDecision("approved", notesInput.value));
-  rejectBtn.addEventListener("click", () => onDecision("rejected", notesInput.value));
+  let isProcessing = false;
 
-  actionBar.append(notesInput, approveBtn, rejectBtn);
+  const setLoading = (loading: boolean) => {
+    isProcessing = loading;
+    approveBtn.disabled = loading;
+    rejectBtn.disabled = loading;
+    notesInput.disabled = loading;
+    errorEl.style.display = "none";
+    retryBtn.style.display = "none";
+    if (loading) {
+      approveBtn.classList.add("btn--loading");
+      rejectBtn.classList.add("btn--loading");
+    } else {
+      approveBtn.classList.remove("btn--loading");
+      rejectBtn.classList.remove("btn--loading");
+    }
+  };
+
+  const showError = (message: string, retryAction: () => void) => {
+    errorEl.textContent = message;
+    errorEl.style.display = "block";
+    retryBtn.style.display = "inline-block";
+    retryBtn.onclick = () => {
+      retryAction();
+    };
+  };
+
+  const handleDecision = async (status: "approved" | "rejected") => {
+    if (isProcessing) return;
+    
+    setLoading(true);
+    try {
+      await onDecision(status, notesInput.value);
+    } catch (error) {
+      setLoading(false);
+      const message = error instanceof Error ? error.message : "Action failed";
+      showError(message, () => handleDecision(status));
+    }
+  };
+
+  approveBtn.addEventListener("click", () => handleDecision("approved"));
+  rejectBtn.addEventListener("click", () => handleDecision("rejected"));
+
+  actionBar.append(notesInput, approveBtn, rejectBtn, retryBtn);
   card.append(actionBar);
+  card.append(errorEl);
 
   return card;
 }
@@ -111,8 +154,14 @@ export function mountModerationPanel(selector: string): () => void {
         suggestions.forEach((suggestion) => {
           const card = renderSuggestionCard(suggestion, async (status, notes) => {
             statusEl.textContent = "Submitting decision...";
-            await decideSuggestion(suggestion.id, status, notes);
-            await loadSuggestions();
+            try {
+              await decideSuggestion(suggestion.id, status, notes);
+              statusEl.textContent = "";
+              await loadSuggestions();
+            } catch (error) {
+              statusEl.textContent = "";
+              throw error;
+            }
           });
           list.append(card);
         });
