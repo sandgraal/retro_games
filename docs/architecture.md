@@ -11,7 +11,7 @@ Dragon's Hoard Atlas is a small, framework-free **TypeScript** single-page app b
 | Layer    | Details                                                                                                    |
 | -------- | ---------------------------------------------------------------------------------------------------------- |
 | Language | TypeScript (strict)                                                                                        |
-| Build    | Vite 7 (base `./`, dev server on 3000)                                                                     |
+| Build    | Vite 7 (base `/retro-games/`, dev server on 3000)                                                          |
 | Runtime  | Vanilla JS + custom signals                                                                                |
 | Data     | Supabase (`games_consolidated`) or `data/sample-games.json`; pricing from `data/sample-price-history.json` |
 | Storage  | `localStorage` for collection, notes, preferences, filters                                                 |
@@ -83,7 +83,7 @@ UI components subscribe via `effect` and rely on the store's computed values:
 
 ## Deployment Notes
 
-- `vite.config.ts` sets `base: "./"` for GitHub Pages compatibility.
+- `vite.config.ts` sets `base: "/retro-games/"` for GitHub Pages compatibility.
 - Supabase requires both `config.js` (generated via `npm run build:config`) and the CDN client script declared in `index.html`.
 - Service worker and manifest live in `public/`.
 - Experimental modules (event sourcing, router, IndexedDB storage, web worker) live in `archive/experimental/`.

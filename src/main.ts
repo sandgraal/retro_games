@@ -54,7 +54,8 @@ import {
 async function registerServiceWorker(): Promise<void> {
   if ("serviceWorker" in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register("/sw.js");
+      // Use relative path to work with Vite base path on GitHub Pages
+      const registration = await navigator.serviceWorker.register("./sw.js");
       console.log("📦 Service worker registered:", registration.scope);
     } catch (error) {
       console.warn("Service worker registration failed:", error);
