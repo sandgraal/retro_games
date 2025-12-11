@@ -282,7 +282,17 @@ export async function runIngestion(configOverrides = {}) {
         mergeDecisions[deterministicKey] = key;
       }
     } catch (error) {
-      console.error(`[ingest] Source ${source.name} failed:`, error.message);
+      let extra = "";
+      if (source.url) {
+        extra += `\n  Source URL: ${source.url}`;
+      }
+      if (error.statusCode || error.status) {
+        extra += `\n  Status: ${error.statusCode || error.status}`;
+      }
+      if (error.body) {
+        extra += `\n  Response body: ${typeof error.body === "string" ? error.body : JSON.stringify(error.body)}`;
+      }
+      console.error(`[ingest] Source ${source.name} failed: ${error.message}${extra}`);
     }
   }
 
