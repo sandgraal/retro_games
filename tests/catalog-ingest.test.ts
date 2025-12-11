@@ -66,6 +66,42 @@ describe("deterministic key + fuzzy matcher", () => {
     expect(score2).toBeGreaterThan(0); // Partial match
     expect(score3).toBe(0); // No match
   });
+
+  test("builds key using platform_slug fallback when platform is undefined", () => {
+    const key = buildDeterministicKey({
+      title: "Chrono Trigger",
+      platform: undefined,
+      platform_slug: "snes",
+    });
+    expect(key).toBe("chrono trigger___snes");
+  });
+
+  test("builds key using platform when both platform and platform_slug are provided", () => {
+    const key = buildDeterministicKey({
+      title: "Final Fantasy VII",
+      platform: "PlayStation",
+      platform_slug: "ps1",
+    });
+    expect(key).toBe("final fantasy vii___playstation");
+  });
+
+  test("builds key with platform_slug when platform is null", () => {
+    const key = buildDeterministicKey({
+      title: "Super Mario 64",
+      platform: null,
+      platform_slug: "n64",
+    });
+    expect(key).toBe("super mario 64___n64");
+  });
+
+  test("builds key with empty string when both platform and platform_slug are missing", () => {
+    const key = buildDeterministicKey({
+      title: "Mystery Game",
+      platform: undefined,
+      platform_slug: undefined,
+    });
+    expect(key).toBe("mystery game___");
+  });
 });
 
 describe("error handling in fetchSourceRecords", () => {
