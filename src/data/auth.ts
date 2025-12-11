@@ -75,7 +75,7 @@ export async function getAuthSession(): Promise<AuthSession> {
       ? sanitizeRole(window.localStorage.getItem(UNSAFE_ROLE_OVERRIDE_KEY))
       : "anonymous";
   const supabaseRole = await loadSupabaseRole();
-  return { sessionId, role: supabaseRole.role, email: supabaseRole.email };
+  return { sessionId, role: override !== "anonymous" ? override : supabaseRole.role, email: supabaseRole.email };
 }
 
 export function buildAuthHeaders(session: AuthSession): Record<string, string> {
