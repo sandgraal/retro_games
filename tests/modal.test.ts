@@ -124,7 +124,7 @@ describe("modal component", () => {
     expect(priceLabels[1].textContent).toBe("Complete");
     expect(priceLabels[2].textContent).toBe("New");
 
-    // formatCurrency with fromCents defaults to 0 decimal places (whole dollars)
+    // formatCurrency with fromCents and no precision rounds to whole dollars
     expect(priceValues[0].textContent).toContain("$16");
     expect(priceValues[1].textContent).toContain("$30");
     expect(priceValues[2].textContent).toContain("$60");
@@ -169,14 +169,13 @@ describe("modal component", () => {
     expect(firstOffer.querySelector(".modal-offers__region")?.textContent).toBe("North America");
     expect(firstOffer.querySelector(".modal-offers__label")?.textContent).toContain("Buy It Now");
     expect(firstOffer.querySelector(".modal-offers__label")?.textContent).toContain("eBay");
-    // formatCurrency with fromCents defaults to 0 decimal places (whole dollars)
     expect(firstOffer.querySelector(".modal-offers__price")?.textContent).toContain("$25");
     expect(firstOffer.querySelector(".modal-offers__cta")).not.toBeNull();
 
     const secondOffer = offerRows[1];
     expect(secondOffer.querySelector(".modal-offers__region")?.textContent).toBe("Europe");
     expect(secondOffer.querySelector(".modal-offers__label")?.textContent).toContain("Used");
-    // formatCurrency with fromCents defaults to 0 decimal places (whole dollars)
+    // formatCurrency always formats as USD regardless of currency field
     expect(secondOffer.querySelector(".modal-offers__price")?.textContent).toContain("$30");
   });
 
