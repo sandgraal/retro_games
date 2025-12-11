@@ -46,10 +46,8 @@ function releaseYear(releaseDate) {
 export function buildDeterministicKey(record) {
   const normalizedTitle = normalizeTitle(record.title);
   const normalizedPlatform = normalizeTitle(record.platform || record.platform_slug);
-  const year = releaseYear(record.release_date);
-  return `${normalizedTitle}___${normalizedPlatform}___${year}`;
+  return `${normalizedTitle}___${normalizedPlatform}`;
 }
-
 function bigramSet(value) {
   const normalized = normalizeTitle(value);
   const grams = new Set();
@@ -130,7 +128,15 @@ function normalizeRecord(raw, sourceName) {
     platform_slug: safeString(raw.platform_slug || raw.platform),
     release_date: raw.release_date || raw.releaseDate || null,
     regions: raw.regions || raw.region ? [].concat(raw.regions || raw.region) : [],
-    genres: raw.genres || raw.genre ? [].concat(raw.genres || raw.genre) : [],
+    genres: Array.isArray(raw.genres)
+      ? raw.genres
+      : raw.genres
+      ? [raw.genres]
+      : Array.isArray(raw.genre)
+      ? raw.genre
+      : raw.genre
+      ? [raw.genre]
+      : [],
     esrb: raw.esrb || raw.rating || null,
     pegi: raw.pegi || null,
     assets: raw.assets || {
@@ -168,12 +174,39 @@ function mergeRecords(base, incoming) {
   };
 }
 
+// Only allow safe headers to be sent in fetch requests
+function sanitizeHeaders(headers) {
+  if (!headers || typeof headers !== "object") return undefined;
+  // Whitelist of allowed header names (case-insensitive)
+  const allowed = [
+    "accept",
+    "accept-language",
+    "content-type",
+    "user-agent",
+    "x-requested-with",
+    "referer",
+    "origin",
+  ];
+  const sanitized = {};
+  for (const [key, value] of Object.entries(headers)) {
+    if (
+      typeof key === "string" &&
+      allowed.includes(key.toLowerCase()) &&
+      typeof value === "string"
+    ) {
+      sanitized[key] = value;
+    }
+  }
+  return Object.keys(sanitized).length > 0 ? sanitized : undefined;
+}
+
 async function fetchSourceRecords(source) {
   if (source.records) {
     return source.records;
   }
   if (!source.url) return [];
-  const response = await fetch(source.url, { headers: source.headers });
+  const safeHeaders = sanitizeHeaders(source.headers);
+  const response = await fetch(source.url, { headers: safeHeaders });
   if (!response.ok) {
     throw new Error(`Failed to fetch ${source.name}: ${response.status}`);
   }
@@ -198,10 +231,9 @@ function evaluateMatch(record, existingRecords, decisions, threshold) {
   for (const [key, value] of Object.entries(existingRecords)) {
     const titleScore = fuzzyMatchScore(record.title, value.record.title);
     const platformScore = fuzzyMatchScore(record.platform, value.record.platform);
-    const score = (titleScore * 0.7 + platformScore * 0.3).toFixed(3);
-    const numericScore = Number(score);
-    if (numericScore > best.score) {
-      best = { key, score: numericScore };
+    const score = titleScore * 0.7 + platformScore * 0.3;
+    if (score > best.score) {
+      best = { key, score };
     }
   }
   if (best.score >= threshold) {
@@ -282,7 +314,17 @@ export async function runIngestion(configOverrides = {}) {
         mergeDecisions[deterministicKey] = key;
       }
     } catch (error) {
-      console.error(`[ingest] Source ${source.name} failed:`, error.message);
+      let extra = "";
+      if (source.url) {
+        extra += `\n  Source URL: ${source.url}`;
+      }
+      if (error.statusCode || error.status) {
+        extra += `\n  Status: ${error.statusCode || error.status}`;
+      }
+      if (error.body) {
+        extra += `\n  Response body: ${typeof error.body === "string" ? error.body : JSON.stringify(error.body)}`;
+      }
+      console.error(`[ingest] Source ${source.name} failed: ${error.message}${extra}`);
     }
   }
 
@@ -367,7 +409,19 @@ async function runCli() {
   const once = args.includes("--once");
   const serve = args.includes("--serve");
   const portIndex = args.indexOf("--port");
-  const port = portIndex !== -1 ? Number(args[portIndex + 1]) : undefined;
+  let port = portIndex !== -1 ? args[portIndex + 1] : undefined;
+  if (port !== undefined) {
+    if (
+      !/^\d+$/.test(port) ||
+      (Number(port) < 1 || Number(port) > 65535)
+    ) {
+      console.error(
+        `[ingest] Invalid port: "${port}". Port must be an integer between 1 and 65535.`
+      );
+      process.exit(1);
+    }
+    port = Number(port);
+  }
 
   const config = configPath
     ? { ...DEFAULT_CONFIG, ...(await readJson(configPath, {})) }
@@ -384,7 +438,13 @@ async function runCli() {
 
   if (!once && !serve) {
     const interval = setInterval(
-      () => runIngestion(config),
+      async () => {
+        try {
+          await runIngestion(config);
+        } catch (err) {
+          console.error("[ingest] scheduled run failed:", err);
+        }
+      },
       config.scheduleMinutes * 60 * 1000
     );
     await runIngestion(config);
