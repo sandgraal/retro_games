@@ -8,6 +8,7 @@ import { mount, escapeHtml } from "./components";
 import { collectionStats, isLoading, collection, prices, games } from "../state/store";
 import { effect } from "../core/signals";
 import type { GameWithKey, PriceData } from "../core/types";
+import { formatCurrency, formatNumber } from "../utils/format";
 
 /**
  * Initialize the dashboard
@@ -73,7 +74,7 @@ function updateValueCard(value: number): void {
   const trendEl = document.getElementById("valueTrend");
 
   if (valueEl) {
-    valueEl.textContent = formatCurrency(value / 100); // Convert cents to dollars
+    valueEl.textContent = formatCurrency(value, { fromCents: true });
   }
 
   if (trendEl) {
@@ -109,7 +110,7 @@ function updateWishlistCard(
         }
       }
     });
-    valueEl.textContent = `Est. ${formatCurrency(wishlistValue / 100)}`;
+    valueEl.textContent = `Est. ${formatCurrency(wishlistValue, { fromCents: true })}`;
   }
 }
 
@@ -202,25 +203,6 @@ function getTopPlatforms(
       count,
       percentage: Math.round((count / total) * 100),
     }));
-}
-
-/**
- * Format number with commas
- */
-function formatNumber(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
-/**
- * Format currency
- */
-function formatCurrency(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(n);
 }
 
 /**

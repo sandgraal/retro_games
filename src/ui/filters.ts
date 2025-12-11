@@ -5,7 +5,7 @@
 
 import type { ComponentContext } from "./components";
 import type { SortOption } from "../core/types";
-import { mount, debounce } from "./components";
+import { mount, debounce, escapeHtml } from "./components";
 import {
   availablePlatforms,
   availableGenres,
@@ -220,15 +220,6 @@ function handleFilterChange(e: Event): void {
       toggleStatusFilter(value);
     }
   }
-}
-
-/**
- * Escape HTML for safe rendering
- */
-function escapeHtml(str: string): string {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 /**
