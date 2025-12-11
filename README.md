@@ -1,6 +1,6 @@
 # Dragon's Hoard Atlas
 
-A TypeScript + Vite app for tracking viedo games. It uses a lightweight custom signal system, renders a virtualized card grid, and keeps your collection data local-first with an optional Supabase source for metadata.
+A TypeScript + Vite app for tracking video games. It uses a lightweight custom signal system, renders a virtualized card grid, and keeps your collection data local-first with an optional Supabase source for metadata.
 
 ## What’s shipping today
 
