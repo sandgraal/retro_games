@@ -277,8 +277,11 @@ describe("ingestion pipeline", () => {
     expect(entries).toHaveLength(1);
     const [record] = entries;
     expect(record.version).toBe(2);
-    expect(record.record.regions.sort()).toEqual(["EU", "NA"]);
-    expect(new Set(record.record.genres)).toEqual(new Set(["FPS", "Shooter"]));
+    expect(record.record.regions.sort()).toEqual(['EU', 'NA']);
+    expect(new Set(record.record.genres)).toEqual(new Set(['FPS', 'Shooter']));
+    // Verify source array is properly merged and deduplicated
+    expect(record.record.source).toEqual(expect.arrayContaining(['primary', 'secondary']));
+    expect(record.record.source).toHaveLength(2);
 
     const snapshots = await fs.readdir(path.join(tempDir, "snapshots"));
     expect(snapshots.length).toBeGreaterThan(0);
@@ -359,7 +362,7 @@ describe("ingestion pipeline", () => {
     const key = Object.keys(run1.records)[0];
     expect(run1.records[key].version).toBe(1);
 
-    // Second ingestion with same data - version increments because source field changes
+    // Second ingestion with same data - version does NOT increment because deduplication prevents changes
     const run2 = await runIngestion({
       sources: [
         {
@@ -371,9 +374,10 @@ describe("ingestion pipeline", () => {
       ],
     });
 
-    // Version increments due to source field concatenation in merge
-    expect(run2.records[key].version).toBe(2);
-    expect(run2.records[key].record.source).toBe('source1,source1');
+    // Version stays the same because source array is deduplicated (no actual change)
+    expect(run2.records[key].version).toBe(1);
+    // Source array should be deduplicated to contain 'source1' only once
+    expect(run2.records[key].record.source).toEqual(['source1']);
   });
 
   test('merges duplicate records within single ingestion', async () => {
@@ -489,6 +493,8 @@ describe("ingestion pipeline", () => {
     const entries = Object.values(run.records);
     expect(entries).toHaveLength(1);
     expect(entries[0].record.regions.sort()).toEqual(['JP', 'NA']);
+    // Source array should be deduplicated to contain the source name only once
+    expect(entries[0].record.source).toEqual(['duplicate-source']);
   });
 
   test('handles duplicate deterministic keys across sources', async () => {
@@ -513,8 +519,37 @@ describe("ingestion pipeline", () => {
     expect(entries).toHaveLength(1);
     // Should merge genres from both sources
     expect(new Set(entries[0].record.genres)).toEqual(new Set(['RPG', 'JRPG']));
-    expect(entries[0].record.source).toContain('source-a');
-    expect(entries[0].record.source).toContain('source-b');
+    // Source should be an array containing both source names
+    expect(entries[0].record.source).toEqual(expect.arrayContaining(['source-a', 'source-b']));
+    expect(entries[0].record.source).toHaveLength(2);
+  });
+
+  test('handles source names containing commas correctly', async () => {
+    const run = await runIngestion({
+      sources: [
+        {
+          name: 'Source, with comma',
+          records: [
+            { title: 'Test Game 1', platform: 'PC', release_date: '2020-01-01', genres: ['Action'] },
+          ],
+        },
+        {
+          name: 'Another, source',
+          records: [
+            { title: 'Test Game 1', platform: 'PC', release_date: '2020-01-01', genres: ['Adventure'] },
+          ],
+        },
+      ],
+    });
+
+    const entries = Object.values(run.records);
+    expect(entries).toHaveLength(1);
+    // Source names with commas should be preserved intact in the array
+    expect(entries[0].record.source).toEqual(expect.arrayContaining(['Source, with comma', 'Another, source']));
+    expect(entries[0].record.source).toHaveLength(2);
+    // Verify no string concatenation occurred (would break comma-containing names)
+    expect(typeof entries[0].record.source).toBe('object');
+    expect(Array.isArray(entries[0].record.source)).toBe(true);
   });
 });
 
