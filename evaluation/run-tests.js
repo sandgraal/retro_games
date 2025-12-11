@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
-const GameListTestRunner = require("./test-runner");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import GameListTestRunner from "./test-runner.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * Main execution script for evaluation
