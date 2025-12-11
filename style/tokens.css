@@ -9,7 +9,8 @@
   /* Primary: Museum Gallery Darks */
   --bg-primary: #0a0e14;
   --bg-elevated: #14181f;
-  --bg-glass: rgba(20, 24, 31, 0.85);
+  --bg-elevated-rgb: 20, 24, 31;
+  --bg-glass: rgba(var(--bg-elevated-rgb), 0.85);
 
   /* Accent: Refined Teal + PS2 Blue */
   --accent-primary: #00d4ff;

@@ -11,6 +11,7 @@ import {
   type GuideMetadata,
   type Guide,
 } from "../data/guides";
+import { safeStorage } from "../core/storage";
 import { games, collection, setGameStatus, openGameModal } from "../state";
 import type { CollectionStatus, GameWithKey } from "../core/types";
 
@@ -32,10 +33,34 @@ const GUIDES_WELCOME_DISMISS_KEY = "guidesWelcomeDismissed";
 let readingProgress = 0;
 let tocActiveId = "";
 let scrollListener: (() => void) | null = null;
+let scrollTriggerCleanup: (() => void) | null = null;
+
+function setupScrollTriggers(container: HTMLElement): void {
+  if (scrollTriggerCleanup) return;
+
+  const handleScrollTrigger = (event: Event): void => {
+    const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+      "[data-scroll-target]"
+    );
+    if (!trigger) return;
+
+    event.preventDefault();
+    const targetId = trigger.getAttribute("data-scroll-target");
+    if (!targetId) return;
+    const target = document.getElementById(targetId);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  container.addEventListener("click", handleScrollTrigger);
+  scrollTriggerCleanup = () =>
+    container.removeEventListener("click", handleScrollTrigger);
+}
 
 function hasDismissedWelcomePanel(): boolean {
   try {
-    return localStorage.getItem(GUIDES_WELCOME_DISMISS_KEY) === "true";
+    return safeStorage.getItem(GUIDES_WELCOME_DISMISS_KEY) === "true";
   } catch (error) {
     console.warn("Unable to read welcome panel state", error);
     return false;
@@ -44,7 +69,7 @@ function hasDismissedWelcomePanel(): boolean {
 
 function dismissWelcomePanel(panel?: HTMLElement | null): void {
   try {
-    localStorage.setItem(GUIDES_WELCOME_DISMISS_KEY, "true");
+    safeStorage.setItem(GUIDES_WELCOME_DISMISS_KEY, "true");
   } catch (error) {
     console.warn("Unable to persist welcome panel dismissal", error);
   }
@@ -109,17 +134,6 @@ function renderWelcomePanel(): HTMLElement | null {
 
   const closeBtn = panel.querySelector<HTMLButtonElement>(".guides-welcome-close");
   closeBtn?.addEventListener("click", () => dismissWelcomePanel(panel));
-
-  panel.querySelectorAll<HTMLElement>("[data-scroll-target]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-scroll-target");
-      if (!targetId) return;
-      const target = document.getElementById(targetId);
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-  });
 
   return panel;
 }
@@ -1270,6 +1284,7 @@ export function mountGuides(selector: string): () => void {
   }
 
   containerElement = element as HTMLElement;
+  setupScrollTriggers(containerElement);
   guideIndex = buildGuideIndex();
 
   // Check URL for initial state
@@ -1302,6 +1317,10 @@ export function mountGuides(selector: string): () => void {
   // Cleanup function
   return () => {
     containerElement = null;
+    if (scrollTriggerCleanup) {
+      scrollTriggerCleanup();
+      scrollTriggerCleanup = null;
+    }
   };
 }
 
