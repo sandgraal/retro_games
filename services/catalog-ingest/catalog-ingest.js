@@ -637,7 +637,12 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         req.method === "POST" &&
         /^\/api\/v1\/games\/[^/]+\/suggestions$/.test(url.pathname)
       ) {
-        const targetId = decodeURIComponent(url.pathname.split("/").at(-2));
+        const match = url.pathname.match(/^\/api\/v1\/games\/([^/]+)\/suggestions$/);
+        const targetId = match ? decodeURIComponent(match[1]) : null;
+        if (!targetId) {
+          sendJson(res, 400, { error: "Invalid or missing targetId in URL" });
+          return;
+        }
         const auth = await resolveAuth(req);
         const body = await parseJsonBody(req);
         const delta = body.delta || body;
