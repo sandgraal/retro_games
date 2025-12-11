@@ -168,8 +168,8 @@ function normalizeRole(rawRole) {
  * @returns {Promise<{role: string, email: string|null, sessionId: string}>}
  */
 async function resolveAuth(req) {
-  // Extract JWT from Authorization header
-  const authHeader = req.headers.authorization || req.headers.Authorization;
+  // Extract JWT from Authorization header (Node.js lowercases header names)
+  const authHeader = req.headers.authorization;
 
   // If no authorization header, return anonymous
   if (!authHeader || typeof authHeader !== "string") {
@@ -204,17 +204,17 @@ async function resolveAuth(req) {
       };
     }
 
-    // Verify JWT signature
+    // Verify JWT signature with additional security checks
     const secret = new TextEncoder().encode(jwtSecret);
     const { payload } = await jose.jwtVerify(token, secret, {
       algorithms: ["HS256"],
+      // Validate issuer matches Supabase URL if configured
+      ...(process.env.SUPABASE_URL && { issuer: process.env.SUPABASE_URL }),
     });
 
-    // Extract role from token claims (check both app_metadata and user_metadata)
+    // Extract role from token claims - require explicit role assignment
     const role = normalizeRole(
-      payload.app_metadata?.role ||
-        payload.user_metadata?.role ||
-        (payload.sub ? "contributor" : "anonymous")
+      payload.app_metadata?.role || payload.user_metadata?.role || "anonymous"
     );
 
     // Extract email from token
@@ -229,8 +229,8 @@ async function resolveAuth(req) {
       sessionId,
     };
   } catch (error) {
-    // JWT validation failed - return anonymous
-    console.warn("JWT validation failed:", error.message);
+    // JWT validation failed - return anonymous (don't log sensitive error details)
+    console.warn("Authentication failed - invalid or expired token");
     return {
       role: "anonymous",
       email: null,
