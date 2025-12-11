@@ -43,3 +43,4 @@
 - Pricing attempts live endpoints before falling back to the bundled snapshot; the UI now displays the last-updated timestamp when available.
 - Node >=20.19.0 enforced via `package.json` engines; lockfile updates should be minimal unless required.
 - Service worker caches assets; consider cache-busting if altering resource paths or base URL.
+- Guides view now opens with a dismissible welcome/FAQ panel accessible from the header to recap features, moderation, and collecting guides.
