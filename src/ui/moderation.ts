@@ -175,7 +175,7 @@ export function mountModerationPanel(selector: string): () => void {
       element.hidden = false;
       statusEl.textContent = "Loading suggestions...";
       try {
-          const suggestions = await fetchSuggestionsForModeration();
+        const suggestions = await fetchSuggestionsForModeration();
         list.innerHTML = "";
         if (!suggestions.length) {
           list.append(el.div({ class: "moderation-empty" }, "No pending submissions"));
