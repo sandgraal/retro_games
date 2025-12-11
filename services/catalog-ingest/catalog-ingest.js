@@ -223,10 +223,9 @@ function evaluateMatch(record, existingRecords, decisions, threshold) {
   for (const [key, value] of Object.entries(existingRecords)) {
     const titleScore = fuzzyMatchScore(record.title, value.record.title);
     const platformScore = fuzzyMatchScore(record.platform, value.record.platform);
-    const score = (titleScore * 0.7 + platformScore * 0.3).toFixed(3);
-    const numericScore = Number(score);
-    if (numericScore > best.score) {
-      best = { key, score: numericScore };
+    const score = titleScore * 0.7 + platformScore * 0.3;
+    if (score > best.score) {
+      best = { key, score };
     }
   }
   if (best.score >= threshold) {
