@@ -3,8 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { resolveWithinBase } from "./utils/path-utils.js";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +17,13 @@ const PROJECT_ROOT = path.resolve(process.cwd());
 const BACKUP_ROOT = path.resolve(PROJECT_ROOT, "backups");
 
 function resolveWithinBase(baseDir, targetPath) {
+  if (typeof targetPath !== "string" || targetPath.trim() === "") {
+    throw new Error("Invalid path: target path must be a non-empty string");
+  }
+  const segments = targetPath.split(/[/\\]/).filter(Boolean);
+  if (segments.some((segment) => segment === "." || segment === "..")) {
+    throw new Error(`Invalid path segment in ${targetPath}`);
+  }
   const normalizedBase = path.resolve(baseDir);
   const resolved = path.resolve(normalizedBase, targetPath);
   if (resolved !== normalizedBase && !resolved.startsWith(normalizedBase + path.sep)) {
@@ -204,11 +210,15 @@ async function main() {
 }
 
 // Run if executed directly
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+const executedPath = process.argv[1] ? path.resolve(process.argv[1]) : null;
+const modulePath = path.resolve(fileURLToPath(import.meta.url));
+
+if (executedPath && modulePath === executedPath) {
   main().catch((error) => {
     console.error("❌ Archive failed", error);
     process.exit(1);
   });
 }
 
-export { parseArgs, encodePath, downloadObject, resolveOutput, assertSafeObjectName };
+// Export for testing
+export { encodePath, parseArgs, resolveWithinBase, downloadObject };

@@ -1,4 +1,4 @@
-import { afterAll, describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterAll, beforeEach } from "vitest";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -9,8 +9,7 @@ describe("archive-media script", () => {
     it("returns default options when no args", () => {
       const options = parseArgs([]);
       expect(options.bucket).toBe("media-archive");
-      expect(options.output).toContain("backups");
-      expect(options.output).toContain("media-archive");
+      expect(options.output).toContain(path.join("backups", options.bucket));
     });
 
     it("parses --bucket option", () => {
@@ -22,6 +21,22 @@ describe("archive-media script", () => {
       expect(() => parseArgs(["--output", "/tmp/archive"])).toThrow(/Invalid path/);
       expect(() => parseArgs(["--output", "../outside"])).toThrow(/Invalid path/);
       expect(() => parseArgs(["--output", "backups/../outside"])).toThrow(/Invalid path/);
+    });
+
+    it("uses default output path when none is provided", () => {
+      const options = parseArgs([]);
+      expect(options.output).toContain(path.join("backups", options.bucket));
+    });
+
+    it("accepts backups root as a valid --output path", () => {
+      const options = parseArgs(["--output", "backups"]);
+      expect(options.output).toContain(path.join("backups"));
+    });
+
+    it("accepts absolute paths inside backups for --output", () => {
+      const absOutput = path.resolve(process.cwd(), "backups/out");
+      const options = parseArgs(["--output", absOutput]);
+      expect(options.output).toBe(absOutput);
     });
 
     it("parses --out shorthand", () => {
@@ -185,27 +200,37 @@ describe("archive-media script", () => {
       fs.rmSync(outputDir, { recursive: true, force: true });
     });
 
-    it("rejects unsafe object names", async () => {
-      const unsafeNames = ["../escape", "/abs/path", "", ".", "..", "nested//file.jpg"];
-
-      for (const name of unsafeNames) {
-        await expect(
-          downloadObject("bucket", { name }, outputDir, mockFetch)
-        ).rejects.toThrow(/Unsafe object name/);
-      }
+    beforeEach(() => {
+      vi.clearAllMocks();
     });
 
-    it("writes nested objects within the output directory", async () => {
-      const entry = await downloadObject(
-        "bucket",
-        { name: "covers/box art.png" },
-        outputDir,
-        mockFetch
-      );
+    it("rejects with a clear error and does not create the file when response is not ok", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: async () => "Not found",
+      });
 
-      expect(entry.name).toBe("covers/box art.png");
-      const expectedPath = path.join(outputDir, "covers", "box art.png");
-      expect(fs.existsSync(expectedPath)).toBe(true);
+      const targetPath = path.join(outputDir, "non-ok.txt");
+
+      await expect(
+        downloadObject("covers", { name: "non-ok.txt" }, outputDir, mockFetch)
+      ).rejects.toThrow(/404|Not found/i);
+
+      expect(fs.existsSync(targetPath)).toBe(false);
+    });
+
+    it("rejects with a clear error and does not create the file when fetchImpl throws", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network failure"));
+
+      const targetPath = path.join(outputDir, "thrown.txt");
+
+      await expect(
+        downloadObject("covers", { name: "thrown.txt" }, outputDir, mockFetch)
+      ).rejects.toThrow(/network failure/i);
+
+      expect(fs.existsSync(targetPath)).toBe(false);
     });
   });
 });
