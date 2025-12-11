@@ -46,10 +46,8 @@ function releaseYear(releaseDate) {
 export function buildDeterministicKey(record) {
   const normalizedTitle = normalizeTitle(record.title);
   const normalizedPlatform = normalizeTitle(record.platform || record.platform_slug);
-  const year = releaseYear(record.release_date);
-  return `${normalizedTitle}___${normalizedPlatform}___${year}`;
+  return `${normalizedTitle}___${normalizedPlatform}`;
 }
-
 function bigramSet(value) {
   const normalized = normalizeTitle(value);
   const grams = new Set();
