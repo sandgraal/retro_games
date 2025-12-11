@@ -116,8 +116,7 @@ async function init(): Promise<void> {
 
     // Moderation UI (hidden for non-moderators by default)
     const shouldShowModeration =
-      ["moderator", "admin"].includes(authSession.role) ||
-      new URLSearchParams(window.location.search).has("moderation");
+      ["moderator", "admin"].includes(authSession.role);
     if (shouldShowModeration) {
       cleanupFunctions.push(mountModerationPanel("#moderationPanel"));
       const moderationEl = document.getElementById("moderationPanel");
