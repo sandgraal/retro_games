@@ -6,10 +6,7 @@ import type {
   RegionalOffer,
 } from "../core/types";
 
-const LIVE_PRICE_ENDPOINTS = [
-  "/api/v1/prices/latest",
-  "/api/prices/latest",
-];
+const LIVE_PRICE_ENDPOINTS = ["/api/v1/prices/latest", "/api/prices/latest"];
 
 const PRICE_SNAPSHOT_PATH = "./data/sample-price-history.json";
 
@@ -65,10 +62,7 @@ async function fetchSnapshotPricing(): Promise<PriceLoadResult | null> {
   return null;
 }
 
-function normalizeResponse(
-  payload: any,
-  source: PricingSource
-): PriceLoadResult | null {
+function normalizeResponse(payload: any, source: PricingSource): PriceLoadResult | null {
   if (!payload) return null;
 
   // Direct map shape { prices: { key: PriceData }, last_updated }
@@ -124,10 +118,7 @@ function mapPriceEntries(
   );
 }
 
-function normalizePriceEntry(
-  entry: any,
-  source: PricingSource
-): PriceData | null {
+function normalizePriceEntry(entry: any, source: PricingSource): PriceData | null {
   if (!entry) return null;
 
   const currency = entry.currency ?? entry.currency_code ?? "USD";
@@ -135,9 +126,7 @@ function normalizePriceEntry(
   const lastUpdated = entry.fetched_at ?? entry.last_updated ?? entry.lastUpdated;
 
   const priceData: PriceData = {
-    loose: coerceNumber(
-      entry.loose_price_cents ?? entry.loose ?? entry.loosePriceCents
-    ),
+    loose: coerceNumber(entry.loose_price_cents ?? entry.loose ?? entry.loosePriceCents),
     cib: coerceNumber(entry.cib_price_cents ?? entry.cib ?? entry.cibPriceCents),
     new: coerceNumber(entry.new_price_cents ?? entry.new ?? entry.newPriceCents),
     currency,
@@ -154,11 +143,7 @@ function normalizePriceEntry(
   return priceData;
 }
 
-function buildOffers(
-  entry: any,
-  currency: string,
-  lastUpdated?: string
-): PricingOffers {
+function buildOffers(entry: any, currency: string, lastUpdated?: string): PricingOffers {
   const offers: PricingOffers = {};
   const region = entry.region ?? entry.country ?? "global";
   const retailer = entry.retailer ?? entry.source ?? entry.vendor ?? undefined;

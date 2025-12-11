@@ -17,20 +17,18 @@ describe("pricing provider", () => {
   });
 
   it("prefers live pricing endpoints when available", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        mockResponse({
-          prices: {
-            "Chrono Trigger___SNES": {
-              loose_price_cents: 12300,
-              currency: "USD",
-              last_updated: "2025-01-05T12:00:00Z",
-            },
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockResponse({
+        prices: {
+          "Chrono Trigger___SNES": {
+            loose_price_cents: 12300,
+            currency: "USD",
+            last_updated: "2025-01-05T12:00:00Z",
           },
-          last_updated: "2025-01-05T12:00:00Z",
-        })
-      );
+        },
+        last_updated: "2025-01-05T12:00:00Z",
+      })
+    );
 
     vi.stubGlobal("fetch", fetchMock);
 

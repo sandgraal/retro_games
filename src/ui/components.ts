@@ -59,30 +59,23 @@ export function escapeHtml(str: string): string {
 }
 
 /**
- * Sanitize URL to prevent XSS attacks via href attributes
- * Only allows http, https, and relative URLs. Rejects javascript:, data:, etc.
- * @param url - The URL to sanitize
- * @returns The sanitized URL or empty string if invalid
+ * Sanitize URL to prevent javascript: and data: protocol attacks
+ * Only allows http: and https: protocols
+ * Returns empty string for invalid or unsafe URLs
  */
 export function sanitizeUrl(url: string): string {
-  if (!url) return "";
-  
-  // Trim whitespace and convert to lowercase for protocol check
-  const trimmed = url.trim();
-  const lower = trimmed.toLowerCase();
-  
-  // Allow relative URLs (starting with /, ./, or ../)
-  if (trimmed.startsWith("/") || trimmed.startsWith("./") || trimmed.startsWith("../")) {
-    return trimmed;
+  try {
+    const parsed = new URL(url);
+    // Only allow http and https protocols
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return url;
+    }
+    // Reject any other protocol (javascript:, data:, etc.)
+    return "";
+  } catch {
+    // Invalid URL format
+    return "";
   }
-  
-  // Only allow http and https protocols
-  if (lower.startsWith("http://") || lower.startsWith("https://")) {
-    return trimmed;
-  }
-  
-  // Reject everything else (javascript:, data:, vbscript:, file:, etc.)
-  return "";
 }
 
 /**
