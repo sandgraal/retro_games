@@ -58,12 +58,66 @@ function renderSuggestionCard(
   });
   const approveBtn = el.button({ class: "btn btn-primary" }, "Approve & merge");
   const rejectBtn = el.button({ class: "btn" }, "Reject");
+  const errorEl = el.div({ class: "moderation-error", role: "alert", style: "display: none;" });
+  const retryBtn = el.button({ class: "btn btn-retry", style: "display: none;" }, "Retry");
 
-  approveBtn.addEventListener("click", () => onDecision("approved", notesInput.value));
-  rejectBtn.addEventListener("click", () => onDecision("rejected", notesInput.value));
+  let isProcessing = false;
+  let currentRetryHandler: (() => void) | null = null;
 
-  actionBar.append(notesInput, approveBtn, rejectBtn);
+  const setLoading = (loading: boolean) => {
+    isProcessing = loading;
+    approveBtn.disabled = loading;
+    rejectBtn.disabled = loading;
+    notesInput.disabled = loading;
+    errorEl.style.display = "none";
+    retryBtn.style.display = "none";
+    if (loading) {
+      approveBtn.classList.add("btn--loading");
+      rejectBtn.classList.add("btn--loading");
+    } else {
+      approveBtn.classList.remove("btn--loading");
+      rejectBtn.classList.remove("btn--loading");
+    }
+  };
+
+  const showError = (message: string, retryAction: () => void) => {
+    errorEl.textContent = message;
+    errorEl.style.display = "block";
+    retryBtn.style.display = "inline-block";
+    
+    // Remove old handler if it exists
+    if (currentRetryHandler) {
+      retryBtn.removeEventListener("click", currentRetryHandler);
+    }
+    
+    // Store and add new handler
+    currentRetryHandler = retryAction;
+    retryBtn.addEventListener("click", currentRetryHandler);
+  };
+
+  const handleDecision = async (status: "approved" | "rejected") => {
+    if (isProcessing) return;
+    
+    setLoading(true);
+    try {
+      await onDecision(status, notesInput.value);
+      // Note: setLoading(false) not needed here because the card will be removed from DOM
+      // when loadSuggestions() is called after successful decision
+    } catch (error) {
+      setLoading(false);
+      const message = error instanceof Error 
+        ? error.message 
+        : "Unable to submit decision. Please try again.";
+      showError(message, () => handleDecision(status));
+    }
+  };
+
+  approveBtn.addEventListener("click", () => handleDecision("approved"));
+  rejectBtn.addEventListener("click", () => handleDecision("rejected"));
+
+  actionBar.append(notesInput, approveBtn, rejectBtn, retryBtn);
   card.append(actionBar);
+  card.append(errorEl);
 
   return card;
 }
@@ -111,8 +165,14 @@ export function mountModerationPanel(selector: string): () => void {
         suggestions.forEach((suggestion) => {
           const card = renderSuggestionCard(suggestion, async (status, notes) => {
             statusEl.textContent = "Submitting decision...";
-            await decideSuggestion(suggestion.id, status, notes);
-            await loadSuggestions();
+            try {
+              await decideSuggestion(suggestion.id, status, notes);
+              statusEl.textContent = "";
+              await loadSuggestions();
+            } catch (error) {
+              statusEl.textContent = "";
+              throw error;
+            }
           });
           list.append(card);
         });
