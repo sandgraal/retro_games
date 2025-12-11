@@ -2862,3 +2862,91 @@ describe("applyApprovedSuggestions", () => {
     expect(records["custom___key"].record.title).toBe("Custom Key Game");
   });
 });
+
+describe("field name variant handling in suggestions", () => {
+  test("handles various field name variants consistently", async () => {
+    const suggestionsPath = path.join(tempDir, "suggestions.json");
+
+    // Create suggestions with different field name variants
+    const suggestions = {
+      suggestions: [
+        {
+          id: "test-1",
+          type: "new",
+          status: "approved",
+          delta: {
+            title: "Game with title field",
+            platform: "SNES",
+            release_date: "1995-01-01",
+            esrb: "E",
+          },
+        },
+        {
+          id: "test-2",
+          type: "new",
+          status: "approved",
+          delta: {
+            game_name: "Game with game_name field",
+            platform_slug: "genesis",
+            release_year: "1994",
+            esrb_rating: "T",
+          },
+        },
+        {
+          id: "test-3",
+          type: "new",
+          status: "approved",
+          delta: {
+            name: "Game with name field",
+            platform_name: "PlayStation",
+            releaseDate: "1996-03-15",
+            rating: "M",
+          },
+        },
+      ],
+    };
+
+    await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
+
+    // Run ingestion which will apply the approved suggestions
+    const run = await runIngestion({ sources: [] });
+
+    // All suggestions should have been applied despite different field names
+    expect(run.metrics.suggestionsApplied).toBe(3);
+
+    // Verify the records were created with normalized field names
+    const keys = Object.keys(run.records);
+    expect(keys).toHaveLength(3);
+
+    // Check that each record has the expected normalized structure
+    for (const key of keys) {
+      const record = run.records[key].record;
+      expect(record.title).toBeDefined();
+      expect(record.platform).toBeDefined();
+      expect(record.platform_slug).toBeDefined();
+      expect(record.release_date).toBeDefined();
+      expect(record.esrb).toBeDefined();
+    }
+
+    // Verify specific records
+    const game1 = Object.values(run.records).find(
+      (r: any) => r.record.title === "Game with title field"
+    );
+    expect(game1).toBeDefined();
+    expect(game1!.record.platform).toBe("SNES");
+
+    const game2 = Object.values(run.records).find(
+      (r: any) => r.record.title === "Game with game_name field"
+    );
+    expect(game2).toBeDefined();
+    expect(game2!.record.platform).toBe("genesis");
+    expect(game2!.record.release_date).toBe("1994");
+
+    const game3 = Object.values(run.records).find(
+      (r: any) => r.record.title === "Game with name field"
+    );
+    expect(game3).toBeDefined();
+    expect(game3!.record.platform).toBe("PlayStation");
+    expect(game3!.record.esrb).toBe("M");
+  });
+});
