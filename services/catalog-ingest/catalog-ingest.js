@@ -228,6 +228,37 @@ function buildPlatformIndex(existingRecords) {
   return index;
 }
 
+function updatePlatformIndex(platformIndex, key, recordValue, oldPlatform = null) {
+  const newPlatform = normalizeTitle(recordValue.record.platform || "");
+
+  // If platform changed, remove from old bucket
+  if (oldPlatform && oldPlatform !== newPlatform) {
+    const oldBucket = platformIndex[oldPlatform];
+    if (oldBucket) {
+      const oldIndex = oldBucket.findIndex((entry) => entry.key === key);
+      if (oldIndex !== -1) {
+        oldBucket.splice(oldIndex, 1);
+      }
+    }
+  }
+
+  // Add or update in new/current bucket
+  if (!platformIndex[newPlatform]) {
+    platformIndex[newPlatform] = [];
+  }
+
+  const bucket = platformIndex[newPlatform];
+  const existingEntry = bucket.find((entry) => entry.key === key);
+
+  if (existingEntry) {
+    // Update existing entry
+    existingEntry.value = recordValue;
+  } else {
+    // Add new entry
+    bucket.push({ key, value: recordValue });
+  }
+}
+
 function evaluateMatch(record, existingRecords, decisions, threshold, platformIndex) {
   const deterministicKey = buildDeterministicKey(record);
   if (existingRecords[deterministicKey]) {
@@ -308,13 +339,7 @@ export async function runIngestion(configOverrides = {}) {
             lastSeen: new Date().toISOString(),
           };
           records[key] = newRecord;
-
-          // Update platform index with new record
-          const normalizedPlatform = normalizeTitle(normalized.platform || "");
-          if (!platformIndex[normalizedPlatform]) {
-            platformIndex[normalizedPlatform] = [];
-          }
-          platformIndex[normalizedPlatform].push({ key, value: newRecord });
+          updatePlatformIndex(platformIndex, key, newRecord);
 
           if (reason === "fuzzy") {
             mergeDecisions[deterministicKey] = key;
@@ -322,6 +347,7 @@ export async function runIngestion(configOverrides = {}) {
           metrics.upserted += 1;
           continue;
         }
+        const oldPlatform = normalizeTitle(records[key].record.platform || "");
         const merged = mergeRecords(records[key].record, normalized);
         const hash = computeRecordHash(merged);
         if (hash !== records[key].hash) {
@@ -333,16 +359,7 @@ export async function runIngestion(configOverrides = {}) {
             lastSeen: new Date().toISOString(),
           };
           records[key] = updatedRecord;
-
-          // Update platform index with new record version
-          const normalizedPlatform = normalizeTitle(merged.platform || "");
-          const bucket = platformIndex[normalizedPlatform];
-          if (bucket) {
-            const indexEntry = bucket.find((entry) => entry.key === key);
-            if (indexEntry) {
-              indexEntry.value = updatedRecord;
-            }
-          }
+          updatePlatformIndex(platformIndex, key, updatedRecord, oldPlatform);
 
           metrics.upserted += 1;
         } else {
