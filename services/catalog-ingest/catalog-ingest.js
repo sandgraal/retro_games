@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import http from "http";
 import path from "path";
@@ -16,6 +16,8 @@ function resolvePaths() {
     mergeDecisionsPath: path.join(dataDir, "merge-decisions.json"),
     catalogStorePath: path.join(dataDir, "catalog-store.json"),
     ingestionLogPath: path.join(dataDir, "ingestion-log.json"),
+    suggestionsPath: path.join(dataDir, "suggestions.json"),
+    auditLogPath: path.join(dataDir, "audit-log.json"),
     snapshotsDir: path.join(dataDir, "snapshots"),
   };
 }
@@ -106,6 +108,8 @@ async function ensureFiles() {
     mergeDecisionsPath,
     catalogStorePath,
     ingestionLogPath,
+    suggestionsPath,
+    auditLogPath,
   } = resolvePaths();
   await fs.mkdir(dataDir, { recursive: true });
   await fs.mkdir(snapshotsDir, { recursive: true });
@@ -113,6 +117,8 @@ async function ensureFiles() {
     [mergeDecisionsPath, {}],
     [catalogStorePath, { records: {}, lastRun: null }],
     [ingestionLogPath, []],
+    [suggestionsPath, { suggestions: [] }],
+    [auditLogPath, []],
   ]) {
     try {
       await fs.access(filePath);
@@ -129,6 +135,73 @@ async function readJson(filePath, fallback) {
   } catch (error) {
     return fallback;
   }
+}
+
+async function readSuggestions() {
+  const { suggestionsPath } = resolvePaths();
+  return readJson(suggestionsPath, { suggestions: [] });
+}
+
+async function writeSuggestions(payload) {
+  const { suggestionsPath } = resolvePaths();
+  await fs.writeFile(suggestionsPath, JSON.stringify(payload, null, 2));
+}
+
+async function appendAudit(entry) {
+  const { auditLogPath } = resolvePaths();
+  const existing = await readJson(auditLogPath, []);
+  existing.push(entry);
+  await fs.writeFile(auditLogPath, JSON.stringify(existing, null, 2));
+}
+
+function normalizeRole(rawRole) {
+  const allowed = ["anonymous", "contributor", "moderator", "admin"];
+  const role = typeof rawRole === "string" ? rawRole.toLowerCase() : "anonymous";
+  return allowed.includes(role) ? role : "anonymous";
+}
+
+function resolveAuth(req) {
+  const role = normalizeRole(req.headers["x-role"] || "anonymous");
+  const emailHeader = req.headers["x-user-email"];
+  const sessionIdHeader = req.headers["x-session-id"];
+  const sessionId =
+    typeof sessionIdHeader === "string" && sessionIdHeader.trim()
+      ? sessionIdHeader
+      : `sess_${randomUUID()}`;
+  return {
+    role,
+    email: typeof emailHeader === "string" ? emailHeader : null,
+    sessionId,
+  };
+}
+
+async function parseJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (chunk) => {
+      data += chunk;
+      // Basic guard against huge payloads
+      if (data.length > 1e6) {
+        reject(new Error("Payload too large"));
+      }
+    });
+    req.on("end", () => {
+      try {
+        const parsed = data ? JSON.parse(data) : {};
+        resolve(parsed);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
+
+function sendJson(res, status, payload) {
+  res.writeHead(status, {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store",
+  });
+  res.end(JSON.stringify(payload));
 }
 
 function normalizeRecord(raw, sourceName) {
@@ -307,6 +380,65 @@ function buildSnapshot(records) {
   }));
 }
 
+function applyApprovedSuggestions(records, suggestions) {
+  let applied = 0;
+  for (const suggestion of suggestions) {
+    if (suggestion.status !== "approved") continue;
+    const delta = suggestion.delta || suggestion.payload || {};
+    if (
+      suggestion.type === "update" &&
+      suggestion.targetId &&
+      records[suggestion.targetId]
+    ) {
+      const merged = { ...records[suggestion.targetId].record, ...delta };
+      const hash = computeRecordHash(merged);
+      if (hash !== records[suggestion.targetId].hash) {
+        records[suggestion.targetId] = {
+          ...records[suggestion.targetId],
+          record: merged,
+          hash,
+          version: records[suggestion.targetId].version + 1,
+          lastSeen: new Date().toISOString(),
+        };
+        applied += 1;
+      }
+    } else if (suggestion.type === "new") {
+      const key =
+        suggestion.targetId ||
+        buildDeterministicKey({
+          title: delta.title || delta.game_name,
+          platform: delta.platform || delta.platform_slug,
+        });
+      const normalized = normalizeRecord(
+        {
+          title: delta.title || delta.game_name,
+          platform: delta.platform,
+          platform_slug: delta.platform_slug,
+          release_date: delta.release_date || delta.release_year,
+          genres: delta.genres,
+          esrb: delta.esrb || delta.esrb_rating,
+          pegi: delta.pegi,
+          assets: delta.assets,
+          external_ids: delta.external_ids,
+          source: "suggestion",
+        },
+        "community"
+      );
+      const hash = computeRecordHash(normalized);
+      if (!records[key]) {
+        records[key] = {
+          record: normalized,
+          hash,
+          version: 1,
+          lastSeen: new Date().toISOString(),
+        };
+        applied += 1;
+      }
+    }
+  }
+  return applied;
+}
+
 export async function runIngestion(configOverrides = {}) {
   await ensureFiles();
   const config = { ...DEFAULT_CONFIG, ...configOverrides };
@@ -321,6 +453,7 @@ export async function runIngestion(configOverrides = {}) {
     merged: 0,
     upserted: 0,
     unchanged: 0,
+    suggestionsApplied: 0,
     snapshotPath: null,
   };
 
@@ -393,6 +526,9 @@ export async function runIngestion(configOverrides = {}) {
     }
   }
 
+  const { suggestions } = await readSuggestions();
+  metrics.suggestionsApplied = applyApprovedSuggestions(records, suggestions);
+
   const snapshot = buildSnapshot(records);
   const snapshotPath = path.join(
     snapshotsDir,
@@ -416,13 +552,134 @@ export async function runIngestion(configOverrides = {}) {
 
 export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
   const server = http.createServer(async (req, res) => {
-    if (!req.url || !req.url.startsWith("/api/v1/catalog")) {
-      res.writeHead(404);
-      res.end("Not found");
-      return;
-    }
     try {
       await ensureFiles();
+      if (!req.url || !req.url.startsWith("/api/v1")) {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
+
+      const url = new URL(req.url, `http://localhost:${port}`);
+      const { catalogStorePath } = resolvePaths();
+
+      if (
+        req.method === "POST" &&
+        /^\/api\/v1\/games\/[^/]+\/suggestions$/.test(url.pathname)
+      ) {
+        const targetId = decodeURIComponent(url.pathname.split("/").at(-2));
+        const auth = resolveAuth(req);
+        const body = await parseJsonBody(req);
+        const delta = body.delta || body;
+        if (!delta || typeof delta !== "object") {
+          sendJson(res, 400, { error: "Missing suggestion payload" });
+          return;
+        }
+        const store = await readSuggestions();
+        const suggestion = {
+          id: randomUUID(),
+          type: "update",
+          targetId,
+          delta,
+          status: "pending",
+          author: auth,
+          submittedAt: new Date().toISOString(),
+          notes: body.notes || null,
+        };
+        store.suggestions.push(suggestion);
+        await writeSuggestions(store);
+        sendJson(res, 201, { suggestion });
+        return;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/v1/games/new") {
+        const auth = resolveAuth(req);
+        const body = await parseJsonBody(req);
+        const delta = body.delta || body;
+        if (!delta?.title && !delta?.game_name) {
+          sendJson(res, 400, { error: "New game submissions require a title" });
+          return;
+        }
+        const store = await readSuggestions();
+        const suggestion = {
+          id: randomUUID(),
+          type: "new",
+          targetId: null,
+          delta,
+          status: "pending",
+          author: auth,
+          submittedAt: new Date().toISOString(),
+          notes: body.notes || null,
+        };
+        store.suggestions.push(suggestion);
+        await writeSuggestions(store);
+        sendJson(res, 201, { suggestion });
+        return;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/v1/moderation/suggestions") {
+        const auth = resolveAuth(req);
+        if (!["moderator", "admin"].includes(auth.role)) {
+          sendJson(res, 403, { error: "Moderator access required" });
+          return;
+        }
+        const catalogStore = await readJson(catalogStorePath, { records: {} });
+        const { suggestions } = await readSuggestions();
+        const enriched = suggestions.map((entry) => ({
+          ...entry,
+          canonical: entry.targetId
+            ? catalogStore.records[entry.targetId]?.record || null
+            : null,
+        }));
+        sendJson(res, 200, { suggestions: enriched });
+        return;
+      }
+
+      if (
+        req.method === "POST" &&
+        url.pathname.startsWith("/api/v1/moderation/suggestions/") &&
+        url.pathname.endsWith("/decision")
+      ) {
+        const auth = resolveAuth(req);
+        if (!["moderator", "admin"].includes(auth.role)) {
+          sendJson(res, 403, { error: "Moderator access required" });
+          return;
+        }
+        const parts = url.pathname.split("/");
+        const suggestionId = parts[5];
+        const body = await parseJsonBody(req);
+        if (!body?.status || !["approved", "rejected"].includes(body.status)) {
+          sendJson(res, 400, { error: "Decision status must be approved or rejected" });
+          return;
+        }
+        const store = await readSuggestions();
+        const target = store.suggestions.find((entry) => entry.id === suggestionId);
+        if (!target) {
+          sendJson(res, 404, { error: "Suggestion not found" });
+          return;
+        }
+        target.status = body.status;
+        target.moderationNotes = body.notes || null;
+        target.decidedAt = new Date().toISOString();
+        await writeSuggestions(store);
+        const auditEntry = {
+          suggestionId,
+          decision: body.status,
+          notes: target.moderationNotes,
+          moderator: auth,
+          timestamp: target.decidedAt,
+        };
+        await appendAudit(auditEntry);
+        sendJson(res, 200, { suggestion: target, audit: auditEntry });
+        return;
+      }
+
+      if (!url.pathname.startsWith("/api/v1/catalog")) {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
+
       const { snapshotsDir } = resolvePaths();
       const snapshots = await fs.readdir(snapshotsDir);
       if (!snapshots.length) {

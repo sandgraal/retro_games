@@ -162,3 +162,37 @@ export type DeepPartial<T> = {
 export type NonNullableFields<T> = {
   [P in keyof T]: NonNullable<T[P]>;
 };
+
+// === Auth & Moderation Types ===
+
+export type AuthRole = "anonymous" | "contributor" | "moderator" | "admin";
+
+export interface SuggestionAuthor {
+  role: AuthRole;
+  email: string | null;
+  sessionId: string;
+}
+
+export type SuggestionStatus = "pending" | "approved" | "rejected";
+
+export interface SuggestionRecord {
+  id: string;
+  type: "update" | "new";
+  targetId: string | null;
+  delta: Record<string, unknown>;
+  status: SuggestionStatus;
+  author: SuggestionAuthor;
+  submittedAt: string;
+  notes?: string | null;
+  moderationNotes?: string | null;
+  decidedAt?: string;
+  canonical?: Record<string, unknown> | null;
+}
+
+export interface AuditLogEntry {
+  suggestionId: string;
+  decision: SuggestionStatus;
+  notes: string | null;
+  moderator: SuggestionAuthor;
+  timestamp: string;
+}

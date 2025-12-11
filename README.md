@@ -19,6 +19,14 @@ A TypeScript + Vite single-page app for tracking retro games. It uses a lightwei
 - **Persistence**: collection statuses, notes, preferences, and filters live in `localStorage` (`dragonshoard_*` keys).
 - **Catalog ingest**: a Node-based worker in `services/catalog-ingest/` can normalize external APIs into versioned snapshots; run it with `node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.example.json --once` to seed data and `--serve` to expose `/api/v1/catalog`.
 
+## Community submissions & moderation
+
+- Auth roles: `anonymous`, `contributor`, and `moderator`/`admin` (Supabase Auth when configured, otherwise session-based fallbacks).
+- Submission endpoints (when running `catalog-ingest.js --serve`):
+  - `POST /api/v1/games/:id/suggestions` to propose updates to existing records (anonymous sessions supported).
+  - `POST /api/v1/games/new` to suggest new games.
+- Moderation queue: `GET /api/v1/moderation/suggestions` (moderator/admin only) with `POST .../decision` for approvals/rejections; decisions are recorded to `audit-log.json` and approved patches are applied during the next ingest run.
+
 ## Development
 
 ```
