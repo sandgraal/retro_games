@@ -285,7 +285,7 @@ describe("startReadApiServer", () => {
     expect(json[0].record.title).toBe("Game A");
   });
 
-  test("returns 500 on file read errors", async () => {
+  test("returns 503 when snapshots directory is empty after deletion", async () => {
     // Create a snapshot
     await runIngestion({
       sources: [
