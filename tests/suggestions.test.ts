@@ -4,12 +4,27 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
-  decideSuggestion,
   fetchPendingSuggestions,
-  submitSuggestion,
+  moderateSuggestion,
+  submitEditSuggestion,
+  submitNewGameSuggestion,
   type SuggestionRecord,
-  type AuditLogEntry,
 } from "../src/data/suggestions";
+
+// Mock auth module
+vi.mock("../src/data/auth", () => ({
+  getAuthSession: vi.fn().mockResolvedValue({
+    sessionId: "test-session",
+    role: "moderator",
+    email: "mod@example.com",
+    userId: "user-123",
+    isAuthenticated: true,
+  }),
+  buildAuthHeaders: vi.fn().mockReturnValue({
+    "x-session-id": "test-session",
+    "x-role": "moderator",
+  }),
+}));
 
 describe("Community Suggestions", () => {
   beforeEach(() => {
@@ -20,136 +35,61 @@ describe("Community Suggestions", () => {
     vi.restoreAllMocks();
   });
 
-  describe("decideSuggestion", () => {
-    it("should handle response with audit log", async () => {
-      const mockSuggestion: SuggestionRecord = {
-        id: "test-123",
-        game_name: "Chrono Trigger",
-        platform: "SNES",
-        status: "approved",
-        created_at: "2025-12-11T00:00:00Z",
-      };
-
-      const mockAudit: AuditLogEntry = {
-        id: "audit-456",
-        suggestion_id: "test-123",
-        moderator_email: "mod@example.com",
-        action: "approve",
-        timestamp: "2025-12-11T00:01:00Z",
-      };
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          suggestion: mockSuggestion,
-          audit: mockAudit,
-        }),
-      });
-
-      const result = await decideSuggestion(
-        "test-123",
-        { action: "approve" },
-        "mod@example.com"
-      );
-
-      expect(result.suggestion).toEqual(mockSuggestion);
-      expect(result.audit).toEqual(mockAudit);
-    });
-
-    it("should handle response without audit log (demonstrates the bug)", async () => {
-      const mockSuggestion: SuggestionRecord = {
-        id: "test-123",
-        game_name: "Chrono Trigger",
-        platform: "SNES",
-        status: "pending",
-        created_at: "2025-12-11T00:00:00Z",
-      };
-
-      // Server returns suggestion without audit (e.g., audit logging failed)
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          suggestion: mockSuggestion,
-          // audit is undefined
-        }),
-      });
-
-      const result = await decideSuggestion(
-        "test-123",
-        { action: "approve" },
-        "mod@example.com"
-      );
-
-      expect(result.suggestion).toEqual(mockSuggestion);
-      // With the fix, audit is correctly typed as optional
-      // so accessing it as undefined is properly handled
-      expect(result.audit).toBeUndefined();
-    });
-
-    it("should include decision reason in request", async () => {
-      const mockSuggestion: SuggestionRecord = {
-        id: "test-123",
-        game_name: "Fake Game",
-        platform: "SNES",
-        status: "rejected",
-        created_at: "2025-12-11T00:00:00Z",
-      };
-
-      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ suggestion: mockSuggestion }),
-      });
-
-      await decideSuggestion(
-        "test-123",
-        { action: "reject", reason: "Duplicate entry" },
-        "mod@example.com"
-      );
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        "/api/suggestions/test-123/decide",
-        expect.objectContaining({
-          method: "POST",
-          body: expect.stringContaining("Duplicate entry"),
-        })
-      );
-    });
-  });
-
   describe("fetchPendingSuggestions", () => {
-    it("should fetch pending suggestions", async () => {
+    it("should fetch pending suggestions from moderation endpoint", async () => {
       const mockSuggestions: SuggestionRecord[] = [
         {
           id: "test-1",
-          game_name: "Game 1",
-          platform: "PS2",
+          type: "update",
+          targetId: "chrono trigger___snes",
+          delta: { genre: "RPG" },
           status: "pending",
-          created_at: "2025-12-11T00:00:00Z",
+          author: { role: "anonymous", email: null, sessionId: "sess-1" },
+          submittedAt: "2025-12-11T00:00:00Z",
         },
         {
           id: "test-2",
-          game_name: "Game 2",
-          platform: "Xbox",
+          type: "new",
+          targetId: null,
+          delta: { title: "New Game", platform: "PS2" },
           status: "pending",
-          created_at: "2025-12-11T00:01:00Z",
+          author: { role: "contributor", email: "user@example.com", sessionId: "sess-2" },
+          submittedAt: "2025-12-11T00:01:00Z",
         },
       ];
 
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockSuggestions,
+        json: async () => ({ suggestions: mockSuggestions }),
       });
 
       const result = await fetchPendingSuggestions();
 
       expect(result).toEqual(mockSuggestions);
-      expect(global.fetch).toHaveBeenCalledWith("/api/suggestions?status=pending");
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/moderation/suggestions?status=pending",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            "x-session-id": "test-session",
+          }),
+        })
+      );
+    });
+
+    it("should return empty array when no suggestions", async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ suggestions: [] }),
+      });
+
+      const result = await fetchPendingSuggestions();
+      expect(result).toEqual([]);
     });
 
     it("should throw error on failed fetch", async () => {
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: false,
-        statusText: "Internal Server Error",
+        statusText: "Forbidden",
       });
 
       await expect(fetchPendingSuggestions()).rejects.toThrow(
@@ -158,50 +98,187 @@ describe("Community Suggestions", () => {
     });
   });
 
-  describe("submitSuggestion", () => {
-    it("should submit a new suggestion", async () => {
-      const mockSuggestion: SuggestionRecord = {
-        id: "new-123",
-        game_name: "Earthbound",
-        platform: "SNES",
-        status: "pending",
-        created_at: "2025-12-11T00:00:00Z",
+  describe("moderateSuggestion", () => {
+    it("should approve a suggestion", async () => {
+      const mockResponse = {
+        suggestion: {
+          id: "test-123",
+          type: "update",
+          targetId: "chrono trigger___snes",
+          delta: { genre: "RPG" },
+          status: "approved",
+          author: { role: "anonymous", email: null, sessionId: "sess-1" },
+          submittedAt: "2025-12-11T00:00:00Z",
+          decidedAt: "2025-12-11T00:05:00Z",
+        },
+        audit: {
+          suggestionId: "test-123",
+          decision: "approved",
+          moderator: { sessionId: "test-session", role: "moderator" },
+          timestamp: "2025-12-11T00:05:00Z",
+        },
       };
 
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockSuggestion,
+        json: async () => mockResponse,
       });
 
-      const result = await submitSuggestion("Earthbound", "SNES");
+      const result = await moderateSuggestion("test-123", "approved", "Looks good");
 
-      expect(result).toEqual(mockSuggestion);
+      expect(result.suggestion.status).toBe("approved");
       expect(global.fetch).toHaveBeenCalledWith(
-        "/api/suggestions",
+        "/api/v1/moderation/suggestions/test-123/decision",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ status: "approved", notes: "Looks good" }),
+        })
+      );
+    });
+
+    it("should reject a suggestion with notes", async () => {
+      const mockResponse = {
+        suggestion: {
+          id: "test-123",
+          type: "update",
+          status: "rejected",
+          moderationNotes: "Duplicate entry",
+        },
+        audit: {
+          suggestionId: "test-123",
+          decision: "rejected",
+          notes: "Duplicate entry",
+        },
+      };
+
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      await moderateSuggestion("test-123", "rejected", "Duplicate entry");
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/moderation/suggestions/test-123/decision",
+        expect.objectContaining({
+          body: JSON.stringify({ status: "rejected", notes: "Duplicate entry" }),
+        })
+      );
+    });
+  });
+
+  describe("submitEditSuggestion", () => {
+    it("should submit an edit suggestion for existing game", async () => {
+      const mockSuggestion: SuggestionRecord = {
+        id: "edit-123",
+        type: "update",
+        targetId: "chrono trigger___snes",
+        delta: { genre: "JRPG", developer: "Square" },
+        status: "pending",
+        author: { role: "contributor", email: "user@example.com", sessionId: "sess-1" },
+        submittedAt: "2025-12-11T00:00:00Z",
+        notes: "Added developer info",
+      };
+
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ suggestion: mockSuggestion }),
+      });
+
+      const result = await submitEditSuggestion(
+        "chrono trigger___snes",
+        { genre: "JRPG", developer: "Square" },
+        "Added developer info"
+      );
+
+      expect(result.type).toBe("update");
+      expect(result.targetId).toBe("chrono trigger___snes");
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/games/chrono%20trigger___snes/suggestions",
         expect.objectContaining({
           method: "POST",
         })
       );
     });
 
-    it("should include submitter email when provided", async () => {
+    it("should throw error with message from server", async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request",
+        json: async () => ({ error: "Invalid delta payload" }),
+      });
+
+      await expect(submitEditSuggestion("chrono trigger___snes", {})).rejects.toThrow(
+        "Invalid delta payload"
+      );
+    });
+  });
+
+  describe("submitNewGameSuggestion", () => {
+    it("should submit a new game suggestion", async () => {
       const mockSuggestion: SuggestionRecord = {
         id: "new-123",
-        game_name: "Earthbound",
-        platform: "SNES",
-        submitter_email: "user@example.com",
+        type: "new",
+        targetId: null,
+        delta: {
+          game_name: "Earthbound",
+          platform: "SNES",
+          genre: "RPG",
+          release_year: 1994,
+        },
         status: "pending",
-        created_at: "2025-12-11T00:00:00Z",
+        author: { role: "anonymous", email: null, sessionId: "sess-1" },
+        submittedAt: "2025-12-11T00:00:00Z",
       };
 
       (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockSuggestion,
+        json: async () => ({ suggestion: mockSuggestion }),
       });
 
-      const result = await submitSuggestion("Earthbound", "SNES", "user@example.com");
+      const result = await submitNewGameSuggestion({
+        game_name: "Earthbound",
+        platform: "SNES",
+        genre: "RPG",
+        release_year: 1994,
+      });
 
-      expect(result.submitter_email).toBe("user@example.com");
+      expect(result.type).toBe("new");
+      expect(result.delta.game_name).toBe("Earthbound");
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/games/new",
+        expect.objectContaining({
+          method: "POST",
+        })
+      );
+    });
+
+    it("should include notes when provided", async () => {
+      const mockSuggestion: SuggestionRecord = {
+        id: "new-123",
+        type: "new",
+        targetId: null,
+        delta: { game_name: "Earthbound", platform: "SNES" },
+        status: "pending",
+        author: { role: "anonymous", email: null, sessionId: "sess-1" },
+        submittedAt: "2025-12-11T00:00:00Z",
+        notes: "Classic SNES RPG",
+      };
+
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ suggestion: mockSuggestion }),
+      });
+
+      await submitNewGameSuggestion(
+        { game_name: "Earthbound", platform: "SNES" },
+        "Classic SNES RPG"
+      );
+
+      const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      const body = JSON.parse(fetchCall[1].body);
+      expect(body.notes).toBe("Classic SNES RPG");
     });
   });
 });
