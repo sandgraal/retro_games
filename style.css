@@ -437,6 +437,52 @@
     margin-top: 0.5rem;
     color: var(--text-muted);
   }
+
+  .moderation-error {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    color: #ff3b30;
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    margin-top: 0.5rem;
+    font-size: var(--font-size-sm);
+  }
+
+  .btn-retry {
+    background: rgba(255, 159, 10, 0.2);
+    border: 1px solid rgba(255, 159, 10, 0.4);
+    color: #ff9f0a;
+  }
+
+  .btn-retry:hover {
+    background: rgba(255, 159, 10, 0.3);
+  }
+
+  .btn--loading {
+    opacity: 0.6;
+    cursor: wait;
+    position: relative;
+  }
+
+  .btn--loading::after {
+    content: "";
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: translateY(-50%) rotate(360deg);
+    }
+  }
 }
 
 /* High Performance Mode */
