@@ -14,7 +14,6 @@ import {
 import { safeStorage } from "../core/storage";
 import { games, collection, setGameStatus, openGameModal } from "../state";
 import type { CollectionStatus, GameWithKey } from "../core/types";
-import { safeStorage } from "../utils/safe-storage";
 
 const WELCOME_PANEL_STORAGE_KEY = "guidesWelcomePanelDismissed";
 
@@ -78,21 +77,6 @@ function renderWelcomePanel(): HTMLElement {
   return panel;
 }
 
-function setupScrollTriggers(panel: HTMLElement): void {
-  panel.querySelectorAll<HTMLElement>("[data-scroll-target]").forEach((trigger) => {
-    trigger.addEventListener("click", (event) => {
-      const targetSelector = trigger.getAttribute("data-scroll-target");
-      if (!targetSelector) return;
-
-      const target = document.querySelector<HTMLElement>(targetSelector);
-      if (target) {
-        event.preventDefault();
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-  });
-}
-
 // Interactive features state
 let readingProgress = 0;
 let tocActiveId = "";
@@ -120,86 +104,6 @@ function setupScrollTriggers(container: HTMLElement): void {
   container.addEventListener("click", handleScrollTrigger);
   scrollTriggerCleanup = () =>
     container.removeEventListener("click", handleScrollTrigger);
-}
-
-function hasDismissedWelcomePanel(): boolean {
-  try {
-    return safeStorage.getItem(GUIDES_WELCOME_DISMISS_KEY) === "true";
-  } catch (error) {
-    console.warn("Unable to read welcome panel state", error);
-    return false;
-  }
-}
-
-function dismissWelcomePanel(panel?: HTMLElement | null): void {
-  try {
-    safeStorage.setItem(GUIDES_WELCOME_DISMISS_KEY, "true");
-  } catch (error) {
-    console.warn("Unable to persist welcome panel dismissal", error);
-  }
-
-  if (panel) {
-    panel.classList.add("guides-welcome--dismissed");
-    setTimeout(() => panel.remove(), 150);
-  }
-}
-
-function renderWelcomePanel(): HTMLElement | null {
-  if (hasDismissedWelcomePanel()) return null;
-
-  const panel = el.div({ class: "guides-welcome", id: "guidesWelcome" });
-  panel.innerHTML = `
-    <div class="guides-welcome-header">
-      <div class="guides-welcome-meta">
-        <span class="guides-welcome-eyebrow">Welcome & FAQ</span>
-        <h2 class="guides-welcome-title">Quick tour of Dragon's Hoard Atlas</h2>
-      </div>
-      <button type="button" class="guides-welcome-close" aria-label="Dismiss welcome panel">
-        <span aria-hidden="true">×</span>
-      </button>
-    </div>
-    <ul class="guides-welcome-list">
-      <li class="guides-welcome-item">
-        <span class="guides-welcome-icon" aria-hidden="true">🧭</span>
-        <div>
-          <div class="guides-welcome-item-title">Explore and track fast</div>
-          <p class="guides-welcome-copy">Use filters, dashboards, and exports/share codes to manage and share your collection.</p>
-        </div>
-      </li>
-      <li class="guides-welcome-item">
-        <span class="guides-welcome-icon" aria-hidden="true">🔒</span>
-        <div>
-          <div class="guides-welcome-item-title">No sign-in required for most tools</div>
-          <p class="guides-welcome-copy">Browse, filter, export, and save progress locally. Sign in only if you want to submit updates.</p>
-        </div>
-      </li>
-      <li class="guides-welcome-item">
-        <span class="guides-welcome-icon" aria-hidden="true">🛡️</span>
-        <div>
-          <div class="guides-welcome-item-title">How submissions are moderated</div>
-          <p class="guides-welcome-copy">Every community submission — anonymous or signed-in — enters the same review queue before going live.</p>
-        </div>
-      </li>
-      <li class="guides-welcome-item">
-        <span class="guides-welcome-icon" aria-hidden="true">📚</span>
-        <div>
-          <div class="guides-welcome-item-title">Collecting guides at the ready</div>
-          <p class="guides-welcome-copy">Jump into platform and genre collecting tips below whenever you need deeper advice.</p>
-        </div>
-      </li>
-    </ul>
-    <div class="guides-welcome-actions">
-      <a class="guides-welcome-link" href="#guidesGrid">Browse collecting guides</a>
-      <button type="button" class="guides-welcome-link guides-welcome-link--secondary" data-scroll-target="guidesGrid">
-        View guide library
-      </button>
-    </div>
-  `;
-
-  const closeBtn = panel.querySelector<HTMLButtonElement>(".guides-welcome-close");
-  closeBtn?.addEventListener("click", () => dismissWelcomePanel(panel));
-
-  return panel;
 }
 
 // === Guide Index Component ===
