@@ -143,9 +143,7 @@ describe("Community Suggestions", () => {
       const result = await fetchPendingSuggestions();
 
       expect(result).toEqual(mockSuggestions);
-      expect(global.fetch).toHaveBeenCalledWith(
-        "/api/suggestions?status=pending"
-      );
+      expect(global.fetch).toHaveBeenCalledWith("/api/suggestions?status=pending");
     });
 
     it("should throw error on failed fetch", async () => {
@@ -201,11 +199,7 @@ describe("Community Suggestions", () => {
         json: async () => mockSuggestion,
       });
 
-      const result = await submitSuggestion(
-        "Earthbound",
-        "SNES",
-        "user@example.com"
-      );
+      const result = await submitSuggestion("Earthbound", "SNES", "user@example.com");
 
       expect(result.submitter_email).toBe("user@example.com");
     });
