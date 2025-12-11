@@ -128,7 +128,15 @@ function normalizeRecord(raw, sourceName) {
     platform_slug: safeString(raw.platform_slug || raw.platform),
     release_date: raw.release_date || raw.releaseDate || null,
     regions: raw.regions || raw.region ? [].concat(raw.regions || raw.region) : [],
-    genres: raw.genres || raw.genre ? [].concat(raw.genres || raw.genre) : [],
+    genres: Array.isArray(raw.genres)
+      ? raw.genres
+      : raw.genres
+      ? [raw.genres]
+      : Array.isArray(raw.genre)
+      ? raw.genre
+      : raw.genre
+      ? [raw.genre]
+      : [],
     esrb: raw.esrb || raw.rating || null,
     pegi: raw.pegi || null,
     assets: raw.assets || {
