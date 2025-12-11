@@ -1,83 +1,97 @@
-import type { AuditLogEntry, SuggestionRecord } from "../core/types";
-import { buildAuthHeaders, getAuthSession } from "./auth";
+/**
+ * Community Suggestions Module
+ * Handles community game submissions and moderation workflow
+ */
 
-const API_BASE = "/api/v1";
-
-async function send<T>(path: string, options: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, options);
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`Request failed: ${response.status} ${detail}`);
-  }
-  return response.json() as Promise<T>;
+import type { SuggestionRecord, AuditLogEntry } from "../core/types";
+export interface ModerationDecision {
+  action: "approve" | "reject";
+  reason?: string;
 }
 
-export async function submitGameSuggestion(
-  gameKey: string,
-  delta: Record<string, unknown>,
-  notes?: string
-): Promise<SuggestionRecord> {
-  const session = await getAuthSession();
-  const body = JSON.stringify({ delta, notes });
-  const { suggestion } = await send<{ suggestion: SuggestionRecord }>(
-    `/games/${encodeURIComponent(gameKey)}/suggestions`,
+/**
+ * Generic HTTP send function that makes API requests
+ * Returns suggestion with optional audit log entry
+ */
+async function send(
+  endpoint: string,
+  method: string,
+  body?: unknown
+): Promise<{ suggestion: SuggestionRecord; audit?: AuditLogEntry }> {
+  const response = await fetch(endpoint, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Submit a moderation decision for a community suggestion
+ * Returns suggestion with optional audit log (audit may be undefined if logging fails)
+ */
+export async function decideSuggestion(
+  suggestionId: string,
+  decision: ModerationDecision,
+  moderatorEmail: string
+): Promise<{ suggestion: SuggestionRecord; audit?: AuditLogEntry }> {
+  const response = await send(
+    `/api/suggestions/${suggestionId}/decide`,
+    "POST",
     {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...buildAuthHeaders(session),
-      },
-      body,
+      ...decision,
+      moderator_email: moderatorEmail,
     }
   );
-  return suggestion;
+
+  // Return response as-is, audit may be undefined which is now correctly typed
+  return {
+    suggestion: response.suggestion,
+    audit: response.audit,
+  };
 }
 
-export async function submitNewGameSuggestion(
-  delta: Record<string, unknown>,
-  notes?: string
+/**
+ * Fetch all pending suggestions
+ */
+export async function fetchPendingSuggestions(): Promise<SuggestionRecord[]> {
+  const response = await fetch("/api/suggestions?status=pending");
+  if (!response.ok) {
+    throw new Error(`Failed to fetch suggestions: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+/**
+ * Submit a new game suggestion
+ */
+export async function submitSuggestion(
+  gameName: string,
+  platform: string,
+  submitterEmail?: string
 ): Promise<SuggestionRecord> {
-  const session = await getAuthSession();
-  const body = JSON.stringify({ delta, notes });
-  const { suggestion } = await send<{ suggestion: SuggestionRecord }>("/games/new", {
+  const response = await fetch("/api/suggestions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...buildAuthHeaders(session),
     },
-    body,
+    body: JSON.stringify({
+      game_name: gameName,
+      platform,
+      submitter_email: submitterEmail,
+    }),
   });
-  return suggestion;
-}
 
-export async function fetchSuggestionsForModeration(): Promise<SuggestionRecord[]> {
-  const session = await getAuthSession();
-  const { suggestions } = await send<{ suggestions: SuggestionRecord[] }>(
-    "/moderation/suggestions",
-    {
-      headers: buildAuthHeaders(session),
-    }
-  );
-  return suggestions;
-}
+  if (!response.ok) {
+    throw new Error(`Failed to submit suggestion: ${response.statusText}`);
+  }
 
-export async function decideSuggestion(
-  suggestionId: string,
-  status: "approved" | "rejected",
-  notes?: string
-): Promise<{ suggestion: SuggestionRecord; audit: AuditLogEntry }> {
-  const session = await getAuthSession();
-  const payload = JSON.stringify({ status, notes });
-  const response = await send<{ suggestion: SuggestionRecord; audit?: AuditLogEntry }>(
-    `/moderation/suggestions/${suggestionId}/decision`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...buildAuthHeaders(session),
-      },
-      body: payload,
-    }
-  );
-  return { suggestion: response.suggestion, audit: response.audit };
+  return response.json();
 }
