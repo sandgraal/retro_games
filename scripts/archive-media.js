@@ -7,11 +7,37 @@ import crypto from "node:crypto";
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 const DEFAULT_BUCKET = process.env.SUPABASE_STORAGE_ARCHIVE_BUCKET || "media-archive";
+const PROJECT_ROOT = path.resolve(process.cwd());
+const BACKUP_ROOT = path.resolve(PROJECT_ROOT, "backups");
+
+function resolveWithinBase(baseDir, targetPath) {
+  const normalizedBase = path.resolve(baseDir);
+  const resolved = path.resolve(normalizedBase, targetPath);
+  if (resolved !== normalizedBase && !resolved.startsWith(normalizedBase + path.sep)) {
+    throw new Error(`Invalid path outside of ${normalizedBase}: ${targetPath}`);
+  }
+  return resolved;
+}
+
+function assertSafeObjectName(name) {
+  if (typeof name !== "string" || path.isAbsolute(name)) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+  const segments = name.split("/");
+  if (
+    segments.some(
+      (segment) =>
+        !segment || segment === "." || segment === ".." || !/^[\w.-]+$/.test(segment)
+    )
+  ) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+}
 
 function parseArgs(argv) {
   const options = {
     bucket: DEFAULT_BUCKET,
-    output: path.resolve(process.cwd(), "backups", "media-archive"),
+    output: resolveWithinBase(BACKUP_ROOT, "media-archive"),
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -19,7 +45,7 @@ function parseArgs(argv) {
       options.bucket = argv[i + 1];
       i += 1;
     } else if ((arg === "--out" || arg === "--output") && argv[i + 1]) {
-      options.output = path.resolve(argv[i + 1]);
+      options.output = resolveWithinBase(BACKUP_ROOT, argv[i + 1]);
       i += 1;
     }
   }
@@ -75,7 +101,8 @@ async function listObjects(bucket, fetchImpl) {
 }
 
 async function downloadObject(bucket, object, outputDir, fetchImpl) {
-  const targetPath = path.join(outputDir, object.name);
+  assertSafeObjectName(object.name);
+  const targetPath = resolveWithinBase(outputDir, object.name);
   fs.mkdirSync(path.dirname(targetPath), { recursive: true });
   const response = await fetchImpl(
     `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/${bucket}/${encodePath(object.name)}`,
@@ -128,7 +155,7 @@ async function main() {
       console.warn(`⚠️  Failed to archive ${object.name}: ${error.message}`);
     }
   }
-  const manifestPath = path.join(options.output, "manifest.json");
+  const manifestPath = resolveWithinBase(options.output, "manifest.json");
   fs.writeFileSync(
     manifestPath,
     JSON.stringify(
