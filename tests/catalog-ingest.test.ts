@@ -41,8 +41,7 @@ describe('error handling in fetchSourceRecords', () => {
   });
 
   test('handles invalid URL gracefully', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockRejectedValue(new Error('Invalid URL'));
+    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Invalid URL'));
 
     const run = await runIngestion({
       sources: [
@@ -56,16 +55,13 @@ describe('error handling in fetchSourceRecords', () => {
     // Should continue processing and not crash
     expect(run.metrics.fetched).toBe(0);
     expect(Object.keys(run.records)).toHaveLength(0);
-
-    global.fetch = originalFetch;
   });
 
   test('handles HTTP 404 error', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: false,
       status: 404,
-    });
+    } as Response);
 
     const run = await runIngestion({
       sources: [
@@ -79,16 +75,13 @@ describe('error handling in fetchSourceRecords', () => {
     // Should log error and continue
     expect(run.metrics.fetched).toBe(0);
     expect(Object.keys(run.records)).toHaveLength(0);
-
-    global.fetch = originalFetch;
   });
 
   test('handles HTTP 500 error', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: false,
       status: 500,
-    });
+    } as Response);
 
     const run = await runIngestion({
       sources: [
@@ -101,13 +94,10 @@ describe('error handling in fetchSourceRecords', () => {
 
     expect(run.metrics.fetched).toBe(0);
     expect(Object.keys(run.records)).toHaveLength(0);
-
-    global.fetch = originalFetch;
   });
 
   test('handles network timeout/failure', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockRejectedValue(new Error('Network request failed'));
+    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network request failed'));
 
     const run = await runIngestion({
       sources: [
@@ -120,17 +110,14 @@ describe('error handling in fetchSourceRecords', () => {
 
     expect(run.metrics.fetched).toBe(0);
     expect(Object.keys(run.records)).toHaveLength(0);
-
-    global.fetch = originalFetch;
   });
 
   test('handles malformed JSON response', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       status: 200,
       json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
-    });
+    } as unknown as Response);
 
     const run = await runIngestion({
       sources: [
@@ -143,19 +130,16 @@ describe('error handling in fetchSourceRecords', () => {
 
     expect(run.metrics.fetched).toBe(0);
     expect(Object.keys(run.records)).toHaveLength(0);
-
-    global.fetch = originalFetch;
   });
 
   test('successfully processes valid URL with array response', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       status: 200,
       json: vi.fn().mockResolvedValue([
         { title: 'Test Game', platform: 'Test Platform', release_date: '2020-01-01' },
       ]),
-    });
+    } as unknown as Response);
 
     const run = await runIngestion({
       sources: [
@@ -168,13 +152,10 @@ describe('error handling in fetchSourceRecords', () => {
 
     expect(run.metrics.fetched).toBe(1);
     expect(Object.keys(run.records)).toHaveLength(1);
-
-    global.fetch = originalFetch;
   });
 
   test('successfully processes valid URL with results wrapper', async () => {
-    const originalFetch = global.fetch;
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       status: 200,
       json: vi.fn().mockResolvedValue({
@@ -182,7 +163,7 @@ describe('error handling in fetchSourceRecords', () => {
           { title: 'Wrapped Game', platform: 'Test Platform', release_date: '2021-01-01' },
         ],
       }),
-    });
+    } as unknown as Response);
 
     const run = await runIngestion({
       sources: [
@@ -195,26 +176,18 @@ describe('error handling in fetchSourceRecords', () => {
 
     expect(run.metrics.fetched).toBe(1);
     expect(Object.keys(run.records)).toHaveLength(1);
-
-    global.fetch = originalFetch;
   });
 
   test('handles mixed success and failure sources', async () => {
-    const originalFetch = global.fetch;
-    let callCount = 0;
-    global.fetch = vi.fn().mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        return Promise.resolve({
-          ok: true,
-          status: 200,
-          json: () => Promise.resolve([
-            { title: 'Success Game', platform: 'PS5', release_date: '2023-01-01' },
-          ]),
-        });
-      }
-      return Promise.reject(new Error('Second source failed'));
-    });
+    vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue([
+          { title: 'Success Game', platform: 'PS5', release_date: '2023-01-01' },
+        ]),
+      } as unknown as Response)
+      .mockRejectedValueOnce(new Error('Second source failed'));
 
     const run = await runIngestion({
       sources: [
@@ -232,8 +205,6 @@ describe('error handling in fetchSourceRecords', () => {
     // Should process the successful source despite the failure
     expect(run.metrics.fetched).toBe(1);
     expect(Object.keys(run.records)).toHaveLength(1);
-
-    global.fetch = originalFetch;
   });
 });
 
