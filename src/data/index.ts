@@ -19,3 +19,27 @@ export {
   type GuideFrontmatter,
   type Guide,
 } from "./guides";
+
+// Auth exports
+export {
+  getAuthSession,
+  signInWithGitHub,
+  signOut,
+  onAuthStateChange,
+  buildAuthHeaders,
+  isModerator,
+  isAuthenticated,
+  type AuthSession,
+} from "./auth";
+
+// Suggestions exports
+export {
+  fetchPendingSuggestions,
+  fetchSuggestionsForModeration,
+  moderateSuggestion,
+  submitEditSuggestion,
+  submitNewGameSuggestion,
+  type SuggestionRecord,
+  type AuditLogEntry,
+  type ModerationDecision,
+} from "./suggestions";

@@ -469,8 +469,8 @@ function importBackup(backup: ReturnType<typeof parseBackup>): void {
   if (!backup) return;
 
   Object.entries(backup.collection).forEach(([key, entry]) => {
-    if (typeof entry === "object" && entry && "status" in entry) {
-      setGameStatus(key, (entry as { status: string }).status as any);
+    if (entry.status) {
+      setGameStatus(key, entry.status);
     }
   });
 

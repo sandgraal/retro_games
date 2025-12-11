@@ -449,13 +449,13 @@ export function toggleRegionFilter(region: string): void {
 /**
  * Toggle status filter
  */
-export function toggleStatusFilter(status: string): void {
+export function toggleStatusFilter(status: CollectionStatus): void {
   filterStateSignal.set((current) => {
     const statuses = new Set(current.statuses);
-    if (statuses.has(status as any)) {
-      statuses.delete(status as any);
+    if (statuses.has(status)) {
+      statuses.delete(status);
     } else {
-      statuses.add(status as any);
+      statuses.add(status);
     }
     return { ...current, statuses };
   });

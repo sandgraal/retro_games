@@ -86,7 +86,7 @@ function checkForceSampleMode(): boolean {
   if (typeof window === "undefined") return false;
 
   // Check global flag
-  if ((window as any).__SANDGRAAL_FORCE_SAMPLE__) {
+  if (window.__SANDGRAAL_FORCE_SAMPLE__) {
     return true;
   }
 

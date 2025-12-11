@@ -80,6 +80,7 @@ interface SupabaseClient {
 declare global {
   interface Window {
     __SUPABASE_CONFIG__?: SupabaseConfig;
+    __SANDGRAAL_FORCE_SAMPLE__?: boolean;
     supabase?: {
       createClient: (url: string, key: string) => SupabaseClient;
     };

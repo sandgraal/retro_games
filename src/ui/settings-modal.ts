@@ -279,8 +279,8 @@ function handleRestore(e: Event): void {
 
     // Import the backup
     Object.entries(backup.collection).forEach(([key, entry]) => {
-      if (typeof entry === "object" && entry.status) {
-        setGameStatus(key, (entry as { status: string }).status as any);
+      if (entry.status) {
+        setGameStatus(key, entry.status);
       }
     });
 

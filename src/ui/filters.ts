@@ -4,6 +4,7 @@
  */
 
 import type { ComponentContext } from "./components";
+import type { SortOption } from "../core/types";
 import { mount, debounce } from "./components";
 import {
   availablePlatforms,
@@ -18,6 +19,12 @@ import {
   resetFilters,
 } from "../state/store";
 import { effect } from "../core/signals";
+
+const VALID_SORT_OPTIONS: SortOption[] = ["name", "rating", "year", "value", "platform"];
+
+function isValidSortOption(value: string): value is SortOption {
+  return VALID_SORT_OPTIONS.includes(value as SortOption);
+}
 
 /**
  * Initialize the filter sidebar
@@ -143,13 +150,13 @@ function setupSortButtons(cleanup: (() => void)[]): void {
     if (!button) return;
 
     const sort = button.getAttribute("data-sort");
-    if (sort) {
+    if (sort && isValidSortOption(sort)) {
       // Toggle direction if same sort is clicked
       const current = filterState.get();
       if (current.sortBy === sort) {
-        setSort(sort as any, current.sortDirection === "asc" ? "desc" : "asc");
+        setSort(sort, current.sortDirection === "asc" ? "desc" : "asc");
       } else {
-        setSort(sort as any);
+        setSort(sort);
       }
 
       // Update active state
@@ -184,6 +191,13 @@ function setupClearButton(cleanup: (() => void)[]): void {
   cleanup.push(() => button.removeEventListener("click", handler));
 }
 
+const VALID_STATUSES = ["none", "owned", "wishlist", "backlog", "trade"] as const;
+type ValidStatus = (typeof VALID_STATUSES)[number];
+
+function isValidStatus(value: string): value is ValidStatus {
+  return VALID_STATUSES.includes(value as ValidStatus);
+}
+
 /**
  * Handle filter checkbox changes
  */
@@ -202,7 +216,9 @@ function handleFilterChange(e: Event): void {
     toggleRegionFilter(value);
   } else if (filterType === "status" || target.closest("#statusFilters")) {
     // Status filters may not have data-filter attribute in HTML
-    toggleStatusFilter(value);
+    if (isValidStatus(value)) {
+      toggleStatusFilter(value);
+    }
   }
 }
 
