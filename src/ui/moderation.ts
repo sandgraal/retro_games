@@ -1,9 +1,6 @@
 import type { SuggestionRecord } from "../core/types";
 import { getAuthSession } from "../data/auth";
-import {
-  moderateSuggestion,
-  fetchSuggestionsForModeration,
-} from "../data/suggestions";
+import { moderateSuggestion, fetchSuggestionsForModeration } from "../data/suggestions";
 import { el, mount } from "./components";
 
 function renderDiffRow(key: string, before: unknown, after: unknown): HTMLElement {

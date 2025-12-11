@@ -11,7 +11,7 @@ import type {
   PricingSource,
 } from "../core/types";
 import type { ComponentContext } from "./components";
-import { mount, escapeHtml } from "./components";
+import { mount, escapeHtml, sanitizeUrl } from "./components";
 import {
   modalGame,
   closeGameModal,
@@ -24,11 +24,7 @@ import {
 } from "../state/store";
 import { effect } from "../core/signals";
 import { buildGuideIndex, type GuideMetadata } from "../data/guides";
-import {
-  formatCurrency,
-  formatRelativeDate,
-  formatAbsoluteDate,
-} from "../utils/format";
+import { formatCurrency, formatRelativeDate, formatAbsoluteDate } from "../utils/format";
 
 // Platform name mapping for guide matching
 const PLATFORM_TO_GUIDE: Record<string, string> = {
@@ -493,7 +489,7 @@ function buildPricingSection(
       ${header}
       <div class="modal-prices" role="group" aria-describedby="modalPricingUpdated">
         <div class="price-grid" role="list">
-          ${priceBlocks.length > 0 ? priceBlocks.join("") : "<p class=\"modal-pricing__empty\">No structured pricing found.</p>"}
+          ${priceBlocks.length > 0 ? priceBlocks.join("") : '<p class="modal-pricing__empty">No structured pricing found.</p>'}
         </div>
         <p class="price-source">${escapeHtml(price.source ?? meta.source ?? "snapshot")}</p>
       </div>
@@ -551,11 +547,12 @@ function buildExternalLinks(game: GameWithKey): string {
   if (links.length === 0) return "";
 
   const chips = links
+    .filter((link) => sanitizeUrl(link.url) !== "") // Filter out unsafe URLs
     .map(
       (link) => `
         <a
           class="modal-link-chip"
-          href="${escapeHtml(link.url)}"
+          href="${sanitizeUrl(link.url)}"
           target="_blank"
           rel="noopener noreferrer"
           role="listitem"
@@ -583,20 +580,19 @@ function normalizeLinks(game: GameWithKey): Array<{
   icon: string;
   ariaLabel: string;
 }> {
-  const links: Array<{ label: string; url: string; icon: string; ariaLabel: string }> = [];
+  const links: Array<{ label: string; url: string; icon: string; ariaLabel: string }> =
+    [];
   const externalLinks: ExternalLinks | undefined = game.external_links;
 
   const wikiLinks = toArray(externalLinks?.wiki ?? game.Details ?? "");
-  wikiLinks
-    .filter(Boolean)
-    .forEach((url) =>
-      links.push({
-        label: buildLinkLabel(url, "Wiki"),
-        url,
-        icon: "📖",
-        ariaLabel: `Open wiki entry for ${game.game_name}`,
-      })
-    );
+  wikiLinks.filter(Boolean).forEach((url) =>
+    links.push({
+      label: buildLinkLabel(url, "Wiki"),
+      url,
+      icon: "📖",
+      ariaLabel: `Open wiki entry for ${game.game_name}`,
+    })
+  );
 
   toArray(externalLinks?.store)
     .filter(Boolean)

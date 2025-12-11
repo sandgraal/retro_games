@@ -104,14 +104,17 @@ export async function moderateSuggestion(
   notes?: string
 ): Promise<{ suggestion: SuggestionRecord; audit: AuditLogEntry }> {
   const session = await getAuthSession();
-  const response = await fetch(`/api/v1/moderation/suggestions/${suggestionId}/decision`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...buildAuthHeaders(session),
-    },
-    body: JSON.stringify({ status, notes }),
-  });
+  const response = await fetch(
+    `/api/v1/moderation/suggestions/${suggestionId}/decision`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...buildAuthHeaders(session),
+      },
+      body: JSON.stringify({ status, notes }),
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`);

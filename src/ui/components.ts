@@ -59,6 +59,26 @@ export function escapeHtml(str: string): string {
 }
 
 /**
+ * Sanitize URL to prevent javascript: and data: protocol attacks
+ * Only allows http: and https: protocols
+ * Returns empty string for invalid or unsafe URLs
+ */
+export function sanitizeUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    // Only allow http and https protocols
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return url;
+    }
+    // Reject any other protocol (javascript:, data:, etc.)
+    return "";
+  } catch {
+    // Invalid URL format
+    return "";
+  }
+}
+
+/**
  * Create an element with attributes and children
  */
 export function createElement<K extends keyof HTMLElementTagNameMap>(

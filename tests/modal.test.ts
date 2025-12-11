@@ -1,11 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { mountModal } from "../src/ui/modal";
-import {
-  closeGameModal,
-  openGameModal,
-  setPriceMeta,
-  setPrices,
-} from "../src/state";
+import { closeGameModal, openGameModal, setPriceMeta, setPrices } from "../src/state";
 
 const game = {
   game_name: "Sample Adventure",
@@ -98,5 +93,69 @@ describe("modal component", () => {
     const pricingFallback = document.querySelector(".modal-pricing__empty");
 
     expect(pricingFallback?.textContent).toContain("Pricing data isn't available");
+  });
+
+  it("filters out unsafe URLs with javascript: protocol", () => {
+    const gameWithUnsafeLinks = {
+      ...game,
+      external_links: {
+        wiki: "javascript:alert('xss')",
+        store: "https://example.com/store",
+      },
+    };
+    openGameModal(gameWithUnsafeLinks as any);
+    const chips = document.querySelectorAll<HTMLElement>(".modal-link-chip");
+
+    // Only the https link should be rendered
+    expect(chips.length).toBe(1);
+    expect(chips[0].getAttribute("href")).toBe("https://example.com/store");
+  });
+
+  it("filters out unsafe URLs with data: protocol", () => {
+    const gameWithUnsafeLinks = {
+      ...game,
+      external_links: {
+        wiki: "data:text/html,<script>alert('xss')</script>",
+        store: "http://example.com/store",
+      },
+    };
+    openGameModal(gameWithUnsafeLinks as any);
+    const chips = document.querySelectorAll<HTMLElement>(".modal-link-chip");
+
+    // Only the http link should be rendered
+    expect(chips.length).toBe(1);
+    expect(chips[0].getAttribute("href")).toBe("http://example.com/store");
+  });
+
+  it("allows both http: and https: protocols", () => {
+    const gameWithMixedLinks = {
+      ...game,
+      external_links: {
+        wiki: "http://example.com/wiki",
+        store: "https://example.com/store",
+      },
+    };
+    openGameModal(gameWithMixedLinks as any);
+    const chips = document.querySelectorAll<HTMLElement>(".modal-link-chip");
+
+    expect(chips.length).toBe(2);
+    expect(chips[0].getAttribute("href")).toBe("http://example.com/wiki");
+    expect(chips[1].getAttribute("href")).toBe("https://example.com/store");
+  });
+
+  it("filters out invalid URLs", () => {
+    const gameWithInvalidLinks = {
+      ...game,
+      external_links: {
+        wiki: "not-a-valid-url",
+        store: "https://example.com/store",
+      },
+    };
+    openGameModal(gameWithInvalidLinks as any);
+    const chips = document.querySelectorAll<HTMLElement>(".modal-link-chip");
+
+    // Only the valid https link should be rendered
+    expect(chips.length).toBe(1);
+    expect(chips[0].getAttribute("href")).toBe("https://example.com/store");
   });
 });
