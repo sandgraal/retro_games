@@ -99,4 +99,78 @@ describe("modal component", () => {
 
     expect(pricingFallback?.textContent).toContain("Pricing data isn't available");
   });
+
+  describe("URL sanitization", () => {
+    it("sanitizes external link URLs and filters out invalid ones", () => {
+      const gameWithDangerousLinks = {
+        ...game,
+        external_links: {
+          wiki: "https://example.com/wiki",
+          store: "javascript:alert('xss')",
+          community: "data:text/html,<script>alert('xss')</script>",
+        },
+      };
+
+      openGameModal(gameWithDangerousLinks as any);
+      const chips = document.querySelectorAll<HTMLElement>(".modal-link-chip");
+
+      // Only the safe URL should be rendered
+      expect(chips.length).toBe(1);
+      expect(chips[0].getAttribute("href")).toBe("https://example.com/wiki");
+    });
+
+    it("sanitizes pricing offer URLs", () => {
+      const gameWithPricing = {
+        ...game,
+        pricing: {
+          currency: "USD",
+          offers: {
+            "US": [
+              {
+                amountCents: 2999,
+                currency: "USD",
+                label: "Safe Offer",
+                url: "https://example.com/buy",
+              },
+              {
+                amountCents: 1999,
+                currency: "USD",
+                label: "Dangerous Offer",
+                url: "javascript:alert('xss')",
+              },
+            ],
+          },
+        },
+      };
+
+      setPrices({ [game.key]: gameWithPricing.pricing });
+      setPriceMeta({ source: "live" });
+      openGameModal(gameWithPricing as any);
+
+      const offerLinks = document.querySelectorAll<HTMLAnchorElement>(
+        ".modal-offers__cta"
+      );
+
+      // Only the safe offer should have a link
+      expect(offerLinks.length).toBe(1);
+      expect(offerLinks[0].getAttribute("href")).toBe("https://example.com/buy");
+    });
+
+    it("allows relative URLs in external links", () => {
+      const gameWithRelativeLinks = {
+        ...game,
+        external_links: {
+          wiki: "/wiki/game",
+          store: "../store/game",
+        },
+      };
+
+      openGameModal(gameWithRelativeLinks as any);
+      const chips = document.querySelectorAll<HTMLElement>(".modal-link-chip");
+
+      expect(chips.length).toBe(2);
+      expect(chips[0].getAttribute("href")).toBe("/wiki/game");
+      expect(chips[1].getAttribute("href")).toBe("../store/game");
+    });
+  });
 });
