@@ -645,8 +645,13 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         return;
       }
 
-      if (
-        req.method === "POST" &&
+        // Extract suggestionId using regex for robustness
+        const match = url.pathname.match(/^\/api\/v1\/moderation\/suggestions\/([^/]+)\/decision$/);
+        if (!match) {
+          sendJson(res, 400, { error: "Invalid suggestion decision URL" });
+          return;
+        }
+        const suggestionId = match[1];
         url.pathname.startsWith("/api/v1/moderation/suggestions/") &&
         url.pathname.endsWith("/decision")
       ) {
