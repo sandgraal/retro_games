@@ -25,6 +25,7 @@ import {
 import { effect } from "../core/signals";
 import { buildGuideIndex, type GuideMetadata } from "../data/guides";
 import { formatCurrency, formatRelativeDate, formatAbsoluteDate } from "../utils/format";
+import { submitEditSuggestion } from "../data/suggestions";
 
 // Platform name mapping for guide matching
 const PLATFORM_TO_GUIDE: Record<string, string> = {
@@ -361,6 +362,7 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
 
       ${externalLinks}
       ${metadataPanel}
+      ${buildSuggestEditSection(game)}
     `;
 
     // Setup notes input with auto-save indicator
@@ -378,6 +380,9 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
         setGameNotes(game.key, notesInput.value);
       });
     }
+
+    // Setup suggest edit form
+    setupSuggestEditForm(detailsEl as HTMLElement, game);
   }
 
   // Update guides section
@@ -670,6 +675,134 @@ function buildExtendedMetadata(game: GameWithKey): string {
       </div>
     </details>
   `;
+}
+
+/**
+ * Build the "Suggest Edit" section for community contributions
+ */
+function buildSuggestEditSection(game: GameWithKey): string {
+  return `
+    <details class="modal-suggest-edit" aria-labelledby="suggestEditSummary">
+      <summary class="modal-suggest-edit__summary" id="suggestEditSummary">
+        <span class="modal-suggest-edit__icon">✏️</span>
+        Suggest an edit
+      </summary>
+      <div class="modal-suggest-edit__body">
+        <p class="modal-suggest-edit__description">
+          Help improve our catalog! Your suggestions will be reviewed by moderators.
+        </p>
+        <form class="modal-suggest-edit__form" id="suggestEditForm" data-game-key="${escapeHtml(game.key)}">
+          <div class="form-row">
+            <label for="suggestGenre">Genre</label>
+            <input type="text" id="suggestGenre" name="genre" value="${escapeHtml(game.genre || "")}" placeholder="e.g., Action RPG" />
+          </div>
+          <div class="form-row">
+            <label for="suggestYear">Release Year</label>
+            <input type="number" id="suggestYear" name="release_year" value="${game.release_year || ""}" min="1970" max="2030" />
+          </div>
+          <div class="form-row">
+            <label for="suggestRegion">Region</label>
+            <input type="text" id="suggestRegion" name="region" value="${escapeHtml(game.region || "")}" placeholder="e.g., NTSC-U, PAL" />
+          </div>
+          <div class="form-row">
+            <label for="suggestDeveloper">Developer</label>
+            <input type="text" id="suggestDeveloper" name="developer" value="${escapeHtml(game.developer || "")}" placeholder="e.g., Capcom" />
+          </div>
+          <div class="form-row">
+            <label for="suggestPublisher">Publisher</label>
+            <input type="text" id="suggestPublisher" name="publisher" value="${escapeHtml(game.publisher || "")}" placeholder="e.g., Nintendo" />
+          </div>
+          <div class="form-row">
+            <label for="suggestDescription">Description</label>
+            <textarea id="suggestDescription" name="description" rows="3" placeholder="Brief game description...">${escapeHtml(game.description || "")}</textarea>
+          </div>
+          <div class="form-row">
+            <label for="suggestNotes">Your Notes (optional)</label>
+            <textarea id="suggestNotes" name="notes" rows="2" placeholder="Why are you suggesting this change?"></textarea>
+          </div>
+          <div class="form-row form-actions">
+            <button type="submit" class="btn btn-primary" id="submitSuggestionBtn">
+              Submit Suggestion
+            </button>
+            <span class="suggest-status" id="suggestStatus" role="status"></span>
+          </div>
+        </form>
+      </div>
+    </details>
+  `;
+}
+
+/**
+ * Setup the suggest edit form handlers
+ */
+function setupSuggestEditForm(container: HTMLElement, game: GameWithKey): void {
+  const form = container.querySelector("#suggestEditForm") as HTMLFormElement | null;
+  if (!form) return;
+
+  const statusEl = container.querySelector("#suggestStatus") as HTMLElement | null;
+  const submitBtn = container.querySelector(
+    "#submitSuggestionBtn"
+  ) as HTMLButtonElement | null;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!submitBtn || !statusEl) return;
+
+    // Collect changed fields
+    const formData = new FormData(form);
+    const delta: Record<string, unknown> = {};
+    const originalValues: Record<string, unknown> = {
+      genre: game.genre || "",
+      release_year: game.release_year || "",
+      region: game.region || "",
+      developer: game.developer || "",
+      publisher: game.publisher || "",
+      description: game.description || "",
+    };
+
+    for (const [key, value] of formData.entries()) {
+      if (key === "notes") continue; // Notes are separate
+      const strValue = String(value).trim();
+      const originalValue = String(originalValues[key] || "").trim();
+      if (strValue && strValue !== originalValue) {
+        delta[key] =
+          key === "release_year" ? parseInt(strValue, 10) || strValue : strValue;
+      }
+    }
+
+    if (Object.keys(delta).length === 0) {
+      statusEl.textContent = "No changes detected";
+      statusEl.className = "suggest-status suggest-status--warning";
+      return;
+    }
+
+    const notes = formData.get("notes") as string | null;
+
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Submitting...";
+    statusEl.textContent = "";
+    statusEl.className = "suggest-status";
+
+    try {
+      await submitEditSuggestion(game.key, delta, notes || undefined);
+      statusEl.textContent = "✓ Suggestion submitted! Thanks for contributing.";
+      statusEl.className = "suggest-status suggest-status--success";
+      submitBtn.textContent = "Submitted!";
+
+      // Reset form after success
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Suggestion";
+      }, 3000);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to submit";
+      statusEl.textContent = `✗ ${message}`;
+      statusEl.className = "suggest-status suggest-status--error";
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit Suggestion";
+    }
+  });
 }
 
 /**

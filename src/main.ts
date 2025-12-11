@@ -6,7 +6,13 @@
  */
 
 import { loadGames, loadPrices } from "./data";
-import { getAuthSession } from "./data/auth";
+import {
+  getAuthSession,
+  signInWithGitHub,
+  signOut,
+  onAuthStateChange,
+  type AuthSession,
+} from "./data/auth";
 import {
   setGames,
   setPrices,
@@ -124,8 +130,9 @@ async function init(): Promise<void> {
     const shouldShowModeration = ["moderator", "admin"].includes(authSession.role);
     if (shouldShowModeration) {
       cleanupFunctions.push(mountModerationPanel("#moderationPanel"));
-      const moderationEl = document.getElementById("moderationPanel");
-      if (moderationEl) moderationEl.hidden = false;
+      // Show moderation button in header
+      const moderationBtn = document.getElementById("moderationBtn");
+      if (moderationBtn) moderationBtn.hidden = false;
     }
   } catch (error) {
     console.error("❌ Initialization failed:", error);
@@ -139,6 +146,13 @@ async function init(): Promise<void> {
 
   // Setup header actions
   setupHeaderActions();
+
+  // Setup auth state listener
+  setupAuthListener();
+
+  // Initialize auth UI
+  const initialSession = await getAuthSession();
+  updateAuthUI(initialSession);
 
   // Setup dashboard quick actions
   setupDashboardActions();
@@ -200,35 +214,43 @@ function setupMobileNav(): void {
 /**
  * Track current view state
  */
-let currentAppView: "collection" | "guides" = "collection";
+let currentAppView: "collection" | "guides" | "moderation" = "collection";
 
 /**
  * Switch between main views
  */
-function switchToView(view: "collection" | "guides"): void {
+function switchToView(view: "collection" | "guides" | "moderation"): void {
   const heroDashboard = document.querySelector<HTMLElement>(".hero-dashboard");
   const collectionSection = document.querySelector<HTMLElement>(".collection-container");
   const guidesContainer = document.getElementById("guidesContainer");
+  const moderationPanel = document.getElementById("moderationPanel");
+
+  // Hide all views first
+  if (heroDashboard) heroDashboard.hidden = true;
+  if (collectionSection) collectionSection.hidden = true;
+  if (guidesContainer) {
+    guidesContainer.hidden = true;
+    hideGuidesView();
+  }
+  if (moderationPanel) moderationPanel.hidden = true;
 
   if (view === "guides") {
-    // Hide collection view
-    if (heroDashboard) heroDashboard.hidden = true;
-    if (collectionSection) collectionSection.hidden = true;
     // Show guides
     if (guidesContainer) {
       guidesContainer.hidden = false;
       showGuidesView();
     }
     currentAppView = "guides";
+  } else if (view === "moderation") {
+    // Show moderation panel
+    if (moderationPanel) {
+      moderationPanel.hidden = false;
+    }
+    currentAppView = "moderation";
   } else {
     // Show collection view
     if (heroDashboard) heroDashboard.hidden = false;
     if (collectionSection) collectionSection.hidden = false;
-    // Hide guides
-    if (guidesContainer) {
-      guidesContainer.hidden = true;
-      hideGuidesView();
-    }
     currentAppView = "collection";
   }
 
@@ -237,8 +259,12 @@ function switchToView(view: "collection" | "guides"): void {
 
   // Update header button state
   const guidesBtn = document.getElementById("guidesBtn");
+  const moderationBtn = document.getElementById("moderationBtn");
   if (guidesBtn) {
     guidesBtn.classList.toggle("active", view === "guides");
+  }
+  if (moderationBtn) {
+    moderationBtn.classList.toggle("active", view === "moderation");
   }
 }
 
@@ -268,9 +294,11 @@ function handleGuidesToggle(): void {
 function setupHeaderActions(): void {
   const homeBtn = document.getElementById("homeBtn");
   const guidesBtn = document.getElementById("guidesBtn");
+  const moderationBtn = document.getElementById("moderationBtn");
   const exportBtn = document.getElementById("exportBtn");
   const shareBtn = document.getElementById("shareBtn");
   const settingsBtn = document.getElementById("settingsBtn");
+  const authBtn = document.getElementById("authBtn");
 
   homeBtn?.addEventListener("click", () => {
     switchToView("collection");
@@ -278,9 +306,98 @@ function setupHeaderActions(): void {
     window.history.pushState({}, "", window.location.pathname);
   });
   guidesBtn?.addEventListener("click", handleGuidesToggle);
+  moderationBtn?.addEventListener("click", () => {
+    if (currentAppView === "moderation") {
+      switchToView("collection");
+      window.history.pushState({}, "", window.location.pathname);
+    } else {
+      switchToView("moderation");
+      window.history.pushState({}, "", "?view=moderation");
+    }
+  });
   exportBtn?.addEventListener("click", handleExport);
   shareBtn?.addEventListener("click", handleShare);
   settingsBtn?.addEventListener("click", handleSettings);
+  authBtn?.addEventListener("click", handleAuth);
+}
+
+/**
+ * Handle auth button click - sign in or show user menu
+ */
+async function handleAuth(): Promise<void> {
+  const session = await getAuthSession();
+  const authBtn = document.getElementById("authBtn");
+
+  if (session.isAuthenticated) {
+    // Show sign out confirmation
+    const confirmSignOut = window.confirm(
+      `Signed in as ${session.email || "User"}\n\nSign out?`
+    );
+    if (confirmSignOut) {
+      await signOut();
+      updateAuthUI(await getAuthSession());
+      showStatus("Signed out successfully", "success");
+    }
+  } else {
+    // Sign in with GitHub
+    try {
+      if (authBtn) {
+        authBtn.textContent = "⏳";
+        authBtn.setAttribute("disabled", "");
+      }
+      await signInWithGitHub();
+      // Will redirect to GitHub, then back
+    } catch (error) {
+      showStatus(
+        `Sign in failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        "error"
+      );
+      if (authBtn) {
+        authBtn.innerHTML = '<span aria-hidden="true">👤</span>';
+        authBtn.removeAttribute("disabled");
+      }
+    }
+  }
+}
+
+/**
+ * Update auth button UI based on session
+ */
+function updateAuthUI(session: AuthSession): void {
+  const authBtn = document.getElementById("authBtn");
+  if (!authBtn) return;
+
+  if (session.isAuthenticated) {
+    authBtn.innerHTML = '<span aria-hidden="true">✓</span>';
+    authBtn.title = `Signed in as ${session.email || "User"} - Click to sign out`;
+    authBtn.classList.add("authenticated");
+  } else {
+    authBtn.innerHTML = '<span aria-hidden="true">👤</span>';
+    authBtn.title = "Sign in with GitHub";
+    authBtn.classList.remove("authenticated");
+  }
+
+  // Show/hide moderation button based on role
+  const moderationBtn = document.getElementById("moderationBtn");
+  if (moderationBtn) {
+    moderationBtn.hidden = !["moderator", "admin"].includes(session.role);
+  }
+}
+
+/**
+ * Setup auth state listener
+ */
+function setupAuthListener(): void {
+  onAuthStateChange((session) => {
+    updateAuthUI(session);
+    // Refresh moderation panel if role changed
+    if (["moderator", "admin"].includes(session.role)) {
+      const moderationPanel = document.getElementById("moderationPanel");
+      if (moderationPanel && !moderationPanel.hidden) {
+        // Panel is already visible, no action needed
+      }
+    }
+  });
 }
 
 /**
@@ -476,6 +593,16 @@ function checkUrlGuidesView(): void {
   const params = new URLSearchParams(window.location.search);
   const viewParam = params.get("view");
   const guideParam = params.get("guide");
+
+  if (viewParam === "moderation") {
+    switchToView("moderation");
+    // Update mobile nav active state
+    const navItems = document.querySelectorAll<HTMLElement>(".mobile-nav-item[data-nav]");
+    navItems.forEach((item) => {
+      item.classList.toggle("active", item.dataset.nav === "moderation");
+    });
+    return;
+  }
 
   if (viewParam === "guides" || guideParam) {
     switchToView("guides");

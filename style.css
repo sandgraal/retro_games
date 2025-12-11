@@ -141,6 +141,39 @@
   transform: scale(1.05);
 }
 
+.header-action-btn.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.header-action-btn--mod {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(0, 212, 255, 0.2));
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.header-action-btn--mod:hover,
+.header-action-btn--mod.active {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+/* Auth button styles */
+.header-action-btn--auth {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(59, 130, 246, 0.2));
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+.header-action-btn--auth:hover {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(59, 130, 246, 0.3));
+}
+
+.header-action-btn--auth.authenticated {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(59, 130, 246, 0.4));
+  border-color: rgba(34, 197, 94, 0.8);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+}
+
 /* Main Content */
 .app-main {
   flex: 1;

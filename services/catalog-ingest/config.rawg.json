@@ -1,0 +1,46 @@
+{
+  "scheduleMinutes": 1440,
+  "fuzzyThreshold": 0.82,
+  "sources": [
+    {
+      "name": "rawg",
+      "type": "rawg",
+      "baseUrl": "https://api.rawg.io/api",
+      "apiKey": "${RAWG_API_KEY}",
+      "platforms": [
+        { "id": 27, "name": "PlayStation", "slug": "playstation" },
+        { "id": 15, "name": "PlayStation 2", "slug": "playstation2" },
+        { "id": 105, "name": "PlayStation 3", "slug": "playstation3" },
+        { "id": 18, "name": "PlayStation 4", "slug": "playstation4" },
+        { "id": 187, "name": "PlayStation 5", "slug": "playstation5" },
+        { "id": 83, "name": "Nintendo 64", "slug": "nintendo-64" },
+        { "id": 7, "name": "Nintendo Switch", "slug": "nintendo-switch" },
+        { "id": 8, "name": "Nintendo 3DS", "slug": "nintendo-3ds" },
+        { "id": 9, "name": "Nintendo DS", "slug": "nintendo-ds" },
+        { "id": 10, "name": "Wii U", "slug": "wii-u" },
+        { "id": 11, "name": "Wii", "slug": "wii" },
+        { "id": 24, "name": "Game Boy Advance", "slug": "game-boy-advance" },
+        { "id": 43, "name": "Game Boy Color", "slug": "game-boy-color" },
+        { "id": 26, "name": "Game Boy", "slug": "game-boy" },
+        { "id": 79, "name": "SNES", "slug": "snes" },
+        { "id": 49, "name": "NES", "slug": "nes" },
+        { "id": 167, "name": "Genesis", "slug": "genesis" },
+        { "id": 107, "name": "Dreamcast", "slug": "dreamcast" },
+        { "id": 119, "name": "Sega Saturn", "slug": "sega-saturn" },
+        { "id": 17, "name": "PSP", "slug": "psp" },
+        { "id": 19, "name": "PS Vita", "slug": "ps-vita" },
+        { "id": 4, "name": "PC", "slug": "pc" },
+        { "id": 1, "name": "Xbox One", "slug": "xbox-one" },
+        { "id": 186, "name": "Xbox Series X", "slug": "xbox-series-x" },
+        { "id": 14, "name": "Xbox 360", "slug": "xbox360" },
+        { "id": 80, "name": "Xbox", "slug": "xbox" }
+      ],
+      "pageSize": 40,
+      "maxPages": 250,
+      "rateLimit": {
+        "requestsPerSecond": 5,
+        "retryAfterMs": 1000
+      }
+    }
+  ]
+}

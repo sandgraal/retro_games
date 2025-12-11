@@ -127,3 +127,70 @@ export async function moderateSuggestion(
  * Alias for fetchPendingSuggestions - used by moderation UI
  */
 export const fetchSuggestionsForModeration = fetchPendingSuggestions;
+
+/**
+ * Submit an edit suggestion for an existing game
+ * Used by the "Suggest Edit" UI in the game modal
+ */
+export async function submitEditSuggestion(
+  gameKey: string,
+  delta: Record<string, unknown>,
+  notes?: string
+): Promise<SuggestionRecord> {
+  const session = await getAuthSession();
+  const response = await fetch(
+    `/api/v1/games/${encodeURIComponent(gameKey)}/suggestions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...buildAuthHeaders(session),
+      },
+      body: JSON.stringify({ delta, notes }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  return result.suggestion;
+}
+
+/**
+ * Submit a new game suggestion
+ * Used when suggesting a game that doesn't exist in the catalog
+ */
+export async function submitNewGameSuggestion(
+  gameData: {
+    game_name: string;
+    platform: string;
+    genre?: string;
+    release_year?: number | string;
+    region?: string;
+    developer?: string;
+    publisher?: string;
+    description?: string;
+  },
+  notes?: string
+): Promise<SuggestionRecord> {
+  const session = await getAuthSession();
+  const response = await fetch("/api/v1/games/new", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(session),
+    },
+    body: JSON.stringify({ delta: gameData, notes }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  return result.suggestion;
+}

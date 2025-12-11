@@ -5,6 +5,29 @@ import path from "path";
 import { fileURLToPath } from "url";
 import * as jose from "jose";
 
+// Supabase client for database operations
+import {
+  initSupabase,
+  insertSubmission,
+  fetchSubmissions,
+  updateSubmissionDecision,
+  insertAuditLog,
+  startIngestionRun,
+  completeIngestionRun,
+  syncGamesToSupabase,
+} from "./supabase-client.js";
+
+// Source adapters
+let rawgAdapter = null;
+try {
+  rawgAdapter = await import("./sources/rawg.js");
+} catch {
+  // RAWG adapter not available - will use generic fetch
+}
+
+// Initialize Supabase connection
+const { enabled: supabaseEnabled, client: supabaseClient } = initSupabase();
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -445,9 +468,17 @@ function sanitizeHeaders(headers) {
 }
 
 async function fetchSourceRecords(source) {
+  // If records are provided inline (for testing), use them directly
   if (source.records) {
     return source.records;
   }
+
+  // Use source-specific adapters
+  if (source.type === "rawg" && rawgAdapter) {
+    return rawgAdapter.fetchRawgSource(source);
+  }
+
+  // Generic URL-based fetch
   if (!source.url) return [];
   const safeHeaders = sanitizeHeaders(source.headers);
   const response = await fetch(source.url, { headers: safeHeaders });
@@ -700,6 +731,18 @@ export async function runIngestion(configOverrides = {}) {
   ingestionLog.push({ ...metrics, completedAt: new Date().toISOString() });
   await fs.writeFile(ingestionLogPath, JSON.stringify(ingestionLog, null, 2));
 
+  // Sync to Supabase if enabled
+  if (supabaseEnabled && supabaseClient && config.syncToSupabase !== false) {
+    console.log("[supabase] Syncing catalog to Supabase...");
+    const gamesToSync = Object.values(records).map((r) => r.record);
+    const { synced, errors } = await syncGamesToSupabase(supabaseClient, gamesToSync);
+    metrics.supabaseSynced = synced;
+    if (errors.length > 0) {
+      console.warn(`[supabase] ${errors.length} sync errors:`, errors[0]?.message);
+    }
+    console.log(`[supabase] Synced ${synced} games to Supabase`);
+  }
+
   return { records, metrics, snapshotPath };
 }
 
@@ -746,6 +789,15 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         };
         store.suggestions.push(suggestion);
         await writeSuggestions(store);
+
+        // Also write to Supabase if enabled
+        if (supabaseEnabled && supabaseClient) {
+          const { error: sbError } = await insertSubmission(supabaseClient, suggestion);
+          if (sbError) {
+            console.warn("[supabase] Failed to sync submission:", sbError.message);
+          }
+        }
+
         sendJson(res, 201, { suggestion });
         return;
       }
@@ -771,6 +823,15 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
         };
         store.suggestions.push(suggestion);
         await writeSuggestions(store);
+
+        // Also write to Supabase if enabled
+        if (supabaseEnabled && supabaseClient) {
+          const { error: sbError } = await insertSubmission(supabaseClient, suggestion);
+          if (sbError) {
+            console.warn("[supabase] Failed to sync submission:", sbError.message);
+          }
+        }
+
         sendJson(res, 201, { suggestion });
         return;
       }
@@ -845,6 +906,34 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
           timestamp: target.decidedAt,
         };
         await appendAudit(auditEntry);
+
+        // Sync decision to Supabase if enabled
+        if (supabaseEnabled && supabaseClient) {
+          const { error: decisionError } = await updateSubmissionDecision(
+            supabaseClient,
+            suggestionId,
+            body.status === "approved" ? "approved" : "rejected",
+            auth.sessionId,
+            body.notes || null
+          );
+          if (decisionError) {
+            console.warn("[supabase] Failed to sync decision:", decisionError.message);
+          }
+
+          // Also log to audit table
+          const { error: auditError } = await insertAuditLog(supabaseClient, {
+            tableName: "catalog_submissions",
+            recordId: suggestionId,
+            action: body.status === "approved" ? "approve" : "reject",
+            newData: { status: body.status, notes: body.notes },
+            userId: auth.sessionId,
+            reason: body.notes,
+          });
+          if (auditError) {
+            console.warn("[supabase] Failed to log audit:", auditError.message);
+          }
+        }
+
         sendJson(res, 200, { suggestion: target, audit: auditEntry });
         return;
       }
