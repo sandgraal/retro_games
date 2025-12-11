@@ -175,7 +175,7 @@ describe("modal component", () => {
     const secondOffer = offerRows[1];
     expect(secondOffer.querySelector(".modal-offers__region")?.textContent).toBe("Europe");
     expect(secondOffer.querySelector(".modal-offers__label")?.textContent).toContain("Used");
-    // formatCurrency always formats as USD regardless of currency field
+    // formatCurrency always outputs USD format (formatters hardcoded to USD currency)
     expect(secondOffer.querySelector(".modal-offers__price")?.textContent).toContain("$30");
   });
 
