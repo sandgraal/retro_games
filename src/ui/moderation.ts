@@ -175,13 +175,14 @@ export function mountModerationPanel(selector: string): () => void {
       element.hidden = false;
       statusEl.textContent = "Loading suggestions...";
       try {
-        const suggestions = await fetchPendingSuggestions();
+        const suggestions = await fetchSuggestionsForModeration();
         list.innerHTML = "";
         if (!suggestions.length) {
           list.append(el.div({ class: "moderation-empty" }, "No pending submissions"));
           statusEl.textContent = "All caught up.";
           return;
         }
+
         suggestions.forEach((suggestion: SuggestionRecord) => {
           const card = renderSuggestionCard(suggestion, async (status, notes) => {
             statusEl.textContent = "Submitting decision...";
@@ -190,6 +191,7 @@ export function mountModerationPanel(selector: string): () => void {
               action: status === "approved" ? "approve" : "reject",
               reason: notes,
             };
+
             try {
               await moderateSuggestion(suggestion.id, status, notes);
               statusEl.textContent = "";
@@ -201,6 +203,7 @@ export function mountModerationPanel(selector: string): () => void {
           });
           list.append(card);
         });
+
         statusEl.textContent = "";
       } catch (error) {
         statusEl.textContent =

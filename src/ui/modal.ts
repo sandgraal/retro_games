@@ -550,8 +550,8 @@ function buildExternalLinks(game: GameWithKey): string {
   const chips = links
     .map((link) => ({ ...link, sanitizedUrl: sanitizeUrl(link.url) }))
     .filter((link) => link.sanitizedUrl !== "") // Filter out unsafe URLs
-    .map(
-      (link) => `
+    .map((link) => {
+      return `
         <a
           class="modal-link-chip"
           href="${link.sanitizedUrl}"
