@@ -1,8 +1,9 @@
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import * as jose from "jose";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +17,8 @@ function resolvePaths() {
     mergeDecisionsPath: path.join(dataDir, "merge-decisions.json"),
     catalogStorePath: path.join(dataDir, "catalog-store.json"),
     ingestionLogPath: path.join(dataDir, "ingestion-log.json"),
+    suggestionsPath: path.join(dataDir, "suggestions.json"),
+    auditLogPath: path.join(dataDir, "audit-log.json"),
     snapshotsDir: path.join(dataDir, "snapshots"),
   };
 }
@@ -106,6 +109,8 @@ async function ensureFiles() {
     mergeDecisionsPath,
     catalogStorePath,
     ingestionLogPath,
+    suggestionsPath,
+    auditLogPath,
   } = resolvePaths();
   await fs.mkdir(dataDir, { recursive: true });
   await fs.mkdir(snapshotsDir, { recursive: true });
@@ -113,6 +118,8 @@ async function ensureFiles() {
     [mergeDecisionsPath, {}],
     [catalogStorePath, { records: {}, lastRun: null }],
     [ingestionLogPath, []],
+    [suggestionsPath, { suggestions: [] }],
+    [auditLogPath, []],
   ]) {
     try {
       await fs.access(filePath);
@@ -129,6 +136,141 @@ async function readJson(filePath, fallback) {
   } catch (error) {
     return fallback;
   }
+}
+
+async function readSuggestions() {
+  const { suggestionsPath } = resolvePaths();
+  return readJson(suggestionsPath, { suggestions: [] });
+}
+
+async function writeSuggestions(payload) {
+  const { suggestionsPath } = resolvePaths();
+  await fs.writeFile(suggestionsPath, JSON.stringify(payload, null, 2));
+}
+
+async function appendAudit(entry) {
+  const { auditLogPath } = resolvePaths();
+  const existing = await readJson(auditLogPath, []);
+  existing.push(entry);
+  await fs.writeFile(auditLogPath, JSON.stringify(existing, null, 2));
+}
+
+function normalizeRole(rawRole) {
+  const allowed = ["anonymous", "contributor", "moderator", "admin"];
+  const role = typeof rawRole === "string" ? rawRole.toLowerCase() : "anonymous";
+  return allowed.includes(role) ? role : "anonymous";
+}
+
+/**
+ * Validate and extract authentication info from request
+ * Validates JWT from Authorization header and extracts role from token claims
+ * @param {http.IncomingMessage} req - HTTP request object
+ * @returns {Promise<{role: string, email: string|null, sessionId: string}>}
+ */
+async function resolveAuth(req) {
+  // Extract JWT from Authorization header (Node.js lowercases header names)
+  const authHeader = req.headers.authorization;
+
+  // If no authorization header, return anonymous
+  if (!authHeader || typeof authHeader !== "string") {
+    return {
+      role: "anonymous",
+      email: null,
+      sessionId: `sess_${randomUUID()}`,
+    };
+  }
+
+  // Extract Bearer token
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0] !== "Bearer") {
+    return {
+      role: "anonymous",
+      email: null,
+      sessionId: `sess_${randomUUID()}`,
+    };
+  }
+
+  const token = parts[1];
+
+  try {
+    // Get JWT secret from environment
+    const jwtSecret = process.env.SUPABASE_JWT_SECRET;
+    if (!jwtSecret) {
+      console.warn("SUPABASE_JWT_SECRET not configured - authentication disabled");
+      return {
+        role: "anonymous",
+        email: null,
+        sessionId: `sess_${randomUUID()}`,
+      };
+    }
+
+    // Verify JWT signature with additional security checks
+    const secret = new TextEncoder().encode(jwtSecret);
+    const { payload } = await jose.jwtVerify(token, secret, {
+      algorithms: ["HS256"],
+      // Validate issuer matches Supabase URL if configured
+      ...(process.env.SUPABASE_URL && { issuer: process.env.SUPABASE_URL }),
+    });
+
+    // Extract role from token claims - require explicit role assignment
+    const role = normalizeRole(
+      payload.app_metadata?.role || payload.user_metadata?.role || "anonymous"
+    );
+
+    // Extract email from token
+    const email = payload.email || null;
+
+    // Use sub (subject) as session ID if available
+    const sessionId = payload.sub || `sess_${randomUUID()}`;
+
+    return {
+      role,
+      email,
+      sessionId,
+    };
+  } catch (error) {
+    // JWT validation failed - return anonymous (don't log sensitive error details)
+    console.warn("Authentication failed - invalid or expired token");
+    return {
+      role: "anonymous",
+      email: null,
+      sessionId: `sess_${randomUUID()}`,
+    };
+  }
+}
+
+async function parseJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    let isDone = false;
+    req.on("data", (chunk) => {
+      if (isDone) return;
+      data += chunk;
+      // Basic guard against huge payloads
+      if (data.length > 1e6) {
+        isDone = true;
+        req.destroy();
+        reject(new Error("Payload too large"));
+      }
+    });
+    req.on("end", () => {
+      if (isDone) return;
+      try {
+        const parsed = data ? JSON.parse(data) : {};
+        resolve(parsed);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
+
+function sendJson(res, status, payload) {
+  res.writeHead(status, {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store",
+  });
+  res.end(JSON.stringify(payload));
 }
 
 function normalizeRecord(raw, sourceName) {
@@ -307,6 +449,66 @@ function buildSnapshot(records) {
   }));
 }
 
+function applyApprovedSuggestions(records, suggestions) {
+  let applied = 0;
+  for (const suggestion of suggestions) {
+    if (suggestion.status !== "approved") continue;
+    const delta = suggestion.delta || suggestion.payload || {};
+    if (
+      suggestion.type === "update" &&
+      suggestion.targetId &&
+      records[suggestion.targetId]
+    ) {
+      const merged = { ...records[suggestion.targetId].record, ...delta };
+      const hash = computeRecordHash(merged);
+      if (hash !== records[suggestion.targetId].hash) {
+        records[suggestion.targetId] = {
+          ...records[suggestion.targetId],
+          record: merged,
+          hash,
+          version: records[suggestion.targetId].version + 1,
+          lastSeen: new Date().toISOString(),
+        };
+        applied += 1;
+      }
+    } else if (suggestion.type === "new") {
+      const key =
+        suggestion.targetId ||
+        buildDeterministicKey({
+          title: delta.title || delta.game_name,
+          platform: delta.platform,
+          platform_slug: delta.platform_slug,
+        });
+      const normalized = normalizeRecord(
+        {
+          title: delta.title || delta.game_name,
+          platform: delta.platform,
+          platform_slug: delta.platform_slug,
+          release_date: delta.release_date || delta.release_year,
+          genres: delta.genres,
+          esrb: delta.esrb || delta.esrb_rating,
+          pegi: delta.pegi,
+          assets: delta.assets,
+          external_ids: delta.external_ids,
+          source: "suggestion",
+        },
+        "community"
+      );
+      const hash = computeRecordHash(normalized);
+      if (!records[key]) {
+        records[key] = {
+          record: normalized,
+          hash,
+          version: 1,
+          lastSeen: new Date().toISOString(),
+        };
+        applied += 1;
+      }
+    }
+  }
+  return applied;
+}
+
 export async function runIngestion(configOverrides = {}) {
   await ensureFiles();
   const config = { ...DEFAULT_CONFIG, ...configOverrides };
@@ -321,6 +523,7 @@ export async function runIngestion(configOverrides = {}) {
     merged: 0,
     upserted: 0,
     unchanged: 0,
+    suggestionsApplied: 0,
     snapshotPath: null,
   };
 
@@ -393,6 +596,9 @@ export async function runIngestion(configOverrides = {}) {
     }
   }
 
+  const { suggestions } = await readSuggestions();
+  metrics.suggestionsApplied = applyApprovedSuggestions(records, suggestions);
+
   const snapshot = buildSnapshot(records);
   const snapshotPath = path.join(
     snapshotsDir,
@@ -416,13 +622,157 @@ export async function runIngestion(configOverrides = {}) {
 
 export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
   const server = http.createServer(async (req, res) => {
-    if (!req.url || !req.url.startsWith("/api/v1/catalog")) {
-      res.writeHead(404);
-      res.end("Not found");
-      return;
-    }
     try {
       await ensureFiles();
+      if (!req.url || !req.url.startsWith("/api/v1")) {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
+
+      const url = new URL(req.url, `http://localhost:${port}`);
+      const { catalogStorePath } = resolvePaths();
+
+      if (
+        req.method === "POST" &&
+        /^\/api\/v1\/games\/[^/]+\/suggestions$/.test(url.pathname)
+      ) {
+        const match = url.pathname.match(/^\/api\/v1\/games\/([^/]+)\/suggestions$/);
+        const targetId = match ? decodeURIComponent(match[1]) : null;
+        if (!targetId) {
+          sendJson(res, 400, { error: "Invalid or missing targetId in URL" });
+          return;
+        }
+        const auth = await resolveAuth(req);
+        const body = await parseJsonBody(req);
+        const delta = "delta" in body ? body.delta : body;
+        if (!delta || typeof delta !== "object") {
+          sendJson(res, 400, { error: "Missing suggestion payload" });
+          return;
+        }
+        const store = await readSuggestions();
+        const suggestion = {
+          id: randomUUID(),
+          type: "update",
+          targetId,
+          delta,
+          status: "pending",
+          author: auth,
+          submittedAt: new Date().toISOString(),
+          notes: body.notes || null,
+        };
+        store.suggestions.push(suggestion);
+        await writeSuggestions(store);
+        sendJson(res, 201, { suggestion });
+        return;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/v1/games/new") {
+        const auth = await resolveAuth(req);
+        const body = await parseJsonBody(req);
+        const delta = body.delta || body;
+        if (!delta?.title && !delta?.game_name) {
+          sendJson(res, 400, { error: "New game submissions require a title" });
+          return;
+        }
+        const store = await readSuggestions();
+        const suggestion = {
+          id: randomUUID(),
+          type: "new",
+          targetId: null,
+          delta,
+          status: "pending",
+          author: auth,
+          submittedAt: new Date().toISOString(),
+          notes: body.notes || null,
+        };
+        store.suggestions.push(suggestion);
+        await writeSuggestions(store);
+        sendJson(res, 201, { suggestion });
+        return;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/v1/moderation/suggestions") {
+        const auth = await resolveAuth(req);
+        if (!["moderator", "admin"].includes(auth.role)) {
+          sendJson(res, 403, { error: "Moderator access required" });
+          return;
+        }
+
+        // Default to pending suggestions; allow overriding via ?status= query param
+        const statusFilter = url.searchParams?.get("status") || "pending";
+
+        const catalogStore = await readJson(catalogStorePath, { records: {} });
+        const { suggestions } = await readSuggestions();
+
+        const filtered = suggestions.filter((entry) =>
+          statusFilter ? entry.status === statusFilter : true
+        );
+
+        const enriched = filtered.map((entry) => ({
+          ...entry,
+          canonical: entry.targetId
+            ? catalogStore.records[entry.targetId]?.record || null
+            : null,
+        }));
+
+        sendJson(res, 200, { suggestions: enriched });
+        return;
+      }
+
+      if (
+        req.method === "POST" &&
+        url.pathname.startsWith("/api/v1/moderation/suggestions/") &&
+        url.pathname.endsWith("/decision")
+      ) {
+        const auth = await resolveAuth(req);
+        if (!["moderator", "admin"].includes(auth.role)) {
+          sendJson(res, 403, { error: "Moderator access required" });
+          return;
+        }
+
+        // Extract suggestionId using regex for robustness
+        const match = url.pathname.match(
+          /^\/api\/v1\/moderation\/suggestions\/([^/]+)\/decision$/
+        );
+        if (!match) {
+          sendJson(res, 400, { error: "Invalid suggestion decision URL" });
+          return;
+        }
+        const suggestionId = match[1];
+        const body = await parseJsonBody(req);
+        if (!body?.status || !["approved", "rejected"].includes(body.status)) {
+          sendJson(res, 400, { error: "Decision status must be approved or rejected" });
+          return;
+        }
+        const store = await readSuggestions();
+        const target = store.suggestions.find((entry) => entry.id === suggestionId);
+        if (!target) {
+          sendJson(res, 404, { error: "Suggestion not found" });
+          return;
+        }
+        target.status = body.status;
+        target.moderationNotes = body.notes || null;
+        target.decidedAt = new Date().toISOString();
+        await writeSuggestions(store);
+        const auditEntry = {
+          suggestionId,
+          decision: body.status,
+          notes: target.moderationNotes,
+          moderator: auth,
+          timestamp: target.decidedAt,
+        };
+        await appendAudit(auditEntry);
+        sendJson(res, 200, { suggestion: target, audit: auditEntry });
+        return;
+      }
+
+      if (!url.pathname.startsWith("/api/v1/catalog")) {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
+
       const { snapshotsDir } = resolvePaths();
       const snapshots = await fs.readdir(snapshotsDir);
       if (!snapshots.length) {

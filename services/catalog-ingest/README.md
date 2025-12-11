@@ -30,6 +30,8 @@ Copy `config.example.json` to `config.json` and fill in your API URLs/headers. E
 - `data/catalog-store.json` – canonical catalog keyed by deterministic ID with hash/version tracking.
 - `data/merge-decisions.json` – fuzzy merge mapping reused between runs.
 - `data/ingestion-log.json` – per-run metrics.
+- `data/suggestions.json` – queued community submissions with author metadata and status.
+- `data/audit-log.json` – immutable decision log for moderation actions.
 - `data/snapshots/` – immutable release snapshots served by the read API.
 
 The files are auto-created on first run; keep them under version control if you want deterministic snapshots.

@@ -6,6 +6,7 @@
  */
 
 import { loadGames, loadPrices } from "./data";
+import { getAuthSession } from "./data/auth";
 import {
   setGames,
   setPrices,
@@ -27,6 +28,7 @@ import {
   showGuidesView,
   hideGuidesView,
   navigateToGuide,
+  mountModerationPanel,
 } from "./ui";
 import {
   exportCollectionToCSV,
@@ -68,6 +70,9 @@ async function init(): Promise<void> {
     // Load persisted user state (collection, preferences)
     loadPersistedState();
 
+    // Resolve auth session (Supabase or anonymous) early
+    const authSessionPromise = getAuthSession();
+
     // Mount UI components
     cleanupFunctions.push(
       mountDashboard("#dashboardGrid"),
@@ -81,7 +86,11 @@ async function init(): Promise<void> {
     // Load game data
     setLoading(true);
 
-    const [gamesResult, priceData] = await Promise.all([loadGames(), loadPrices()]);
+    const [gamesResult, priceData, authSession] = await Promise.all([
+      loadGames(),
+      loadPrices(),
+      authSessionPromise,
+    ]);
 
     setGames(gamesResult.games);
     setPrices(priceData);
@@ -104,6 +113,15 @@ async function init(): Promise<void> {
 
     // Check for guides view in URL
     checkUrlGuidesView();
+
+    // Moderation UI (hidden for non-moderators by default)
+    const shouldShowModeration =
+      ["moderator", "admin"].includes(authSession.role);
+    if (shouldShowModeration) {
+      cleanupFunctions.push(mountModerationPanel("#moderationPanel"));
+      const moderationEl = document.getElementById("moderationPanel");
+      if (moderationEl) moderationEl.hidden = false;
+    }
   } catch (error) {
     console.error("❌ Initialization failed:", error);
     setError(error instanceof Error ? error.message : "Unknown error");
