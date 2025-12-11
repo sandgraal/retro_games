@@ -29,68 +29,37 @@ let filterCategory: "all" | "console" | "genre" = "all";
 let filterPlatform = "all";
 let searchQuery = "";
 let containerElement: HTMLElement | null = null;
+let scrollTriggerCleanup: (() => void) | null = null;
 
-function hasDismissedWelcomePanel(): boolean {
-  return safeStorage.getItem(WELCOME_PANEL_STORAGE_KEY) === "true";
-}
+function setupScrollTriggers(container: HTMLElement): void {
+  if (scrollTriggerCleanup) {
+    scrollTriggerCleanup();
+  }
 
-function dismissWelcomePanel(): void {
-  safeStorage.setItem(WELCOME_PANEL_STORAGE_KEY, "true");
-}
+  const handleClick = (event: Event): void => {
+    const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+      "[data-scroll-target]"
+    );
+    if (!trigger || !container.contains(trigger)) return;
 
-function renderWelcomePanel(): HTMLElement {
-  const panel = el.div({ class: "guides-welcome" });
-  panel.innerHTML = `
-    <div class="guides-welcome__content">
-      <div class="guides-welcome__copy">
-        <p class="guides-welcome__eyebrow">Start here</p>
-        <h2 class="guides-welcome__title">Welcome to Collector's Guides</h2>
-        <p class="guides-welcome__description">
-          Browse curated reference and collecting guides by platform or genre. Use the filters and search below
-          to jump straight to what you need.
-        </p>
-        <div class="guides-welcome__actions">
-          <a class="guides-welcome__action guides-welcome__action--primary" href="#guidesGrid" data-scroll-target="#guidesGrid">
-            Explore the guide grid
-          </a>
-          <button class="guides-welcome__action guides-welcome__action--secondary" type="button" data-scroll-target="#guidesGrid">
-            Skip to filters
-          </button>
-        </div>
-      </div>
-      <div class="guides-welcome__badges" aria-hidden="true">
-        <span class="guides-welcome__badge">🎮 Platforms</span>
-        <span class="guides-welcome__badge">⚔️ Genres</span>
-        <span class="guides-welcome__badge">💎 Collecting tips</span>
-      </div>
-      <button class="guides-welcome__dismiss" type="button" aria-label="Dismiss welcome panel">✕</button>
-    </div>
-  `;
+    const targetSelector = trigger.getAttribute("data-scroll-target");
+    if (!targetSelector) return;
 
-  setupScrollTriggers(panel);
+    const target =
+      container.querySelector<HTMLElement>(targetSelector) ??
+      document.querySelector<HTMLElement>(targetSelector);
 
-  const dismissBtn = panel.querySelector<HTMLButtonElement>(".guides-welcome__dismiss");
-  dismissBtn?.addEventListener("click", () => {
-    dismissWelcomePanel();
-    panel.remove();
-  });
+    if (target) {
+      event.preventDefault();
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
-  return panel;
-}
-
-function setupScrollTriggers(panel: HTMLElement): void {
-  panel.querySelectorAll<HTMLElement>("[data-scroll-target]").forEach((trigger) => {
-    trigger.addEventListener("click", (event) => {
-      const targetSelector = trigger.getAttribute("data-scroll-target");
-      if (!targetSelector) return;
-
-      const target = document.querySelector<HTMLElement>(targetSelector);
-      if (target) {
-        event.preventDefault();
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-  });
+  container.addEventListener("click", handleClick);
+  scrollTriggerCleanup = () => {
+    container.removeEventListener("click", handleClick);
+    scrollTriggerCleanup = null;
+  };
 }
 
 // Interactive features state
@@ -99,27 +68,75 @@ let tocActiveId = "";
 let scrollListener: (() => void) | null = null;
 let scrollTriggerCleanup: (() => void) | null = null;
 
-function setupScrollTriggers(container: HTMLElement): void {
-  if (scrollTriggerCleanup) return;
+function hasDismissedWelcomePanel(): boolean {
+  return safeStorage.getItem(WELCOME_PANEL_STORAGE_KEY) === "true";
+}
 
-  const handleScrollTrigger = (event: Event): void => {
-    const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>(
-      "[data-scroll-target]"
-    );
-    if (!trigger) return;
+function dismissWelcomePanel(panel?: HTMLElement | null): void {
+  safeStorage.setItem(WELCOME_PANEL_STORAGE_KEY, "true");
 
-    event.preventDefault();
-    const targetId = trigger.getAttribute("data-scroll-target");
-    if (!targetId) return;
-    const target = document.getElementById(targetId);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
+  if (panel) {
+    panel.classList.add("guides-welcome--dismissed");
+    setTimeout(() => panel.remove(), 150);
+  }
+}
 
-  container.addEventListener("click", handleScrollTrigger);
-  scrollTriggerCleanup = () =>
-    container.removeEventListener("click", handleScrollTrigger);
+function renderWelcomePanel(): HTMLElement | null {
+  if (hasDismissedWelcomePanel()) return null;
+
+  const panel = el.div({ class: "guides-welcome", id: "guidesWelcome" });
+  panel.innerHTML = `
+    <div class="guides-welcome-header">
+      <div class="guides-welcome-meta">
+        <span class="guides-welcome-eyebrow">Welcome & FAQ</span>
+        <h2 class="guides-welcome-title">Quick tour of Dragon's Hoard Atlas</h2>
+      </div>
+      <button type="button" class="guides-welcome-close" aria-label="Dismiss welcome panel">
+        <span aria-hidden="true">×</span>
+      </button>
+    </div>
+    <ul class="guides-welcome-list">
+      <li class="guides-welcome-item">
+        <span class="guides-welcome-icon" aria-hidden="true">🧭</span>
+        <div>
+          <div class="guides-welcome-item-title">Explore and track fast</div>
+          <p class="guides-welcome-copy">Use filters, dashboards, and exports/share codes to manage and share your collection.</p>
+        </div>
+      </li>
+      <li class="guides-welcome-item">
+        <span class="guides-welcome-icon" aria-hidden="true">🔒</span>
+        <div>
+          <div class="guides-welcome-item-title">No sign-in required for most tools</div>
+          <p class="guides-welcome-copy">Browse, filter, export, and save progress locally. Sign in only if you want to submit updates.</p>
+        </div>
+      </li>
+      <li class="guides-welcome-item">
+        <span class="guides-welcome-icon" aria-hidden="true">🛡️</span>
+        <div>
+          <div class="guides-welcome-item-title">How submissions are moderated</div>
+          <p class="guides-welcome-copy">Every community submission — anonymous or signed-in — enters the same review queue before going live.</p>
+        </div>
+      </li>
+      <li class="guides-welcome-item">
+        <span class="guides-welcome-icon" aria-hidden="true">📚</span>
+        <div>
+          <div class="guides-welcome-item-title">Collecting guides at the ready</div>
+          <p class="guides-welcome-copy">Jump into platform and genre collecting tips below whenever you need deeper advice.</p>
+        </div>
+      </li>
+    </ul>
+    <div class="guides-welcome-actions">
+      <a class="guides-welcome-link" href="#guidesGrid">Browse collecting guides</a>
+      <button type="button" class="guides-welcome-link guides-welcome-link--secondary" data-scroll-target="guidesGrid">
+        View guide library
+      </button>
+    </div>
+  `;
+
+  const closeBtn = panel.querySelector<HTMLButtonElement>(".guides-welcome-close");
+  closeBtn?.addEventListener("click", () => dismissWelcomePanel(panel));
+
+  return panel;
 }
 
 // === Guide Index Component ===
@@ -129,7 +146,9 @@ function renderGuideIndex(): HTMLElement {
 
   if (!hasDismissedWelcomePanel()) {
     const welcome = renderWelcomePanel();
-    container.appendChild(welcome);
+    if (welcome) {
+      container.appendChild(welcome);
+    }
   }
 
   // Hero Section
@@ -1299,6 +1318,9 @@ export function mountGuides(selector: string): () => void {
 
   // Cleanup function
   return () => {
+    if (scrollTriggerCleanup) {
+      scrollTriggerCleanup();
+    }
     containerElement = null;
     if (scrollTriggerCleanup) {
       scrollTriggerCleanup();
