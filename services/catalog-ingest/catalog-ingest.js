@@ -390,7 +390,15 @@ async function runCli() {
     }
 
     const interval = setInterval(
-      () => runIngestion(config),
+      async () => {
+        try {
+          const result = await runIngestion(config);
+          console.log("[ingest] scheduled run complete", result.metrics);
+        } catch (error) {
+          console.error("[ingest] scheduled run failed:", error.message);
+          console.error(error.stack);
+        }
+      },
       config.scheduleMinutes * 60 * 1000
     );
     console.log(`[ingest] scheduled every ${config.scheduleMinutes} minutes`);
