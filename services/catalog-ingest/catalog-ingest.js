@@ -178,14 +178,19 @@ function resolveAuth(req) {
 async function parseJsonBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
+    let isDone = false;
     req.on("data", (chunk) => {
+      if (isDone) return;
       data += chunk;
       // Basic guard against huge payloads
       if (data.length > 1e6) {
+        isDone = true;
+        req.destroy();
         reject(new Error("Payload too large"));
       }
     });
     req.on("end", () => {
+      if (isDone) return;
       try {
         const parsed = data ? JSON.parse(data) : {};
         resolve(parsed);
