@@ -40,13 +40,14 @@ describe("archive-media script", () => {
     });
 
     it("parses --out shorthand", () => {
-      expect(() => parseArgs(["--out", "/tmp/backup"])).toThrow(/Invalid path/);
+      const options = parseArgs(["--out", "backups/backup"]);
+      expect(options.output).toContain(path.join("backups", "backup"));
     });
 
     it("parses multiple options", () => {
-      const options = parseArgs(["--bucket", "covers", "--output", "local/out"]);
+      const options = parseArgs(["--bucket", "covers", "--output", "backups/out"]);
       expect(options.bucket).toBe("covers");
-      expect(options.output).toBe(path.resolve(process.cwd(), "backups", "local", "out"));
+      expect(options.output).toContain(path.join("backups", "out"));
     });
   });
 

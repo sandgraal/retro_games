@@ -5,6 +5,11 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const PROJECT_ROOT = path.resolve(__dirname, "..");
+const BACKUP_ROOT = path.join(PROJECT_ROOT, "backups");
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 const DEFAULT_BUCKET = process.env.SUPABASE_STORAGE_ARCHIVE_BUCKET || "media-archive";
@@ -42,10 +47,18 @@ function assertSafeObjectName(name) {
   }
 }
 
+function resolveOutput(targetPath = path.join("backups", DEFAULT_BUCKET)) {
+  return resolveWithinBase(BACKUP_ROOT, targetPath, {
+    allowBase: true,
+    resolveFrom: PROJECT_ROOT,
+    errorMessage: `Invalid path: ${targetPath}`,
+  });
+}
+
 function parseArgs(argv) {
   const options = {
     bucket: DEFAULT_BUCKET,
-    output: resolveWithinBase(BACKUP_ROOT, "media-archive"),
+    output: resolveOutput(),
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -53,7 +66,7 @@ function parseArgs(argv) {
       options.bucket = argv[i + 1];
       i += 1;
     } else if ((arg === "--out" || arg === "--output") && argv[i + 1]) {
-      options.output = resolveWithinBase(BACKUP_ROOT, argv[i + 1]);
+      options.output = resolveOutput(argv[i + 1]);
       i += 1;
     }
   }
@@ -108,9 +121,26 @@ async function listObjects(bucket, fetchImpl) {
   return results;
 }
 
+function assertSafeObjectName(name) {
+  if (typeof name !== "string" || !name.trim()) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+  if (path.isAbsolute(name) || name.startsWith("/")) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+  const segments = name.split("/");
+  if (segments.some((segment) => !segment || segment === "." || segment === "..")) {
+    throw new Error(`Unsafe object name: ${name}`);
+  }
+}
+
 async function downloadObject(bucket, object, outputDir, fetchImpl) {
   assertSafeObjectName(object.name);
-  const targetPath = resolveWithinBase(outputDir, object.name);
+  const resolvedOutput = path.resolve(outputDir);
+  const targetPath = resolveWithinBase(resolvedOutput, object.name, {
+    resolveFrom: resolvedOutput,
+    errorMessage: `Invalid path for object: ${object.name}`,
+  });
   fs.mkdirSync(path.dirname(targetPath), { recursive: true });
   const response = await fetchImpl(
     `${SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/${bucket}/${encodePath(object.name)}`,

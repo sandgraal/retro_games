@@ -14,7 +14,6 @@ import {
 import { safeStorage } from "../core/storage";
 import { games, collection, setGameStatus, openGameModal } from "../state";
 import type { CollectionStatus, GameWithKey } from "../core/types";
-import { safeStorage } from "../utils/safe-storage";
 
 const WELCOME_PANEL_STORAGE_KEY = "guidesWelcomePanelDismissed";
 
@@ -78,21 +77,6 @@ function renderWelcomePanel(): HTMLElement {
   return panel;
 }
 
-function setupScrollTriggers(panel: HTMLElement): void {
-  panel.querySelectorAll<HTMLElement>("[data-scroll-target]").forEach((trigger) => {
-    trigger.addEventListener("click", (event) => {
-      const targetSelector = trigger.getAttribute("data-scroll-target");
-      if (!targetSelector) return;
-
-      const target = document.querySelector<HTMLElement>(targetSelector);
-      if (target) {
-        event.preventDefault();
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-  });
-}
-
 // Interactive features state
 let readingProgress = 0;
 let tocActiveId = "";
@@ -100,26 +84,34 @@ let scrollListener: (() => void) | null = null;
 let scrollTriggerCleanup: (() => void) | null = null;
 
 function setupScrollTriggers(container: HTMLElement): void {
-  if (scrollTriggerCleanup) return;
+  if (scrollTriggerCleanup) {
+    scrollTriggerCleanup();
+  }
 
-  const handleScrollTrigger = (event: Event): void => {
+  const handleClick = (event: Event): void => {
     const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>(
       "[data-scroll-target]"
     );
-    if (!trigger) return;
+    if (!trigger || !container.contains(trigger)) return;
 
-    event.preventDefault();
-    const targetId = trigger.getAttribute("data-scroll-target");
-    if (!targetId) return;
-    const target = document.getElementById(targetId);
+    const targetSelector = trigger.getAttribute("data-scroll-target");
+    if (!targetSelector) return;
+
+    const target =
+      container.querySelector<HTMLElement>(targetSelector) ??
+      document.querySelector<HTMLElement>(targetSelector);
+
     if (target) {
+      event.preventDefault();
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
-  container.addEventListener("click", handleScrollTrigger);
-  scrollTriggerCleanup = () =>
-    container.removeEventListener("click", handleScrollTrigger);
+  container.addEventListener("click", handleClick);
+  scrollTriggerCleanup = () => {
+    container.removeEventListener("click", handleClick);
+    scrollTriggerCleanup = null;
+  };
 }
 
 // === Guide Index Component ===
@@ -129,7 +121,9 @@ function renderGuideIndex(): HTMLElement {
 
   if (!hasDismissedWelcomePanel()) {
     const welcome = renderWelcomePanel();
-    container.appendChild(welcome);
+    if (welcome) {
+      container.appendChild(welcome);
+    }
   }
 
   // Hero Section
@@ -1299,6 +1293,9 @@ export function mountGuides(selector: string): () => void {
 
   // Cleanup function
   return () => {
+    if (scrollTriggerCleanup) {
+      scrollTriggerCleanup();
+    }
     containerElement = null;
     if (scrollTriggerCleanup) {
       scrollTriggerCleanup();
