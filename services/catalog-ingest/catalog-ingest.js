@@ -47,7 +47,7 @@ export function buildDeterministicKey(record) {
   const normalizedTitle = normalizeTitle(record.title);
   const normalizedPlatform = normalizeTitle(record.platform || record.platform_slug);
   const year = releaseYear(record.release_date);
-  return `${normalizedTitle}__${normalizedPlatform}__${year}`;
+  return `${normalizedTitle}___${normalizedPlatform}___${year}`;
 }
 
 function bigramSet(value) {
