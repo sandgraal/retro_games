@@ -81,8 +81,8 @@ describe("Community Suggestions", () => {
       );
 
       expect(result.suggestion).toEqual(mockSuggestion);
-      // BUG: result.audit is typed as required but is actually undefined
-      // TypeScript thinks this is safe, but it's not!
+      // With the fix, audit is correctly typed as optional
+      // so accessing it as undefined is properly handled
       expect(result.audit).toBeUndefined();
     });
 
