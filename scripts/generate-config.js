@@ -9,19 +9,19 @@ import fs from "node:fs";
 import path from "node:path";
 import dotenv from "dotenv";
 import { fileURLToPath } from "node:url";
+import { resolveWithinBase } from "./utils/path-utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 
-function resolveWithinRoot(targetPath) {
-  const resolved = path.resolve(ROOT_DIR, targetPath);
-  if (!resolved.startsWith(ROOT_DIR + path.sep)) {
-    throw new Error(`Path must stay within project root: ${targetPath}`);
-  }
-  return resolved;
-}
+const resolveWithinRoot = (targetPath) =>
+  resolveWithinBase(ROOT_DIR, targetPath, {
+    allowBase: true,
+    resolveFrom: ROOT_DIR,
+    errorMessage: `Path must stay within project root: ${targetPath}`,
+  });
 
 function parseArgs() {
   const args = process.argv.slice(2);
