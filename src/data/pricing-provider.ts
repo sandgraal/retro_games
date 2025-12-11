@@ -42,7 +42,9 @@ async function fetchLivePricing(): Promise<PriceLoadResult | null> {
         return normalized;
       }
     } catch (error) {
-      console.warn(`Live pricing fetch failed for ${endpoint}:`, error);
+      console.warn(
+        `Live pricing fetch failed for ${endpoint}: ${error && typeof error === "object" && "message" in error ? (error as Error).message : String(error)}`
+      );
     }
   }
   return null;
