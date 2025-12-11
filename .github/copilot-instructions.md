@@ -33,8 +33,12 @@ src/
 ├── state/          # Centralized reactive state
 │   └── store.ts    # Signal-based state management
 ├── data/           # Data layer
-│   ├── supabase.ts # Type-safe Supabase client
-│   └── loader.ts   # Data loading & processing
+│   ├── auth.ts           # Auth session + role management
+│   ├── guides.ts         # Markdown guide loading
+│   ├── loader.ts         # Game data loading & processing
+│   ├── pricing-provider.ts # Price data loading
+│   ├── suggestions.ts    # Community submission APIs
+│   └── supabase.ts       # Type-safe Supabase client
 ├── features/       # Business logic
 │   └── export.ts   # CSV export, backup, sharing
 ├── ui/             # Component system
@@ -42,7 +46,10 @@ src/
 │   ├── game-grid.ts
 │   ├── dashboard.ts
 │   ├── filters.ts
-│   └── modal.ts
+│   ├── guides.ts
+│   ├── modal.ts
+│   ├── moderation.ts
+│   └── settings-modal.ts
 ├── utils/          # Pure utility functions
 │   └── format.ts   # Formatting helpers
 └── main.ts         # Application entry point
@@ -103,16 +110,20 @@ const key = generateGameKey({ game_name: "Chrono Trigger", platform: "SNES" });
 
 ## File Responsibilities
 
-| File                     | Purpose                                              |
-| ------------------------ | ---------------------------------------------------- |
-| `src/main.ts`            | App entry, mounts components, sets up event handlers |
-| `src/core/signals.ts`    | Reactive primitives (Signal, computed, effect)       |
-| `src/core/types.ts`      | All TypeScript interfaces and types                  |
-| `src/state/store.ts`     | Centralized state, computed values, actions          |
-| `src/data/loader.ts`     | Load games from Supabase or sample JSON              |
-| `src/data/supabase.ts`   | Supabase client wrapper                              |
-| `src/features/export.ts` | CSV export, backup/restore, share codes              |
-| `src/ui/*.ts`            | UI components (game-card, grid, modal, etc.)         |
+| File                           | Purpose                                                    |
+| ------------------------------ | ---------------------------------------------------------- |
+| `src/main.ts`                  | App entry, mounts components, sets up event handlers       |
+| `src/core/signals.ts`          | Reactive primitives (Signal, computed, effect)             |
+| `src/core/types.ts`            | All TypeScript interfaces and types                        |
+| `src/state/store.ts`           | Centralized state, computed values, actions                |
+| `src/data/loader.ts`           | Load games from Supabase or sample JSON                    |
+| `src/data/supabase.ts`         | Supabase client wrapper                                    |
+| `src/data/auth.ts`             | Auth session, GitHub OAuth, role management                |
+| `src/data/suggestions.ts`      | Community submission + moderation APIs                     |
+| `src/data/pricing-provider.ts` | Price data loading with fallback                           |
+| `src/data/guides.ts`           | Markdown guide loading + rendering                         |
+| `src/features/export.ts`       | CSV export, backup/restore, share codes                    |
+| `src/ui/*.ts`                  | UI components (game-card, grid, modal, moderation, guides) |
 
 ## Development Commands
 
@@ -131,7 +142,7 @@ npm run build:config # Generate config.js from .env
 
 - **Unit tests**: `tests/*.test.ts` - Vitest with jsdom
 - **E2E tests**: `tests/e2e/*.spec.js` - Playwright
-- Current: 204 unit tests + 14 e2e tests = 218 total
+- Current: 311 unit tests + 14 e2e tests = 325 total
 
 ```bash
 npm test                    # Run all unit tests
