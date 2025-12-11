@@ -144,7 +144,7 @@ function normalizeRecord(raw, sourceName) {
       screenshots: raw.screenshots || [],
     },
     external_ids: raw.external_ids || { igdb: raw.igdb_id, giantbomb: raw.giantbomb_id },
-    source: sourceName,
+    source: [sourceName],
     source_id: raw.id || raw.slug || raw.external_id || null,
   };
 }
@@ -170,7 +170,7 @@ function mergeRecords(base, incoming) {
     esrb: incoming.esrb || base.esrb || null,
     pegi: incoming.pegi || base.pegi || null,
     release_date: incoming.release_date || base.release_date || null,
-    source: `${base.source},${incoming.source}`,
+    source: Array.from(new Set([...(base.source || []), ...(incoming.source || [])])),
   };
 }
 
