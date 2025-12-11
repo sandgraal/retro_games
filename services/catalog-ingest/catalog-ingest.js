@@ -226,7 +226,50 @@ async function fetchSourceRecords(source) {
   return [];
 }
 
-function evaluateMatch(record, existingRecords, decisions, threshold) {
+function buildPlatformIndex(existingRecords) {
+  const index = {};
+  for (const [key, value] of Object.entries(existingRecords)) {
+    const normalizedPlatform = normalizeTitle(value.record.platform || "");
+    if (!index[normalizedPlatform]) {
+      index[normalizedPlatform] = [];
+    }
+    index[normalizedPlatform].push({ key, value });
+  }
+  return index;
+}
+
+function updatePlatformIndex(platformIndex, key, recordValue, oldPlatform = null) {
+  const newPlatform = normalizeTitle(recordValue.record.platform || "");
+
+  // If platform changed, remove from old bucket
+  if (oldPlatform && oldPlatform !== newPlatform) {
+    const oldBucket = platformIndex[oldPlatform];
+    if (oldBucket) {
+      const oldIndex = oldBucket.findIndex((entry) => entry.key === key);
+      if (oldIndex !== -1) {
+        oldBucket.splice(oldIndex, 1);
+      }
+    }
+  }
+
+  // Add or update in new/current bucket
+  if (!platformIndex[newPlatform]) {
+    platformIndex[newPlatform] = [];
+  }
+
+  const bucket = platformIndex[newPlatform];
+  const existingEntry = bucket.find((entry) => entry.key === key);
+
+  if (existingEntry) {
+    // Update existing entry
+    existingEntry.value = recordValue;
+  } else {
+    // Add new entry
+    bucket.push({ key, value: recordValue });
+  }
+}
+
+function evaluateMatch(record, existingRecords, decisions, threshold, platformIndex) {
   const deterministicKey = buildDeterministicKey(record);
   if (existingRecords[deterministicKey]) {
     return { key: deterministicKey, deterministicKey, reason: "deterministic" };
@@ -238,7 +281,10 @@ function evaluateMatch(record, existingRecords, decisions, threshold) {
   }
 
   let best = { key: null, score: 0 };
-  for (const [key, value] of Object.entries(existingRecords)) {
+  const normalizedPlatform = normalizeTitle(record.platform || "");
+  const platformBucket = platformIndex[normalizedPlatform] || [];
+
+  for (const { key, value } of platformBucket) {
     const titleScore = fuzzyMatchScore(record.title, value.record.title);
     const platformScore = fuzzyMatchScore(record.platform, value.record.platform);
     const score = titleScore * 0.7 + platformScore * 0.3;
@@ -279,6 +325,7 @@ export async function runIngestion(configOverrides = {}) {
   };
 
   const records = { ...catalogStore.records };
+  let platformIndex = buildPlatformIndex(records);
 
   for (const source of config.sources) {
     try {
@@ -291,31 +338,39 @@ export async function runIngestion(configOverrides = {}) {
           normalized,
           records,
           mergeDecisions,
-          config.fuzzyThreshold
+          config.fuzzyThreshold,
+          platformIndex
         );
         if (!records[key]) {
-          records[key] = {
+          const newRecord = {
             record: normalized,
             hash: computeRecordHash(normalized),
             version: 1,
             lastSeen: new Date().toISOString(),
           };
+          records[key] = newRecord;
+          updatePlatformIndex(platformIndex, key, newRecord);
+
           if (reason === "fuzzy") {
             mergeDecisions[deterministicKey] = key;
           }
           metrics.upserted += 1;
           continue;
         }
+        const oldPlatform = normalizeTitle(records[key].record.platform || "");
         const merged = mergeRecords(records[key].record, normalized);
         const hash = computeRecordHash(merged);
         if (hash !== records[key].hash) {
-          records[key] = {
+          const updatedRecord = {
             ...records[key],
             record: merged,
             hash,
             version: records[key].version + 1,
             lastSeen: new Date().toISOString(),
           };
+          records[key] = updatedRecord;
+          updatePlatformIndex(platformIndex, key, updatedRecord, oldPlatform);
+
           metrics.upserted += 1;
         } else {
           metrics.unchanged += 1;
