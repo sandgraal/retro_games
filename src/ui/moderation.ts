@@ -8,7 +8,7 @@ import { el, mount } from "./components";
 
 function renderDiffRow(key: string, before: unknown, after: unknown): HTMLElement {
   return el.div(
-    { class: "moderation-diff" },
+    { class: "moderation-diff", role: "listitem" },
     el.span({ class: "moderation-diff__key" }, key),
     el.span({ class: "moderation-diff__before" }, before === undefined ? "—" : String(before)),
     el.span({ class: "moderation-diff__after" }, after === undefined ? "—" : String(after))
