@@ -182,9 +182,12 @@ export function mountModerationPanel(selector: string): () => void {
           statusEl.textContent = "All caught up.";
           return;
         }
+
         suggestions.forEach((suggestion: SuggestionRecord) => {
           const card = renderSuggestionCard(suggestion, async (status, notes) => {
             statusEl.textContent = "Submitting decision...";
+            const session = await getAuthSession();
+
             try {
                 await moderateSuggestion(suggestion.id, status, notes);
               statusEl.textContent = "";
@@ -196,6 +199,7 @@ export function mountModerationPanel(selector: string): () => void {
           });
           list.append(card);
         });
+
         statusEl.textContent = "";
       } catch (error) {
         statusEl.textContent =
