@@ -172,9 +172,23 @@ function renderSettings(container: HTMLElement): void {
           <div class="settings-about">
             <p><strong>Dragon's Hoard Atlas</strong> v2.0</p>
             <p>A privacy-first retro game collection tracker.</p>
-            <p class="settings-about-note">
-              All data stored locally in your browser. No account required.
-            </p>
+            <div class="settings-about-card">
+              <p class="settings-about-title">Your data stays here.</p>
+              <ul class="settings-about-list">
+                <li>Everything saves locally in your browser by default—no account needed.</li>
+                <li>
+                  Supabase is optional and only used for catalog/auth metadata if you turn it on;
+                  your collection and notes stay on-device.
+                </li>
+                <li>Offline ready thanks to the service worker, so you can keep browsing on a plane or spotty Wi-Fi.</li>
+                <li>
+                  Back up, export, or share anytime using the buttons above to keep copies wherever you like.
+                </li>
+              </ul>
+              <p class="settings-about-note">
+                Want more details? Read the <a class="settings-about-link" href="./privacy-faq.html">privacy & data FAQ</a>.
+              </p>
+            </div>
           </div>
         </section>
       </div>
