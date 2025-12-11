@@ -4,9 +4,10 @@
  */
 
 import type { ComponentContext } from "./components";
-import { mount } from "./components";
-import { collectionStats, isLoading } from "../state/store";
+import { mount, escapeHtml } from "./components";
+import { collectionStats, isLoading, collection, prices, games } from "../state/store";
 import { effect } from "../core/signals";
+import type { GameWithKey, PriceData } from "../core/types";
 
 /**
  * Initialize the dashboard
@@ -20,10 +21,15 @@ export function initDashboard(ctx: ComponentContext): void {
 
     if (loading) return;
 
+    const allGames = games.get();
+    const collectionMap = collection.get();
+    const priceMap = prices.get();
+
     updateOwnedCard(stats.ownedCount, stats.totalGames, stats.platformBreakdown);
     updateValueCard(stats.totalValue);
-    updateWishlistCard(stats.wishlistCount);
+    updateWishlistCard(stats.wishlistCount, allGames, collectionMap, priceMap);
     updateBacklogCard(stats.backlogCount);
+    updateRecentAdditionsCard(allGames, collectionMap);
   });
 
   cleanup.push(unsub);
@@ -79,10 +85,31 @@ function updateValueCard(value: number): void {
 /**
  * Update wishlist card
  */
-function updateWishlistCard(count: number): void {
+function updateWishlistCard(
+  count: number,
+  _allGames: GameWithKey[],
+  collectionMap: Map<string, { status: string }>,
+  priceMap: Map<string, PriceData>
+): void {
   const countEl = document.getElementById("wishlistCount");
+  const valueEl = document.getElementById("wishlistValue");
+
   if (countEl) {
     countEl.textContent = formatNumber(count);
+  }
+
+  if (valueEl) {
+    // Calculate total wishlist value
+    let wishlistValue = 0;
+    collectionMap.forEach((entry, key) => {
+      if (entry.status === "wishlist") {
+        const price = priceMap.get(key);
+        if (price?.loose) {
+          wishlistValue += price.loose;
+        }
+      }
+    });
+    valueEl.textContent = `Est. ${formatCurrency(wishlistValue / 100)}`;
   }
 }
 
@@ -101,6 +128,59 @@ function updateBacklogCard(count: number): void {
     // Estimate ~20 hours per game
     const hours = count * 20;
     hoursEl.textContent = `~${formatNumber(hours)} hours`;
+  }
+}
+
+/**
+ * Update recent additions card
+ */
+function updateRecentAdditionsCard(
+  allGames: GameWithKey[],
+  collectionMap: Map<string, { status: string; addedAt?: number }>
+): void {
+  const countEl = document.getElementById("recentCount");
+  const carouselEl = document.getElementById("recentGamesCarousel");
+
+  // Get recently added games (last 30 days), sorted by addedAt
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const recentGames: Array<{ game: GameWithKey; addedAt: number }> = [];
+
+  collectionMap.forEach((entry, key) => {
+    if (entry.status === "owned" && entry.addedAt && entry.addedAt > thirtyDaysAgo) {
+      const game = allGames.find((g) => g.key === key);
+      if (game) {
+        recentGames.push({ game, addedAt: entry.addedAt });
+      }
+    }
+  });
+
+  // Sort by most recent first
+  recentGames.sort((a, b) => b.addedAt - a.addedAt);
+  const recent = recentGames.slice(0, 5);
+
+  if (countEl) {
+    countEl.textContent = formatNumber(recent.length);
+  }
+
+  if (carouselEl) {
+    if (recent.length === 0) {
+      carouselEl.innerHTML =
+        '<span class="carousel-empty">Add games to see them here</span>';
+    } else {
+      carouselEl.innerHTML = recent
+        .map(
+          ({ game }) => `
+          <div class="carousel-item" title="${escapeHtml(game.game_name)}">
+            ${
+              game.cover
+                ? `<img class="carousel-cover" src="${escapeHtml(game.cover)}" alt="${escapeHtml(game.game_name)}" loading="lazy" />`
+                : `<div class="carousel-placeholder">${escapeHtml(game.game_name.charAt(0))}</div>`
+            }
+          </div>
+        `
+        )
+        .join("");
+    }
   }
 }
 
