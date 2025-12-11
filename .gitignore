@@ -25,6 +25,9 @@ test-results/
 # Price data cache
 data/ebay-price-cache.json
 
+# Catalog ingest service runtime data
+services/catalog-ingest/data/
+
 # Temporary/backup files from development
 *-new.*
 *-backup.*
