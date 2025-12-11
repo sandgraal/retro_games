@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Privacy & Data FAQ - Dragon's Hoard Atlas</title>
+    <meta
+      name="description"
+      content="Learn how Dragon's Hoard Atlas handles your data, backups, and privacy choices."
+    />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/png" href="./favicon.png" />
+    <style>
+      .faq-header {
+        background: var(--bg-elevated);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: var(--spacing-lg) 0;
+        box-shadow: var(--shadow-md);
+      }
+
+      .faq-shell {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 var(--spacing-lg) var(--spacing-2xl);
+      }
+
+      .faq-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--spacing-lg);
+      }
+
+      .faq-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+      }
+
+      .faq-button {
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: var(--font-weight-medium);
+      }
+
+      .faq-button--primary {
+        background: var(--accent-primary);
+        border-color: var(--accent-primary);
+        color: #0b0a0f;
+      }
+
+      .faq-grid {
+        display: grid;
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-xl);
+      }
+
+      .faq-card {
+        background: var(--bg-elevated);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .faq-card h2 {
+        margin-bottom: var(--spacing-sm);
+      }
+
+      .faq-meta {
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
+      }
+
+      .faq-list {
+        list-style: disc inside;
+        color: var(--text-secondary);
+      }
+
+      .faq-list li + li {
+        margin-top: var(--spacing-sm);
+      }
+
+      @media (max-width: 720px) {
+        .faq-hero {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .faq-actions {
+          width: 100%;
+        }
+
+        .faq-actions a {
+          flex: 1;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="faq-header">
+      <div class="faq-shell faq-hero">
+        <div>
+          <p class="faq-meta">Privacy & Data FAQ</p>
+          <h1>How we protect your collection</h1>
+          <p class="faq-meta">
+            Dragon's Hoard Atlas is built to be privacy-first. This page explains what
+            stays on-device, when network calls happen, and how you control backups.
+          </p>
+        </div>
+        <div class="faq-actions" aria-label="Page actions">
+          <a class="faq-button" href="./index.html">← Back to app</a>
+          <a
+            class="faq-button faq-button--primary"
+            href="mailto:hello@dragonshoard.atlas"
+          >
+            Ask a question
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="faq-shell faq-grid" id="mainContent">
+      <section class="faq-card">
+        <h2>What stays on your device?</h2>
+        <ul class="faq-list">
+          <li>
+            Your collection data (statuses, ratings, tags) and personal notes are stored
+            locally.
+          </li>
+          <li>
+            Backlog, wishlist, and trade markers live in your browser's storage—not a
+            cloud account.
+          </li>
+          <li>
+            Offline mode keeps previously viewed data available even without a connection.
+          </li>
+        </ul>
+      </section>
+
+      <section class="faq-card">
+        <h2>When is Supabase used?</h2>
+        <p>
+          Supabase powers optional catalog metadata and authentication. If you don't
+          enable those features, no Supabase calls are made. Even when connected, your
+          personal collection changes stay local and are never written to Supabase tables.
+        </p>
+      </section>
+
+      <section class="faq-card">
+        <h2>Backups and restores</h2>
+        <ul class="faq-list">
+          <li>
+            Use <strong>Create Backup</strong> in Settings to download an encrypted-free
+            JSON copy.
+          </li>
+          <li>Restore any backup locally—no servers or third parties are involved.</li>
+          <li>You can also export or share the JSON if you want an off-site copy.</li>
+        </ul>
+      </section>
+
+      <section class="faq-card">
+        <h2>What leaves your browser?</h2>
+        <ul class="faq-list">
+          <li>No analytics or tracking pixels are loaded by default.</li>
+          <li>
+            Media assets and platform metadata are fetched from public sources to power
+            search and covers.
+          </li>
+          <li>
+            If you opt in to Supabase, requests include only what's needed for
+            authentication and catalog lookups.
+          </li>
+        </ul>
+      </section>
+
+      <section class="faq-card">
+        <h2>Need more details?</h2>
+        <p>
+          We're happy to clarify anything about data handling, offline behavior, or how to
+          safely back up your collection. Reach out via the email link above and we'll
+          respond quickly.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
