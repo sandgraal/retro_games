@@ -16,6 +16,9 @@
   --accent-primary: #00d4ff;
   --accent-secondary: #6366f1;
   --accent-warm: #f59e0b;
+  --accent-primary-rgb: 0, 212, 255;
+  --accent-secondary-rgb: 99, 102, 241;
+  --accent-warm-rgb: 245, 158, 11;
 
   /* Text: High Contrast Hierarchy */
   --text-primary: #ffffff;
