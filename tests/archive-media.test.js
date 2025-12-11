@@ -1,14 +1,15 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterAll, beforeEach } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
-import { parseArgs, encodePath } from "../scripts/archive-media.js";
+import { parseArgs, encodePath, downloadObject } from "../scripts/archive-media.js";
 
 describe("archive-media script", () => {
   describe("parseArgs", () => {
     it("returns default options when no args", () => {
       const options = parseArgs([]);
       expect(options.bucket).toBe("media-archive");
-      expect(options.output).toContain("backups");
-      expect(options.output).toContain("media-archive");
+      expect(options.output).toContain(path.join("backups", options.bucket));
     });
 
     it("parses --bucket option", () => {
@@ -16,8 +17,26 @@ describe("archive-media script", () => {
       expect(options.bucket).toBe("game-covers");
     });
 
-    it("parses --output option", () => {
+    it("rejects invalid --output paths", () => {
       expect(() => parseArgs(["--output", "/tmp/archive"])).toThrow(/Invalid path/);
+      expect(() => parseArgs(["--output", "../outside"])).toThrow(/Invalid path/);
+      expect(() => parseArgs(["--output", "backups/../outside"])).toThrow(/Invalid path/);
+    });
+
+    it("uses default output path when none is provided", () => {
+      const options = parseArgs([]);
+      expect(options.output).toContain(path.join("backups", options.bucket));
+    });
+
+    it("accepts backups root as a valid --output path", () => {
+      const options = parseArgs(["--output", "backups"]);
+      expect(options.output).toContain(path.join("backups"));
+    });
+
+    it("accepts absolute paths inside backups for --output", () => {
+      const absOutput = path.resolve(process.cwd(), "backups/out");
+      const options = parseArgs(["--output", absOutput]);
+      expect(options.output).toBe(absOutput);
     });
 
     it("parses --out shorthand", () => {
@@ -166,6 +185,51 @@ describe("archive-media script", () => {
       expect(callArgs.headers).toHaveProperty("apikey", "test-service-key");
       expect(callArgs.headers).toHaveProperty("Authorization", "Bearer test-service-key");
       expect(callArgs.headers).toHaveProperty("Content-Type", "application/json");
+    });
+  });
+
+  describe("downloadObject", () => {
+    const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "archive-media-"));
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new TextEncoder().encode("file-contents").buffer,
+    });
+
+    afterAll(() => {
+      fs.rmSync(outputDir, { recursive: true, force: true });
+    });
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("rejects with a clear error and does not create the file when response is not ok", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: async () => "Not found",
+      });
+
+      const targetPath = path.join(outputDir, "non-ok.txt");
+
+      await expect(
+        downloadObject("covers", { name: "non-ok.txt" }, outputDir, mockFetch)
+      ).rejects.toThrow(/404|Not found/i);
+
+      expect(fs.existsSync(targetPath)).toBe(false);
+    });
+
+    it("rejects with a clear error and does not create the file when fetchImpl throws", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network failure"));
+
+      const targetPath = path.join(outputDir, "thrown.txt");
+
+      await expect(
+        downloadObject("covers", { name: "thrown.txt" }, outputDir, mockFetch)
+      ).rejects.toThrow(/network failure/i);
+
+      expect(fs.existsSync(targetPath)).toBe(false);
     });
   });
 });
