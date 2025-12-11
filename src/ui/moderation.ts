@@ -1,10 +1,6 @@
 import type { SuggestionRecord } from "../core/types";
 import { getAuthSession } from "../data/auth";
-import {
-  decideSuggestion,
-  fetchPendingSuggestions,
-  type ModerationDecision,
-} from "../data/suggestions";
+import { moderateSuggestion, fetchSuggestionsForModeration } from "../data/suggestions";
 import { el, mount } from "./components";
 
 function renderDiffRow(key: string, before: unknown, after: unknown): HTMLElement {
@@ -195,7 +191,7 @@ export function mountModerationPanel(selector: string): () => void {
               reason: notes,
             };
             try {
-              await decideSuggestion(suggestion.id, decision, session.email || "");
+              await moderateSuggestion(suggestion.id, status, notes);
               statusEl.textContent = "";
               await loadSuggestions();
             } catch (error) {

@@ -33,6 +33,8 @@ export interface Game {
   // Variant data
   variant_count?: number;
   available_regions?: string[];
+  external_links?: ExternalLinks;
+  pricing?: PriceData;
   // Legacy fields (sample data only, not in Supabase)
   Details?: string;
   screenshots?: string[];
@@ -66,9 +68,39 @@ export interface PriceData {
   new?: number;
   currency: string;
   snapshotDate?: string;
+  lastUpdated?: string;
+  source?: PricingSource;
+  offers?: PricingOffers;
 }
 
 export type PriceMap = Map<GameKey, PriceData>;
+
+export type PricingSource = "live" | "snapshot" | "cache" | "none";
+
+export interface PriceLoadResult {
+  prices: Record<string, PriceData>;
+  source: PricingSource;
+  lastUpdated?: string;
+  reason?: string;
+}
+
+export interface RegionalOffer {
+  amountCents: number;
+  currency: string;
+  label?: string;
+  retailer?: string;
+  url?: string;
+  condition?: "loose" | "cib" | "new" | "digital";
+  lastUpdated?: string;
+}
+
+export type PricingOffers = Record<string, RegionalOffer[]>;
+
+export interface ExternalLinks {
+  store?: string | string[];
+  wiki?: string;
+  community?: string | string[];
+}
 
 // === Filter Types ===
 

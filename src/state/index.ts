@@ -12,6 +12,7 @@ export {
   // Reactive getters
   games,
   prices,
+  priceMeta,
   isLoading,
   error,
   dataSource,
@@ -26,6 +27,7 @@ export {
   // Actions
   setGames,
   setPrices,
+  setPriceMeta,
   setLoading,
   setError,
   setDataSource,

@@ -3,7 +3,13 @@
  * Beautiful game detail modal with guides integration
  */
 
-import type { GameWithKey, CollectionStatus } from "../core/types";
+import type {
+  GameWithKey,
+  CollectionStatus,
+  ExternalLinks,
+  PriceData,
+  PricingSource,
+} from "../core/types";
 import type { ComponentContext } from "./components";
 import { mount, escapeHtml } from "./components";
 import {
@@ -13,9 +19,16 @@ import {
   getGameStatus,
   getGameNotes,
   setGameNotes,
+  prices,
+  priceMeta,
 } from "../state/store";
 import { effect } from "../core/signals";
 import { buildGuideIndex, type GuideMetadata } from "../data/guides";
+import {
+  formatCurrency,
+  formatRelativeDate,
+  formatAbsoluteDate,
+} from "../utils/format";
 
 // Platform name mapping for guide matching
 const PLATFORM_TO_GUIDE: Record<string, string> = {
@@ -176,6 +189,8 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
   const rating = parseFloat(String(game.rating));
   const statusInfo = getStatusInfo(status);
   const relevantGuides = getRelevantGuides(game);
+  const priceInfo = prices.get().get(game.key);
+  const pricingInfo = priceMeta.get();
 
   // Update modal title
   const titleEl = backdrop.querySelector("#gameModalTitle");
@@ -249,6 +264,10 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
   // Update details section with enhanced layout
   const detailsEl = backdrop.querySelector("#gameModalDetails");
   if (detailsEl) {
+    const pricingSection = buildPricingSection(priceInfo, pricingInfo, game.game_name);
+    const externalLinks = buildExternalLinks(game);
+    const metadataPanel = buildExtendedMetadata(game);
+
     detailsEl.innerHTML = `
       <div class="modal-status-badge ${statusInfo.class}">
         <span>${statusInfo.icon}</span> ${statusInfo.label}
@@ -333,7 +352,9 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
             : ""
         }
       </div>
-      
+
+      ${pricingSection}
+
       <div class="modal-notes">
         <label for="notesInput" class="modal-notes-label">
           <span class="modal-notes-icon">📝</span>
@@ -341,20 +362,9 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
         </label>
         <textarea id="notesInput" class="modal-notes-input" rows="3" placeholder="Add personal notes about this game...">${escapeHtml(notes)}</textarea>
       </div>
-      
-      ${
-        game.Details
-          ? `
-      <div class="modal-links">
-        <a href="${escapeHtml(game.Details)}" target="_blank" rel="noopener noreferrer" class="modal-external-link">
-          <span class="link-icon">📖</span>
-          <span class="link-text">View on Wikipedia</span>
-          <span class="link-arrow">→</span>
-        </a>
-      </div>
-      `
-          : ""
-      }
+
+      ${externalLinks}
+      ${metadataPanel}
     `;
 
     // Setup notes input with auto-save indicator
@@ -423,6 +433,244 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
   // Setup close button (might already have listener but re-add for safety)
   const closeBtn = backdrop.querySelector("#gameModalClose");
   closeBtn?.addEventListener("click", closeGameModal);
+}
+
+function buildPricingSection(
+  price: PriceData | undefined,
+  meta: { lastUpdated?: string; source: PricingSource; reason?: string },
+  gameName: string
+): string {
+  const updated = price?.lastUpdated ?? price?.snapshotDate ?? meta.lastUpdated;
+  const updatedLabel = formatUpdatedLabel(updated);
+  const fallbackLabel = updatedLabel
+    ? `Updated ${escapeHtml(updatedLabel)}`
+    : "No recent pricing timestamp";
+
+  const header = `
+    <div class="modal-pricing__header">
+      <span class="modal-section-title" id="modalPricingHeading">Pricing</span>
+      <span class="modal-pricing__timestamp" id="modalPricingUpdated">${fallbackLabel}</span>
+    </div>
+  `;
+
+  if (!price) {
+    const reason = meta.reason ? ` ${escapeHtml(meta.reason)}` : ".";
+    return `
+      <section class="modal-pricing" aria-labelledby="modalPricingHeading">
+        ${header}
+        <p class="modal-pricing__empty" role="status">
+          Pricing data isn't available for ${escapeHtml(gameName)}${reason}
+        </p>
+      </section>
+    `;
+  }
+
+  const priceBlocks = [
+    price.loose !== undefined
+      ? `<div class="price-item" role="listitem">
+          <span class="price-label">Loose</span>
+          <span class="price-value">${formatCurrency(price.loose, { fromCents: true })}</span>
+        </div>`
+      : "",
+    price.cib !== undefined
+      ? `<div class="price-item" role="listitem">
+          <span class="price-label">Complete</span>
+          <span class="price-value price-value--cib">${formatCurrency(price.cib, { fromCents: true })}</span>
+        </div>`
+      : "",
+    price.new !== undefined
+      ? `<div class="price-item" role="listitem">
+          <span class="price-label">New</span>
+          <span class="price-value price-value--new">${formatCurrency(price.new, { fromCents: true })}</span>
+        </div>`
+      : "",
+  ].filter(Boolean);
+
+  const offers = renderOffers(price.offers);
+
+  return `
+    <section class="modal-pricing" aria-labelledby="modalPricingHeading">
+      ${header}
+      <div class="modal-prices" role="group" aria-describedby="modalPricingUpdated">
+        <div class="price-grid" role="list">
+          ${priceBlocks.length > 0 ? priceBlocks.join("") : "<p class=\"modal-pricing__empty\">No structured pricing found.</p>"}
+        </div>
+        <p class="price-source">${escapeHtml(price.source ?? meta.source ?? "snapshot")}</p>
+      </div>
+      ${offers}
+    </section>
+  `;
+}
+
+function renderOffers(offers?: PriceData["offers"]): string {
+  if (!offers) return "";
+
+  const offerRows = Object.entries(offers)
+    .flatMap(([region, regionOffers]) =>
+      regionOffers.map((offer) => {
+        const label = offer.label ?? "Offer";
+        const updatedLabel = formatUpdatedLabel(offer.lastUpdated);
+        const retailerText = offer.retailer ? ` • ${escapeHtml(offer.retailer)}` : "";
+        const updatedText = updatedLabel ? ` (Updated ${escapeHtml(updatedLabel)})` : "";
+        const link = offer.url
+          ? `<a class="modal-offers__cta" href="${escapeHtml(offer.url)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${escapeHtml(label)} offer link">View</a>`
+          : "";
+        return `
+          <div class="modal-offers__row" role="listitem">
+            <span class="modal-offers__region">${escapeHtml(region)}</span>
+            <span class="modal-offers__label">${escapeHtml(label)}${retailerText}</span>
+            <span class="modal-offers__price">${formatCurrency(offer.amountCents, {
+              fromCents: true,
+            })}${updatedText}</span>
+            ${link}
+          </div>
+        `;
+      })
+    )
+    .join("");
+
+  if (!offerRows) return "";
+
+  return `
+    <div class="modal-offers" aria-label="Regional offers" role="list">
+      ${offerRows}
+    </div>
+  `;
+}
+
+function formatUpdatedLabel(updated?: string): string {
+  if (!updated) return "";
+  const relative = formatRelativeDate(updated);
+  const absolute = formatAbsoluteDate(updated);
+  if (relative && absolute) return `${relative} (${absolute})`;
+  return relative || absolute;
+}
+
+function buildExternalLinks(game: GameWithKey): string {
+  const links = normalizeLinks(game);
+  if (links.length === 0) return "";
+
+  const chips = links
+    .map(
+      (link) => `
+        <a
+          class="modal-link-chip"
+          href="${escapeHtml(link.url)}"
+          target="_blank"
+          rel="noopener noreferrer"
+          role="listitem"
+          aria-label="${escapeHtml(link.ariaLabel)}"
+        >
+          <span aria-hidden="true">${link.icon}</span>
+          <span class="modal-link-chip__label">${escapeHtml(link.label)}</span>
+        </a>
+      `
+    )
+    .join("");
+
+  return `
+    <div class="modal-links" aria-label="External resources">
+      <div class="modal-link-chip-list" role="list">
+        ${chips}
+      </div>
+    </div>
+  `;
+}
+
+function normalizeLinks(game: GameWithKey): Array<{
+  label: string;
+  url: string;
+  icon: string;
+  ariaLabel: string;
+}> {
+  const links: Array<{ label: string; url: string; icon: string; ariaLabel: string }> = [];
+  const externalLinks: ExternalLinks | undefined = game.external_links;
+
+  const wikiLinks = toArray(externalLinks?.wiki ?? game.Details ?? "");
+  wikiLinks
+    .filter(Boolean)
+    .forEach((url) =>
+      links.push({
+        label: buildLinkLabel(url, "Wiki"),
+        url,
+        icon: "📖",
+        ariaLabel: `Open wiki entry for ${game.game_name}`,
+      })
+    );
+
+  toArray(externalLinks?.store)
+    .filter(Boolean)
+    .forEach((url) =>
+      links.push({
+        label: buildLinkLabel(url, "Store"),
+        url,
+        icon: "🛒",
+        ariaLabel: `Open store listing for ${game.game_name}`,
+      })
+    );
+
+  toArray(externalLinks?.community)
+    .filter(Boolean)
+    .forEach((url) =>
+      links.push({
+        label: buildLinkLabel(url, "Community"),
+        url,
+        icon: "👥",
+        ariaLabel: `Open community link for ${game.game_name}`,
+      })
+    );
+
+  return links;
+}
+
+function buildLinkLabel(url: string, fallback: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.replace(/^www\./, "");
+  } catch {
+    return fallback;
+  }
+}
+
+function toArray(value: string | string[] | undefined | null): string[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function buildExtendedMetadata(game: GameWithKey): string {
+  const description = game.description
+    ? `<p class="modal-metadata__description">${escapeHtml(game.description)}</p>`
+    : "";
+
+  const rows = (
+    [
+      { label: "Developer", value: game.developer },
+      { label: "Publisher", value: game.publisher },
+      { label: "ESRB", value: game.esrb_rating },
+      { label: "Metacritic", value: game.metacritic_score },
+      { label: "Updated", value: formatAbsoluteDate(game.updated_at) },
+    ] as const
+  )
+    .filter((entry) => entry.value)
+    .map(
+      (entry) => `
+        <dt class="modal-metadata__row">${escapeHtml(entry.label)}</dt>
+        <dd class="modal-metadata__row">${escapeHtml(String(entry.value))}</dd>
+      `
+    )
+    .join("");
+
+  if (!description && !rows) return "";
+
+  return `
+    <details class="modal-metadata" aria-labelledby="modalMetadataSummary">
+      <summary class="modal-metadata__summary" id="modalMetadataSummary">Extended metadata</summary>
+      <div class="modal-metadata__body" id="modalMetadataBody">
+        ${description}
+        ${rows ? `<dl class="modal-metadata__list">${rows}</dl>` : ""}
+      </div>
+    </details>
+  `;
 }
 
 /**
