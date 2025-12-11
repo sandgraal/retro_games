@@ -68,7 +68,7 @@ export async function decideSuggestion(
 ): Promise<{ suggestion: SuggestionRecord; audit: AuditLogEntry }> {
   const session = await getAuthSession();
   const payload = JSON.stringify({ status, notes });
-  const response = await send<{ suggestion: SuggestionRecord; audit?: AuditLogEntry }>(
+  const response = await send<{ suggestion: SuggestionRecord; audit: AuditLogEntry }>(
     `/moderation/suggestions/${suggestionId}/decision`,
     {
       method: "POST",
