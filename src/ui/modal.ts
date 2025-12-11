@@ -563,8 +563,8 @@ function buildExternalLinks(game: GameWithKey): string {
           <span aria-hidden="true">${link.icon}</span>
           <span class="modal-link-chip__label">${escapeHtml(link.label)}</span>
         </a>
-      `;
-    })
+      `
+    )
     .filter((chip) => chip !== "") // Remove invalid URLs
     .join("");
 
