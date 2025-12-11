@@ -2,7 +2,8 @@ import type { SuggestionRecord } from "../core/types";
 import { getAuthSession } from "../data/auth";
 import {
   decideSuggestion,
-  fetchSuggestionsForModeration,
+  fetchPendingSuggestions,
+  type ModerationDecision,
 } from "../data/suggestions";
 import { el, mount } from "./components";
 
@@ -10,8 +11,14 @@ function renderDiffRow(key: string, before: unknown, after: unknown): HTMLElemen
   return el.div(
     { class: "moderation-diff", role: "listitem" },
     el.span({ class: "moderation-diff__key" }, key),
-    el.span({ class: "moderation-diff__before" }, before === undefined ? "—" : String(before)),
-    el.span({ class: "moderation-diff__after" }, after === undefined ? "—" : String(after))
+    el.span(
+      { class: "moderation-diff__before" },
+      before === undefined ? "—" : String(before)
+    ),
+    el.span(
+      { class: "moderation-diff__after" },
+      after === undefined ? "—" : String(after)
+    )
   );
 }
 
@@ -27,7 +34,8 @@ function renderSuggestionCard(
     el.span({}, `Submitted ${new Date(suggestion.submittedAt).toLocaleString()}`)
   );
 
-  const title = suggestion.delta.title || suggestion.delta.game_name || suggestion.targetId;
+  const title =
+    suggestion.delta.title || suggestion.delta.game_name || suggestion.targetId;
   const titleEl = document.createElement("h3");
   titleEl.className = "moderation-card__title";
   titleEl.textContent = String(title ?? "Suggestion");
@@ -38,7 +46,13 @@ function renderSuggestionCard(
   const canonical = suggestion.canonical || {};
   const keys = Object.keys(suggestion.delta || {});
   keys.forEach((key) => {
-    diffList.append(renderDiffRow(key, (canonical as Record<string, unknown>)[key], suggestion.delta[key]));
+    diffList.append(
+      renderDiffRow(
+        key,
+        (canonical as Record<string, unknown>)[key],
+        suggestion.delta[key]
+      )
+    );
   });
   if (!keys.length) {
     diffList.append(el.div({ class: "moderation-empty" }, "No fields provided"));
@@ -46,7 +60,9 @@ function renderSuggestionCard(
   card.append(diffList);
 
   if (suggestion.notes) {
-    card.append(el.div({ class: "moderation-note" }, `Submitter note: ${suggestion.notes}`));
+    card.append(
+      el.div({ class: "moderation-note" }, `Submitter note: ${suggestion.notes}`)
+    );
   }
 
   const actionBar = el.div({ class: "moderation-actions" });
@@ -58,8 +74,15 @@ function renderSuggestionCard(
   });
   const approveBtn = el.button({ class: "btn btn-primary" }, "Approve & merge");
   const rejectBtn = el.button({ class: "btn" }, "Reject");
-  const errorEl = el.div({ class: "moderation-error", role: "alert", style: "display: none;" });
-  const retryBtn = el.button({ class: "btn btn-retry", style: "display: none;" }, "Retry");
+  const errorEl = el.div({
+    class: "moderation-error",
+    role: "alert",
+    style: "display: none;",
+  });
+  const retryBtn = el.button(
+    { class: "btn btn-retry", style: "display: none;" },
+    "Retry"
+  );
 
   let isProcessing = false;
   let currentRetryHandler: (() => void) | null = null;
@@ -84,12 +107,12 @@ function renderSuggestionCard(
     errorEl.textContent = message;
     errorEl.style.display = "block";
     retryBtn.style.display = "inline-block";
-    
+
     // Remove old handler if it exists
     if (currentRetryHandler) {
       retryBtn.removeEventListener("click", currentRetryHandler);
     }
-    
+
     // Store and add new handler
     currentRetryHandler = retryAction;
     retryBtn.addEventListener("click", currentRetryHandler);
@@ -97,7 +120,7 @@ function renderSuggestionCard(
 
   const handleDecision = async (status: "approved" | "rejected") => {
     if (isProcessing) return;
-    
+
     setLoading(true);
     try {
       await onDecision(status, notesInput.value);
@@ -105,9 +128,10 @@ function renderSuggestionCard(
       // when loadSuggestions() is called after successful decision
     } catch (error) {
       setLoading(false);
-      const message = error instanceof Error 
-        ? error.message 
-        : "Unable to submit decision. Please try again.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to submit decision. Please try again.";
       showError(message, () => handleDecision(status));
     }
   };
@@ -155,18 +179,23 @@ export function mountModerationPanel(selector: string): () => void {
       element.hidden = false;
       statusEl.textContent = "Loading suggestions...";
       try {
-        const suggestions = await fetchSuggestionsForModeration();
+        const suggestions = await fetchPendingSuggestions();
         list.innerHTML = "";
         if (!suggestions.length) {
           list.append(el.div({ class: "moderation-empty" }, "No pending submissions"));
           statusEl.textContent = "All caught up.";
           return;
         }
-        suggestions.forEach((suggestion) => {
+        suggestions.forEach((suggestion: SuggestionRecord) => {
           const card = renderSuggestionCard(suggestion, async (status, notes) => {
             statusEl.textContent = "Submitting decision...";
+            const session = await getAuthSession();
+            const decision: ModerationDecision = {
+              action: status === "approved" ? "approve" : "reject",
+              reason: notes,
+            };
             try {
-              await decideSuggestion(suggestion.id, status, notes);
+              await decideSuggestion(suggestion.id, decision, session.email || "");
               statusEl.textContent = "";
               await loadSuggestions();
             } catch (error) {
@@ -178,7 +207,8 @@ export function mountModerationPanel(selector: string): () => void {
         });
         statusEl.textContent = "";
       } catch (error) {
-        statusEl.textContent = error instanceof Error ? error.message : "Failed to load suggestions";
+        statusEl.textContent =
+          error instanceof Error ? error.message : "Failed to load suggestions";
       }
     }
 

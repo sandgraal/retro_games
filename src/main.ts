@@ -115,8 +115,7 @@ async function init(): Promise<void> {
     checkUrlGuidesView();
 
     // Moderation UI (hidden for non-moderators by default)
-    const shouldShowModeration =
-      ["moderator", "admin"].includes(authSession.role);
+    const shouldShowModeration = ["moderator", "admin"].includes(authSession.role);
     if (shouldShowModeration) {
       cleanupFunctions.push(mountModerationPanel("#moderationPanel"));
       const moderationEl = document.getElementById("moderationPanel");
@@ -178,7 +177,7 @@ function setupMobileNav(): void {
   const navItems = document.querySelectorAll<HTMLElement>(".mobile-nav-item[data-nav]");
   navItems.forEach((item) => {
     item.addEventListener("click", () => {
-      const nav = item.dataset.nav;
+      const { nav } = item.dataset;
       if (nav === "guides") {
         switchToView("guides");
       } else if (nav === "collection") {

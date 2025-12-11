@@ -3,26 +3,66 @@ import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
 import http from "http";
+import crypto from "crypto";
 import {
   buildDeterministicKey,
   fuzzyMatchScore,
   runIngestion,
   startReadApiServer,
   applyApprovedSuggestions,
-  normalizeRecord,
   computeRecordHash,
 } from "../services/catalog-ingest/catalog-ingest.js";
 
 const originalDataDir = process.env.CATALOG_DATA_DIR;
+const originalJwtSecret = process.env.SUPABASE_JWT_SECRET;
+const TEST_JWT_SECRET = "test-secret-for-catalog-ingest-tests-32chars";
 let tempDir: string;
+
+/**
+ * Creates a test JWT token for the given role using Node's crypto module
+ * This avoids issues with jose's webapi in jsdom environment
+ */
+function getTestJwt(role: string, options: { email?: string } = {}): string {
+  const header = { alg: "HS256", typ: "JWT" };
+  const payload = {
+    app_metadata: { role },
+    email: options.email || `${role}@test.example.com`,
+    sub: `test-user-${role}`,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  };
+
+  const base64UrlEncode = (obj: object): string =>
+    Buffer.from(JSON.stringify(obj))
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+
+  const headerBase64 = base64UrlEncode(header);
+  const payloadBase64 = base64UrlEncode(payload);
+  const data = `${headerBase64}.${payloadBase64}`;
+
+  const signature = crypto
+    .createHmac("sha256", TEST_JWT_SECRET)
+    .update(data)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+
+  return `${data}.${signature}`;
+}
 
 beforeEach(async () => {
   tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "catalog-ingest-"));
   process.env.CATALOG_DATA_DIR = tempDir;
+  process.env.SUPABASE_JWT_SECRET = TEST_JWT_SECRET;
 });
 
 afterEach(async () => {
   process.env.CATALOG_DATA_DIR = originalDataDir;
+  process.env.SUPABASE_JWT_SECRET = originalJwtSecret;
   await fs.rm(tempDir, { recursive: true, force: true });
 });
 
@@ -322,7 +362,7 @@ describe("ingestion pipeline", () => {
 
     const entries = Object.values(run.records);
     expect(entries).toHaveLength(1);
-    const [record] = entries;
+    const [record] = entries as any[];
     expect(record.version).toBe(2);
     expect(record.record.regions.sort()).toEqual(["EU", "NA"]);
     expect(new Set(record.record.genres)).toEqual(new Set(["FPS", "Shooter"]));
@@ -694,8 +734,8 @@ describe("ingestion pipeline", () => {
     );
     expect(entries[0].record.source).toHaveLength(2);
     // Verify no string concatenation occurred (would break comma-containing names)
-    expect(typeof entries[0].record.source).toBe("object");
-    expect(Array.isArray(entries[0].record.source)).toBe(true);
+    expect(typeof (entries[0] as any).record.source).toBe("object");
+    expect(Array.isArray((entries[0] as any).record.source)).toBe(true);
   });
 });
 
@@ -798,7 +838,7 @@ describe("startReadApiServer", () => {
     // Wait for server to start
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const listening = server.listening;
+    const { listening } = server;
     expect(listening).toBe(true);
 
     const address = server.address();
@@ -939,7 +979,9 @@ describe("startReadApiServer", () => {
     expect(snapshots.length).toBe(2);
 
     const port = 9881;
-    server = startReadApiServer({ port, preferredSnapshot: firstSnapshot });
+    // Use preferredSnapshot option to serve the first snapshot
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    server = startReadApiServer({ port, preferredSnapshot: firstSnapshot } as any);
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     const response = await makeRequest(port, "/api/v1/catalog");
@@ -1001,8 +1043,9 @@ describe("startReadApiServer", () => {
       server = startReadApiServer({ port });
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const contributorToken = getTestJwt("contributor");
       const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "contributor" },
+        headers: { Authorization: `Bearer ${contributorToken}` },
       });
       expect(response.statusCode).toBe(403);
       const json = JSON.parse(response.body);
@@ -1014,8 +1057,9 @@ describe("startReadApiServer", () => {
       server = startReadApiServer({ port });
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const moderatorToken = getTestJwt("moderator");
       const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "moderator" },
+        headers: { Authorization: `Bearer ${moderatorToken}` },
       });
       expect(response.statusCode).toBe(200);
       const json = JSON.parse(response.body);
@@ -1088,7 +1132,11 @@ describe("startReadApiServer", () => {
               targetId: gameKey,
               delta: { genres: ["RPG", "Updated"] },
               status: "pending",
-              author: { role: "contributor", email: "user@example.com", sessionId: "sess_123" },
+              author: {
+                role: "contributor",
+                email: "user@example.com",
+                sessionId: "sess_123",
+              },
               submittedAt: "2024-01-01T00:00:00.000Z",
               notes: "Updating genres",
             },
@@ -1099,8 +1147,9 @@ describe("startReadApiServer", () => {
         server = startReadApiServer({ port });
         await new Promise((resolve) => setTimeout(resolve, 100));
 
+        const roleToken = getTestJwt(role);
         const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-          headers: { "x-role": role },
+          headers: { Authorization: `Bearer ${roleToken}` },
         });
         expect(response.statusCode).toBe(200);
         const json = JSON.parse(response.body);
@@ -1129,7 +1178,11 @@ describe("startReadApiServer", () => {
               genres: ["Adventure"],
             },
             status: "pending",
-            author: { role: "contributor", email: "user@example.com", sessionId: "sess_789" },
+            author: {
+              role: "contributor",
+              email: "user@example.com",
+              sessionId: "sess_789",
+            },
             submittedAt: "2024-01-03T00:00:00.000Z",
             notes: "Submitting new game",
           },
@@ -1141,8 +1194,9 @@ describe("startReadApiServer", () => {
       server = startReadApiServer({ port });
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const moderatorToken = getTestJwt("moderator");
       const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "moderator" },
+        headers: { Authorization: `Bearer ${moderatorToken}` },
       });
       expect(response.statusCode).toBe(200);
       const json = JSON.parse(response.body);
@@ -1163,7 +1217,11 @@ describe("startReadApiServer", () => {
             targetId: null,
             delta: { title: "Pending Game", platform: "PS5" },
             status: "pending",
-            author: { role: "contributor", email: "user1@example.com", sessionId: "sess_1" },
+            author: {
+              role: "contributor",
+              email: "user1@example.com",
+              sessionId: "sess_1",
+            },
             submittedAt: "2024-01-01T00:00:00.000Z",
           },
           {
@@ -1172,7 +1230,11 @@ describe("startReadApiServer", () => {
             targetId: null,
             delta: { title: "Approved Game", platform: "Xbox" },
             status: "approved",
-            author: { role: "contributor", email: "user2@example.com", sessionId: "sess_2" },
+            author: {
+              role: "contributor",
+              email: "user2@example.com",
+              sessionId: "sess_2",
+            },
             submittedAt: "2024-01-02T00:00:00.000Z",
           },
           {
@@ -1181,7 +1243,11 @@ describe("startReadApiServer", () => {
             targetId: null,
             delta: { title: "Rejected Game", platform: "PC" },
             status: "rejected",
-            author: { role: "contributor", email: "user3@example.com", sessionId: "sess_3" },
+            author: {
+              role: "contributor",
+              email: "user3@example.com",
+              sessionId: "sess_3",
+            },
             submittedAt: "2024-01-03T00:00:00.000Z",
           },
         ],
@@ -1192,9 +1258,11 @@ describe("startReadApiServer", () => {
       server = startReadApiServer({ port });
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      const moderatorToken = getTestJwt("moderator");
+
       // Test default (pending)
       const pendingResponse = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "moderator" },
+        headers: { Authorization: `Bearer ${moderatorToken}` },
       });
       expect(pendingResponse.statusCode).toBe(200);
       const pendingJson = JSON.parse(pendingResponse.body);
@@ -1206,7 +1274,7 @@ describe("startReadApiServer", () => {
         port,
         "/api/v1/moderation/suggestions?status=approved",
         {
-          headers: { "x-role": "moderator" },
+          headers: { Authorization: `Bearer ${moderatorToken}` },
         }
       );
       expect(approvedResponse.statusCode).toBe(200);
@@ -1219,7 +1287,7 @@ describe("startReadApiServer", () => {
         port,
         "/api/v1/moderation/suggestions?status=rejected",
         {
-          headers: { "x-role": "moderator" },
+          headers: { Authorization: `Bearer ${moderatorToken}` },
         }
       );
       expect(rejectedResponse.statusCode).toBe(200);
@@ -1233,7 +1301,7 @@ describe("startReadApiServer", () => {
 describe("applyApprovedSuggestions", () => {
   test("applies approved update suggestion to existing record", () => {
     const records = {
-      "sonic___genesis": {
+      sonic___genesis: {
         record: {
           title: "Sonic",
           platform: "Genesis",
@@ -1300,7 +1368,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("increments version for updated records", () => {
     const records = {
-      "mario___nes": {
+      mario___nes: {
         record: {
           title: "Mario",
           platform: "NES",
@@ -1345,7 +1413,7 @@ describe("applyApprovedSuggestions", () => {
     };
 
     const records = {
-      "zelda___nes": {
+      zelda___nes: {
         record: originalRecord,
         hash: computeRecordHash(originalRecord),
         version: 1,
@@ -1377,7 +1445,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("skips pending suggestions", () => {
     const records = {
-      "metroid___nes": {
+      metroid___nes: {
         record: {
           title: "Metroid",
           platform: "NES",
@@ -1411,7 +1479,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("skips rejected suggestions", () => {
     const records = {
-      "castlevania___nes": {
+      castlevania___nes: {
         record: {
           title: "Castlevania",
           platform: "NES",
@@ -1445,13 +1513,13 @@ describe("applyApprovedSuggestions", () => {
 
   test("properly counts applied suggestions", () => {
     const records = {
-      "game1___platform1": {
+      game1___platform1: {
         record: { title: "Game1", platform: "Platform1", source: ["src1"] },
         hash: "hash4",
         version: 1,
         lastSeen: "2024-01-01T00:00:00.000Z",
       },
-      "game2___platform2": {
+      game2___platform2: {
         record: { title: "Game2", platform: "Platform2", source: ["src2"] },
         hash: "hash5",
         version: 1,
@@ -1499,7 +1567,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("handles suggestions with missing delta/payload", () => {
     const records = {
-      "game___platform": {
+      game___platform: {
         record: { title: "Game", platform: "Platform", source: ["src"] },
         hash: "hash6",
         version: 1,
@@ -1526,7 +1594,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("handles update suggestions with non-existent targetId", () => {
     const records = {
-      "existing___game": {
+      existing___game: {
         record: { title: "Existing", platform: "Game", source: ["src"] },
         hash: "hash7",
         version: 1,
@@ -1555,7 +1623,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("handles new suggestions with existing keys", () => {
     const records = {
-      "duplicate___game": {
+      duplicate___game: {
         record: { title: "Duplicate", platform: "Game", source: ["original"] },
         hash: "hash8",
         version: 1,
@@ -1632,7 +1700,7 @@ describe("applyApprovedSuggestions", () => {
     };
 
     const records = {
-      "unchanged___platform": {
+      unchanged___platform: {
         record: originalRecord,
         hash: computeRecordHash(originalRecord),
         version: 2,
@@ -1666,7 +1734,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("uses delta field for updates", () => {
     const records = {
-      "game___platform": {
+      game___platform: {
         record: { title: "Game", platform: "Platform", source: ["src"] },
         hash: "hash9",
         version: 1,
@@ -1692,7 +1760,7 @@ describe("applyApprovedSuggestions", () => {
 
   test("uses payload field for updates when delta is missing", () => {
     const records = {
-      "game2___platform": {
+      game2___platform: {
         record: { title: "Game2", platform: "Platform", source: ["src"] },
         hash: "hash10",
         version: 1,

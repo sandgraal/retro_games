@@ -292,17 +292,17 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
         }
         
         ${
-          !isNaN(rating)
-            ? `
-        <div class="modal-info-item">
-          <span class="modal-info-icon">⭐</span>
-          <div class="modal-info-content">
-            <span class="modal-info-label">Rating</span>
-            <span class="modal-info-value">${rating.toFixed(1)} / 10</span>
-          </div>
-        </div>
-        `
-            : ""
+          isNaN(rating)
+            ? ""
+            : `
+                  <div class="modal-info-item">
+                    <span class="modal-info-icon">⭐</span>
+                    <div class="modal-info-content">
+                      <span class="modal-info-label">Rating</span>
+                      <span class="modal-info-value">${rating.toFixed(1)} / 10</span>
+                    </div>
+                  </div>
+                  `
         }
         
         ${
