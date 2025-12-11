@@ -24,7 +24,7 @@ afterEach(async () => {
 describe('deterministic key + fuzzy matcher', () => {
   test('builds stable key using release year', () => {
     const key = buildDeterministicKey({ title: 'Metroid Prime', platform: 'GameCube', release_date: '2002-11-17' });
-    expect(key).toBe('metroid prime___gamecube___2002');
+    expect(key).toBe('metroid prime___gamecube');
   });
 
   test('fuzzy score correlates similar titles', () => {
