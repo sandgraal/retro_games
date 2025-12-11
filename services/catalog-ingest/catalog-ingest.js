@@ -623,14 +623,24 @@ export function startReadApiServer({ port = 8787, preferredSnapshot } = {}) {
           sendJson(res, 403, { error: "Moderator access required" });
           return;
         }
+
+        // Default to pending suggestions; allow overriding via ?status= query param
+        const statusFilter = url.searchParams?.get("status") || "pending";
+
         const catalogStore = await readJson(catalogStorePath, { records: {} });
         const { suggestions } = await readSuggestions();
-        const enriched = suggestions.map((entry) => ({
+
+        const filtered = suggestions.filter((entry) =>
+          statusFilter ? entry.status === statusFilter : true
+        );
+
+        const enriched = filtered.map((entry) => ({
           ...entry,
           canonical: entry.targetId
             ? catalogStore.records[entry.targetId]?.record || null
             : null,
         }));
+
         sendJson(res, 200, { suggestions: enriched });
         return;
       }
