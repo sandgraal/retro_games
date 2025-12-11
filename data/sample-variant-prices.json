@@ -1,6 +1,6 @@
 [
   {
-    "game_key": "Chrono Trigger___SNES",
+    "game_key": "chrono trigger___snes",
     "region_code": "PAL",
     "currency": "USD",
     "loose_price_cents": 42000,
@@ -12,7 +12,7 @@
     "snapshot_date": "2025-10-20"
   },
   {
-    "game_key": "Chrono Trigger___SNES",
+    "game_key": "chrono trigger___snes",
     "region_code": "JPN",
     "currency": "USD",
     "loose_price_cents": 31000,
