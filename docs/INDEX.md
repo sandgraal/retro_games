@@ -115,7 +115,7 @@ This project maintains comprehensive documentation for developers, contributors,
   - `build-css.test.js` - CSS bundler script (12 tests)
   - `e2e/*.spec.js` - Playwright E2E tests (14 tests)
 
-**Total: 313 unit tests + 14 E2E tests = 327 tests**
+**Total: 327 unit tests + 14 E2E tests = 341 tests**
 
 ## Context & History
 
