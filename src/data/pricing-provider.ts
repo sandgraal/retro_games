@@ -57,7 +57,10 @@ async function fetchSnapshotPricing(): Promise<PriceLoadResult | null> {
     const normalized = normalizeResponse(payload, "snapshot");
     if (normalized) return normalized;
   } catch (error) {
-    console.warn("Price snapshot unavailable:", error?.message ?? error);
+    console.warn(
+      "Price snapshot unavailable:",
+      error instanceof Error ? error.message : String(error)
+    );
   }
   return null;
 }
