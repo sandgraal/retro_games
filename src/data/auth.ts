@@ -8,7 +8,7 @@ export interface AuthSession {
 }
 
 const SESSION_STORAGE_KEY = "dragonshoard_session_id";
-const ROLE_OVERRIDE_KEY = "dragonshoard_role_override";
+const UNSAFE_ROLE_OVERRIDE_KEY = "dragonshoard_unsafe_role_override";
 
 function ensureSessionId(): string {
   if (typeof window === "undefined") return "server";
@@ -72,7 +72,7 @@ export async function getAuthSession(): Promise<AuthSession> {
   const sessionId = ensureSessionId();
   const override =
     typeof window !== "undefined"
-      ? sanitizeRole(window.localStorage.getItem(ROLE_OVERRIDE_KEY))
+      ? sanitizeRole(window.localStorage.getItem(UNSAFE_ROLE_OVERRIDE_KEY))
       : "anonymous";
   const supabaseRole = await loadSupabaseRole();
   const role = override !== "anonymous" ? override : supabaseRole.role;
