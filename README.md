@@ -25,6 +25,8 @@ A TypeScript + Vite single-page app for tracking retro games. It uses a lightwei
 - Submission endpoints (when running `catalog-ingest.js --serve`):
   - `POST /api/v1/games/:id/suggestions` to propose updates to existing records (anonymous sessions supported).
   - `POST /api/v1/games/new` to suggest new games.
+
+  **Note:** Anonymous submissions are fully supported for both suggestion endpoints. All anonymous submissions are subject to moderation and require approval by a moderator or admin before being applied, just like submissions from authenticated contributors. There are no additional moderation steps or different approval workflows for anonymous users; all submissions, regardless of authentication status, enter the same moderation queue and are reviewed according to the same criteria.
 - Moderation queue: `GET /api/v1/moderation/suggestions` (moderator/admin only) with `POST .../decision` for approvals/rejections; decisions are recorded to `audit-log.json` and approved patches are applied during the next ingest run.
 
 ## Development
