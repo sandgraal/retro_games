@@ -15,16 +15,24 @@ const __dirname = path.dirname(__filename);
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 
+function resolveWithinRoot(targetPath) {
+  const resolved = path.resolve(ROOT_DIR, targetPath);
+  if (!resolved.startsWith(ROOT_DIR + path.sep)) {
+    throw new Error(`Path must stay within project root: ${targetPath}`);
+  }
+  return resolved;
+}
+
 function parseArgs() {
   const args = process.argv.slice(2);
   const options = {};
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
     if (arg === "--env" && args[i + 1]) {
-      options.envPath = path.resolve(ROOT_DIR, args[i + 1]);
+      options.envPath = resolveWithinRoot(args[i + 1]);
       i += 1;
     } else if (arg === "--out" && args[i + 1]) {
-      options.outputPath = path.resolve(ROOT_DIR, args[i + 1]);
+      options.outputPath = resolveWithinRoot(args[i + 1]);
       i += 1;
     }
   }
@@ -40,8 +48,8 @@ function ensureFileExists(filePath, friendlyName) {
 }
 
 function buildConfig({ envPath, outputPath }) {
-  const resolvedEnv = envPath || path.join(ROOT_DIR, ".env");
-  const resolvedOut = outputPath || path.join(ROOT_DIR, "config.js");
+  const resolvedEnv = envPath || resolveWithinRoot(".env");
+  const resolvedOut = outputPath || resolveWithinRoot("config.js");
 
   ensureFileExists(resolvedEnv, ".env file");
   const result = dotenv.config({ path: resolvedEnv });
