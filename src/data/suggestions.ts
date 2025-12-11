@@ -3,26 +3,7 @@
  * Handles community game submissions and moderation workflow
  */
 
-// Type definitions
-export interface SuggestionRecord {
-  id: string;
-  game_name: string;
-  platform: string;
-  submitter_email?: string;
-  status: "pending" | "approved" | "rejected";
-  created_at: string;
-  updated_at?: string;
-}
-
-export interface AuditLogEntry {
-  id: string;
-  suggestion_id: string;
-  moderator_email: string;
-  action: "approve" | "reject";
-  reason?: string;
-  timestamp: string;
-}
-
+import type { SuggestionRecord, AuditLogEntry } from "../core/types";
 export interface ModerationDecision {
   action: "approve" | "reject";
   reason?: string;
