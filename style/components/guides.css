@@ -34,13 +34,172 @@
    HERO SECTION
    ======================================== */
 
+.guides-welcome {
+  position: relative;
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--accent-primary-rgb), 0.08) 0%,
+    rgba(var(--accent-secondary-rgb), 0.08) 50%,
+    rgba(var(--accent-warm-rgb), 0.05) 100%
+  );
+  border: 1px solid var(--border-color);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px rgba(var(--accent-primary-rgb), 0.05);
+  overflow: hidden;
+}
+
+.guides-welcome__content {
+  position: relative;
+  display: grid;
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.guides-welcome__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--accent-primary-rgb), 0.12);
+  color: var(--accent-primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  margin: 0 0 var(--spacing-sm);
+}
+
+.guides-welcome__title {
+  margin: 0 0 var(--spacing-sm);
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  color: var(--text-primary);
+}
+
+.guides-welcome__description {
+  margin: 0 0 var(--spacing-md);
+  color: var(--text-secondary);
+  max-width: 700px;
+}
+
+.guides-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.guides-welcome__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition:
+    transform var(--duration-fast) var(--easing-default),
+    box-shadow var(--duration-fast) var(--easing-default),
+    border-color var(--duration-fast) var(--easing-default);
+}
+
+.guides-welcome__action--primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--bg-primary);
+  box-shadow: 0 10px 30px rgba(var(--accent-primary-rgb), 0.25);
+}
+
+.guides-welcome__action--secondary {
+  border-color: rgba(var(--accent-primary-rgb), 0.35);
+  background: rgba(var(--accent-primary-rgb), 0.08);
+}
+
+.guides-welcome__action:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.guides-welcome__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.guides-welcome__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 8px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(var(--accent-secondary-rgb), 0.1);
+  color: var(--text-primary);
+  border: 1px solid rgba(var(--accent-secondary-rgb), 0.25);
+  font-weight: 600;
+}
+
+.guides-welcome__dismiss {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(var(--bg-elevated-rgb, 20, 24, 31), 0.85);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--easing-default),
+    transform var(--duration-fast) var(--easing-default);
+}
+
+.guides-welcome__dismiss:hover {
+  background: rgba(var(--accent-primary-rgb), 0.12);
+  transform: translateY(-1px);
+  color: var(--text-primary);
+}
+
+.guides-welcome__dismiss:focus-visible,
+.guides-welcome__action:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.guides-welcome__content::after {
+  content: "";
+  position: absolute;
+  inset: -40% auto auto 60%;
+  width: 280px;
+  aspect-ratio: 1;
+  background: radial-gradient(
+    circle,
+    rgba(var(--accent-primary-rgb), 0.14) 0%,
+    rgba(var(--accent-secondary-rgb), 0.08) 40%,
+    transparent 70%
+  );
+  filter: blur(12px);
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .guides-welcome__content {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
 .guides-hero {
   position: relative;
   background: linear-gradient(
     135deg,
-    rgba(0, 212, 255, 0.08) 0%,
-    rgba(147, 51, 234, 0.08) 50%,
-    rgba(239, 68, 68, 0.05) 100%
+    rgba(var(--accent-primary-rgb), 0.08) 0%,
+    rgba(var(--accent-secondary-rgb), 0.08) 50%,
+    rgba(var(--accent-warm-rgb), 0.05) 100%
   );
   border: 1px solid var(--border-color);
   border-radius: var(--radius-xl);
@@ -59,7 +218,7 @@
 
 .guides-hero-badge {
   display: inline-block;
-  background: rgba(0, 212, 255, 0.15);
+  background: rgba(var(--accent-primary-rgb), 0.15);
   color: var(--accent-primary);
   font-size: 0.75rem;
   font-weight: 600;
@@ -74,10 +233,10 @@
 @keyframes pulseGlow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.3);
+    box-shadow: 0 0 0 0 rgba(var(--accent-primary-rgb), 0.3);
   }
   50% {
-    box-shadow: 0 0 20px 5px rgba(0, 212, 255, 0.15);
+    box-shadow: 0 0 20px 5px rgba(var(--accent-primary-rgb), 0.15);
   }
 }
 
