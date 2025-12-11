@@ -204,6 +204,17 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+/**
+ * Normalizes a raw game record by standardizing field names and values.
+ * Handles various field name variants from different data sources and community submissions:
+ * - title: title, name, game_name
+ * - platform: platform, platform_name, platform_slug
+ * - platform_slug: platform_slug, platform
+ * - release_date: release_date, releaseDate, release_year
+ * - esrb: esrb, rating, esrb_rating
+ * - genres: genres, genre (array or single value)
+ * - regions: regions, region (array or single value)
+ */
 function normalizeRecord(raw, sourceName) {
   return {
     title: safeString(raw.title || raw.name || raw.game_name),
