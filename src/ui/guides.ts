@@ -28,68 +28,37 @@ let filterCategory: "all" | "console" | "genre" = "all";
 let filterPlatform = "all";
 let searchQuery = "";
 let containerElement: HTMLElement | null = null;
+let scrollTriggerCleanup: (() => void) | null = null;
 
-function hasDismissedWelcomePanel(): boolean {
-  return safeStorage.getItem(WELCOME_PANEL_STORAGE_KEY) === "true";
-}
+function setupScrollTriggers(container: HTMLElement): void {
+  if (scrollTriggerCleanup) {
+    scrollTriggerCleanup();
+  }
 
-function dismissWelcomePanel(): void {
-  safeStorage.setItem(WELCOME_PANEL_STORAGE_KEY, "true");
-}
+  const handleClick = (event: Event): void => {
+    const trigger = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+      "[data-scroll-target]"
+    );
+    if (!trigger || !container.contains(trigger)) return;
 
-function renderWelcomePanel(): HTMLElement {
-  const panel = el.div({ class: "guides-welcome" });
-  panel.innerHTML = `
-    <div class="guides-welcome__content">
-      <div class="guides-welcome__copy">
-        <p class="guides-welcome__eyebrow">Start here</p>
-        <h2 class="guides-welcome__title">Welcome to Collector's Guides</h2>
-        <p class="guides-welcome__description">
-          Browse curated reference and collecting guides by platform or genre. Use the filters and search below
-          to jump straight to what you need.
-        </p>
-        <div class="guides-welcome__actions">
-          <a class="guides-welcome__action guides-welcome__action--primary" href="#guidesGrid" data-scroll-target="#guidesGrid">
-            Explore the guide grid
-          </a>
-          <button class="guides-welcome__action guides-welcome__action--secondary" type="button" data-scroll-target="#guidesGrid">
-            Skip to filters
-          </button>
-        </div>
-      </div>
-      <div class="guides-welcome__badges" aria-hidden="true">
-        <span class="guides-welcome__badge">🎮 Platforms</span>
-        <span class="guides-welcome__badge">⚔️ Genres</span>
-        <span class="guides-welcome__badge">💎 Collecting tips</span>
-      </div>
-      <button class="guides-welcome__dismiss" type="button" aria-label="Dismiss welcome panel">✕</button>
-    </div>
-  `;
+    const targetSelector = trigger.getAttribute("data-scroll-target");
+    if (!targetSelector) return;
 
-  setupScrollTriggers(panel);
+    const target =
+      container.querySelector<HTMLElement>(targetSelector) ??
+      document.querySelector<HTMLElement>(targetSelector);
 
-  const dismissBtn = panel.querySelector<HTMLButtonElement>(".guides-welcome__dismiss");
-  dismissBtn?.addEventListener("click", () => {
-    dismissWelcomePanel();
-    panel.remove();
-  });
+    if (target) {
+      event.preventDefault();
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
-  return panel;
-}
-
-function setupScrollTriggers(panel: HTMLElement): void {
-  panel.querySelectorAll<HTMLElement>("[data-scroll-target]").forEach((trigger) => {
-    trigger.addEventListener("click", (event) => {
-      const targetSelector = trigger.getAttribute("data-scroll-target");
-      if (!targetSelector) return;
-
-      const target = document.querySelector<HTMLElement>(targetSelector);
-      if (target) {
-        event.preventDefault();
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-  });
+  container.addEventListener("click", handleClick);
+  scrollTriggerCleanup = () => {
+    container.removeEventListener("click", handleClick);
+    scrollTriggerCleanup = null;
+  };
 }
 
 // Interactive features state
@@ -98,20 +67,11 @@ let tocActiveId = "";
 let scrollListener: (() => void) | null = null;
 
 function hasDismissedWelcomePanel(): boolean {
-  try {
-    return localStorage.getItem(GUIDES_WELCOME_DISMISS_KEY) === "true";
-  } catch (error) {
-    console.warn("Unable to read welcome panel state", error);
-    return false;
-  }
+  return safeStorage.getItem(WELCOME_PANEL_STORAGE_KEY) === "true";
 }
 
 function dismissWelcomePanel(panel?: HTMLElement | null): void {
-  try {
-    localStorage.setItem(GUIDES_WELCOME_DISMISS_KEY, "true");
-  } catch (error) {
-    console.warn("Unable to persist welcome panel dismissal", error);
-  }
+  safeStorage.setItem(WELCOME_PANEL_STORAGE_KEY, "true");
 
   if (panel) {
     panel.classList.add("guides-welcome--dismissed");
@@ -174,17 +134,6 @@ function renderWelcomePanel(): HTMLElement | null {
   const closeBtn = panel.querySelector<HTMLButtonElement>(".guides-welcome-close");
   closeBtn?.addEventListener("click", () => dismissWelcomePanel(panel));
 
-  panel.querySelectorAll<HTMLElement>("[data-scroll-target]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-scroll-target");
-      if (!targetId) return;
-      const target = document.getElementById(targetId);
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-  });
-
   return panel;
 }
 
@@ -195,7 +144,9 @@ function renderGuideIndex(): HTMLElement {
 
   if (!hasDismissedWelcomePanel()) {
     const welcome = renderWelcomePanel();
-    container.appendChild(welcome);
+    if (welcome) {
+      container.appendChild(welcome);
+    }
   }
 
   // Hero Section
@@ -1333,6 +1284,7 @@ export function mountGuides(selector: string): () => void {
   }
 
   containerElement = element as HTMLElement;
+  setupScrollTriggers(containerElement);
   guideIndex = buildGuideIndex();
 
   // Check URL for initial state
@@ -1364,6 +1316,9 @@ export function mountGuides(selector: string): () => void {
 
   // Cleanup function
   return () => {
+    if (scrollTriggerCleanup) {
+      scrollTriggerCleanup();
+    }
     containerElement = null;
   };
 }
