@@ -487,7 +487,6 @@ export function applyApprovedSuggestions(records, suggestions) {
       const normalized = normalizeRecord(
         {
           ...delta,
-          source: "suggestion",
         },
         "community"
       );
