@@ -682,7 +682,7 @@ describe("startReadApiServer", () => {
     return new Promise((resolve, reject) => {
       const req = http.get(
         `http://localhost:${port}${path}`,
-        { headers: options.headers || {} },
+        { headers: options.headers },
         (res) => {
           let body = "";
           res.on("data", (chunk) => {
@@ -949,121 +949,81 @@ describe("startReadApiServer", () => {
       expect(json.suggestions).toEqual([]);
     });
 
-    test("enriches suggestions with canonical data from catalog-store for moderator", async () => {
-      // First, create a game in the catalog
-      await runIngestion({
-        sources: [
-          {
-            name: "test-source",
-            records: [
-              {
-                title: "Chrono Trigger",
-                platform: "SNES",
-                release_date: "1995-03-11",
-                genres: ["RPG"],
-              },
-            ],
-          },
-        ],
-      });
+    test.each([
+      {
+        role: "moderator",
+        port: 9887,
+        game: {
+          title: "Chrono Trigger",
+          platform: "SNES",
+          release_date: "1995-03-11",
+          genres: ["RPG"],
+        },
+        suggestionId: "test-suggestion-1",
+      },
+      {
+        role: "admin",
+        port: 9888,
+        game: {
+          title: "Final Fantasy VII",
+          platform: "PlayStation",
+          release_date: "1997-01-31",
+          genres: ["RPG"],
+        },
+        suggestionId: "test-suggestion-2",
+      },
+    ])(
+      "enriches suggestions with canonical data from catalog-store for $role",
+      async ({ role, port, game, suggestionId }) => {
+        // First, create a game in the catalog
+        await runIngestion({
+          sources: [
+            {
+              name: "test-source",
+              records: [game],
+            },
+          ],
+        });
 
-      // Get the game key to use as targetId
-      const catalogStorePath = path.join(tempDir, "catalog-store.json");
-      const suggestionsPath = path.join(tempDir, "suggestions.json");
-      const catalogStoreData = await fs.readFile(catalogStorePath, "utf-8");
-      const catalogStore = JSON.parse(catalogStoreData);
-      const gameKey = Object.keys(catalogStore.records)[0];
+        // Get the game key to use as targetId
+        const catalogStorePath = path.join(tempDir, "catalog-store.json");
+        const suggestionsPath = path.join(tempDir, "suggestions.json");
+        const catalogStoreData = await fs.readFile(catalogStorePath, "utf-8");
+        const catalogStore = JSON.parse(catalogStoreData);
+        const gameKey = Object.keys(catalogStore.records)[0];
 
-      // Create a suggestion
-      const suggestions = {
-        suggestions: [
-          {
-            id: "test-suggestion-1",
-            type: "update",
-            targetId: gameKey,
-            delta: { genres: ["RPG", "JRPG"] },
-            status: "pending",
-            author: { role: "contributor", email: "user@example.com", sessionId: "sess_123" },
-            submittedAt: "2024-01-01T00:00:00.000Z",
-            notes: "Adding JRPG genre",
-          },
-        ],
-      };
-      await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
+        // Create a suggestion
+        const suggestions = {
+          suggestions: [
+            {
+              id: suggestionId,
+              type: "update",
+              targetId: gameKey,
+              delta: { genres: ["RPG", "Updated"] },
+              status: "pending",
+              author: { role: "contributor", email: "user@example.com", sessionId: "sess_123" },
+              submittedAt: "2024-01-01T00:00:00.000Z",
+              notes: "Updating genres",
+            },
+          ],
+        };
+        await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
 
-      const port = 9887;
-      server = startReadApiServer({ port });
-      await new Promise((resolve) => setTimeout(resolve, 100));
+        server = startReadApiServer({ port });
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "moderator" },
-      });
-      expect(response.statusCode).toBe(200);
-      const json = JSON.parse(response.body);
-      expect(json.suggestions).toHaveLength(1);
-      expect(json.suggestions[0].id).toBe("test-suggestion-1");
-      expect(json.suggestions[0].canonical).toBeDefined();
-      expect(json.suggestions[0].canonical.title).toBe("Chrono Trigger");
-      expect(json.suggestions[0].canonical.platform).toBe("SNES");
-    });
-
-    test("enriches suggestions with canonical data from catalog-store for admin", async () => {
-      // First, create a game in the catalog
-      await runIngestion({
-        sources: [
-          {
-            name: "test-source",
-            records: [
-              {
-                title: "Final Fantasy VII",
-                platform: "PlayStation",
-                release_date: "1997-01-31",
-                genres: ["RPG"],
-              },
-            ],
-          },
-        ],
-      });
-
-      // Get the game key to use as targetId
-      const catalogStorePath = path.join(tempDir, "catalog-store.json");
-      const suggestionsPath = path.join(tempDir, "suggestions.json");
-      const catalogStoreData = await fs.readFile(catalogStorePath, "utf-8");
-      const catalogStore = JSON.parse(catalogStoreData);
-      const gameKey = Object.keys(catalogStore.records)[0];
-
-      // Create a suggestion
-      const suggestions = {
-        suggestions: [
-          {
-            id: "test-suggestion-2",
-            type: "update",
-            targetId: gameKey,
-            delta: { genres: ["RPG", "Action"] },
-            status: "pending",
-            author: { role: "contributor", email: "user@example.com", sessionId: "sess_456" },
-            submittedAt: "2024-01-02T00:00:00.000Z",
-            notes: "Updating genres",
-          },
-        ],
-      };
-      await fs.writeFile(suggestionsPath, JSON.stringify(suggestions, null, 2));
-
-      const port = 9888;
-      server = startReadApiServer({ port });
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
-        headers: { "x-role": "admin" },
-      });
-      expect(response.statusCode).toBe(200);
-      const json = JSON.parse(response.body);
-      expect(json.suggestions).toHaveLength(1);
-      expect(json.suggestions[0].id).toBe("test-suggestion-2");
-      expect(json.suggestions[0].canonical).toBeDefined();
-      expect(json.suggestions[0].canonical.title).toBe("Final Fantasy VII");
-      expect(json.suggestions[0].canonical.platform).toBe("PlayStation");
-    });
+        const response = await makeRequest(port, "/api/v1/moderation/suggestions", {
+          headers: { "x-role": role },
+        });
+        expect(response.statusCode).toBe(200);
+        const json = JSON.parse(response.body);
+        expect(json.suggestions).toHaveLength(1);
+        expect(json.suggestions[0].id).toBe(suggestionId);
+        expect(json.suggestions[0].canonical).toBeDefined();
+        expect(json.suggestions[0].canonical.title).toBe(game.title);
+        expect(json.suggestions[0].canonical.platform).toBe(game.platform);
+      }
+    );
 
     test("handles suggestions with no targetId (new game suggestions)", async () => {
       const suggestionsPath = path.join(tempDir, "suggestions.json");
