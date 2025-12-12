@@ -11,12 +11,15 @@ When a user deletes their eBay account, eBay sends a notification to registered 
 
 ## Environment Variables
 
-| Variable                              | Required | Description                                    | Example                                                               |
-| ------------------------------------- | -------- | ---------------------------------------------- | --------------------------------------------------------------------- |
-| `EBAY_MARKETPLACE_VERIFICATION_TOKEN` | Yes      | Secret token you create and register with eBay | `my-secret-token-abc123`                                              |
-| `EBAY_MARKETPLACE_ENDPOINT_URL`       | Yes      | The public HTTPS URL eBay will call            | `https://your-project.supabase.co/functions/v1/ebay-account-deletion` |
-| `SUPABASE_URL`                        | No       | Auto-injected by Supabase                      | -                                                                     |
-| `SUPABASE_SERVICE_ROLE_KEY`           | No       | Required if implementing database deletions    | -                                                                     |
+| Variable                              | Required | Description                                           | Example                                                               |
+| ------------------------------------- | -------- | ----------------------------------------------------- | --------------------------------------------------------------------- |
+| `EBAY_MARKETPLACE_VERIFICATION_TOKEN` | Yes      | Secret token you create and register with eBay        | `my-secret-token-abc123`                                              |
+| `EBAY_MARKETPLACE_ENDPOINT_URL`       | Yes      | The public HTTPS URL eBay will call                   | `https://your-project.supabase.co/functions/v1/ebay-account-deletion` |
+| `EBAY_DELETION_STUB_MODE`             | No       | Set to `true` to log deletions without requiring a DB | `false`                                                               |
+| `SUPABASE_URL`                        | No       | Auto-injected by Supabase                             | -                                                                     |
+| `SUPABASE_SERVICE_ROLE_KEY`           | No       | Required if implementing database deletions           | -                                                                     |
+
+> **Note on Stub Mode**: In production, leave `EBAY_DELETION_STUB_MODE` unset or set to `false`. If Supabase credentials are missing and stub mode is disabled, the endpoint will return an error (HTTP 500) so eBay retries the notification. This prevents silent compliance gaps.
 
 ### Setting Environment Variables
 
@@ -157,7 +160,7 @@ curl -X POST "${ENDPOINT_URL}" \
       "data": {
         "username": "testuser123",
         "userId": "TESTUSER12345",
-        "eiasToken": "nY+sHZ2PrBmdj6wVnY+sEZ2PrA2dj6wFk4GhDJOCpQSdj6x9nY+seQ=="
+        "eiasToken": "EXAMPLE-EIAS-TOKEN-FOR-TESTING-ONLY-12345"
       }
     }
   }'

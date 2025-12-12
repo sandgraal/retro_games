@@ -116,6 +116,23 @@
   color: #ffffff;
 }
 
+/* Price Badge - shows loose price */
+.game-card-price {
+  position: absolute;
+  bottom: var(--spacing-sm);
+  right: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-full);
+  font-family: var(--font-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  background: rgba(16, 185, 129, 0.9);
+  color: #ffffff;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-md);
+  z-index: 2;
+}
+
 /* Variant Badge - shows regional versions */
 .game-card-variants {
   position: absolute;
