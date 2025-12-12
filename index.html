@@ -409,6 +409,40 @@
               </div>
             </div>
 
+            <!-- Price Range Filter -->
+            <div class="filter-group">
+              <div class="filter-group-label">
+                <span>Price Range</span>
+                <button
+                  type="button"
+                  class="filter-toggle deals-toggle"
+                  id="dealsToggle"
+                  aria-pressed="false"
+                >
+                  🔥 Hot Deals
+                </button>
+              </div>
+              <div class="filter-range" id="priceFilter">
+                <input
+                  type="number"
+                  id="priceMin"
+                  class="filter-range-input"
+                  placeholder="$0"
+                  min="0"
+                  aria-label="Minimum price"
+                />
+                <span class="filter-range-separator">-</span>
+                <input
+                  type="number"
+                  id="priceMax"
+                  class="filter-range-input"
+                  placeholder="$∞"
+                  min="0"
+                  aria-label="Maximum price"
+                />
+              </div>
+            </div>
+
             <!-- Sort Options -->
             <div class="filter-group">
               <div class="filter-group-label">

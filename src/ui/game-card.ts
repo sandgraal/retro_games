@@ -68,13 +68,26 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
     card.appendChild(badge);
   }
 
-  // Price badge - show loose price if available
+  // Price badge - show loose price with trend indicator if available
   const priceData = prices.get().get(game.key);
   if (priceData?.loose) {
+    // Determine trend
+    let trendClass = "";
+    let trendIcon = "";
+    if (priceData.weekChangePct !== undefined) {
+      if (priceData.weekChangePct > 2) {
+        trendClass = "price-up";
+        trendIcon = "↑";
+      } else if (priceData.weekChangePct < -2) {
+        trendClass = "price-down";
+        trendIcon = "↓";
+      }
+    }
+
     const priceBadge = createElement(
       "div",
-      { class: "game-card-price" },
-      formatCurrency(priceData.loose, { fromCents: true })
+      { class: `game-card-price ${trendClass}` },
+      `${trendIcon}${formatCurrency(priceData.loose, { fromCents: true })}`
     );
     card.appendChild(priceBadge);
   }

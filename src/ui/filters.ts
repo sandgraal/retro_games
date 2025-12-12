@@ -17,6 +17,8 @@ import {
   setSearchQuery,
   setSort,
   resetFilters,
+  setPriceRange,
+  toggleDealsOnly,
 } from "../state/store";
 import { effect } from "../core/signals";
 
@@ -56,6 +58,9 @@ export function initFilters(ctx: ComponentContext): void {
 
   // Setup clear button
   setupClearButton(cleanup);
+
+  // Setup price filter
+  setupPriceFilter(cleanup);
 
   // Setup filter checkboxes (event delegation)
   element.addEventListener("change", handleFilterChange);
@@ -196,6 +201,45 @@ type ValidStatus = (typeof VALID_STATUSES)[number];
 
 function isValidStatus(value: string): value is ValidStatus {
   return VALID_STATUSES.includes(value as ValidStatus);
+}
+
+/**
+ * Setup price filter inputs and deals toggle
+ */
+function setupPriceFilter(cleanup: (() => void)[]): void {
+  const priceMin = document.getElementById("priceMin") as HTMLInputElement | null;
+  const priceMax = document.getElementById("priceMax") as HTMLInputElement | null;
+  const dealsToggle = document.getElementById("dealsToggle") as HTMLButtonElement | null;
+
+  // Handle price range changes (debounced)
+  const handlePriceChange = debounce(() => {
+    const minValue = priceMin?.value ? parseFloat(priceMin.value) * 100 : undefined; // Convert dollars to cents
+    const maxValue = priceMax?.value ? parseFloat(priceMax.value) * 100 : undefined;
+    setPriceRange(minValue, maxValue);
+  }, 400);
+
+  if (priceMin) {
+    priceMin.addEventListener("input", handlePriceChange);
+    cleanup.push(() => priceMin.removeEventListener("input", handlePriceChange));
+  }
+
+  if (priceMax) {
+    priceMax.addEventListener("input", handlePriceChange);
+    cleanup.push(() => priceMax.removeEventListener("input", handlePriceChange));
+  }
+
+  // Handle deals toggle
+  if (dealsToggle) {
+    const handleDealsClick = () => {
+      toggleDealsOnly();
+      const isActive = filterState.get().showDealsOnly;
+      dealsToggle.setAttribute("aria-pressed", isActive ? "true" : "false");
+      dealsToggle.classList.toggle("active", isActive);
+    };
+
+    dealsToggle.addEventListener("click", handleDealsClick);
+    cleanup.push(() => dealsToggle.removeEventListener("click", handleDealsClick));
+  }
 }
 
 /**
