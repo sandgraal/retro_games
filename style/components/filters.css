@@ -75,6 +75,35 @@
   justify-content: space-between;
 }
 
+/* Deals Toggle Button */
+.deals-toggle {
+  font-family: var(--font-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-default);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.deals-toggle:hover {
+  background: rgba(255, 140, 0, 0.1);
+  border-color: var(--accent-fire);
+  color: var(--accent-fire);
+}
+
+.deals-toggle.active {
+  background: rgba(255, 140, 0, 0.2);
+  border-color: var(--accent-fire);
+  color: var(--accent-fire);
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.3);
+}
+
 .filter-count {
   font-family: var(--font-accent);
   font-size: var(--font-size-xs);

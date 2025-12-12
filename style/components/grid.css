@@ -131,6 +131,28 @@
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow-md);
   z-index: 2;
+  transition: background-color var(--duration-fast) var(--easing-default);
+}
+
+/* Price trending up */
+.game-card-price.price-up {
+  background: rgba(239, 68, 68, 0.9);
+}
+
+/* Price trending down - good deal! */
+.game-card-price.price-down {
+  background: rgba(34, 197, 94, 0.9);
+  animation: pulse-deal 2s ease-in-out infinite;
+}
+
+@keyframes pulse-deal {
+  0%,
+  100% {
+    box-shadow: var(--shadow-md);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.6);
+  }
 }
 
 /* Variant Badge - shows regional versions */

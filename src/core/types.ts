@@ -71,6 +71,11 @@ export interface PriceData {
   lastUpdated?: string;
   source?: PricingSource;
   offers?: PricingOffers;
+  // Trend data
+  weekChangePct?: number;
+  monthChangePct?: number;
+  allTimeLow?: number;
+  allTimeHigh?: number;
 }
 
 export type PriceMap = Map<GameKey, PriceData>;
@@ -114,9 +119,14 @@ export interface FilterState {
     start?: number;
     end?: number;
   };
+  priceRange: {
+    min?: number; // in cents
+    max?: number; // in cents
+  };
   minRating: number;
   sortBy: SortOption;
   sortDirection: "asc" | "desc";
+  showDealsOnly: boolean; // games with price drops
 }
 
 export type SortOption = "name" | "rating" | "year" | "value" | "platform";

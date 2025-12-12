@@ -37,9 +37,11 @@ const DEFAULT_FILTER_STATE: FilterState = {
   statuses: new Set(),
   searchQuery: "",
   yearRange: {},
+  priceRange: {},
   minRating: 0,
   sortBy: "name",
   sortDirection: "asc",
+  showDealsOnly: false,
 };
 
 // === Core State Signals ===
@@ -143,6 +145,29 @@ export const filteredGames: ComputedSignal<GameWithKey[]> = computed(() => {
     result = result.filter((g) => {
       const rating = parseFloat(String(g.rating));
       return !isNaN(rating) && rating >= filters.minRating;
+    });
+  }
+
+  // Price range filter
+  if (filters.priceRange.min !== undefined || filters.priceRange.max !== undefined) {
+    result = result.filter((g) => {
+      const price = prices.get(g.key);
+      const loosePrice = price?.loose ?? 0;
+      if (filters.priceRange.min !== undefined && loosePrice < filters.priceRange.min) {
+        return false;
+      }
+      if (filters.priceRange.max !== undefined && loosePrice > filters.priceRange.max) {
+        return false;
+      }
+      return loosePrice > 0; // Only include games with prices
+    });
+  }
+
+  // Show only deals (price drops)
+  if (filters.showDealsOnly) {
+    result = result.filter((g) => {
+      const price = prices.get(g.key);
+      return price?.weekChangePct !== undefined && price.weekChangePct < -2;
     });
   }
 
@@ -519,6 +544,26 @@ export function openGameModal(game: GameWithKey): void {
  */
 export function closeGameModal(): void {
   modalGameSignal.set(null);
+}
+
+/**
+ * Set price range filter (prices in cents)
+ */
+export function setPriceRange(min?: number, max?: number): void {
+  filterStateSignal.set((current) => ({
+    ...current,
+    priceRange: { min, max },
+  }));
+}
+
+/**
+ * Toggle deals-only filter
+ */
+export function toggleDealsOnly(): void {
+  filterStateSignal.set((current) => ({
+    ...current,
+    showDealsOnly: !current.showDealsOnly,
+  }));
 }
 
 // === Persistence ===

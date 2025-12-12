@@ -36,7 +36,7 @@ export async function loadPrices(): Promise<PriceLoadResult> {
 }
 
 /**
- * Fetch latest prices from Supabase game_price_latest view
+ * Fetch latest prices from Supabase game_price_trends view (includes trend data)
  */
 async function fetchSupabasePricing(): Promise<PriceLoadResult | null> {
   const config = getConfig();
@@ -46,7 +46,8 @@ async function fetchSupabasePricing(): Promise<PriceLoadResult | null> {
   }
 
   try {
-    const url = `${config.url.replace(/\/$/, "")}/rest/v1/game_price_latest?select=*`;
+    // Use game_price_trends view which includes trend data
+    const url = `${config.url.replace(/\/$/, "")}/rest/v1/game_price_trends?select=*`;
     const response = await fetch(url, {
       headers: {
         apikey: config.anonKey,
@@ -73,6 +74,12 @@ async function fetchSupabasePricing(): Promise<PriceLoadResult | null> {
       if (!row?.game_key) continue;
       const normalized = normalizePriceEntry(row, "live");
       if (normalized) {
+        // Add trend data
+        normalized.weekChangePct = parseFloat(row.week_change_pct) || undefined;
+        normalized.monthChangePct = parseFloat(row.month_change_pct) || undefined;
+        normalized.allTimeLow = row.all_time_low_loose || undefined;
+        normalized.allTimeHigh = row.all_time_high_loose || undefined;
+
         prices[row.game_key] = normalized;
         const candidate = normalized.lastUpdated ?? normalized.snapshotDate;
         if (candidate && (!newestTimestamp || candidate > newestTimestamp)) {
@@ -81,7 +88,7 @@ async function fetchSupabasePricing(): Promise<PriceLoadResult | null> {
       }
     }
 
-    console.info(`Loaded ${Object.keys(prices).length} prices from Supabase`);
+    console.info(`Loaded ${Object.keys(prices).length} prices with trends from Supabase`);
     return {
       prices,
       source: "live",
