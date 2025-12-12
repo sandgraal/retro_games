@@ -70,7 +70,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: data/cover-cache.json
-          key: cover-cache-v1-${{ hashFiles('data/cover-cache.json') }}
+          key: cover-cache-v1-${{ github.run_id }}-${{ hashFiles('data/cover-cache.json') }}
 
       - name: Upload results artifact
         if: always()
