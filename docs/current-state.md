@@ -9,7 +9,7 @@ _Last updated: December 2025_
 - **TypeScript SPA** built with **Vite 7**; no framework.
 - **Custom signals** drive state and computed views (`src/core/signals.ts`).
 - **State store** in `src/state/store.ts` enriches games with keys, persists collection/notes/preferences to `localStorage`, and exposes `filteredGames` + `collectionStats`.
-- **Data layer** in `src/data/loader.ts` tries Supabase (`games_consolidated` view) when `config.js` + the Supabase CDN client are present, otherwise falls back to `data/sample-games.json` (8 games).
+- **Data layer** in `src/data/loader.ts` tries Supabase (`games_consolidated` view) when `config.js` + the Supabase CDN client are present, otherwise falls back to `data/sample-games.json` (24 games).
 - **UI** lives in `src/ui/` (grid with virtualization at ≥100 cards, modal, filters, dashboard, settings modal, moderation panel, guides).
 - **Exports** handled by `src/features/export.ts` (CSV, backup, share codes).
 - **Pricing** reads from live API endpoints first (`/api/v1/prices/latest`), falling back to `data/sample-price-history.json` (cents).
@@ -23,9 +23,9 @@ _Last updated: December 2025_
 
 ## Tests
 
-- **Vitest**: 327 unit tests across core, state, features, formatting, suggestions, and build scripts.
+- **Vitest**: 388 unit tests across core, state, features, formatting, suggestions, and build scripts.
 - **Playwright**: 14 e2e tests across smoke, filters, and aria checks (`tests/e2e/*.spec.js`).
-- **Total**: 341 tests (327 unit + 14 e2e)
+- **Total**: 402 tests (388 unit + 14 e2e)
 - Commands: `npm test`, `npm run test:e2e` (after `npx playwright install --with-deps`).
 
 ## Working

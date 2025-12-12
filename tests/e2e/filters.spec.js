@@ -12,7 +12,7 @@ test.describe("Platform Filtering", () => {
   test("shows all games initially", async ({ page }) => {
     const cards = page.locator("#gameGrid .game-card");
     const count = await cards.count();
-    // Sample data has 8 games
+    // Sample data has 24 games
     expect(count).toBeGreaterThanOrEqual(1);
   });
 

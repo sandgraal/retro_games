@@ -11,7 +11,7 @@ A TypeScript + Vite app for tracking **ALL video games**—retro classics, moder
 - Filters: platform + genre checkboxes, search, and sort (name, rating, year, value, platform).
 - Collection status (owned/wishlist/backlog/trade) and notes persisted to `localStorage`; the settings modal handles theme/view/backup/restore/clear actions.
 - Export: CSV, JSON backup, and share codes that can be imported via the URL `?share=...`.
-- Data sources: Supabase `games_consolidated` view when `config.js` provides credentials; otherwise `data/sample-games.json` (8 games). Prices currently come from `data/sample-price-history.json` (cents) and feed the dashboard/modal value displays.
+- Data sources: Supabase `games_consolidated` view when `config.js` provides credentials; otherwise `data/sample-games.json` (24 games). Prices currently come from `data/sample-price-history.json` (cents) and feed the dashboard/modal value displays.
 - Offline basics via `public/sw.js` + `public/manifest.json`.
 
 ## Data sources & configuration
@@ -63,7 +63,7 @@ npm install
 npm run dev           # Vite dev server on http://localhost:3000
 npm run build         # TypeScript check + Vite build
 npm run lint          # ESLint over src + scripts
-npm test              # Vitest (327 tests)
+npm test              # Vitest (388 tests)
 npm run test:e2e      # Playwright (14 tests); run `npx playwright install --with-deps` once
 npm run build:config  # Generate config.js from .env
 ```

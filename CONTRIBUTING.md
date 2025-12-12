@@ -2,7 +2,7 @@
 
 **✅ Phase 0 Refactoring Complete** (January 2025)
 
-The modular architecture refactoring is complete! The monolithic `app.js` (5,940 lines) has been successfully extracted into **29 TypeScript modules** with **341 tests passing** (327 unit + 14 e2e).
+The modular architecture refactoring is complete! The monolithic `app.js` (5,940 lines) has been successfully extracted into **29 TypeScript modules** with **402 tests passing** (388 unit + 14 e2e).
 
 **Ready to accept:**
 
