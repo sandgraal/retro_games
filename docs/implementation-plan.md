@@ -45,7 +45,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 | Phase 3: SEO & Web Vitals       | ✅ COMPLETE | JSON-LD, sitemap, Lighthouse CI                 |
 | Phase 3: Content Marketing      | ✅ COMPLETE | Guides, templates, embed widgets, outreach plan |
 | Phase 4: Monetization           | ⛔ BLOCKED  | Requires business decisions                     |
-| **Phase 5: Global Catalog**     | 🚧 ACTIVE   | Multi-source ingestion, submissions, moderation |
+| **Phase 5: Global Catalog**     | 🚧 ACTIVE   | **74,458 games** ingested, Supabase upload next |
 | **Phase 6: Social & Community** | 📋 PLANNED  | User profiles, reviews, lists, activity feeds   |
 
 ---

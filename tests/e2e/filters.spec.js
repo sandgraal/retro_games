@@ -17,28 +17,45 @@ test.describe("Platform Filtering", () => {
   });
 
   test("filters by platform via dropdown", async ({ page }) => {
-    // Find platform filter
-    const platformFilter = page
-      .locator("#platformFilter, [data-filter='platform']")
-      .first();
+    const platformFilters = page.locator("#platformFilters");
+    const familyToggles = platformFilters.locator("[data-family-toggle]");
+    const platformCheckboxes = platformFilters.locator('input[data-filter="platform"]');
 
-    if ((await platformFilter.count()) > 0) {
-      // Get initial count
-      const initialCount = await page.locator("#gameGrid .game-card").count();
-
-      // Select a specific platform (SNES is in sample data)
-      await platformFilter.selectOption({ label: "SNES" }).catch(() => {
-        // Try clicking if it's not a select
-      });
-
-      // Wait for filter to apply
-      await page.waitForTimeout(500);
-
-      // Check that results changed or stayed same (depends on data)
-      const filteredCount = await page.locator("#gameGrid .game-card").count();
-      expect(filteredCount).toBeLessThanOrEqual(initialCount);
-    } else {
+    // Ensure platform filters exist
+    if ((await platformCheckboxes.count()) === 0) {
       test.skip("Platform filter not found in UI");
+      return;
+    }
+
+    // Expand the first family to reveal platform checkboxes
+    if ((await familyToggles.count()) > 0) {
+      await familyToggles.first().click();
+    }
+
+    const initialCount = await page.locator("#gameGrid .game-card").count();
+    const targetPlatform = platformCheckboxes.first();
+
+    await targetPlatform.waitFor({ state: "visible" });
+    const platformValue = await targetPlatform.inputValue();
+    await targetPlatform.check();
+
+    // Wait for filter to apply
+    await page.waitForTimeout(500);
+
+    const filteredCount = await page.locator("#gameGrid .game-card").count();
+    expect(filteredCount).toBeLessThanOrEqual(initialCount);
+
+    // Cards shown should match the chosen platform
+    if (platformValue) {
+      const platformText = platformValue.toLowerCase();
+      const platforms = page.locator("#gameGrid .game-card-platform");
+      const hasOnlySelectedPlatform = await platforms.evaluateAll(
+        (nodes, expected) =>
+          nodes.every((node) => node.textContent?.toLowerCase().includes(expected)),
+        platformText
+      );
+
+      expect(hasOnlySelectedPlatform).toBe(true);
     }
   });
 });
