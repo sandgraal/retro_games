@@ -2,12 +2,13 @@
 
 ## Project Overview
 
-**Dragon's Hoard Atlas** is a privacy-first, single-page web app for tracking classic and retro games with a museum-quality interface.
+**Dragon's Hoard Atlas** is a privacy-first, single-page web app for tracking ALL video games (retro, modern, indie, mobile, VR) with a museum-quality interface.
 
 ### Key Traits
 
 - No user registration; all data stays local by default
-- Museum-quality design with glassmorphism, masonry grid, PS2-era aesthetic
+- Museum-quality design with glassmorphism, masonry grid, modern aesthetic
+- **Universal coverage**: retro classics, modern AAA, indie games, mobile, VR, and emerging platforms
 - **TypeScript** with reactive signals architecture
 - Vite build system with hot module replacement
 - Instant search/filter across thousands of games

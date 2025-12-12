@@ -155,9 +155,54 @@ Objective: ensure long-term viability without compromising trust.
 ## Operational Cadence
 
 - **Per Release** – Follow a release checklist: changelog entry, fresh backup, accessibility regression test, and post-deploy monitoring. Capture media (screenshots/video) for announcement posts.
+- **Daily** – Automated data ingestion from IGDB/RAWG for new releases. Price updates from eBay/PriceCharting every 6 hours via GitHub Actions.
+- **Weekly** – Full metadata enrichment pass (descriptions, covers, ratings). Community submission review queue processing. Data quality report generation.
 - **Monthly** – Run automated accessibility audits (Lighthouse/axe), review analytics & Core Web Vitals, publish at least one content piece, and audit community metrics for anomalies.
-- **Quarterly** – Perform security reviews (rotate keys, validate backups, dependency scan) and data freshness audits (import new titles, reconcile errors). Conduct performance load test on search and navigation flows.
+- **Quarterly** – Perform security reviews (rotate keys, validate backups, dependency scan) and data freshness audits (import new titles, reconcile errors). Conduct performance load test on search and navigation flows. Add new platforms as they emerge.
 - **Semi-Annually** – Revisit competitive landscape, run user surveys, recalibrate roadmap priorities (e.g., mobile app, barcode scanning) based on community feedback.
+
+## Continuous Data Update Strategy
+
+> **📖 See [UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md) for the complete expansion roadmap.**
+
+### Automated Ingestion Pipeline
+
+| Data Type         | Source           | Frequency   | Automation                     |
+| ----------------- | ---------------- | ----------- | ------------------------------ |
+| New game releases | IGDB webhooks    | Real-time   | Supabase Edge Function trigger |
+| Catalog updates   | IGDB/RAWG API    | Every 6 hrs | GitHub Actions cron            |
+| Price data        | eBay/PriceChart  | Every 6 hrs | `npm run prices:update` cron   |
+| Cover art         | IGDB/Wikipedia   | Daily       | `npm run audit:covers` cron    |
+| User submissions  | Moderation queue | On-demand   | Manual review + auto-apply     |
+
+### GitHub Actions Workflows
+
+```yaml
+# .github/workflows/data-refresh.yml (to be created)
+name: Data Refresh Pipeline
+on:
+  schedule:
+    - cron: "0 */6 * * *" # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  refresh-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm ci
+      - run: npm run ingest:catalog
+      - run: npm run prices:update -- --limit 100
+      - run: npm run audit:covers -- --limit 50
+```
+
+### Monitoring & Alerts
+
+- **Data freshness dashboard**: Track time since last successful ingestion per source
+- **Coverage metrics**: % of games with description, cover, rating (target: 95%+)
+- **Error alerting**: Slack/email notifications for failed ingestion jobs
+- **Anomaly detection**: Alert if game count drops >5% or new releases lag >48hrs
 
 ## Success Metrics & Monitoring
 
@@ -167,7 +212,7 @@ Track the following to gauge progress and keep the hub world-class:
 - **Accessibility & Quality** – Lighthouse ≥95, zero unresolved high-severity accessibility issues, CI accessibility gate enforced.
 - **Community Engagement** – Target 5,000 MAU in year one; ≥50% of active users adding to collections or posting reviews; review queue SLA ≤72 hours.
 - **Contribution & Data Completeness** – ≥95% games with cover art, ≥90% with screenshots/video, ≥80% with rich descriptions; monitor weekly contribution counts and revert rates.
-- **Content & SEO** – 10% MoM organic traffic growth post content launch; first-page rankings for key retro collecting queries; track time-on-page and backlink growth.
+- **Content & SEO** – 10% MoM organic traffic growth post content launch; first-page rankings for key video game collecting queries; track time-on-page and backlink growth.
 - **User Satisfaction & Retention** – NPS >50, ≥30% of new sign-ups active after 3 months, qualitative feedback praising ease of collection management.
 
 ## Task Intake Workflow for Agents
@@ -178,4 +223,4 @@ Track the following to gauge progress and keep the hub world-class:
 4. **Execute with Guardrails** – Follow coding standards, write or update tests, and document changes (README/docs) as needed.
 5. **Report Back** – On completion, link PRs/issues and update the roadmap status. If blockers arise, bundle questions per the ask policy with clear options and defaults.
 
-By following this plan, contributors can make steady, incremental progress while preserving the strategic vision for a world-class retro games hub.
+By following this plan, contributors can make steady, incremental progress while preserving the strategic vision for a world-class universal games hub that serves collectors across all platforms and eras.

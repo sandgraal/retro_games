@@ -1,31 +1,33 @@
 # Data Sources for Game Enrichment
 
-This document catalogs reliable data sources for enriching the Dragon's Hoard Atlas game database.
+This document catalogs reliable data sources for enriching the Dragon's Hoard Atlas universal game database.
+
+> **🚀 UNIVERSAL COVERAGE (December 2025)**: This project now covers ALL games—retro classics, modern AAA, indie, mobile, and VR. Data sources must support the full spectrum of gaming platforms.
 
 ## Current Data Status
 
-After the December 2025 cleanup:
+After the December 2025 expansion:
 
-| Field            | Coverage | Notes                          |
-| ---------------- | -------- | ------------------------------ |
-| game_name        | 100%     | All games have names           |
-| platform         | 100%     | Standardized (PS1, SNES, etc.) |
-| genre            | 100%     | Cleaned N/A values             |
-| cover            | 98.7%    | Wikipedia fallback available   |
-| release_year     | 87.2%    | Priority for enrichment        |
-| rating           | 83.9%    | User ratings                   |
-| description      | 37.0%    | Needs external sources         |
-| developer        | 37.0%    | Needs external sources         |
-| publisher        | 37.0%    | Needs external sources         |
-| igdb_id          | 0%       | External ID linking needed     |
-| metacritic_score | 0%       | Requires API integration       |
+| Field            | Coverage | Notes                                     |
+| ---------------- | -------- | ----------------------------------------- |
+| game_name        | 100%     | All games have names                      |
+| platform         | 100%     | Standardized (PS5, Switch, PC, PS1, etc.) |
+| genre            | 100%     | Cleaned N/A values                        |
+| cover            | 98.7%    | Wikipedia/IGDB fallback available         |
+| release_year     | 87.2%    | Priority for enrichment                   |
+| rating           | 83.9%    | User ratings                              |
+| description      | 37.0%    | Needs external sources                    |
+| developer        | 37.0%    | Needs external sources                    |
+| publisher        | 37.0%    | Needs external sources                    |
+| igdb_id          | 0%       | External ID linking needed                |
+| metacritic_score | 0%       | Requires API integration                  |
 
 ## Recommended Data Sources
 
-### 1. IGDB (Internet Games Database)
+### 1. IGDB (Internet Games Database) ⭐ Primary
 
 **URL**: https://api.igdb.com/v4/  
-**Coverage**: Excellent for retro games  
+**Coverage**: Excellent for ALL games (retro through current releases)  
 **API**: REST API with OAuth authentication  
 **Rate Limits**: 4 requests/second  
 **Best For**: descriptions, developers, publishers, release dates, cover art

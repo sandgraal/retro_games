@@ -1,7 +1,7 @@
 {
   "name": "dragons-hoard-atlas",
-  "version": "2.0.0",
-  "description": "A modern, type-safe retro game collection tracker with reactive state management",
+  "version": "2.1.0",
+  "description": "A modern, type-safe video game collection tracker with reactive state management",
   "type": "module",
   "main": "dist/main.js",
   "module": "dist/main.js",
@@ -39,11 +39,14 @@
     "url": "git+https://github.com/sandgraal/retro-games.git"
   },
   "keywords": [
-    "retro-games",
+    "video-games",
     "game-collection",
     "typescript",
     "vite",
-    "reactive"
+    "reactive",
+    "retro-games",
+    "modern-games",
+    "indie-games"
   ],
   "author": "Dragon's Hoard Atlas",
   "license": "ISC",
