@@ -22,6 +22,8 @@ import {
   setDataSource,
   setGameStatus,
   loadPersistedState,
+  getRandomGameFromAll,
+  openGameModal,
 } from "./state";
 import {
   mountGameGrid,
@@ -147,6 +149,9 @@ async function init(): Promise<void> {
 
   // Setup header actions
   setupHeaderActions();
+
+  // Setup keyboard shortcuts
+  setupKeyboardShortcuts();
 
   // Setup auth state listener
   setupAuthListener();
@@ -295,6 +300,7 @@ function handleGuidesToggle(): void {
 function setupHeaderActions(): void {
   const homeBtn = document.getElementById("homeBtn");
   const guidesBtn = document.getElementById("guidesBtn");
+  const randomGameBtn = document.getElementById("randomGameBtn");
   const moderationBtn = document.getElementById("moderationBtn");
   const exportBtn = document.getElementById("exportBtn");
   const shareBtn = document.getElementById("shareBtn");
@@ -307,6 +313,7 @@ function setupHeaderActions(): void {
     window.history.pushState({}, "", window.location.pathname);
   });
   guidesBtn?.addEventListener("click", handleGuidesToggle);
+  randomGameBtn?.addEventListener("click", handleRandomGame);
   moderationBtn?.addEventListener("click", () => {
     if (currentAppView === "moderation") {
       switchToView("collection");
@@ -320,6 +327,79 @@ function setupHeaderActions(): void {
   shareBtn?.addEventListener("click", handleShare);
   settingsBtn?.addEventListener("click", handleSettings);
   authBtn?.addEventListener("click", handleAuth);
+}
+
+/**
+ * Handle random game button click
+ */
+function handleRandomGame(): void {
+  const game = getRandomGameFromAll();
+  if (game) {
+    openGameModal(game);
+    showStatus(`🎲 Discovered: ${game.game_name}`, "success");
+  } else {
+    showStatus("No games loaded yet", "error");
+  }
+}
+
+/**
+ * Setup global keyboard shortcuts
+ * - ⌘K / Ctrl+K: Focus search
+ * - R: Random game (when not in input)
+ * - Escape: Close modal/sidebar
+ */
+function setupKeyboardShortcuts(): void {
+  document.addEventListener("keydown", (e) => {
+    // Don't trigger shortcuts when typing in inputs
+    const target = e.target as HTMLElement;
+    const isInputActive =
+      target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.isContentEditable;
+
+    // ⌘K / Ctrl+K: Focus search
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      e.preventDefault();
+      const searchInput = document.getElementById("filterSearch") as HTMLInputElement;
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+      }
+      return;
+    }
+
+    // Escape: Close modal or mobile sidebar
+    if (e.key === "Escape") {
+      const modal = document.getElementById("gameModalBackdrop");
+      if (modal && !modal.classList.contains("hidden")) {
+        modal.classList.add("hidden");
+        return;
+      }
+      const sidebar = document.getElementById("filtersSidebar");
+      if (sidebar?.classList.contains("open")) {
+        sidebar.classList.remove("open");
+        return;
+      }
+    }
+
+    // Skip other shortcuts if in input
+    if (isInputActive) return;
+
+    // R: Random game
+    if (e.key === "r" || e.key === "R") {
+      handleRandomGame();
+      return;
+    }
+
+    // /: Focus search (vim-style)
+    if (e.key === "/") {
+      e.preventDefault();
+      const searchInput = document.getElementById("filterSearch") as HTMLInputElement;
+      if (searchInput) {
+        searchInput.focus();
+      }
+    }
+  });
 }
 
 /**

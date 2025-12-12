@@ -9,6 +9,9 @@ export {
   availableGenres,
   collectionStats,
 
+  // Reactive state signals (for subscriptions)
+  gamesSignal,
+
   // Reactive getters
   games,
   prices,
@@ -50,4 +53,7 @@ export {
   openGameModal,
   closeGameModal,
   loadPersistedState,
+  getRandomGame,
+  getRandomGameFromAll,
+  applyQuickFilter,
 } from "./store";

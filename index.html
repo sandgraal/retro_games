@@ -104,6 +104,15 @@
           <div class="header-actions">
             <button
               type="button"
+              class="header-action-btn header-action-btn--random"
+              id="randomGameBtn"
+              aria-label="Discover a random game"
+              title="Random Game (R)"
+            >
+              <span aria-hidden="true">🎲</span>
+            </button>
+            <button
+              type="button"
               class="header-action-btn"
               id="guidesBtn"
               aria-label="Collecting guides"
@@ -279,8 +288,42 @@
           <aside class="filters-sidebar" id="filtersSidebar">
             <div class="filters-header">
               <h3 class="filters-title">Filters</h3>
+              <span
+                class="filters-match-count"
+                id="matchCount"
+                title="Games matching current filters"
+                >0 games</span
+              >
               <button type="button" class="filters-clear" id="clearFilters" disabled>
                 Clear All
+              </button>
+            </div>
+
+            <!-- Quick Filters -->
+            <div class="quick-filters" id="quickFilters">
+              <button
+                type="button"
+                class="quick-filter-btn"
+                data-quick="popular"
+                title="Top rated games"
+              >
+                🏆 Popular
+              </button>
+              <button
+                type="button"
+                class="quick-filter-btn"
+                data-quick="new"
+                title="Recently released"
+              >
+                ✨ New
+              </button>
+              <button
+                type="button"
+                class="quick-filter-btn"
+                data-quick="affordable"
+                title="Games under $30"
+              >
+                💰 Under $30
               </button>
             </div>
 
@@ -297,33 +340,42 @@
             </div>
 
             <!-- Platform Filter -->
-            <div class="filter-group">
-              <div class="filter-group-label">
+            <details class="filter-group filter-group--collapsible" open>
+              <summary class="filter-group-label filter-group-toggle">
                 <span>Platform</span>
-                <span class="filter-count" id="platformCount">0</span>
-              </div>
-              <div class="filter-options" id="platformFilters">
+                <span class="filter-group-meta">
+                  <span class="filter-count" id="platformCount">0</span>
+                  <span class="filter-group-arrow">▼</span>
+                </span>
+              </summary>
+              <div class="filter-options filter-options--scrollable" id="platformFilters">
                 <!-- Populated by JS -->
               </div>
-            </div>
+            </details>
 
             <!-- Genre Filter -->
-            <div class="filter-group">
-              <div class="filter-group-label">
+            <details class="filter-group filter-group--collapsible">
+              <summary class="filter-group-label filter-group-toggle">
                 <span>Genre</span>
-                <span class="filter-count" id="genreCount">0</span>
-              </div>
-              <div class="filter-options" id="genreFilters">
+                <span class="filter-group-meta">
+                  <span class="filter-count" id="genreCount">0</span>
+                  <span class="filter-group-arrow">▼</span>
+                </span>
+              </summary>
+              <div class="filter-options filter-options--scrollable" id="genreFilters">
                 <!-- Populated by JS -->
               </div>
-            </div>
+            </details>
 
             <!-- Region Filter -->
-            <div class="filter-group">
-              <div class="filter-group-label">
+            <details class="filter-group filter-group--collapsible">
+              <summary class="filter-group-label filter-group-toggle">
                 <span>Region</span>
-                <span class="filter-count" id="regionCount">0</span>
-              </div>
+                <span class="filter-group-meta">
+                  <span class="filter-count" id="regionCount">0</span>
+                  <span class="filter-group-arrow">▼</span>
+                </span>
+              </summary>
               <div class="filter-options" id="regionFilters">
                 <label class="filter-option">
                   <input type="checkbox" value="NTSC" data-filter="region" />
@@ -341,7 +393,7 @@
                   <span class="filter-option-count" data-region="JPN">0</span>
                 </label>
               </div>
-            </div>
+            </details>
 
             <!-- Status Filter -->
             <div class="filter-group">

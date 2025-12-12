@@ -4,13 +4,15 @@
  */
 
 import type { ComponentContext } from "./components";
-import type { SortOption } from "../core/types";
+import type { SortOption, GameWithKey } from "../core/types";
 import { mount, debounce, escapeHtml } from "./components";
 import {
   availablePlatforms,
   availableGenres,
   availableEras,
   filterState,
+  filteredGames,
+  gamesSignal,
   togglePlatformFilter,
   toggleGenreFilter,
   toggleRegionFilter,
@@ -23,6 +25,7 @@ import {
   resetFilters,
   setPriceRange,
   toggleDealsOnly,
+  applyQuickFilter,
 } from "../state/store";
 import { effect } from "../core/signals";
 
@@ -81,21 +84,47 @@ export function initFilters(ctx: ComponentContext): void {
   // Setup price filter
   setupPriceFilter(cleanup);
 
+  // Setup quick filters
+  setupQuickFilters(cleanup);
+
+  // Subscribe to match count updates
+  const matchCountUnsub = effect(() => {
+    const games = filteredGames.get();
+    const total = gamesSignal.get().length;
+    updateMatchCount(games.length, total);
+  });
+  cleanup.push(matchCountUnsub);
+
   // Setup filter checkboxes (event delegation)
   element.addEventListener("change", handleFilterChange);
   cleanup.push(() => element.removeEventListener("change", handleFilterChange));
 }
 
 /**
- * Render platform filter checkboxes
+ * Render platform filter checkboxes with game counts
  */
 function renderPlatformFilters(platforms: string[], active: Set<string>): void {
   const container = document.getElementById("platformFilters");
   if (!container) return;
 
-  container.innerHTML = platforms
-    .map(
-      (platform) => `
+  // Count games per platform
+  const games: GameWithKey[] = gamesSignal.get();
+  const platformCounts = new Map<string, number>();
+  games.forEach((game: GameWithKey) => {
+    const count = platformCounts.get(game.platform) || 0;
+    platformCounts.set(game.platform, count + 1);
+  });
+
+  // Sort platforms by count (descending) then by name
+  const sortedPlatforms = [...platforms].sort((a, b) => {
+    const countDiff = (platformCounts.get(b) || 0) - (platformCounts.get(a) || 0);
+    return countDiff !== 0 ? countDiff : a.localeCompare(b);
+  });
+
+  container.innerHTML = sortedPlatforms
+    .map((platform) => {
+      const count = platformCounts.get(platform) || 0;
+      return `
       <label class="filter-option">
         <input 
           type="checkbox" 
@@ -104,9 +133,10 @@ function renderPlatformFilters(platforms: string[], active: Set<string>): void {
           ${active.has(platform) ? "checked" : ""}
         />
         <span class="filter-option-label">${escapeHtml(platform)}</span>
+        <span class="filter-option-count">${count}</span>
       </label>
-    `
-    )
+    `;
+    })
     .join("");
 }
 
@@ -155,15 +185,35 @@ function updateSpecialToggles(
 }
 
 /**
- * Render genre filter checkboxes
+ * Render genre filter checkboxes with counts
  */
 function renderGenreFilters(genres: string[], active: Set<string>): void {
   const container = document.getElementById("genreFilters");
   if (!container) return;
 
-  container.innerHTML = genres
-    .map(
-      (genre) => `
+  // Count games per genre
+  const games: GameWithKey[] = gamesSignal.get();
+  const genreCounts = new Map<string, number>();
+  games.forEach((game: GameWithKey) => {
+    game.genre?.split(",").forEach((g: string) => {
+      const trimmed = g.trim();
+      if (trimmed) {
+        const count = genreCounts.get(trimmed) || 0;
+        genreCounts.set(trimmed, count + 1);
+      }
+    });
+  });
+
+  // Sort genres by count (descending) then by name
+  const sortedGenres = [...genres].sort((a, b) => {
+    const countDiff = (genreCounts.get(b) || 0) - (genreCounts.get(a) || 0);
+    return countDiff !== 0 ? countDiff : a.localeCompare(b);
+  });
+
+  container.innerHTML = sortedGenres
+    .map((genre) => {
+      const count = genreCounts.get(genre) || 0;
+      return `
       <label class="filter-option">
         <input 
           type="checkbox" 
@@ -172,9 +222,10 @@ function renderGenreFilters(genres: string[], active: Set<string>): void {
           ${active.has(genre) ? "checked" : ""}
         />
         <span class="filter-option-label">${escapeHtml(genre)}</span>
+        <span class="filter-option-count">${count}</span>
       </label>
-    `
-    )
+    `;
+    })
     .join("");
 }
 
@@ -357,4 +408,92 @@ function escapeAttr(str: string): string {
  */
 export function mountFilters(selector: string | HTMLElement): () => void {
   return mount(selector, initFilters);
+}
+
+/**
+ * Update match count display
+ */
+function updateMatchCount(count: number, total: number): void {
+  const matchCountEl = document.getElementById("matchCount");
+  if (!matchCountEl) return;
+
+  const formatted = count.toLocaleString();
+  const isFiltered = count !== total;
+
+  if (isFiltered) {
+    matchCountEl.textContent = `${formatted} of ${total.toLocaleString()} games`;
+  } else {
+    matchCountEl.textContent = `${formatted} games`;
+  }
+
+  // Brief highlight animation
+  matchCountEl.classList.add("updating");
+  setTimeout(() => matchCountEl.classList.remove("updating"), 300);
+}
+
+/**
+ * Setup quick filter buttons
+ */
+function setupQuickFilters(cleanup: (() => void)[]): void {
+  const container = document.getElementById("quickFilters");
+  if (!container) return;
+
+  const handleClick = (e: Event) => {
+    const target = e.target as HTMLElement;
+    const button = target.closest<HTMLButtonElement>(".quick-filter-btn");
+    if (!button) return;
+
+    const preset = button.dataset.quick as "popular" | "new" | "affordable" | undefined;
+    if (!preset) return;
+
+    // Toggle active state
+    const wasActive = button.classList.contains("active");
+
+    // Clear all active states
+    container.querySelectorAll(".quick-filter-btn").forEach((btn) => {
+      btn.classList.remove("active");
+    });
+
+    if (wasActive) {
+      // If clicking active button, clear filters
+      applyQuickFilter("clear");
+    } else {
+      // Apply the preset and show active state
+      button.classList.add("active");
+      applyQuickFilter(preset);
+    }
+  };
+
+  container.addEventListener("click", handleClick);
+  cleanup.push(() => container.removeEventListener("click", handleClick));
+
+  // Subscribe to filter state to clear active buttons when filters change externally
+  const filterUnsub = effect(() => {
+    const state = filterState.get();
+    // Check if any quick filter matches current state
+    const buttons = container.querySelectorAll<HTMLButtonElement>(".quick-filter-btn");
+    buttons.forEach((btn) => {
+      const preset = btn.dataset.quick;
+      let isActive = false;
+
+      if (preset === "popular" && state.minRating >= 7) {
+        isActive = true;
+      } else if (
+        preset === "new" &&
+        state.yearRange.start &&
+        state.yearRange.start >= new Date().getFullYear() - 5
+      ) {
+        isActive = true;
+      } else if (
+        preset === "affordable" &&
+        state.priceRange.max !== undefined &&
+        state.priceRange.max <= 30
+      ) {
+        isActive = true;
+      }
+
+      btn.classList.toggle("active", isActive);
+    });
+  });
+  cleanup.push(filterUnsub);
 }

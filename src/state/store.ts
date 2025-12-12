@@ -52,7 +52,7 @@ const DEFAULT_FILTER_STATE: FilterState = {
 // === Core State Signals ===
 
 // Games data
-const gamesSignal = createSignal<GameWithKey[]>([]);
+export const gamesSignal = createSignal<GameWithKey[]>([]);
 const pricesSignal = createSignal<Map<GameKey, PriceData>>(new Map());
 const priceMetaSignal = createSignal<{
   lastUpdated?: string;
@@ -555,6 +555,71 @@ export function toggleVrFilter(): void {
     ...current,
     showVrOnly: !current.showVrOnly,
   }));
+}
+
+/**
+ * Get a random game from current filtered results
+ */
+export function getRandomGame(): GameWithKey | null {
+  const games = filteredGames.get();
+  if (games.length === 0) return null;
+  const randomIndex = Math.floor(Math.random() * games.length);
+  return games[randomIndex];
+}
+
+/**
+ * Get a random game from all games (ignores filters)
+ */
+export function getRandomGameFromAll(): GameWithKey | null {
+  const games = gamesSignal.get();
+  if (games.length === 0) return null;
+  const randomIndex = Math.floor(Math.random() * games.length);
+  return games[randomIndex];
+}
+
+/**
+ * Apply a quick filter preset
+ */
+export function applyQuickFilter(
+  preset: "popular" | "new" | "affordable" | "clear"
+): void {
+  if (preset === "clear") {
+    resetFilters();
+    return;
+  }
+
+  // Start with default filters
+  const baseFilter = { ...DEFAULT_FILTER_STATE };
+
+  switch (preset) {
+    case "popular":
+      // Top rated games (7+ rating)
+      filterStateSignal.set({
+        ...baseFilter,
+        minRating: 7,
+        sortBy: "rating",
+        sortDirection: "desc",
+      });
+      break;
+    case "new":
+      // Recent releases (last 5 years)
+      filterStateSignal.set({
+        ...baseFilter,
+        yearRange: { start: new Date().getFullYear() - 5 },
+        sortBy: "year",
+        sortDirection: "desc",
+      });
+      break;
+    case "affordable":
+      // Games under $30
+      filterStateSignal.set({
+        ...baseFilter,
+        priceRange: { max: 30 },
+        sortBy: "value",
+        sortDirection: "asc",
+      });
+      break;
+  }
 }
 
 /**
