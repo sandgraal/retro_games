@@ -135,7 +135,11 @@ describe("eBay Account Deletion Endpoint", () => {
       if (typeof meta.schemaVersion !== "string") return false;
 
       // Validate topic against allowed notification types
-      if (!ALLOWED_NOTIFICATION_TYPES.includes(meta.topic as typeof ALLOWED_NOTIFICATION_TYPES[number])) {
+      if (
+        !ALLOWED_NOTIFICATION_TYPES.includes(
+          meta.topic as (typeof ALLOWED_NOTIFICATION_TYPES)[number]
+        )
+      ) {
         return false;
       }
 
