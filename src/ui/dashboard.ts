@@ -28,6 +28,7 @@ export function initDashboard(ctx: ComponentContext): void {
 
     updateOwnedCard(stats.ownedCount, stats.totalGames, stats.platformBreakdown);
     updateValueCard(stats.totalValue);
+    updateHotDealsCard(allGames, priceMap);
     updateWishlistCard(stats.wishlistCount, allGames, collectionMap, priceMap);
     updateBacklogCard(stats.backlogCount);
     updateRecentAdditionsCard(allGames, collectionMap);
@@ -80,6 +81,56 @@ function updateValueCard(value: number): void {
   if (trendEl) {
     // For now, show static trend
     trendEl.innerHTML = `<span aria-hidden="true">↗</span><span>Updated today</span>`;
+  }
+}
+
+/**
+ * Update hot deals card - games with biggest price drops
+ */
+function updateHotDealsCard(
+  allGames: GameWithKey[],
+  priceMap: Map<string, PriceData>
+): void {
+  const countEl = document.getElementById("dealsCount");
+  const carouselEl = document.getElementById("hotDealsCarousel");
+
+  // Find games with significant price drops (>2% weekly decrease)
+  const deals: Array<{ game: GameWithKey; price: PriceData; dropPct: number }> = [];
+
+  allGames.forEach((game) => {
+    const price = priceMap.get(game.key);
+    if (price?.weekChangePct !== undefined && price.weekChangePct < -2) {
+      deals.push({ game, price, dropPct: price.weekChangePct });
+    }
+  });
+
+  // Sort by biggest drops first
+  deals.sort((a, b) => a.dropPct - b.dropPct);
+  const topDeals = deals.slice(0, 5);
+
+  if (countEl) {
+    countEl.textContent = formatNumber(deals.length);
+  }
+
+  if (carouselEl) {
+    if (topDeals.length === 0) {
+      carouselEl.innerHTML = '<span class="carousel-empty">No deals right now</span>';
+    } else {
+      carouselEl.innerHTML = topDeals
+        .map(
+          ({ game, dropPct }) => `
+          <div class="deal-item" title="${escapeHtml(game.game_name)}: ${dropPct.toFixed(1)}% this week">
+            ${
+              game.cover
+                ? `<img class="deal-cover" src="${escapeHtml(game.cover)}" alt="${escapeHtml(game.game_name)}" loading="lazy" />`
+                : `<div class="deal-placeholder">${escapeHtml(game.game_name.charAt(0))}</div>`
+            }
+            <span class="deal-drop">${dropPct.toFixed(0)}%</span>
+          </div>
+        `
+        )
+        .join("");
+    }
   }
 }
 

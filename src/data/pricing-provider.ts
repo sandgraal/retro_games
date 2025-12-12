@@ -266,3 +266,63 @@ function coerceNumber(value: unknown): number | undefined {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : undefined;
 }
+
+/**
+ * Price history point for charting
+ */
+export interface PriceHistoryPoint {
+  date: string;
+  loose: number | null;
+  cib: number | null;
+  newPrice: number | null;
+}
+
+/**
+ * Fetch price history for a game from Supabase
+ */
+export async function fetchPriceHistory(
+  gameKey: string,
+  days = 90
+): Promise<PriceHistoryPoint[]> {
+  const config = getConfig();
+  if (!config?.url || !config?.anonKey) {
+    return [];
+  }
+
+  try {
+    const url = `${config.url.replace(/\/$/, "")}/rest/v1/rpc/get_price_history`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        p_game_key: gameKey,
+        p_days: days,
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`Price history fetch failed: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data)) return [];
+
+    return data.map((row) => ({
+      date: row.snapshot_date,
+      loose: row.loose_price_cents ?? null,
+      cib: row.cib_price_cents ?? null,
+      newPrice: row.new_price_cents ?? null,
+    }));
+  } catch (error) {
+    console.warn(
+      "Price history fetch error:",
+      error instanceof Error ? error.message : String(error)
+    );
+    return [];
+  }
+}

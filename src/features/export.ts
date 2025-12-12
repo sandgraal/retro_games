@@ -4,7 +4,7 @@
  */
 
 import type { CollectionEntry, CollectionStatus } from "../core/types";
-import { games, collection, notes, filterState } from "../state/store";
+import { games, collection, notes, filterState, prices } from "../state/store";
 
 // Version for schema migrations
 const BACKUP_VERSION = 2;
@@ -28,12 +28,20 @@ interface SharePayload {
 /**
  * Generate a CSV export of the collection
  */
-export function exportCollectionToCSV(statusFilter?: CollectionStatus): string {
+export function exportCollectionToCSV(
+  statusFilter?: CollectionStatus,
+  includePrices = true
+): string {
   const gamesList = games.get();
   const collectionMap = collection.get();
   const notesMap = notes.get();
+  const priceMap = prices.get();
 
-  const headers = ["Game Name", "Platform", "Genre", "Rating", "Year", "Status", "Notes"];
+  const baseHeaders = ["Game Name", "Platform", "Genre", "Rating", "Year", "Status", "Notes"];
+  const priceHeaders = includePrices
+    ? ["Loose Price", "Complete Price", "New Price", "Week Change %"]
+    : [];
+  const headers = [...baseHeaders, ...priceHeaders];
 
   const rows: string[][] = [headers];
 
@@ -46,8 +54,9 @@ export function exportCollectionToCSV(statusFilter?: CollectionStatus): string {
     if (!statusFilter && status === "none") return;
 
     const note = notesMap.get(game.key) ?? "";
+    const price = priceMap.get(game.key);
 
-    rows.push([
+    const baseRow = [
       escapeCSV(game.game_name),
       escapeCSV(game.platform),
       escapeCSV(game.genre ?? ""),
@@ -55,10 +64,29 @@ export function exportCollectionToCSV(statusFilter?: CollectionStatus): string {
       String(game.release_year ?? ""),
       status,
       escapeCSV(note),
-    ]);
+    ];
+
+    const priceRow = includePrices
+      ? [
+          formatPriceForCSV(price?.loose),
+          formatPriceForCSV(price?.cib),
+          formatPriceForCSV(price?.new),
+          price?.weekChangePct !== undefined ? price.weekChangePct.toFixed(1) : "",
+        ]
+      : [];
+
+    rows.push([...baseRow, ...priceRow]);
   });
 
   return rows.map((row) => row.join(",")).join("\n");
+}
+
+/**
+ * Format price in cents to dollars for CSV
+ */
+function formatPriceForCSV(cents: number | undefined): string {
+  if (cents === undefined) return "";
+  return (cents / 100).toFixed(2);
 }
 
 /**

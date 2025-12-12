@@ -15,6 +15,7 @@ import type {
   Theme,
   ViewMode,
   PriceData,
+  PriceAlert,
   CollectionStats,
   PricingSource,
 } from "../core/types";
@@ -27,6 +28,7 @@ const STORAGE_KEYS = {
   notes: "dragonshoard_notes",
   preferences: "dragonshoard_preferences",
   filterState: "dragonshoard_filters",
+  priceAlerts: "dragonshoard_price_alerts",
 } as const;
 
 // === Default States ===
@@ -61,6 +63,7 @@ const dataSourceSignal = createSignal<"supabase" | "sample" | "cache">("sample")
 // Collection state
 const collectionSignal = createSignal<Map<GameKey, CollectionEntry>>(new Map());
 const notesSignal = createSignal<Map<GameKey, string>>(new Map());
+const priceAlertsSignal = createSignal<Map<GameKey, PriceAlert>>(new Map());
 
 // Filter state
 const filterStateSignal = createSignal<FilterState>(DEFAULT_FILTER_STATE);
@@ -566,6 +569,96 @@ export function toggleDealsOnly(): void {
   }));
 }
 
+// === Price Alerts ===
+
+/**
+ * Set a price alert for a game
+ */
+export function setPriceAlert(
+  gameKey: GameKey,
+  targetPriceCents: number,
+  condition: "loose" | "cib" | "new" = "loose"
+): void {
+  const alert: PriceAlert = {
+    gameKey,
+    targetPriceCents,
+    condition,
+    createdAt: Date.now(),
+  };
+
+  priceAlertsSignal.set((current) => {
+    const updated = new Map(current);
+    updated.set(gameKey, alert);
+    return updated;
+  });
+  persistPriceAlerts();
+}
+
+/**
+ * Remove a price alert
+ */
+export function removePriceAlert(gameKey: GameKey): void {
+  priceAlertsSignal.set((current) => {
+    const updated = new Map(current);
+    updated.delete(gameKey);
+    return updated;
+  });
+  persistPriceAlerts();
+}
+
+/**
+ * Get price alert for a game
+ */
+export function getPriceAlert(gameKey: GameKey): PriceAlert | undefined {
+  return priceAlertsSignal.get().get(gameKey);
+}
+
+/**
+ * Check if any alerts are triggered
+ */
+export function checkPriceAlerts(): Array<{ alert: PriceAlert; currentPrice: number }> {
+  const alerts = priceAlertsSignal.get();
+  const prices = pricesSignal.get();
+  const triggered: Array<{ alert: PriceAlert; currentPrice: number }> = [];
+
+  alerts.forEach((alert, gameKey) => {
+    if (alert.triggered) return;
+
+    const priceData = prices.get(gameKey);
+    if (!priceData) return;
+
+    const currentPrice =
+      alert.condition === "loose"
+        ? priceData.loose
+        : alert.condition === "cib"
+          ? priceData.cib
+          : priceData.new;
+
+    if (currentPrice !== undefined && currentPrice <= alert.targetPriceCents) {
+      triggered.push({ alert, currentPrice });
+
+      // Mark as triggered
+      priceAlertsSignal.set((current) => {
+        const updated = new Map(current);
+        const updatedAlert = { ...alert, triggered: true, triggeredAt: Date.now() };
+        updated.set(gameKey, updatedAlert);
+        return updated;
+      });
+    }
+  });
+
+  if (triggered.length > 0) {
+    persistPriceAlerts();
+  }
+
+  return triggered;
+}
+
+/**
+ * Export price alerts signal for components
+ */
+export const priceAlerts = priceAlertsSignal;
+
 // === Persistence ===
 
 function persistCollection(): void {
@@ -600,6 +693,16 @@ function persistPreferences(): void {
   }
 }
 
+function persistPriceAlerts(): void {
+  try {
+    const alerts = priceAlertsSignal.get();
+    const data = Object.fromEntries(alerts);
+    safeStorage.setItem(STORAGE_KEYS.priceAlerts, JSON.stringify(data));
+  } catch {
+    console.warn("Failed to persist price alerts");
+  }
+}
+
 /**
  * Load persisted state from localStorage
  */
@@ -625,6 +728,13 @@ export function loadPersistedState(): void {
       const prefs = JSON.parse(prefsRaw);
       if (prefs.theme) themeSignal.set(prefs.theme);
       if (prefs.viewMode) viewModeSignal.set(prefs.viewMode);
+    }
+
+    // Load price alerts
+    const alertsRaw = safeStorage.getItem(STORAGE_KEYS.priceAlerts);
+    if (alertsRaw) {
+      const data = JSON.parse(alertsRaw);
+      priceAlertsSignal.set(new Map(Object.entries(data)));
     }
   } catch {
     console.warn("Failed to load persisted state");

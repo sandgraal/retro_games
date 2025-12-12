@@ -352,6 +352,202 @@
   text-align: center;
 }
 
+/* Price Trends Info */
+.price-trends {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-sm) 0;
+  justify-content: center;
+}
+
+.trend-stat {
+  font-size: var(--font-size-xs);
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+}
+
+.trend-stat--low {
+  color: var(--color-success);
+}
+
+.trend-stat--high {
+  color: var(--accent-fire);
+}
+
+.trend-stat.trend-up {
+  color: var(--color-error);
+}
+
+.trend-stat.trend-down {
+  color: var(--color-success);
+}
+
+/* Price History Chart */
+.price-chart-container {
+  margin: var(--spacing-md) 0;
+  min-height: 100px;
+}
+
+.price-chart-loading,
+.price-chart-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-md);
+}
+
+.price-chart {
+  width: 100%;
+}
+
+.price-sparkline {
+  width: 100%;
+  height: 80px;
+  display: block;
+}
+
+.price-chart-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  padding: var(--spacing-xs) 0;
+}
+
+.price-chart-range {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+}
+
+/* Price Alert Section */
+.price-alert-section {
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  background: rgba(255, 200, 50, 0.05);
+  border: 1px solid rgba(255, 200, 50, 0.2);
+  border-radius: var(--radius-md);
+}
+
+.price-alert-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.price-alert-icon {
+  font-size: var(--font-size-lg);
+}
+
+.price-alert-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.price-alert-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.price-alert-current {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  flex-basis: 100%;
+  margin-bottom: var(--spacing-xs);
+}
+
+.price-alert-input-group {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.price-alert-currency {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.price-alert-input {
+  width: 80px;
+  padding: var(--spacing-xs);
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.price-alert-input:focus {
+  outline: none;
+}
+
+.price-alert-condition {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+}
+
+.price-alert-set,
+.price-alert-remove {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-default);
+}
+
+.price-alert-set {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+}
+
+.price-alert-set:hover {
+  background: var(--accent-primary-hover);
+}
+
+.price-alert-remove {
+  background: transparent;
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+.price-alert-remove:hover {
+  background: rgba(255, 100, 100, 0.1);
+}
+
+.price-alert-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.alert-active {
+  color: var(--accent-primary);
+}
+
+.alert-triggered {
+  color: var(--color-success);
+  font-weight: var(--font-weight-medium);
+}
+
 /* Notes */
 .modal-notes {
   width: 100%;
