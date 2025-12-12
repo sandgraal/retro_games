@@ -5,18 +5,26 @@ import type {
   PricingSource,
   RegionalOffer,
 } from "../core/types";
+import { getConfig } from "./supabase";
 
 const LIVE_PRICE_ENDPOINTS = ["/api/v1/prices/latest", "/api/prices/latest"];
 
 const PRICE_SNAPSHOT_PATH = "./data/sample-price-history.json";
 
 /**
- * Load pricing from live endpoints or bundled snapshot
+ * Load pricing from Supabase, live endpoints, or bundled snapshot
+ * Priority: Supabase > Live API > Local Snapshot
  */
 export async function loadPrices(): Promise<PriceLoadResult> {
+  // Try Supabase first (primary source)
+  const supabaseResult = await fetchSupabasePricing();
+  if (supabaseResult) return supabaseResult;
+
+  // Fall back to live endpoints
   const liveResult = await fetchLivePricing();
   if (liveResult) return liveResult;
 
+  // Fall back to bundled snapshot
   const snapshotResult = await fetchSnapshotPricing();
   if (snapshotResult) return snapshotResult;
 
@@ -25,6 +33,67 @@ export async function loadPrices(): Promise<PriceLoadResult> {
     source: "none",
     reason: "No pricing sources responded",
   };
+}
+
+/**
+ * Fetch latest prices from Supabase game_price_latest view
+ */
+async function fetchSupabasePricing(): Promise<PriceLoadResult | null> {
+  const config = getConfig();
+  if (!config?.url || !config?.anonKey) {
+    console.warn("Supabase not configured, skipping pricing fetch");
+    return null;
+  }
+
+  try {
+    const url = `${config.url.replace(/\/$/, "")}/rest/v1/game_price_latest?select=*`;
+    const response = await fetch(url, {
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${config.anonKey}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`Supabase pricing fetch failed: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      console.info("No pricing data in Supabase yet");
+      return null;
+    }
+
+    const prices: Record<string, PriceData> = {};
+    let newestTimestamp: string | undefined;
+
+    for (const row of data) {
+      if (!row?.game_key) continue;
+      const normalized = normalizePriceEntry(row, "live");
+      if (normalized) {
+        prices[row.game_key] = normalized;
+        const candidate = normalized.lastUpdated ?? normalized.snapshotDate;
+        if (candidate && (!newestTimestamp || candidate > newestTimestamp)) {
+          newestTimestamp = candidate;
+        }
+      }
+    }
+
+    console.info(`Loaded ${Object.keys(prices).length} prices from Supabase`);
+    return {
+      prices,
+      source: "live",
+      lastUpdated: newestTimestamp,
+    };
+  } catch (error) {
+    console.warn(
+      "Supabase pricing fetch error:",
+      error instanceof Error ? error.message : String(error)
+    );
+    return null;
+  }
 }
 
 async function fetchLivePricing(): Promise<PriceLoadResult | null> {

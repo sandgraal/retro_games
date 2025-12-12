@@ -5,7 +5,8 @@
 
 import type { GameWithKey, CollectionStatus } from "../core/types";
 import { createElement } from "./components";
-import { getGameStatus, openGameModal } from "../state/store";
+import { getGameStatus, openGameModal, prices } from "../state/store";
+import { formatCurrency } from "../utils/format";
 
 const STATUS_LABELS: Record<CollectionStatus, string> = {
   none: "",
@@ -65,6 +66,17 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
       `${STATUS_ICONS[status]} ${STATUS_LABELS[status]}`
     );
     card.appendChild(badge);
+  }
+
+  // Price badge - show loose price if available
+  const priceData = prices.get().get(game.key);
+  if (priceData?.loose) {
+    const priceBadge = createElement(
+      "div",
+      { class: "game-card-price" },
+      formatCurrency(priceData.loose, { fromCents: true })
+    );
+    card.appendChild(priceBadge);
   }
 
   // Info overlay
