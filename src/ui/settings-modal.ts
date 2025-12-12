@@ -264,7 +264,8 @@ function renderSettings(container: HTMLElement): void {
   productLine.append(productStrong, document.createTextNode(" v2.0"));
 
   const description = document.createElement("p");
-  description.textContent = "A privacy-first retro game collection tracker.";
+  description.textContent =
+    "A privacy-first video game collection tracker for all platforms.";
 
   const aboutNote = document.createElement("p");
   aboutNote.className = "settings-about-note";

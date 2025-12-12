@@ -46,6 +46,14 @@ This project maintains comprehensive documentation for developers, contributors,
   - Phase 2: UX & Features ✅ COMPLETE
   - Phase 3: SEO ✅ COMPLETE, Content Marketing ✅ COMPLETE
   - Phase 4: Monetization (blocked on business decisions)
+  - **Phase 5: Universal Games Expansion 🚧 ACTIVE**
+
+- **[docs/UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md)** - **NEW** Universal games expansion roadmap
+  - Migration from retro-only to all video games
+  - Platform expansion plan (PS5, Switch, PC, VR, mobile)
+  - Continuous data update strategy
+  - IGDB/RAWG/Steam integration plans
+  - Automated ingestion pipeline design
 
 - **[docs/image-sourcing.md](./image-sourcing.md)** - Cover art and media guidelines
   - Trusted sources

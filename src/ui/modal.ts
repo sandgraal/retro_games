@@ -9,6 +9,7 @@ import type {
   ExternalLinks,
   PriceData,
   PricingSource,
+  PriceAlert,
 } from "../core/types";
 import type { ComponentContext } from "./components";
 import { mount, escapeHtml, sanitizeUrl } from "./components";
@@ -21,11 +22,15 @@ import {
   setGameNotes,
   prices,
   priceMeta,
+  getPriceAlert,
+  setPriceAlert,
+  removePriceAlert,
 } from "../state/store";
 import { effect } from "../core/signals";
 import { buildGuideIndex, type GuideMetadata } from "../data/guides";
 import { formatCurrency, formatRelativeDate, formatAbsoluteDate } from "../utils/format";
 import { submitEditSuggestion } from "../data/suggestions";
+import { fetchPriceHistory, type PriceHistoryPoint } from "../data/pricing-provider";
 
 // Platform name mapping for guide matching
 const PLATFORM_TO_GUIDE: Record<string, string> = {
@@ -100,6 +105,9 @@ export function initModal(ctx: ComponentContext): void {
       element.classList.add("open");
       document.body.style.overflow = "hidden";
       trapFocus(element);
+
+      // Load price history chart asynchronously
+      loadPriceChart(game.key);
     } else {
       // Add hidden attribute and update aria for accessibility
       element.setAttribute("hidden", "");
@@ -261,7 +269,12 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
   // Update details section with enhanced layout
   const detailsEl = backdrop.querySelector("#gameModalDetails");
   if (detailsEl) {
-    const pricingSection = buildPricingSection(priceInfo, pricingInfo, game.game_name);
+    const pricingSection = buildPricingSection(
+      priceInfo,
+      pricingInfo,
+      game.game_name,
+      game.key
+    );
     const externalLinks = buildExternalLinks(game);
     const metadataPanel = buildExtendedMetadata(game);
 
@@ -381,6 +394,9 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
       });
     }
 
+    // Setup price alert handlers
+    setupPriceAlertHandlers(detailsEl as HTMLElement, game.key);
+
     // Setup suggest edit form
     setupSuggestEditForm(detailsEl as HTMLElement, game);
   }
@@ -439,7 +455,8 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
 function buildPricingSection(
   price: PriceData | undefined,
   meta: { lastUpdated?: string; source: PricingSource; reason?: string },
-  gameName: string
+  gameName: string,
+  gameKey: string
 ): string {
   const updated = price?.lastUpdated ?? price?.snapshotDate ?? meta.lastUpdated;
   const updatedLabel = formatPricingTimestamp(updated);
@@ -489,6 +506,13 @@ function buildPricingSection(
 
   const offers = renderOffers(price.offers);
 
+  // Build trend info if available
+  const trendInfo = buildTrendInfo(price);
+
+  // Build price alert UI
+  const existingAlert = getPriceAlert(gameKey);
+  const alertSection = buildPriceAlertSection(gameKey, price, existingAlert);
+
   return `
     <section class="modal-pricing" aria-labelledby="modalPricingHeading">
       ${header}
@@ -496,11 +520,217 @@ function buildPricingSection(
         <div class="price-grid" role="list">
           ${priceBlocks.length > 0 ? priceBlocks.join("") : '<p class="modal-pricing__empty">No structured pricing found.</p>'}
         </div>
+        ${trendInfo}
+        <div class="price-chart-container" id="priceChartContainer" aria-label="Price history chart">
+          <div class="price-chart-loading">Loading price history...</div>
+        </div>
+        ${alertSection}
         <p class="price-source">${escapeHtml(price.source ?? meta.source ?? "snapshot")}</p>
       </div>
       ${offers}
     </section>
   `;
+}
+
+/**
+ * Build trend info showing all-time high/low and recent changes
+ */
+function buildTrendInfo(price: PriceData): string {
+  const parts: string[] = [];
+
+  if (price.allTimeLow !== undefined) {
+    parts.push(
+      `<span class="trend-stat trend-stat--low">All-Time Low: ${formatCurrency(price.allTimeLow, { fromCents: true })}</span>`
+    );
+  }
+  if (price.allTimeHigh !== undefined) {
+    parts.push(
+      `<span class="trend-stat trend-stat--high">All-Time High: ${formatCurrency(price.allTimeHigh, { fromCents: true })}</span>`
+    );
+  }
+
+  if (price.weekChangePct !== undefined) {
+    const weekClass =
+      price.weekChangePct > 0 ? "trend-up" : price.weekChangePct < 0 ? "trend-down" : "";
+    const weekSign = price.weekChangePct > 0 ? "+" : "";
+    parts.push(
+      `<span class="trend-stat ${weekClass}">Week: ${weekSign}${price.weekChangePct.toFixed(1)}%</span>`
+    );
+  }
+
+  if (price.monthChangePct !== undefined) {
+    const monthClass =
+      price.monthChangePct > 0
+        ? "trend-up"
+        : price.monthChangePct < 0
+          ? "trend-down"
+          : "";
+    const monthSign = price.monthChangePct > 0 ? "+" : "";
+    parts.push(
+      `<span class="trend-stat ${monthClass}">Month: ${monthSign}${price.monthChangePct.toFixed(1)}%</span>`
+    );
+  }
+
+  if (parts.length === 0) return "";
+
+  return `<div class="price-trends">${parts.join("")}</div>`;
+}
+
+/**
+ * Build price alert section for modal
+ */
+function buildPriceAlertSection(
+  gameKey: string,
+  price: PriceData,
+  existingAlert: PriceAlert | undefined
+): string {
+  const currentLoose = price.loose
+    ? formatCurrency(price.loose, { fromCents: true })
+    : "N/A";
+
+  if (existingAlert) {
+    const targetPrice = formatCurrency(existingAlert.targetPriceCents, {
+      fromCents: true,
+    });
+    const status = existingAlert.triggered
+      ? `<span class="alert-triggered">🔔 Triggered!</span>`
+      : `<span class="alert-active">⏳ Watching...</span>`;
+
+    return `
+      <div class="price-alert-section" data-game-key="${escapeHtml(gameKey)}">
+        <div class="price-alert-header">
+          <span class="price-alert-icon">🔔</span>
+          <span class="price-alert-title">Price Alert Active</span>
+        </div>
+        <div class="price-alert-info">
+          <span>Alert when ${existingAlert.condition} ≤ ${targetPrice}</span>
+          ${status}
+        </div>
+        <button type="button" class="price-alert-remove" id="removeAlertBtn">
+          Remove Alert
+        </button>
+      </div>
+    `;
+  }
+
+  // No alert set - show form to create one
+  const suggestedPrice = price.loose ? Math.round(price.loose * 0.8) : 0; // 20% below current
+
+  return `
+    <div class="price-alert-section" data-game-key="${escapeHtml(gameKey)}">
+      <div class="price-alert-header">
+        <span class="price-alert-icon">🔔</span>
+        <span class="price-alert-title">Set Price Alert</span>
+      </div>
+      <div class="price-alert-form">
+        <span class="price-alert-current">Current: ${currentLoose}</span>
+        <label for="alertPriceInput" class="sr-only">Target price</label>
+        <div class="price-alert-input-group">
+          <span class="price-alert-currency">$</span>
+          <input 
+            type="number" 
+            id="alertPriceInput" 
+            class="price-alert-input" 
+            placeholder="${(suggestedPrice / 100).toFixed(0)}"
+            min="0"
+            step="1"
+            aria-label="Target price in dollars"
+          />
+        </div>
+        <select id="alertConditionSelect" class="price-alert-condition">
+          <option value="loose">Loose</option>
+          <option value="cib">Complete</option>
+          <option value="new">New</option>
+        </select>
+        <button type="button" class="price-alert-set" id="setAlertBtn">
+          Set Alert
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Setup event handlers for price alert UI
+ */
+function setupPriceAlertHandlers(container: HTMLElement, gameKey: string): void {
+  const setBtn = container.querySelector("#setAlertBtn");
+  const removeBtn = container.querySelector("#removeAlertBtn");
+
+  if (setBtn) {
+    setBtn.addEventListener("click", () => {
+      const priceInput = container.querySelector("#alertPriceInput") as HTMLInputElement;
+      const conditionSelect = container.querySelector(
+        "#alertConditionSelect"
+      ) as HTMLSelectElement;
+
+      if (!priceInput?.value) return;
+
+      const targetDollars = parseFloat(priceInput.value);
+      if (isNaN(targetDollars) || targetDollars <= 0) return;
+
+      const targetCents = Math.round(targetDollars * 100);
+      const condition = (conditionSelect?.value as "loose" | "cib" | "new") || "loose";
+
+      setPriceAlert(gameKey, targetCents, condition);
+
+      // Update UI to show active alert
+      const alertSection = container.querySelector(".price-alert-section");
+      if (alertSection) {
+        alertSection.innerHTML = `
+          <div class="price-alert-header">
+            <span class="price-alert-icon">🔔</span>
+            <span class="price-alert-title">Price Alert Active</span>
+          </div>
+          <div class="price-alert-info">
+            <span>Alert when ${condition} ≤ $${targetDollars.toFixed(0)}</span>
+            <span class="alert-active">⏳ Watching...</span>
+          </div>
+          <button type="button" class="price-alert-remove" id="removeAlertBtn">
+            Remove Alert
+          </button>
+        `;
+
+        // Re-setup remove handler
+        setupPriceAlertHandlers(container, gameKey);
+      }
+    });
+  }
+
+  if (removeBtn) {
+    removeBtn.addEventListener("click", () => {
+      removePriceAlert(gameKey);
+
+      // Update UI to show form
+      const alertSection = container.querySelector(".price-alert-section");
+      if (alertSection) {
+        alertSection.innerHTML = `
+          <div class="price-alert-header">
+            <span class="price-alert-icon">🔔</span>
+            <span class="price-alert-title">Set Price Alert</span>
+          </div>
+          <div class="price-alert-form">
+            <span class="price-alert-current">Alert removed</span>
+            <div class="price-alert-input-group">
+              <span class="price-alert-currency">$</span>
+              <input type="number" id="alertPriceInput" class="price-alert-input" placeholder="0" min="0" step="1" />
+            </div>
+            <select id="alertConditionSelect" class="price-alert-condition">
+              <option value="loose">Loose</option>
+              <option value="cib">Complete</option>
+              <option value="new">New</option>
+            </select>
+            <button type="button" class="price-alert-set" id="setAlertBtn">
+              Set Alert
+            </button>
+          </div>
+        `;
+
+        // Re-setup set handler
+        setupPriceAlertHandlers(container, gameKey);
+      }
+    });
+  }
 }
 
 function renderOffers(offers?: PriceData["offers"]): string {
@@ -831,6 +1061,103 @@ function trapFocus(container: HTMLElement): void {
       first.focus();
     }
   });
+}
+
+/**
+ * Load and render price history chart
+ */
+async function loadPriceChart(gameKey: string): Promise<void> {
+  const container = document.getElementById("priceChartContainer");
+  if (!container) return;
+
+  try {
+    const history = await fetchPriceHistory(gameKey, 90);
+
+    if (history.length < 2) {
+      container.innerHTML =
+        '<p class="price-chart-empty">Not enough history for chart</p>';
+      return;
+    }
+
+    // Render SVG sparkline chart
+    container.innerHTML = renderPriceSparkline(history);
+  } catch {
+    container.innerHTML = '<p class="price-chart-empty">Failed to load price history</p>';
+  }
+}
+
+/**
+ * Render a simple SVG sparkline chart for price history
+ */
+function renderPriceSparkline(history: PriceHistoryPoint[]): string {
+  const width = 320;
+  const height = 80;
+  const padding = 8;
+
+  // Get loose prices (most common condition tracked)
+  const prices = history.map((h) => h.loose).filter((p): p is number => p !== null);
+  if (prices.length < 2) {
+    return '<p class="price-chart-empty">Not enough loose price data</p>';
+  }
+
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const range = maxPrice - minPrice || 1;
+
+  // Build path
+  const points = prices.map((price, i) => {
+    const x = padding + (i / (prices.length - 1)) * (width - padding * 2);
+    const y = height - padding - ((price - minPrice) / range) * (height - padding * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+
+  const pathD = `M ${points.join(" L ")}`;
+
+  // Determine trend color
+  const startPrice = prices[0];
+  const endPrice = prices[prices.length - 1];
+  const trendColor =
+    endPrice > startPrice
+      ? "var(--color-error)"
+      : endPrice < startPrice
+        ? "var(--color-success)"
+        : "var(--accent-primary)";
+
+  // Format dates for labels
+  const startDate = history[0].date.slice(5); // MM-DD
+  const endDate = history[history.length - 1].date.slice(5);
+
+  return `
+    <div class="price-chart">
+      <svg viewBox="0 0 ${width} ${height}" class="price-sparkline" aria-label="Price trend over ${history.length} days">
+        <defs>
+          <linearGradient id="priceGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="${trendColor}" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="${trendColor}" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path 
+          d="${pathD} L ${width - padding},${height - padding} L ${padding},${height - padding} Z" 
+          fill="url(#priceGradient)"
+        />
+        <path 
+          d="${pathD}" 
+          fill="none" 
+          stroke="${trendColor}" 
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <circle cx="${points[0].split(",")[0]}" cy="${points[0].split(",")[1]}" r="3" fill="${trendColor}"/>
+        <circle cx="${points[points.length - 1].split(",")[0]}" cy="${points[points.length - 1].split(",")[1]}" r="3" fill="${trendColor}"/>
+      </svg>
+      <div class="price-chart-labels">
+        <span class="price-chart-date">${startDate}</span>
+        <span class="price-chart-range">$${(minPrice / 100).toFixed(0)} - $${(maxPrice / 100).toFixed(0)}</span>
+        <span class="price-chart-date">${endDate}</span>
+      </div>
+    </div>
+  `;
 }
 
 /**

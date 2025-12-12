@@ -101,6 +101,17 @@ export interface RegionalOffer {
 
 export type PricingOffers = Record<string, RegionalOffer[]>;
 
+// === Price Alert Types ===
+
+export interface PriceAlert {
+  gameKey: GameKey;
+  targetPriceCents: number;
+  condition: "loose" | "cib" | "new";
+  createdAt: number;
+  triggered?: boolean;
+  triggeredAt?: number;
+}
+
 export interface ExternalLinks {
   store?: string | string[];
   wiki?: string;

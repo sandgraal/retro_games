@@ -1,7 +1,7 @@
 {
   "name": "Dragon's Hoard Atlas",
   "short_name": "Dragon's Hoard",
-  "description": "Track your retro game collection with museum-quality design",
+  "description": "Track your video game collection with museum-quality design",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0e14",

@@ -589,7 +589,7 @@ async function handleShare(): Promise<void> {
     try {
       await navigator.share({
         title: "My Dragon's Hoard Collection",
-        text: `Check out my retro game collection (${stats.owned} owned, ${stats.wishlist} wishlist)`,
+        text: `Check out my game collection (${stats.owned} owned, ${stats.wishlist} wishlist)`,
         url: `${window.location.origin}?share=${encodeURIComponent(code)}`,
       });
       return;
