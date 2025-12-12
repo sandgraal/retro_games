@@ -21,7 +21,6 @@ import {
   setError,
   setDataSource,
   setGameStatus,
-  setGameNotes,
   loadPersistedState,
 } from "./state";
 import {
@@ -36,14 +35,14 @@ import {
   hideGuidesView,
   navigateToGuide,
   mountModerationPanel,
+  openImportModal,
+  injectImportStyles,
 } from "./ui";
 import {
   exportCollectionToCSV,
   createBackup,
   createShareCode,
   parseShareCode,
-  parseBackup,
-  parseCSVImport,
   downloadFile,
   copyToClipboard,
   getExportStats,
@@ -427,87 +426,12 @@ function setupGuideNavigation(): void {
 }
 
 /**
- * Handle import action (file upload)
+ * Handle import action - opens the platform import modal
  */
 function handleImport(): void {
-  // Create a file input and trigger it
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".json,.csv";
-  input.onchange = async (e) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-
-    try {
-      const content = await file.text();
-
-      if (file.name.endsWith(".json")) {
-        // Try to parse as backup
-        const backup = parseBackup(content);
-        if (backup) {
-          const total = Object.keys(backup.collection).length;
-          if (confirm(`Import ${total} games from backup?`)) {
-            importBackup(backup);
-            showStatus(`Imported ${total} games!`, "success");
-          }
-        } else {
-          showStatus("Invalid backup file format.", "error");
-        }
-      } else if (file.name.endsWith(".csv")) {
-        // Parse CSV import
-        const result = parseCSVImport(content);
-        if (result.errors.length > 0) {
-          showStatus(result.errors[0], "error");
-          return;
-        }
-        if (result.imported === 0) {
-          showStatus("No valid games found in CSV.", "info");
-          return;
-        }
-        if (
-          confirm(
-            `Import ${result.imported} games from CSV?${result.skipped > 0 ? ` (${result.skipped} rows skipped)` : ""}`
-          )
-        ) {
-          result.data.forEach(({ key, status, notes }) => {
-            if (status !== "none") {
-              setGameStatus(key, status);
-            }
-            if (notes) {
-              setGameNotes(key, notes);
-            }
-          });
-          showStatus(`Imported ${result.imported} games from CSV!`, "success");
-        }
-      } else {
-        showStatus("Unsupported file format. Use .json or .csv", "error");
-      }
-    } catch {
-      showStatus("Failed to read file.", "error");
-    }
-  };
-  input.click();
-}
-
-/**
- * Import a backup payload
- */
-function importBackup(backup: ReturnType<typeof parseBackup>): void {
-  if (!backup) return;
-
-  Object.entries(backup.collection).forEach(([key, entry]) => {
-    if (entry.status) {
-      setGameStatus(key, entry.status);
-    }
-  });
-
-  if (backup.notes) {
-    Object.entries(backup.notes).forEach(([key, note]) => {
-      if (typeof note === "string") {
-        setGameNotes(key, note);
-      }
-    });
-  }
+  // Inject styles if needed and open the import modal
+  injectImportStyles();
+  openImportModal();
 }
 
 /**

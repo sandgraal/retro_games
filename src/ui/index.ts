@@ -16,3 +16,4 @@ export { mountModal } from "./modal";
 export { mountSettingsModal, openSettings, closeSettings } from "./settings-modal";
 export { mountGuides, showGuidesView, hideGuidesView, navigateToGuide } from "./guides";
 export { mountModerationPanel } from "./moderation";
+export { openImportModal, closeImportModal, injectImportStyles } from "./import-modal";
