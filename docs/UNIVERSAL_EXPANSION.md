@@ -119,9 +119,10 @@ flowchart TB
 
 - [x] IGDB API integration with OAuth (`services/catalog-ingest/sources/igdb.js`)
 - [x] Platform mapping (IGDB IDs → internal platform names)
+- [x] Create "era" filter (Retro/Last-Gen/Current-Gen) with Indie/VR toggles
+- [x] Platform import from Steam, Xbox, PlayStation, and 10+ services
 - [ ] Add PS5, Xbox Series X/S, Switch game catalogs (run ingestion with credentials)
 - [ ] Add PS4, Xbox One backlog
-- [ ] Create "era" filter (Retro/Last-Gen/Current-Gen)
 - [ ] Update UI platform badges for modern consoles
 - [ ] Test virtualization with 50k+ games
 

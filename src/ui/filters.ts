@@ -9,11 +9,15 @@ import { mount, debounce, escapeHtml } from "./components";
 import {
   availablePlatforms,
   availableGenres,
+  availableEras,
   filterState,
   togglePlatformFilter,
   toggleGenreFilter,
   toggleRegionFilter,
   toggleStatusFilter,
+  toggleEraFilter,
+  toggleIndieFilter,
+  toggleVrFilter,
   setSearchQuery,
   setSort,
   resetFilters,
@@ -49,6 +53,21 @@ export function initFilters(ctx: ComponentContext): void {
     renderGenreFilters(genres, currentFilters);
   });
   cleanup.push(genreUnsub);
+
+  // Subscribe to available eras and update UI
+  const eraUnsub = effect(() => {
+    const eras = availableEras.get();
+    const currentFilters = filterState.get().eras;
+    updateEraFilterCounts(eras, currentFilters);
+  });
+  cleanup.push(eraUnsub);
+
+  // Subscribe to special toggle states
+  const specialUnsub = effect(() => {
+    const state = filterState.get();
+    updateSpecialToggles(state.showIndieOnly, state.showVrOnly, state.showDealsOnly);
+  });
+  cleanup.push(specialUnsub);
 
   // Setup search input
   setupSearchInput(cleanup);
@@ -89,6 +108,44 @@ function renderPlatformFilters(platforms: string[], active: Set<string>): void {
     `
     )
     .join("");
+}
+
+/**
+ * Update era filter checkbox states and counts
+ */
+function updateEraFilterCounts(_availableEras: string[], active: Set<string>): void {
+  const container = document.getElementById("eraFilters");
+  if (!container) return;
+
+  // Update checkbox states
+  container.querySelectorAll<HTMLInputElement>('input[data-filter="era"]').forEach((checkbox) => {
+    checkbox.checked = active.has(checkbox.value as "retro" | "last-gen" | "current");
+  });
+
+  // Update count badge
+  const countEl = document.getElementById("eraCount");
+  if (countEl) {
+    countEl.textContent = String(active.size);
+  }
+}
+
+/**
+ * Update special toggle states (indie, VR, deals)
+ */
+function updateSpecialToggles(showIndieOnly: boolean, showVrOnly: boolean, showDealsOnly: boolean): void {
+  const indieToggle = document.getElementById("indieToggle") as HTMLInputElement | null;
+  const vrToggle = document.getElementById("vrToggle") as HTMLInputElement | null;
+  const dealsToggle = document.getElementById("dealsToggle") as HTMLInputElement | null;
+
+  if (indieToggle) {
+    indieToggle.checked = showIndieOnly;
+  }
+  if (vrToggle) {
+    vrToggle.checked = showVrOnly;
+  }
+  if (dealsToggle) {
+    dealsToggle.checked = showDealsOnly;
+  }
 }
 
 /**
@@ -258,6 +315,16 @@ function handleFilterChange(e: Event): void {
     toggleGenreFilter(value);
   } else if (filterType === "region") {
     toggleRegionFilter(value);
+  } else if (filterType === "era") {
+    if (value === "retro" || value === "last-gen" || value === "current") {
+      toggleEraFilter(value);
+    }
+  } else if (filterType === "indie") {
+    toggleIndieFilter();
+  } else if (filterType === "vr") {
+    toggleVrFilter();
+  } else if (filterType === "deals") {
+    toggleDealsOnly();
   } else if (filterType === "status" || target.closest("#statusFilters")) {
     // Status filters may not have data-filter attribute in HTML
     if (isValidStatus(value)) {

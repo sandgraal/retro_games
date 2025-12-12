@@ -31,12 +31,13 @@ _Last updated: December 2025_
 ## Working
 
 - Virtualized game grid with keyboard navigation and hover overlays.
-- Filters: platform + genre checkboxes, search input, and sorts for name/rating/year/value/platform.
+- Filters: platform + genre + era checkboxes, search input, indie/VR/deals toggles, and sorts for name/rating/year/value/platform.
 - Modal for viewing details plus updating status and notes.
 - Settings modal: theme/view switches, backup/restore, clear collection.
 - CSV export, JSON backups, and share-code import via `?share=`.
 - Dashboard stats and price display backed by the local price snapshot.
 - Service worker + manifest provide basic offline support.
+- **Platform Import**: Import collections from Steam, Xbox, PlayStation, Nintendo, Backloggd, and 10+ other services.
 
 ## Known Gaps / Risks
 
@@ -47,10 +48,11 @@ _Last updated: December 2025_
 ## Next Steps
 
 1. ~~**IGDB API integration**~~ ✅ Complete - `services/catalog-ingest/sources/igdb.js` ready
-2. **Run IGDB ingestion** - Add `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET` secrets, run `npm run ingest:catalog`
-3. **Add modern platforms** - PS5, Switch, Xbox Series X/S filter options in UI
-4. **Expand sample dataset** - Include modern game examples in `data/sample-games.json`
-5. **Automate catalog refresh** - Enable `.github/workflows/catalog-refresh.yml` scheduled job
-6. Replace the local price snapshot with a real source (Supabase table or API) or expose a clear toggle when prices are unavailable.
+2. ~~**Era/Modern filters**~~ ✅ Complete - Era, Indie, VR filters in UI
+3. ~~**Platform Import**~~ ✅ Complete - Import from Steam, Backloggd, and 10+ services
+4. **Run IGDB ingestion** - Add `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET` secrets, run `npm run ingest:catalog`
+5. **Expand sample dataset** - Include more modern game examples in `data/sample-games.json`
+6. **Automate catalog refresh** - Enable `.github/workflows/catalog-refresh.yml` scheduled job
+7. Replace the local price snapshot with a real source (Supabase table or API) or expose a clear toggle when prices are unavailable.
 
 **📖 See [UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md) for the complete expansion roadmap.**
