@@ -167,6 +167,35 @@ async function readJson(filePath, fallback) {
   }
 }
 
+/**
+ * Substitutes ${VAR} patterns in an object with environment variable values.
+ * Recursively processes nested objects and arrays.
+ */
+function substituteEnvVars(obj) {
+  if (typeof obj === "string") {
+    // Replace ${VAR} patterns with environment variable values
+    return obj.replace(/\$\{([^}]+)\}/g, (match, varName) => {
+      const value = process.env[varName];
+      if (value === undefined) {
+        console.warn(`[config] Environment variable ${varName} is not set`);
+        return match; // Keep original if not found
+      }
+      return value;
+    });
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(substituteEnvVars);
+  }
+  if (obj !== null && typeof obj === "object") {
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = substituteEnvVars(value);
+    }
+    return result;
+  }
+  return obj;
+}
+
 async function readSuggestions() {
   const { suggestionsPath } = resolvePaths();
   return readJson(suggestionsPath, { suggestions: [] });
@@ -1012,9 +1041,12 @@ async function runCli() {
     port = Number(port);
   }
 
-  const config = configPath
+  const rawConfig = configPath
     ? { ...DEFAULT_CONFIG, ...(await readJson(configPath, {})) }
     : DEFAULT_CONFIG;
+
+  // Substitute ${VAR} patterns with environment variable values
+  const config = substituteEnvVars(rawConfig);
 
   if (once) {
     const result = await runIngestion(config);

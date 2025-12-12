@@ -310,9 +310,10 @@ async function* fetchIgdbPlatform(source, platform, accessToken, onProgress) {
   let totalFetched = 0;
 
   while (totalFetched < maxRecords) {
+    // category 0 = main game, also include null category (many games don't have it set)
     const query = `
       fields ${GAME_FIELDS};
-      where platforms = (${platform.id}) & category = 0;
+      where platforms = (${platform.id}) & (category = 0 | category = null);
       sort total_rating desc;
       limit ${pageSize};
       offset ${offset};
