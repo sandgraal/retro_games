@@ -7,1610 +7,1604 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
+    PostgrestVersion: "13.0.5";
+  };
   public: {
     Tables: {
       audit_log: {
         Row: {
-          action: string
-          actor_email: string | null
-          actor_id: string | null
-          actor_role: Database["public"]["Enums"]["user_role"]
-          created_at: string
-          entity_id: string | null
-          entity_type: string
-          id: string
-          ip_address: unknown
-          new_state: Json | null
-          previous_state: Json | null
-          reason: string | null
-          submission_id: string | null
-          user_agent: string | null
-        }
+          action: string;
+          actor_email: string | null;
+          actor_id: string | null;
+          actor_role: Database["public"]["Enums"]["user_role"];
+          created_at: string;
+          entity_id: string | null;
+          entity_type: string;
+          id: string;
+          ip_address: unknown;
+          new_state: Json | null;
+          previous_state: Json | null;
+          reason: string | null;
+          submission_id: string | null;
+          user_agent: string | null;
+        };
         Insert: {
-          action: string
-          actor_email?: string | null
-          actor_id?: string | null
-          actor_role?: Database["public"]["Enums"]["user_role"]
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string
-          id?: string
-          ip_address?: unknown
-          new_state?: Json | null
-          previous_state?: Json | null
-          reason?: string | null
-          submission_id?: string | null
-          user_agent?: string | null
-        }
+          action: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          actor_role?: Database["public"]["Enums"]["user_role"];
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string;
+          id?: string;
+          ip_address?: unknown;
+          new_state?: Json | null;
+          previous_state?: Json | null;
+          reason?: string | null;
+          submission_id?: string | null;
+          user_agent?: string | null;
+        };
         Update: {
-          action?: string
-          actor_email?: string | null
-          actor_id?: string | null
-          actor_role?: Database["public"]["Enums"]["user_role"]
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string
-          id?: string
-          ip_address?: unknown
-          new_state?: Json | null
-          previous_state?: Json | null
-          reason?: string | null
-          submission_id?: string | null
-          user_agent?: string | null
-        }
+          action?: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          actor_role?: Database["public"]["Enums"]["user_role"];
+          created_at?: string;
+          entity_id?: string | null;
+          entity_type?: string;
+          id?: string;
+          ip_address?: unknown;
+          new_state?: Json | null;
+          previous_state?: Json | null;
+          reason?: string | null;
+          submission_id?: string | null;
+          user_agent?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "audit_log_submission_id_fkey"
-            columns: ["submission_id"]
-            isOneToOne: false
-            referencedRelation: "catalog_submissions"
-            referencedColumns: ["id"]
+            foreignKeyName: "audit_log_submission_id_fkey";
+            columns: ["submission_id"];
+            isOneToOne: false;
+            referencedRelation: "catalog_submissions";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       catalog_submissions: {
         Row: {
-          author_id: string | null
-          author_role: Database["public"]["Enums"]["user_role"]
-          author_session_id: string | null
-          created_at: string
-          decided_at: string | null
-          delta: Json
-          id: string
-          is_reconciled: boolean | null
-          moderation_notes: string | null
-          moderator_id: string | null
-          notes: string | null
-          source_hash: string | null
-          status: Database["public"]["Enums"]["submission_status"]
-          target_game_id: number | null
-          target_game_key: string | null
-          type: Database["public"]["Enums"]["submission_type"]
-          updated_at: string
-        }
+          author_id: string | null;
+          author_role: Database["public"]["Enums"]["user_role"];
+          author_session_id: string | null;
+          created_at: string;
+          decided_at: string | null;
+          delta: Json;
+          id: string;
+          is_reconciled: boolean | null;
+          moderation_notes: string | null;
+          moderator_id: string | null;
+          notes: string | null;
+          source_hash: string | null;
+          status: Database["public"]["Enums"]["submission_status"];
+          target_game_id: number | null;
+          target_game_key: string | null;
+          type: Database["public"]["Enums"]["submission_type"];
+          updated_at: string;
+        };
         Insert: {
-          author_id?: string | null
-          author_role?: Database["public"]["Enums"]["user_role"]
-          author_session_id?: string | null
-          created_at?: string
-          decided_at?: string | null
-          delta?: Json
-          id?: string
-          is_reconciled?: boolean | null
-          moderation_notes?: string | null
-          moderator_id?: string | null
-          notes?: string | null
-          source_hash?: string | null
-          status?: Database["public"]["Enums"]["submission_status"]
-          target_game_id?: number | null
-          target_game_key?: string | null
-          type?: Database["public"]["Enums"]["submission_type"]
-          updated_at?: string
-        }
+          author_id?: string | null;
+          author_role?: Database["public"]["Enums"]["user_role"];
+          author_session_id?: string | null;
+          created_at?: string;
+          decided_at?: string | null;
+          delta?: Json;
+          id?: string;
+          is_reconciled?: boolean | null;
+          moderation_notes?: string | null;
+          moderator_id?: string | null;
+          notes?: string | null;
+          source_hash?: string | null;
+          status?: Database["public"]["Enums"]["submission_status"];
+          target_game_id?: number | null;
+          target_game_key?: string | null;
+          type?: Database["public"]["Enums"]["submission_type"];
+          updated_at?: string;
+        };
         Update: {
-          author_id?: string | null
-          author_role?: Database["public"]["Enums"]["user_role"]
-          author_session_id?: string | null
-          created_at?: string
-          decided_at?: string | null
-          delta?: Json
-          id?: string
-          is_reconciled?: boolean | null
-          moderation_notes?: string | null
-          moderator_id?: string | null
-          notes?: string | null
-          source_hash?: string | null
-          status?: Database["public"]["Enums"]["submission_status"]
-          target_game_id?: number | null
-          target_game_key?: string | null
-          type?: Database["public"]["Enums"]["submission_type"]
-          updated_at?: string
-        }
+          author_id?: string | null;
+          author_role?: Database["public"]["Enums"]["user_role"];
+          author_session_id?: string | null;
+          created_at?: string;
+          decided_at?: string | null;
+          delta?: Json;
+          id?: string;
+          is_reconciled?: boolean | null;
+          moderation_notes?: string | null;
+          moderator_id?: string | null;
+          notes?: string | null;
+          source_hash?: string | null;
+          status?: Database["public"]["Enums"]["submission_status"];
+          target_game_id?: number | null;
+          target_game_key?: string | null;
+          type?: Database["public"]["Enums"]["submission_type"];
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "catalog_submissions_target_game_id_fkey"
-            columns: ["target_game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
+            foreignKeyName: "catalog_submissions_target_game_id_fkey";
+            columns: ["target_game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "catalog_submissions_target_game_id_fkey"
-            columns: ["target_game_id"]
-            isOneToOne: false
-            referencedRelation: "games_consolidated"
-            referencedColumns: ["id"]
+            foreignKeyName: "catalog_submissions_target_game_id_fkey";
+            columns: ["target_game_id"];
+            isOneToOne: false;
+            referencedRelation: "games_consolidated";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       collections: {
         Row: {
-          created_at: string | null
-          game_id: number | null
-          id: number
-          status: string | null
-          user_id: string | null
-        }
+          created_at: string | null;
+          game_id: number | null;
+          id: number;
+          status: string | null;
+          user_id: string | null;
+        };
         Insert: {
-          created_at?: string | null
-          game_id?: number | null
-          id?: number
-          status?: string | null
-          user_id?: string | null
-        }
+          created_at?: string | null;
+          game_id?: number | null;
+          id?: number;
+          status?: string | null;
+          user_id?: string | null;
+        };
         Update: {
-          created_at?: string | null
-          game_id?: number | null
-          id?: number
-          status?: string | null
-          user_id?: string | null
-        }
+          created_at?: string | null;
+          game_id?: number | null;
+          id?: number;
+          status?: string | null;
+          user_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "collections_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
+            foreignKeyName: "collections_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "collections_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games_consolidated"
-            referencedColumns: ["id"]
+            foreignKeyName: "collections_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games_consolidated";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "collections_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "collections_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "collections_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "collections_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
-        ]
-      }
+        ];
+      };
       game_external_ids: {
         Row: {
-          created_at: string
-          external_id: string
-          external_url: string | null
-          game_id: number
-          id: string
-          last_synced_at: string | null
-          source: string
-          sync_hash: string | null
-          updated_at: string
-        }
+          created_at: string;
+          external_id: string;
+          external_url: string | null;
+          game_id: number;
+          id: string;
+          last_synced_at: string | null;
+          source: string;
+          sync_hash: string | null;
+          updated_at: string;
+        };
         Insert: {
-          created_at?: string
-          external_id: string
-          external_url?: string | null
-          game_id: number
-          id?: string
-          last_synced_at?: string | null
-          source: string
-          sync_hash?: string | null
-          updated_at?: string
-        }
+          created_at?: string;
+          external_id: string;
+          external_url?: string | null;
+          game_id: number;
+          id?: string;
+          last_synced_at?: string | null;
+          source: string;
+          sync_hash?: string | null;
+          updated_at?: string;
+        };
         Update: {
-          created_at?: string
-          external_id?: string
-          external_url?: string | null
-          game_id?: number
-          id?: string
-          last_synced_at?: string | null
-          source?: string
-          sync_hash?: string | null
-          updated_at?: string
-        }
+          created_at?: string;
+          external_id?: string;
+          external_url?: string | null;
+          game_id?: number;
+          id?: string;
+          last_synced_at?: string | null;
+          source?: string;
+          sync_hash?: string | null;
+          updated_at?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "game_external_ids_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
+            foreignKeyName: "game_external_ids_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "game_external_ids_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games_consolidated"
-            referencedColumns: ["id"]
+            foreignKeyName: "game_external_ids_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games_consolidated";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       game_media: {
         Row: {
-          attribution: string | null
-          content_type: string | null
-          created_at: string
-          file_size_bytes: number | null
-          game_key: string
-          height: number | null
-          id: string
-          is_primary: boolean | null
-          media_type: string
-          metadata: Json | null
-          public_url: string | null
-          source: string | null
-          storage_bucket: string
-          storage_path: string
-          updated_at: string
-          width: number | null
-        }
+          attribution: string | null;
+          content_type: string | null;
+          created_at: string;
+          file_size_bytes: number | null;
+          game_key: string;
+          height: number | null;
+          id: string;
+          is_primary: boolean | null;
+          media_type: string;
+          metadata: Json | null;
+          public_url: string | null;
+          source: string | null;
+          storage_bucket: string;
+          storage_path: string;
+          updated_at: string;
+          width: number | null;
+        };
         Insert: {
-          attribution?: string | null
-          content_type?: string | null
-          created_at?: string
-          file_size_bytes?: number | null
-          game_key: string
-          height?: number | null
-          id?: string
-          is_primary?: boolean | null
-          media_type?: string
-          metadata?: Json | null
-          public_url?: string | null
-          source?: string | null
-          storage_bucket?: string
-          storage_path: string
-          updated_at?: string
-          width?: number | null
-        }
+          attribution?: string | null;
+          content_type?: string | null;
+          created_at?: string;
+          file_size_bytes?: number | null;
+          game_key: string;
+          height?: number | null;
+          id?: string;
+          is_primary?: boolean | null;
+          media_type?: string;
+          metadata?: Json | null;
+          public_url?: string | null;
+          source?: string | null;
+          storage_bucket?: string;
+          storage_path: string;
+          updated_at?: string;
+          width?: number | null;
+        };
         Update: {
-          attribution?: string | null
-          content_type?: string | null
-          created_at?: string
-          file_size_bytes?: number | null
-          game_key?: string
-          height?: number | null
-          id?: string
-          is_primary?: boolean | null
-          media_type?: string
-          metadata?: Json | null
-          public_url?: string | null
-          source?: string | null
-          storage_bucket?: string
-          storage_path?: string
-          updated_at?: string
-          width?: number | null
-        }
-        Relationships: []
-      }
+          attribution?: string | null;
+          content_type?: string | null;
+          created_at?: string;
+          file_size_bytes?: number | null;
+          game_key?: string;
+          height?: number | null;
+          id?: string;
+          is_primary?: boolean | null;
+          media_type?: string;
+          metadata?: Json | null;
+          public_url?: string | null;
+          source?: string | null;
+          storage_bucket?: string;
+          storage_path?: string;
+          updated_at?: string;
+          width?: number | null;
+        };
+        Relationships: [];
+      };
       game_price_snapshots: {
         Row: {
-          cib_price_cents: number | null
-          console_name: string | null
-          currency: string
-          fetched_at: string
-          game_key: string
-          game_name: string
-          id: string
-          loose_price_cents: number | null
-          metadata: Json | null
-          new_price_cents: number | null
-          platform: string
-          product_id: string | null
-          product_name: string | null
-          region_code: string | null
-          snapshot_date: string
-          source: string
-        }
+          cib_price_cents: number | null;
+          console_name: string | null;
+          currency: string;
+          fetched_at: string;
+          game_key: string;
+          game_name: string;
+          id: string;
+          loose_price_cents: number | null;
+          metadata: Json | null;
+          new_price_cents: number | null;
+          platform: string;
+          product_id: string | null;
+          product_name: string | null;
+          region_code: string | null;
+          snapshot_date: string;
+          source: string;
+        };
         Insert: {
-          cib_price_cents?: number | null
-          console_name?: string | null
-          currency?: string
-          fetched_at?: string
-          game_key: string
-          game_name: string
-          id?: string
-          loose_price_cents?: number | null
-          metadata?: Json | null
-          new_price_cents?: number | null
-          platform: string
-          product_id?: string | null
-          product_name?: string | null
-          region_code?: string | null
-          snapshot_date?: string
-          source?: string
-        }
+          cib_price_cents?: number | null;
+          console_name?: string | null;
+          currency?: string;
+          fetched_at?: string;
+          game_key: string;
+          game_name: string;
+          id?: string;
+          loose_price_cents?: number | null;
+          metadata?: Json | null;
+          new_price_cents?: number | null;
+          platform: string;
+          product_id?: string | null;
+          product_name?: string | null;
+          region_code?: string | null;
+          snapshot_date?: string;
+          source?: string;
+        };
         Update: {
-          cib_price_cents?: number | null
-          console_name?: string | null
-          currency?: string
-          fetched_at?: string
-          game_key?: string
-          game_name?: string
-          id?: string
-          loose_price_cents?: number | null
-          metadata?: Json | null
-          new_price_cents?: number | null
-          platform?: string
-          product_id?: string | null
-          product_name?: string | null
-          region_code?: string | null
-          snapshot_date?: string
-          source?: string
-        }
-        Relationships: []
-      }
+          cib_price_cents?: number | null;
+          console_name?: string | null;
+          currency?: string;
+          fetched_at?: string;
+          game_key?: string;
+          game_name?: string;
+          id?: string;
+          loose_price_cents?: number | null;
+          metadata?: Json | null;
+          new_price_cents?: number | null;
+          platform?: string;
+          product_id?: string | null;
+          product_name?: string | null;
+          region_code?: string | null;
+          snapshot_date?: string;
+          source?: string;
+        };
+        Relationships: [];
+      };
       game_variant_prices: {
         Row: {
-          cib_price_cents: number | null
-          created_at: string
-          currency: string
-          game_key: string
-          id: string
-          loose_price_cents: number | null
-          new_price_cents: number | null
-          region_code: string
-          snapshot_date: string
-          source: string
-          updated_at: string
-        }
+          cib_price_cents: number | null;
+          created_at: string;
+          currency: string;
+          game_key: string;
+          id: string;
+          loose_price_cents: number | null;
+          new_price_cents: number | null;
+          region_code: string;
+          snapshot_date: string;
+          source: string;
+          updated_at: string;
+        };
         Insert: {
-          cib_price_cents?: number | null
-          created_at?: string
-          currency?: string
-          game_key: string
-          id?: string
-          loose_price_cents?: number | null
-          new_price_cents?: number | null
-          region_code?: string
-          snapshot_date?: string
-          source?: string
-          updated_at?: string
-        }
+          cib_price_cents?: number | null;
+          created_at?: string;
+          currency?: string;
+          game_key: string;
+          id?: string;
+          loose_price_cents?: number | null;
+          new_price_cents?: number | null;
+          region_code?: string;
+          snapshot_date?: string;
+          source?: string;
+          updated_at?: string;
+        };
         Update: {
-          cib_price_cents?: number | null
-          created_at?: string
-          currency?: string
-          game_key?: string
-          id?: string
-          loose_price_cents?: number | null
-          new_price_cents?: number | null
-          region_code?: string
-          snapshot_date?: string
-          source?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          cib_price_cents?: number | null;
+          created_at?: string;
+          currency?: string;
+          game_key?: string;
+          id?: string;
+          loose_price_cents?: number | null;
+          new_price_cents?: number | null;
+          region_code?: string;
+          snapshot_date?: string;
+          source?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       game_variants: {
         Row: {
-          cover_url: string | null
-          created_at: string
-          game_id: number
-          id: string
-          is_primary: boolean | null
-          local_title: string | null
-          metadata: Json | null
-          notes: string | null
-          product_code: string | null
-          publisher: string | null
-          region: Database["public"]["Enums"]["region_code"]
-          release_date: string | null
-          updated_at: string
-          variant_type: Database["public"]["Enums"]["variant_type"]
-        }
+          cover_url: string | null;
+          created_at: string;
+          game_id: number;
+          id: string;
+          is_primary: boolean | null;
+          local_title: string | null;
+          metadata: Json | null;
+          notes: string | null;
+          product_code: string | null;
+          publisher: string | null;
+          region: Database["public"]["Enums"]["region_code"];
+          release_date: string | null;
+          updated_at: string;
+          variant_type: Database["public"]["Enums"]["variant_type"];
+        };
         Insert: {
-          cover_url?: string | null
-          created_at?: string
-          game_id: number
-          id?: string
-          is_primary?: boolean | null
-          local_title?: string | null
-          metadata?: Json | null
-          notes?: string | null
-          product_code?: string | null
-          publisher?: string | null
-          region?: Database["public"]["Enums"]["region_code"]
-          release_date?: string | null
-          updated_at?: string
-          variant_type?: Database["public"]["Enums"]["variant_type"]
-        }
+          cover_url?: string | null;
+          created_at?: string;
+          game_id: number;
+          id?: string;
+          is_primary?: boolean | null;
+          local_title?: string | null;
+          metadata?: Json | null;
+          notes?: string | null;
+          product_code?: string | null;
+          publisher?: string | null;
+          region?: Database["public"]["Enums"]["region_code"];
+          release_date?: string | null;
+          updated_at?: string;
+          variant_type?: Database["public"]["Enums"]["variant_type"];
+        };
         Update: {
-          cover_url?: string | null
-          created_at?: string
-          game_id?: number
-          id?: string
-          is_primary?: boolean | null
-          local_title?: string | null
-          metadata?: Json | null
-          notes?: string | null
-          product_code?: string | null
-          publisher?: string | null
-          region?: Database["public"]["Enums"]["region_code"]
-          release_date?: string | null
-          updated_at?: string
-          variant_type?: Database["public"]["Enums"]["variant_type"]
-        }
+          cover_url?: string | null;
+          created_at?: string;
+          game_id?: number;
+          id?: string;
+          is_primary?: boolean | null;
+          local_title?: string | null;
+          metadata?: Json | null;
+          notes?: string | null;
+          product_code?: string | null;
+          publisher?: string | null;
+          region?: Database["public"]["Enums"]["region_code"];
+          release_date?: string | null;
+          updated_at?: string;
+          variant_type?: Database["public"]["Enums"]["variant_type"];
+        };
         Relationships: [
           {
-            foreignKeyName: "game_variants_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
+            foreignKeyName: "game_variants_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "game_variants_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games_consolidated"
-            referencedColumns: ["id"]
+            foreignKeyName: "game_variants_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games_consolidated";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       games: {
         Row: {
-          canonical_id: number | null
-          cover: string | null
-          description: string | null
-          developer: string | null
-          esrb_rating: string | null
-          game_name: string
-          genre: string | null
-          id: number
-          igdb_id: number | null
-          is_canonical: boolean | null
-          metacritic_score: number | null
-          notes: string | null
-          platform: string | null
-          player_count: string | null
-          player_mode: string | null
-          publisher: string | null
-          rating: number | null
-          rating_cat: string | null
-          region: string | null
-          release_year: number | null
-          search_vector: unknown
-          updated_at: string | null
-        }
+          canonical_id: number | null;
+          cover: string | null;
+          description: string | null;
+          developer: string | null;
+          esrb_rating: string | null;
+          game_name: string;
+          genre: string | null;
+          id: number;
+          igdb_id: number | null;
+          is_canonical: boolean | null;
+          metacritic_score: number | null;
+          notes: string | null;
+          platform: string | null;
+          player_count: string | null;
+          player_mode: string | null;
+          publisher: string | null;
+          rating: number | null;
+          rating_cat: string | null;
+          region: string | null;
+          release_year: number | null;
+          search_vector: unknown;
+          updated_at: string | null;
+        };
         Insert: {
-          canonical_id?: number | null
-          cover?: string | null
-          description?: string | null
-          developer?: string | null
-          esrb_rating?: string | null
-          game_name: string
-          genre?: string | null
-          id?: number
-          igdb_id?: number | null
-          is_canonical?: boolean | null
-          metacritic_score?: number | null
-          notes?: string | null
-          platform?: string | null
-          player_count?: string | null
-          player_mode?: string | null
-          publisher?: string | null
-          rating?: number | null
-          rating_cat?: string | null
-          region?: string | null
-          release_year?: number | null
-          search_vector?: unknown
-          updated_at?: string | null
-        }
+          canonical_id?: number | null;
+          cover?: string | null;
+          description?: string | null;
+          developer?: string | null;
+          esrb_rating?: string | null;
+          game_name: string;
+          genre?: string | null;
+          id?: number;
+          igdb_id?: number | null;
+          is_canonical?: boolean | null;
+          metacritic_score?: number | null;
+          notes?: string | null;
+          platform?: string | null;
+          player_count?: string | null;
+          player_mode?: string | null;
+          publisher?: string | null;
+          rating?: number | null;
+          rating_cat?: string | null;
+          region?: string | null;
+          release_year?: number | null;
+          search_vector?: unknown;
+          updated_at?: string | null;
+        };
         Update: {
-          canonical_id?: number | null
-          cover?: string | null
-          description?: string | null
-          developer?: string | null
-          esrb_rating?: string | null
-          game_name?: string
-          genre?: string | null
-          id?: number
-          igdb_id?: number | null
-          is_canonical?: boolean | null
-          metacritic_score?: number | null
-          notes?: string | null
-          platform?: string | null
-          player_count?: string | null
-          player_mode?: string | null
-          publisher?: string | null
-          rating?: number | null
-          rating_cat?: string | null
-          region?: string | null
-          release_year?: number | null
-          search_vector?: unknown
-          updated_at?: string | null
-        }
+          canonical_id?: number | null;
+          cover?: string | null;
+          description?: string | null;
+          developer?: string | null;
+          esrb_rating?: string | null;
+          game_name?: string;
+          genre?: string | null;
+          id?: number;
+          igdb_id?: number | null;
+          is_canonical?: boolean | null;
+          metacritic_score?: number | null;
+          notes?: string | null;
+          platform?: string | null;
+          player_count?: string | null;
+          player_mode?: string | null;
+          publisher?: string | null;
+          rating?: number | null;
+          rating_cat?: string | null;
+          region?: string | null;
+          release_year?: number | null;
+          search_vector?: unknown;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "games_canonical_id_fkey"
-            columns: ["canonical_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
+            foreignKeyName: "games_canonical_id_fkey";
+            columns: ["canonical_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "games_canonical_id_fkey"
-            columns: ["canonical_id"]
-            isOneToOne: false
-            referencedRelation: "games_consolidated"
-            referencedColumns: ["id"]
+            foreignKeyName: "games_canonical_id_fkey";
+            columns: ["canonical_id"];
+            isOneToOne: false;
+            referencedRelation: "games_consolidated";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       genres: {
         Row: {
-          created_at: string
-          id: string
-          name: string
-        }
+          created_at: string;
+          id: string;
+          name: string;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          name: string
-        }
+          created_at?: string;
+          id?: string;
+          name: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          id?: string;
+          name?: string;
+        };
+        Relationships: [];
+      };
       ingestion_runs: {
         Row: {
-          completed_at: string | null
-          error_details: Json | null
-          error_message: string | null
-          id: string
-          records_created: number | null
-          records_failed: number | null
-          records_fetched: number | null
-          records_unchanged: number | null
-          records_updated: number | null
-          source: string
-          started_at: string
-          status: string
-        }
+          completed_at: string | null;
+          error_details: Json | null;
+          error_message: string | null;
+          id: string;
+          records_created: number | null;
+          records_failed: number | null;
+          records_fetched: number | null;
+          records_unchanged: number | null;
+          records_updated: number | null;
+          source: string;
+          started_at: string;
+          status: string;
+        };
         Insert: {
-          completed_at?: string | null
-          error_details?: Json | null
-          error_message?: string | null
-          id?: string
-          records_created?: number | null
-          records_failed?: number | null
-          records_fetched?: number | null
-          records_unchanged?: number | null
-          records_updated?: number | null
-          source: string
-          started_at?: string
-          status?: string
-        }
+          completed_at?: string | null;
+          error_details?: Json | null;
+          error_message?: string | null;
+          id?: string;
+          records_created?: number | null;
+          records_failed?: number | null;
+          records_fetched?: number | null;
+          records_unchanged?: number | null;
+          records_updated?: number | null;
+          source: string;
+          started_at?: string;
+          status?: string;
+        };
         Update: {
-          completed_at?: string | null
-          error_details?: Json | null
-          error_message?: string | null
-          id?: string
-          records_created?: number | null
-          records_failed?: number | null
-          records_fetched?: number | null
-          records_unchanged?: number | null
-          records_updated?: number | null
-          source?: string
-          started_at?: string
-          status?: string
-        }
-        Relationships: []
-      }
+          completed_at?: string | null;
+          error_details?: Json | null;
+          error_message?: string | null;
+          id?: string;
+          records_created?: number | null;
+          records_failed?: number | null;
+          records_fetched?: number | null;
+          records_unchanged?: number | null;
+          records_updated?: number | null;
+          source?: string;
+          started_at?: string;
+          status?: string;
+        };
+        Relationships: [];
+      };
       pending_media: {
         Row: {
-          content_type: string | null
-          file_size_bytes: number | null
-          game_key: string
-          game_name: string | null
-          id: string
-          media_type: string
-          metadata: Json | null
-          original_filename: string | null
-          platform: string | null
-          review_notes: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          status: string
-          storage_path: string
-          submitted_at: string
-          submitted_by: string | null
-        }
+          content_type: string | null;
+          file_size_bytes: number | null;
+          game_key: string;
+          game_name: string | null;
+          id: string;
+          media_type: string;
+          metadata: Json | null;
+          original_filename: string | null;
+          platform: string | null;
+          review_notes: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: string;
+          storage_path: string;
+          submitted_at: string;
+          submitted_by: string | null;
+        };
         Insert: {
-          content_type?: string | null
-          file_size_bytes?: number | null
-          game_key: string
-          game_name?: string | null
-          id?: string
-          media_type?: string
-          metadata?: Json | null
-          original_filename?: string | null
-          platform?: string | null
-          review_notes?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string
-          storage_path: string
-          submitted_at?: string
-          submitted_by?: string | null
-        }
+          content_type?: string | null;
+          file_size_bytes?: number | null;
+          game_key: string;
+          game_name?: string | null;
+          id?: string;
+          media_type?: string;
+          metadata?: Json | null;
+          original_filename?: string | null;
+          platform?: string | null;
+          review_notes?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          storage_path: string;
+          submitted_at?: string;
+          submitted_by?: string | null;
+        };
         Update: {
-          content_type?: string | null
-          file_size_bytes?: number | null
-          game_key?: string
-          game_name?: string | null
-          id?: string
-          media_type?: string
-          metadata?: Json | null
-          original_filename?: string | null
-          platform?: string | null
-          review_notes?: string | null
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          status?: string
-          storage_path?: string
-          submitted_at?: string
-          submitted_by?: string | null
-        }
-        Relationships: []
-      }
+          content_type?: string | null;
+          file_size_bytes?: number | null;
+          game_key?: string;
+          game_name?: string | null;
+          id?: string;
+          media_type?: string;
+          metadata?: Json | null;
+          original_filename?: string | null;
+          platform?: string | null;
+          review_notes?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          storage_path?: string;
+          submitted_at?: string;
+          submitted_by?: string | null;
+        };
+        Relationships: [];
+      };
       platforms: {
         Row: {
-          created_at: string
-          id: string
-          manufacturer: string | null
-          name: string
-          release_year: number | null
-          slug: string
-        }
+          created_at: string;
+          id: string;
+          manufacturer: string | null;
+          name: string;
+          release_year: number | null;
+          slug: string;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          manufacturer?: string | null
-          name: string
-          release_year?: number | null
-          slug: string
-        }
+          created_at?: string;
+          id?: string;
+          manufacturer?: string | null;
+          name: string;
+          release_year?: number | null;
+          slug: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          manufacturer?: string | null
-          name?: string
-          release_year?: number | null
-          slug?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          id?: string;
+          manufacturer?: string | null;
+          name?: string;
+          release_year?: number | null;
+          slug?: string;
+        };
+        Relationships: [];
+      };
       price_source_configs: {
         Row: {
-          api_base_url: string | null
-          config: Json | null
-          created_at: string | null
-          display_name: string
-          id: string
-          is_enabled: boolean | null
-          last_sync_at: string | null
-          priority: number | null
-          rate_limit_per_hour: number | null
-          source: Database["public"]["Enums"]["price_source"]
-          updated_at: string | null
-        }
+          api_base_url: string | null;
+          config: Json | null;
+          created_at: string | null;
+          display_name: string;
+          id: string;
+          is_enabled: boolean | null;
+          last_sync_at: string | null;
+          priority: number | null;
+          rate_limit_per_hour: number | null;
+          source: Database["public"]["Enums"]["price_source"];
+          updated_at: string | null;
+        };
         Insert: {
-          api_base_url?: string | null
-          config?: Json | null
-          created_at?: string | null
-          display_name: string
-          id?: string
-          is_enabled?: boolean | null
-          last_sync_at?: string | null
-          priority?: number | null
-          rate_limit_per_hour?: number | null
-          source: Database["public"]["Enums"]["price_source"]
-          updated_at?: string | null
-        }
+          api_base_url?: string | null;
+          config?: Json | null;
+          created_at?: string | null;
+          display_name: string;
+          id?: string;
+          is_enabled?: boolean | null;
+          last_sync_at?: string | null;
+          priority?: number | null;
+          rate_limit_per_hour?: number | null;
+          source: Database["public"]["Enums"]["price_source"];
+          updated_at?: string | null;
+        };
         Update: {
-          api_base_url?: string | null
-          config?: Json | null
-          created_at?: string | null
-          display_name?: string
-          id?: string
-          is_enabled?: boolean | null
-          last_sync_at?: string | null
-          priority?: number | null
-          rate_limit_per_hour?: number | null
-          source?: Database["public"]["Enums"]["price_source"]
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+          api_base_url?: string | null;
+          config?: Json | null;
+          created_at?: string | null;
+          display_name?: string;
+          id?: string;
+          is_enabled?: boolean | null;
+          last_sync_at?: string | null;
+          priority?: number | null;
+          rate_limit_per_hour?: number | null;
+          source?: Database["public"]["Enums"]["price_source"];
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string | null
-          display_name: string | null
-          email: string | null
-          id: string
-          role: string | null
-          updated_at: string | null
-        }
+          avatar_url: string | null;
+          bio: string | null;
+          created_at: string | null;
+          display_name: string | null;
+          email: string | null;
+          id: string;
+          role: string | null;
+          updated_at: string | null;
+        };
         Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          email?: string | null
-          id: string
-          role?: string | null
-          updated_at?: string | null
-        }
+          avatar_url?: string | null;
+          bio?: string | null;
+          created_at?: string | null;
+          display_name?: string | null;
+          email?: string | null;
+          id: string;
+          role?: string | null;
+          updated_at?: string | null;
+        };
         Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          email?: string | null
-          id?: string
-          role?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+          avatar_url?: string | null;
+          bio?: string | null;
+          created_at?: string | null;
+          display_name?: string | null;
+          email?: string | null;
+          id?: string;
+          role?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       trade_offers: {
         Row: {
-          completed_at: string | null
-          counter_count: number | null
-          created_at: string | null
-          decline_reason: string | null
-          expires_at: string | null
-          id: string
-          message: string | null
-          offerer_cash_cents: number | null
-          offerer_id: string | null
-          offerer_items: Json | null
-          offerer_listing_id: string | null
-          parent_offer_id: string | null
-          recipient_id: string | null
-          recipient_listing_id: string | null
-          responded_at: string | null
-          status: Database["public"]["Enums"]["trade_status"]
-          updated_at: string | null
-        }
+          completed_at: string | null;
+          counter_count: number | null;
+          created_at: string | null;
+          decline_reason: string | null;
+          expires_at: string | null;
+          id: string;
+          message: string | null;
+          offerer_cash_cents: number | null;
+          offerer_id: string | null;
+          offerer_items: Json | null;
+          offerer_listing_id: string | null;
+          parent_offer_id: string | null;
+          recipient_id: string | null;
+          recipient_listing_id: string | null;
+          responded_at: string | null;
+          status: Database["public"]["Enums"]["trade_status"];
+          updated_at: string | null;
+        };
         Insert: {
-          completed_at?: string | null
-          counter_count?: number | null
-          created_at?: string | null
-          decline_reason?: string | null
-          expires_at?: string | null
-          id?: string
-          message?: string | null
-          offerer_cash_cents?: number | null
-          offerer_id?: string | null
-          offerer_items?: Json | null
-          offerer_listing_id?: string | null
-          parent_offer_id?: string | null
-          recipient_id?: string | null
-          recipient_listing_id?: string | null
-          responded_at?: string | null
-          status?: Database["public"]["Enums"]["trade_status"]
-          updated_at?: string | null
-        }
+          completed_at?: string | null;
+          counter_count?: number | null;
+          created_at?: string | null;
+          decline_reason?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          message?: string | null;
+          offerer_cash_cents?: number | null;
+          offerer_id?: string | null;
+          offerer_items?: Json | null;
+          offerer_listing_id?: string | null;
+          parent_offer_id?: string | null;
+          recipient_id?: string | null;
+          recipient_listing_id?: string | null;
+          responded_at?: string | null;
+          status?: Database["public"]["Enums"]["trade_status"];
+          updated_at?: string | null;
+        };
         Update: {
-          completed_at?: string | null
-          counter_count?: number | null
-          created_at?: string | null
-          decline_reason?: string | null
-          expires_at?: string | null
-          id?: string
-          message?: string | null
-          offerer_cash_cents?: number | null
-          offerer_id?: string | null
-          offerer_items?: Json | null
-          offerer_listing_id?: string | null
-          parent_offer_id?: string | null
-          recipient_id?: string | null
-          recipient_listing_id?: string | null
-          responded_at?: string | null
-          status?: Database["public"]["Enums"]["trade_status"]
-          updated_at?: string | null
-        }
+          completed_at?: string | null;
+          counter_count?: number | null;
+          created_at?: string | null;
+          decline_reason?: string | null;
+          expires_at?: string | null;
+          id?: string;
+          message?: string | null;
+          offerer_cash_cents?: number | null;
+          offerer_id?: string | null;
+          offerer_items?: Json | null;
+          offerer_listing_id?: string | null;
+          parent_offer_id?: string | null;
+          recipient_id?: string | null;
+          recipient_listing_id?: string | null;
+          responded_at?: string | null;
+          status?: Database["public"]["Enums"]["trade_status"];
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "trade_offers_offerer_id_fkey"
-            columns: ["offerer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "trade_offers_offerer_id_fkey";
+            columns: ["offerer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "trade_offers_offerer_id_fkey"
-            columns: ["offerer_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "trade_offers_offerer_id_fkey";
+            columns: ["offerer_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
           {
-            foreignKeyName: "trade_offers_offerer_listing_id_fkey"
-            columns: ["offerer_listing_id"]
-            isOneToOne: false
-            referencedRelation: "listing_price_comparison"
-            referencedColumns: ["listing_id"]
+            foreignKeyName: "trade_offers_offerer_listing_id_fkey";
+            columns: ["offerer_listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listing_price_comparison";
+            referencedColumns: ["listing_id"];
           },
           {
-            foreignKeyName: "trade_offers_offerer_listing_id_fkey"
-            columns: ["offerer_listing_id"]
-            isOneToOne: false
-            referencedRelation: "user_listings"
-            referencedColumns: ["id"]
+            foreignKeyName: "trade_offers_offerer_listing_id_fkey";
+            columns: ["offerer_listing_id"];
+            isOneToOne: false;
+            referencedRelation: "user_listings";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "trade_offers_parent_offer_id_fkey"
-            columns: ["parent_offer_id"]
-            isOneToOne: false
-            referencedRelation: "trade_offers"
-            referencedColumns: ["id"]
+            foreignKeyName: "trade_offers_parent_offer_id_fkey";
+            columns: ["parent_offer_id"];
+            isOneToOne: false;
+            referencedRelation: "trade_offers";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "trade_offers_recipient_id_fkey"
-            columns: ["recipient_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "trade_offers_recipient_id_fkey";
+            columns: ["recipient_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "trade_offers_recipient_id_fkey"
-            columns: ["recipient_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "trade_offers_recipient_id_fkey";
+            columns: ["recipient_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
           {
-            foreignKeyName: "trade_offers_recipient_listing_id_fkey"
-            columns: ["recipient_listing_id"]
-            isOneToOne: false
-            referencedRelation: "listing_price_comparison"
-            referencedColumns: ["listing_id"]
+            foreignKeyName: "trade_offers_recipient_listing_id_fkey";
+            columns: ["recipient_listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listing_price_comparison";
+            referencedColumns: ["listing_id"];
           },
           {
-            foreignKeyName: "trade_offers_recipient_listing_id_fkey"
-            columns: ["recipient_listing_id"]
-            isOneToOne: false
-            referencedRelation: "user_listings"
-            referencedColumns: ["id"]
+            foreignKeyName: "trade_offers_recipient_listing_id_fkey";
+            columns: ["recipient_listing_id"];
+            isOneToOne: false;
+            referencedRelation: "user_listings";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       user_listing_favorites: {
         Row: {
-          created_at: string | null
-          id: string
-          listing_id: string | null
-          user_id: string | null
-        }
+          created_at: string | null;
+          id: string;
+          listing_id: string | null;
+          user_id: string | null;
+        };
         Insert: {
-          created_at?: string | null
-          id?: string
-          listing_id?: string | null
-          user_id?: string | null
-        }
+          created_at?: string | null;
+          id?: string;
+          listing_id?: string | null;
+          user_id?: string | null;
+        };
         Update: {
-          created_at?: string | null
-          id?: string
-          listing_id?: string | null
-          user_id?: string | null
-        }
+          created_at?: string | null;
+          id?: string;
+          listing_id?: string | null;
+          user_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_listing_favorites_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "listing_price_comparison"
-            referencedColumns: ["listing_id"]
+            foreignKeyName: "user_listing_favorites_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listing_price_comparison";
+            referencedColumns: ["listing_id"];
           },
           {
-            foreignKeyName: "user_listing_favorites_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "user_listings"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_listing_favorites_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "user_listings";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_listing_favorites_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_listing_favorites_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_listing_favorites_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "user_listing_favorites_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
-        ]
-      }
+        ];
+      };
       user_listings: {
         Row: {
-          asking_price_cents: number | null
-          city: string | null
-          condition: Database["public"]["Enums"]["item_condition"]
-          condition_notes: string | null
-          country_code: string | null
-          created_at: string | null
-          currency: string | null
-          description: string | null
-          expires_at: string | null
-          favorite_count: number | null
-          game_id: number | null
-          game_key: string
-          id: string
-          includes_inserts: boolean | null
-          includes_manual: boolean | null
-          is_complete_in_box: boolean | null
-          is_price_negotiable: boolean | null
-          listing_type: Database["public"]["Enums"]["listing_type"]
-          local_pickup_only: boolean | null
-          minimum_price_cents: number | null
-          photos: Json | null
-          published_at: string | null
-          region: string | null
-          shipping_price_cents: number | null
-          ships_internationally: boolean | null
-          status: Database["public"]["Enums"]["listing_status"]
-          title: string
-          trade_notes: string | null
-          trade_preferences: Json | null
-          updated_at: string | null
-          user_id: string | null
-          view_count: number | null
-        }
+          asking_price_cents: number | null;
+          city: string | null;
+          condition: Database["public"]["Enums"]["item_condition"];
+          condition_notes: string | null;
+          country_code: string | null;
+          created_at: string | null;
+          currency: string | null;
+          description: string | null;
+          expires_at: string | null;
+          favorite_count: number | null;
+          game_id: number | null;
+          game_key: string;
+          id: string;
+          includes_inserts: boolean | null;
+          includes_manual: boolean | null;
+          is_complete_in_box: boolean | null;
+          is_price_negotiable: boolean | null;
+          listing_type: Database["public"]["Enums"]["listing_type"];
+          local_pickup_only: boolean | null;
+          minimum_price_cents: number | null;
+          photos: Json | null;
+          published_at: string | null;
+          region: string | null;
+          shipping_price_cents: number | null;
+          ships_internationally: boolean | null;
+          status: Database["public"]["Enums"]["listing_status"];
+          title: string;
+          trade_notes: string | null;
+          trade_preferences: Json | null;
+          updated_at: string | null;
+          user_id: string | null;
+          view_count: number | null;
+        };
         Insert: {
-          asking_price_cents?: number | null
-          city?: string | null
-          condition?: Database["public"]["Enums"]["item_condition"]
-          condition_notes?: string | null
-          country_code?: string | null
-          created_at?: string | null
-          currency?: string | null
-          description?: string | null
-          expires_at?: string | null
-          favorite_count?: number | null
-          game_id?: number | null
-          game_key: string
-          id?: string
-          includes_inserts?: boolean | null
-          includes_manual?: boolean | null
-          is_complete_in_box?: boolean | null
-          is_price_negotiable?: boolean | null
-          listing_type?: Database["public"]["Enums"]["listing_type"]
-          local_pickup_only?: boolean | null
-          minimum_price_cents?: number | null
-          photos?: Json | null
-          published_at?: string | null
-          region?: string | null
-          shipping_price_cents?: number | null
-          ships_internationally?: boolean | null
-          status?: Database["public"]["Enums"]["listing_status"]
-          title: string
-          trade_notes?: string | null
-          trade_preferences?: Json | null
-          updated_at?: string | null
-          user_id?: string | null
-          view_count?: number | null
-        }
+          asking_price_cents?: number | null;
+          city?: string | null;
+          condition?: Database["public"]["Enums"]["item_condition"];
+          condition_notes?: string | null;
+          country_code?: string | null;
+          created_at?: string | null;
+          currency?: string | null;
+          description?: string | null;
+          expires_at?: string | null;
+          favorite_count?: number | null;
+          game_id?: number | null;
+          game_key: string;
+          id?: string;
+          includes_inserts?: boolean | null;
+          includes_manual?: boolean | null;
+          is_complete_in_box?: boolean | null;
+          is_price_negotiable?: boolean | null;
+          listing_type?: Database["public"]["Enums"]["listing_type"];
+          local_pickup_only?: boolean | null;
+          minimum_price_cents?: number | null;
+          photos?: Json | null;
+          published_at?: string | null;
+          region?: string | null;
+          shipping_price_cents?: number | null;
+          ships_internationally?: boolean | null;
+          status?: Database["public"]["Enums"]["listing_status"];
+          title: string;
+          trade_notes?: string | null;
+          trade_preferences?: Json | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+          view_count?: number | null;
+        };
         Update: {
-          asking_price_cents?: number | null
-          city?: string | null
-          condition?: Database["public"]["Enums"]["item_condition"]
-          condition_notes?: string | null
-          country_code?: string | null
-          created_at?: string | null
-          currency?: string | null
-          description?: string | null
-          expires_at?: string | null
-          favorite_count?: number | null
-          game_id?: number | null
-          game_key?: string
-          id?: string
-          includes_inserts?: boolean | null
-          includes_manual?: boolean | null
-          is_complete_in_box?: boolean | null
-          is_price_negotiable?: boolean | null
-          listing_type?: Database["public"]["Enums"]["listing_type"]
-          local_pickup_only?: boolean | null
-          minimum_price_cents?: number | null
-          photos?: Json | null
-          published_at?: string | null
-          region?: string | null
-          shipping_price_cents?: number | null
-          ships_internationally?: boolean | null
-          status?: Database["public"]["Enums"]["listing_status"]
-          title?: string
-          trade_notes?: string | null
-          trade_preferences?: Json | null
-          updated_at?: string | null
-          user_id?: string | null
-          view_count?: number | null
-        }
+          asking_price_cents?: number | null;
+          city?: string | null;
+          condition?: Database["public"]["Enums"]["item_condition"];
+          condition_notes?: string | null;
+          country_code?: string | null;
+          created_at?: string | null;
+          currency?: string | null;
+          description?: string | null;
+          expires_at?: string | null;
+          favorite_count?: number | null;
+          game_id?: number | null;
+          game_key?: string;
+          id?: string;
+          includes_inserts?: boolean | null;
+          includes_manual?: boolean | null;
+          is_complete_in_box?: boolean | null;
+          is_price_negotiable?: boolean | null;
+          listing_type?: Database["public"]["Enums"]["listing_type"];
+          local_pickup_only?: boolean | null;
+          minimum_price_cents?: number | null;
+          photos?: Json | null;
+          published_at?: string | null;
+          region?: string | null;
+          shipping_price_cents?: number | null;
+          ships_internationally?: boolean | null;
+          status?: Database["public"]["Enums"]["listing_status"];
+          title?: string;
+          trade_notes?: string | null;
+          trade_preferences?: Json | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+          view_count?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_listings_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_listings_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_listings_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games_consolidated"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_listings_game_id_fkey";
+            columns: ["game_id"];
+            isOneToOne: false;
+            referencedRelation: "games_consolidated";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_listings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_listings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_listings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "user_listings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
-        ]
-      }
+        ];
+      };
       user_price_alerts: {
         Row: {
-          alert_type: Database["public"]["Enums"]["alert_type"]
-          condition_filter:
-            | Database["public"]["Enums"]["item_condition"][]
-            | null
-          created_at: string | null
-          expires_at: string | null
-          game_key: string
-          game_name: string
-          id: string
-          include_market_prices: boolean | null
-          include_user_listings: boolean | null
-          last_checked_at: string | null
-          last_triggered_at: string | null
-          notify_email: boolean | null
-          notify_push: boolean | null
-          platform: string
-          status: Database["public"]["Enums"]["alert_status"]
-          target_price_cents: number | null
-          trigger_count: number | null
-          updated_at: string | null
-          user_id: string | null
-        }
+          alert_type: Database["public"]["Enums"]["alert_type"];
+          condition_filter: Database["public"]["Enums"]["item_condition"][] | null;
+          created_at: string | null;
+          expires_at: string | null;
+          game_key: string;
+          game_name: string;
+          id: string;
+          include_market_prices: boolean | null;
+          include_user_listings: boolean | null;
+          last_checked_at: string | null;
+          last_triggered_at: string | null;
+          notify_email: boolean | null;
+          notify_push: boolean | null;
+          platform: string;
+          status: Database["public"]["Enums"]["alert_status"];
+          target_price_cents: number | null;
+          trigger_count: number | null;
+          updated_at: string | null;
+          user_id: string | null;
+        };
         Insert: {
-          alert_type?: Database["public"]["Enums"]["alert_type"]
-          condition_filter?:
-            | Database["public"]["Enums"]["item_condition"][]
-            | null
-          created_at?: string | null
-          expires_at?: string | null
-          game_key: string
-          game_name: string
-          id?: string
-          include_market_prices?: boolean | null
-          include_user_listings?: boolean | null
-          last_checked_at?: string | null
-          last_triggered_at?: string | null
-          notify_email?: boolean | null
-          notify_push?: boolean | null
-          platform: string
-          status?: Database["public"]["Enums"]["alert_status"]
-          target_price_cents?: number | null
-          trigger_count?: number | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
+          alert_type?: Database["public"]["Enums"]["alert_type"];
+          condition_filter?: Database["public"]["Enums"]["item_condition"][] | null;
+          created_at?: string | null;
+          expires_at?: string | null;
+          game_key: string;
+          game_name: string;
+          id?: string;
+          include_market_prices?: boolean | null;
+          include_user_listings?: boolean | null;
+          last_checked_at?: string | null;
+          last_triggered_at?: string | null;
+          notify_email?: boolean | null;
+          notify_push?: boolean | null;
+          platform: string;
+          status?: Database["public"]["Enums"]["alert_status"];
+          target_price_cents?: number | null;
+          trigger_count?: number | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
         Update: {
-          alert_type?: Database["public"]["Enums"]["alert_type"]
-          condition_filter?:
-            | Database["public"]["Enums"]["item_condition"][]
-            | null
-          created_at?: string | null
-          expires_at?: string | null
-          game_key?: string
-          game_name?: string
-          id?: string
-          include_market_prices?: boolean | null
-          include_user_listings?: boolean | null
-          last_checked_at?: string | null
-          last_triggered_at?: string | null
-          notify_email?: boolean | null
-          notify_push?: boolean | null
-          platform?: string
-          status?: Database["public"]["Enums"]["alert_status"]
-          target_price_cents?: number | null
-          trigger_count?: number | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
+          alert_type?: Database["public"]["Enums"]["alert_type"];
+          condition_filter?: Database["public"]["Enums"]["item_condition"][] | null;
+          created_at?: string | null;
+          expires_at?: string | null;
+          game_key?: string;
+          game_name?: string;
+          id?: string;
+          include_market_prices?: boolean | null;
+          include_user_listings?: boolean | null;
+          last_checked_at?: string | null;
+          last_triggered_at?: string | null;
+          notify_email?: boolean | null;
+          notify_push?: boolean | null;
+          platform?: string;
+          status?: Database["public"]["Enums"]["alert_status"];
+          target_price_cents?: number | null;
+          trigger_count?: number | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_price_alerts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_price_alerts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_price_alerts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "user_price_alerts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
-        ]
-      }
+        ];
+      };
       user_ratings: {
         Row: {
-          accuracy_rating: number | null
-          comment: string | null
-          communication_rating: number | null
-          created_at: string | null
-          id: string
-          overall_rating: number
-          rated_id: string | null
-          rater_id: string | null
-          responded_at: string | null
-          response: string | null
-          shipping_rating: number | null
-          transaction_id: string | null
-          updated_at: string | null
-        }
+          accuracy_rating: number | null;
+          comment: string | null;
+          communication_rating: number | null;
+          created_at: string | null;
+          id: string;
+          overall_rating: number;
+          rated_id: string | null;
+          rater_id: string | null;
+          responded_at: string | null;
+          response: string | null;
+          shipping_rating: number | null;
+          transaction_id: string | null;
+          updated_at: string | null;
+        };
         Insert: {
-          accuracy_rating?: number | null
-          comment?: string | null
-          communication_rating?: number | null
-          created_at?: string | null
-          id?: string
-          overall_rating: number
-          rated_id?: string | null
-          rater_id?: string | null
-          responded_at?: string | null
-          response?: string | null
-          shipping_rating?: number | null
-          transaction_id?: string | null
-          updated_at?: string | null
-        }
+          accuracy_rating?: number | null;
+          comment?: string | null;
+          communication_rating?: number | null;
+          created_at?: string | null;
+          id?: string;
+          overall_rating: number;
+          rated_id?: string | null;
+          rater_id?: string | null;
+          responded_at?: string | null;
+          response?: string | null;
+          shipping_rating?: number | null;
+          transaction_id?: string | null;
+          updated_at?: string | null;
+        };
         Update: {
-          accuracy_rating?: number | null
-          comment?: string | null
-          communication_rating?: number | null
-          created_at?: string | null
-          id?: string
-          overall_rating?: number
-          rated_id?: string | null
-          rater_id?: string | null
-          responded_at?: string | null
-          response?: string | null
-          shipping_rating?: number | null
-          transaction_id?: string | null
-          updated_at?: string | null
-        }
+          accuracy_rating?: number | null;
+          comment?: string | null;
+          communication_rating?: number | null;
+          created_at?: string | null;
+          id?: string;
+          overall_rating?: number;
+          rated_id?: string | null;
+          rater_id?: string | null;
+          responded_at?: string | null;
+          response?: string | null;
+          shipping_rating?: number | null;
+          transaction_id?: string | null;
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_ratings_rated_id_fkey"
-            columns: ["rated_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_ratings_rated_id_fkey";
+            columns: ["rated_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_ratings_rated_id_fkey"
-            columns: ["rated_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "user_ratings_rated_id_fkey";
+            columns: ["rated_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
           {
-            foreignKeyName: "user_ratings_rater_id_fkey"
-            columns: ["rater_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_ratings_rater_id_fkey";
+            columns: ["rater_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_ratings_rater_id_fkey"
-            columns: ["rater_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "user_ratings_rater_id_fkey";
+            columns: ["rater_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
           {
-            foreignKeyName: "user_ratings_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "user_transactions"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_ratings_transaction_id_fkey";
+            columns: ["transaction_id"];
+            isOneToOne: false;
+            referencedRelation: "user_transactions";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       user_transactions: {
         Row: {
-          buyer_id: string | null
-          carrier: string | null
-          completed_at: string | null
-          created_at: string | null
-          currency: string | null
-          delivered_at: string | null
-          id: string
-          items: Json | null
-          listing_id: string | null
-          notes: string | null
-          sale_price_cents: number | null
-          seller_id: string | null
-          shipped_at: string | null
-          shipping_price_cents: number | null
-          status: Database["public"]["Enums"]["transaction_status"]
-          total_cents: number | null
-          tracking_number: string | null
-          trade_offer_id: string | null
-          transaction_type: Database["public"]["Enums"]["transaction_type"]
-          updated_at: string | null
-        }
+          buyer_id: string | null;
+          carrier: string | null;
+          completed_at: string | null;
+          created_at: string | null;
+          currency: string | null;
+          delivered_at: string | null;
+          id: string;
+          items: Json | null;
+          listing_id: string | null;
+          notes: string | null;
+          sale_price_cents: number | null;
+          seller_id: string | null;
+          shipped_at: string | null;
+          shipping_price_cents: number | null;
+          status: Database["public"]["Enums"]["transaction_status"];
+          total_cents: number | null;
+          tracking_number: string | null;
+          trade_offer_id: string | null;
+          transaction_type: Database["public"]["Enums"]["transaction_type"];
+          updated_at: string | null;
+        };
         Insert: {
-          buyer_id?: string | null
-          carrier?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          currency?: string | null
-          delivered_at?: string | null
-          id?: string
-          items?: Json | null
-          listing_id?: string | null
-          notes?: string | null
-          sale_price_cents?: number | null
-          seller_id?: string | null
-          shipped_at?: string | null
-          shipping_price_cents?: number | null
-          status?: Database["public"]["Enums"]["transaction_status"]
-          total_cents?: number | null
-          tracking_number?: string | null
-          trade_offer_id?: string | null
-          transaction_type: Database["public"]["Enums"]["transaction_type"]
-          updated_at?: string | null
-        }
+          buyer_id?: string | null;
+          carrier?: string | null;
+          completed_at?: string | null;
+          created_at?: string | null;
+          currency?: string | null;
+          delivered_at?: string | null;
+          id?: string;
+          items?: Json | null;
+          listing_id?: string | null;
+          notes?: string | null;
+          sale_price_cents?: number | null;
+          seller_id?: string | null;
+          shipped_at?: string | null;
+          shipping_price_cents?: number | null;
+          status?: Database["public"]["Enums"]["transaction_status"];
+          total_cents?: number | null;
+          tracking_number?: string | null;
+          trade_offer_id?: string | null;
+          transaction_type: Database["public"]["Enums"]["transaction_type"];
+          updated_at?: string | null;
+        };
         Update: {
-          buyer_id?: string | null
-          carrier?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          currency?: string | null
-          delivered_at?: string | null
-          id?: string
-          items?: Json | null
-          listing_id?: string | null
-          notes?: string | null
-          sale_price_cents?: number | null
-          seller_id?: string | null
-          shipped_at?: string | null
-          shipping_price_cents?: number | null
-          status?: Database["public"]["Enums"]["transaction_status"]
-          total_cents?: number | null
-          tracking_number?: string | null
-          trade_offer_id?: string | null
-          transaction_type?: Database["public"]["Enums"]["transaction_type"]
-          updated_at?: string | null
-        }
+          buyer_id?: string | null;
+          carrier?: string | null;
+          completed_at?: string | null;
+          created_at?: string | null;
+          currency?: string | null;
+          delivered_at?: string | null;
+          id?: string;
+          items?: Json | null;
+          listing_id?: string | null;
+          notes?: string | null;
+          sale_price_cents?: number | null;
+          seller_id?: string | null;
+          shipped_at?: string | null;
+          shipping_price_cents?: number | null;
+          status?: Database["public"]["Enums"]["transaction_status"];
+          total_cents?: number | null;
+          tracking_number?: string | null;
+          trade_offer_id?: string | null;
+          transaction_type?: Database["public"]["Enums"]["transaction_type"];
+          updated_at?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_transactions_buyer_id_fkey"
-            columns: ["buyer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_transactions_buyer_id_fkey";
+            columns: ["buyer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_transactions_buyer_id_fkey"
-            columns: ["buyer_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "user_transactions_buyer_id_fkey";
+            columns: ["buyer_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
           {
-            foreignKeyName: "user_transactions_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "listing_price_comparison"
-            referencedColumns: ["listing_id"]
+            foreignKeyName: "user_transactions_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "listing_price_comparison";
+            referencedColumns: ["listing_id"];
           },
           {
-            foreignKeyName: "user_transactions_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "user_listings"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_transactions_listing_id_fkey";
+            columns: ["listing_id"];
+            isOneToOne: false;
+            referencedRelation: "user_listings";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_transactions_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_transactions_seller_id_fkey";
+            columns: ["seller_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_transactions_seller_id_fkey"
-            columns: ["seller_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "user_transactions_seller_id_fkey";
+            columns: ["seller_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
           {
-            foreignKeyName: "user_transactions_trade_offer_id_fkey"
-            columns: ["trade_offer_id"]
-            isOneToOne: false
-            referencedRelation: "trade_offers"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_transactions_trade_offer_id_fkey";
+            columns: ["trade_offer_id"];
+            isOneToOne: false;
+            referencedRelation: "trade_offers";
+            referencedColumns: ["id"];
           },
-        ]
-      }
-    }
+        ];
+      };
+    };
     Views: {
       game_price_latest: {
         Row: {
-          cib_price_cents: number | null
-          console_name: string | null
-          currency: string | null
-          fetched_at: string | null
-          game_key: string | null
-          game_name: string | null
-          id: string | null
-          loose_price_cents: number | null
-          metadata: Json | null
-          new_price_cents: number | null
-          platform: string | null
-          product_id: string | null
-          product_name: string | null
-          region_code: string | null
-          snapshot_date: string | null
-          source: string | null
-        }
-        Relationships: []
-      }
+          cib_price_cents: number | null;
+          console_name: string | null;
+          currency: string | null;
+          fetched_at: string | null;
+          game_key: string | null;
+          game_name: string | null;
+          id: string | null;
+          loose_price_cents: number | null;
+          metadata: Json | null;
+          new_price_cents: number | null;
+          platform: string | null;
+          product_id: string | null;
+          product_name: string | null;
+          region_code: string | null;
+          snapshot_date: string | null;
+          source: string | null;
+        };
+        Relationships: [];
+      };
       games_consolidated: {
         Row: {
-          available_regions: string[] | null
-          cover: string | null
-          description: string | null
-          developer: string | null
-          esrb_rating: string | null
-          game_name: string | null
-          genre: string | null
-          id: number | null
-          igdb_id: number | null
-          metacritic_score: number | null
-          notes: string | null
-          platform: string | null
-          player_count: string | null
-          player_mode: string | null
-          publisher: string | null
-          rating: number | null
-          rating_cat: string | null
-          region: string | null
-          release_year: number | null
-          updated_at: string | null
-          variant_count: number | null
-        }
-        Relationships: []
-      }
+          available_regions: string[] | null;
+          cover: string | null;
+          description: string | null;
+          developer: string | null;
+          esrb_rating: string | null;
+          game_name: string | null;
+          genre: string | null;
+          id: number | null;
+          igdb_id: number | null;
+          metacritic_score: number | null;
+          notes: string | null;
+          platform: string | null;
+          player_count: string | null;
+          player_mode: string | null;
+          publisher: string | null;
+          rating: number | null;
+          rating_cat: string | null;
+          region: string | null;
+          release_year: number | null;
+          updated_at: string | null;
+          variant_count: number | null;
+        };
+        Relationships: [];
+      };
       listing_price_comparison: {
         Row: {
-          asking_price_cents: number | null
-          comparable_market_cents: number | null
-          condition: Database["public"]["Enums"]["item_condition"] | null
-          created_at: string | null
-          game_key: string | null
-          listing_id: string | null
-          market_cib_cents: number | null
-          market_loose_cents: number | null
-          price_vs_market_pct: number | null
-          title: string | null
-          user_id: string | null
-        }
+          asking_price_cents: number | null;
+          comparable_market_cents: number | null;
+          condition: Database["public"]["Enums"]["item_condition"] | null;
+          created_at: string | null;
+          game_key: string | null;
+          listing_id: string | null;
+          market_cib_cents: number | null;
+          market_loose_cents: number | null;
+          price_vs_market_pct: number | null;
+          title: string | null;
+          user_id: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_listings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_listings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_listings_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_reputation"
-            referencedColumns: ["user_id"]
+            foreignKeyName: "user_listings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_reputation";
+            referencedColumns: ["user_id"];
           },
-        ]
-      }
+        ];
+      };
       marketplace_stats: {
         Row: {
-          active_listings: number | null
-          active_sellers: number | null
-          for_sale: number | null
-          for_trade: number | null
-          pending_trades: number | null
-          prices_updated_today: number | null
-          transactions_30d: number | null
-          volume_30d_cents: number | null
-          wanted: number | null
-        }
-        Relationships: []
-      }
+          active_listings: number | null;
+          active_sellers: number | null;
+          for_sale: number | null;
+          for_trade: number | null;
+          pending_trades: number | null;
+          prices_updated_today: number | null;
+          transactions_30d: number | null;
+          volume_30d_cents: number | null;
+          wanted: number | null;
+        };
+        Relationships: [];
+      };
       user_reputation: {
         Row: {
-          avatar_url: string | null
-          avg_accuracy: number | null
-          avg_communication: number | null
-          avg_overall: number | null
-          avg_shipping: number | null
-          display_name: string | null
-          items_sold: number | null
-          member_since_transaction: string | null
-          negative_count: number | null
-          neutral_count: number | null
-          positive_count: number | null
-          total_ratings: number | null
-          total_transactions: number | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
-    }
+          avatar_url: string | null;
+          avg_accuracy: number | null;
+          avg_communication: number | null;
+          avg_overall: number | null;
+          avg_shipping: number | null;
+          display_name: string | null;
+          items_sold: number | null;
+          member_since_transaction: string | null;
+          negative_count: number | null;
+          neutral_count: number | null;
+          positive_count: number | null;
+          total_ratings: number | null;
+          total_transactions: number | null;
+          user_id: string | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       approve_submission: {
-        Args: { p_moderation_notes?: string; p_submission_id: string }
-        Returns: Json
-      }
+        Args: { p_moderation_notes?: string; p_submission_id: string };
+        Returns: Json;
+      };
       check_price_alerts: {
-        Args: Record<PropertyKey, never>
+        Args: Record<PropertyKey, never>;
         Returns: {
-          alert_id: string
-          alert_type: Database["public"]["Enums"]["alert_type"]
-          current_price_cents: number
-          game_key: string
-          game_name: string
-          target_price_cents: number
-          triggered_by: string
-          user_id: string
-        }[]
-      }
+          alert_id: string;
+          alert_type: Database["public"]["Enums"]["alert_type"];
+          current_price_cents: number;
+          game_key: string;
+          game_name: string;
+          target_price_cents: number;
+          triggered_by: string;
+          user_id: string;
+        }[];
+      };
       find_trade_matches: {
-        Args: { p_user_id: string }
+        Args: { p_user_id: string };
         Returns: {
-          match_type: string
-          my_game_key: string
-          my_game_name: string
-          my_listing_id: string
-          their_game_key: string
-          their_game_name: string
-          their_listing_id: string
-          their_user_id: string
-          their_username: string
-        }[]
-      }
+          match_type: string;
+          my_game_key: string;
+          my_game_name: string;
+          my_listing_id: string;
+          their_game_key: string;
+          their_game_name: string;
+          their_listing_id: string;
+          their_user_id: string;
+          their_username: string;
+        }[];
+      };
       get_game_listings: {
         Args: {
-          p_conditions?: Database["public"]["Enums"]["item_condition"][]
-          p_game_key: string
-          p_listing_type?: Database["public"]["Enums"]["listing_type"]
-          p_max_price_cents?: number
-        }
+          p_conditions?: Database["public"]["Enums"]["item_condition"][];
+          p_game_key: string;
+          p_listing_type?: Database["public"]["Enums"]["listing_type"];
+          p_max_price_cents?: number;
+        };
         Returns: {
-          asking_price_cents: number
-          condition: Database["public"]["Enums"]["item_condition"]
-          country_code: string
-          created_at: string
-          is_complete_in_box: boolean
-          is_price_negotiable: boolean
-          listing_id: string
-          listing_type: Database["public"]["Enums"]["listing_type"]
-          photo_count: number
-          region: string
-          seller_name: string
-          seller_rating: number
-          title: string
-          user_id: string
-        }[]
-      }
-      get_game_with_variants: { Args: { p_game_id: number }; Returns: Json }
+          asking_price_cents: number;
+          condition: Database["public"]["Enums"]["item_condition"];
+          country_code: string;
+          created_at: string;
+          is_complete_in_box: boolean;
+          is_price_negotiable: boolean;
+          listing_id: string;
+          listing_type: Database["public"]["Enums"]["listing_type"];
+          photo_count: number;
+          region: string;
+          seller_name: string;
+          seller_rating: number;
+          title: string;
+          user_id: string;
+        }[];
+      };
+      get_game_with_variants: { Args: { p_game_id: number }; Returns: Json };
       get_price_history: {
-        Args: { p_days?: number; p_game_key: string; p_region_code?: string }
+        Args: { p_days?: number; p_game_key: string; p_region_code?: string };
         Returns: {
-          cib_price_cents: number
-          loose_price_cents: number
-          new_price_cents: number
-          snapshot_date: string
-          source: string
-        }[]
-      }
+          cib_price_cents: number;
+          loose_price_cents: number;
+          new_price_cents: number;
+          snapshot_date: string;
+          source: string;
+        }[];
+      };
       get_price_trends: {
-        Args: { p_game_key: string }
+        Args: { p_game_key: string };
         Returns: {
-          all_time_high_loose: number
-          all_time_low_loose: number
-          current_cib: number
-          current_loose: number
-          current_new: number
-          game_key: string
-          month_change_pct: number
-          quarter_change_pct: number
-          snapshot_count: number
-          week_change_pct: number
-          year_change_pct: number
-        }[]
-      }
+          all_time_high_loose: number;
+          all_time_low_loose: number;
+          current_cib: number;
+          current_loose: number;
+          current_new: number;
+          game_key: string;
+          month_change_pct: number;
+          quarter_change_pct: number;
+          snapshot_count: number;
+          week_change_pct: number;
+          year_change_pct: number;
+        }[];
+      };
       reject_submission: {
-        Args: { p_moderation_notes?: string; p_submission_id: string }
-        Returns: Json
-      }
+        Args: { p_moderation_notes?: string; p_submission_id: string };
+        Returns: Json;
+      };
       search_games: {
         Args: {
-          p_genre?: string
-          p_limit?: number
-          p_offset?: number
-          p_platform?: string
-          p_query: string
-        }
+          p_genre?: string;
+          p_limit?: number;
+          p_offset?: number;
+          p_platform?: string;
+          p_query: string;
+        };
         Returns: {
-          cover: string
-          game_name: string
-          genre: string
-          id: number
-          platform: string
-          rank: number
-          rating: number
-          release_year: number
-        }[]
-      }
-    }
+          cover: string;
+          game_name: string;
+          genre: string;
+          id: number;
+          platform: string;
+          rank: number;
+          rating: number;
+          release_year: number;
+        }[];
+      };
+    };
     Enums: {
-      alert_status: "active" | "triggered" | "paused" | "expired"
-      alert_type: "price_drop" | "price_below" | "new_listing" | "any_listing"
+      alert_status: "active" | "triggered" | "paused" | "expired";
+      alert_type: "price_drop" | "price_below" | "new_listing" | "any_listing";
       item_condition:
         | "new"
         | "like_new"
@@ -1618,24 +1612,13 @@ export type Database = {
         | "good"
         | "acceptable"
         | "poor"
-        | "parts_only"
-      listing_status:
-        | "draft"
-        | "active"
-        | "sold"
-        | "reserved"
-        | "expired"
-        | "cancelled"
-      listing_type: "sale" | "trade" | "auction" | "wanted"
-      price_source:
-        | "ebay"
-        | "pricecharting"
-        | "vgpc"
-        | "user_listing"
-        | "manual"
-      region_code: "NTSC-U" | "NTSC-J" | "PAL" | "NTSC-K" | "NTSC-C" | "WORLD"
-      submission_status: "pending" | "approved" | "rejected"
-      submission_type: "new" | "update" | "delete"
+        | "parts_only";
+      listing_status: "draft" | "active" | "sold" | "reserved" | "expired" | "cancelled";
+      listing_type: "sale" | "trade" | "auction" | "wanted";
+      price_source: "ebay" | "pricecharting" | "vgpc" | "user_listing" | "manual";
+      region_code: "NTSC-U" | "NTSC-J" | "PAL" | "NTSC-K" | "NTSC-C" | "WORLD";
+      submission_status: "pending" | "approved" | "rejected";
+      submission_type: "new" | "update" | "delete";
       trade_status:
         | "pending"
         | "accepted"
@@ -1643,44 +1626,44 @@ export type Database = {
         | "countered"
         | "completed"
         | "cancelled"
-        | "expired"
+        | "expired";
       transaction_status:
         | "pending"
         | "shipped"
         | "delivered"
         | "completed"
         | "disputed"
-        | "refunded"
-      transaction_type: "sale" | "purchase" | "trade"
-      user_role: "anonymous" | "contributor" | "moderator" | "admin"
-      variant_type: "official" | "translation" | "revision" | "special_edition"
-    }
+        | "refunded";
+      transaction_type: "sale" | "purchase" | "trade";
+      user_role: "anonymous" | "contributor" | "moderator" | "admin";
+      variant_type: "official" | "translation" | "revision" | "special_edition";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
@@ -1688,95 +1671,95 @@ export type Tables<
         DefaultSchema["Views"])
     ? (DefaultSchema["Tables"] &
         DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
@@ -1792,14 +1775,7 @@ export const Constants = {
         "poor",
         "parts_only",
       ],
-      listing_status: [
-        "draft",
-        "active",
-        "sold",
-        "reserved",
-        "expired",
-        "cancelled",
-      ],
+      listing_status: ["draft", "active", "sold", "reserved", "expired", "cancelled"],
       listing_type: ["sale", "trade", "auction", "wanted"],
       price_source: ["ebay", "pricecharting", "vgpc", "user_listing", "manual"],
       region_code: ["NTSC-U", "NTSC-J", "PAL", "NTSC-K", "NTSC-C", "WORLD"],
@@ -1827,4 +1803,4 @@ export const Constants = {
       variant_type: ["official", "translation", "revision", "special_edition"],
     },
   },
-} as const
+} as const;
