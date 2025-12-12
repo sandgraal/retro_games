@@ -584,10 +584,14 @@ function buildPriceAlertSection(
   price: PriceData,
   existingAlert: PriceAlert | undefined
 ): string {
-  const currentLoose = price.loose ? formatCurrency(price.loose, { fromCents: true }) : "N/A";
+  const currentLoose = price.loose
+    ? formatCurrency(price.loose, { fromCents: true })
+    : "N/A";
 
   if (existingAlert) {
-    const targetPrice = formatCurrency(existingAlert.targetPriceCents, { fromCents: true });
+    const targetPrice = formatCurrency(existingAlert.targetPriceCents, {
+      fromCents: true,
+    });
     const status = existingAlert.triggered
       ? `<span class="alert-triggered">🔔 Triggered!</span>`
       : `<span class="alert-active">⏳ Watching...</span>`;
@@ -656,7 +660,9 @@ function setupPriceAlertHandlers(container: HTMLElement, gameKey: string): void 
   if (setBtn) {
     setBtn.addEventListener("click", () => {
       const priceInput = container.querySelector("#alertPriceInput") as HTMLInputElement;
-      const conditionSelect = container.querySelector("#alertConditionSelect") as HTMLSelectElement;
+      const conditionSelect = container.querySelector(
+        "#alertConditionSelect"
+      ) as HTMLSelectElement;
 
       if (!priceInput?.value) return;
 

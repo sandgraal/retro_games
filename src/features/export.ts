@@ -37,7 +37,15 @@ export function exportCollectionToCSV(
   const notesMap = notes.get();
   const priceMap = prices.get();
 
-  const baseHeaders = ["Game Name", "Platform", "Genre", "Rating", "Year", "Status", "Notes"];
+  const baseHeaders = [
+    "Game Name",
+    "Platform",
+    "Genre",
+    "Rating",
+    "Year",
+    "Status",
+    "Notes",
+  ];
   const priceHeaders = includePrices
     ? ["Loose Price", "Complete Price", "New Price", "Week Change %"]
     : [];
