@@ -30,10 +30,15 @@ export interface Game {
   metacritic_score?: number;
   igdb_id?: number;
   updated_at?: string;
+  // Platform era classification
+  era?: "retro" | "last-gen" | "current";
+  is_indie?: boolean;
+  is_vr_supported?: boolean;
   // Variant data
   variant_count?: number;
   available_regions?: string[];
   external_links?: ExternalLinks;
+  external_ids?: { igdb?: number; rawg?: number; steam?: number };
   pricing?: PriceData;
   // Legacy fields (sample data only, not in Supabase)
   Details?: string;
