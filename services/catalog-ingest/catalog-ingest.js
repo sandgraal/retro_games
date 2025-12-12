@@ -19,10 +19,16 @@ import {
 
 // Source adapters
 let rawgAdapter = null;
+let igdbAdapter = null;
 try {
   rawgAdapter = await import("./sources/rawg.js");
 } catch {
   // RAWG adapter not available - will use generic fetch
+}
+try {
+  igdbAdapter = await import("./sources/igdb.js");
+} catch {
+  // IGDB adapter not available - will use generic fetch
 }
 
 // Initialize Supabase connection
@@ -474,6 +480,9 @@ async function fetchSourceRecords(source) {
   }
 
   // Use source-specific adapters
+  if (source.type === "igdb" && igdbAdapter) {
+    return igdbAdapter.fetchIgdbSource(source);
+  }
   if (source.type === "rawg" && rawgAdapter) {
     return rawgAdapter.fetchRawgSource(source);
   }

@@ -38,8 +38,8 @@ _Created: December 2025_
 
 | Source            | Coverage                    | Update Frequency | Integration Status |
 | ----------------- | --------------------------- | ---------------- | ------------------ |
-| **IGDB**          | 200k+ games, all platforms  | Real-time API    | 🔴 Priority #1     |
-| **RAWG**          | 500k+ games, broad coverage | Daily API        | 📋 Planned         |
+| **IGDB**          | 200k+ games, all platforms  | Real-time API    | ✅ Integrated      |
+| **RAWG**          | 500k+ games, broad coverage | Daily API        | ✅ Integrated      |
 | **GiantBomb**     | Deep metadata, wiki-quality | Weekly           | 📋 Planned         |
 | **MobyGames**     | Historical accuracy         | Weekly           | 📋 Planned         |
 | **Steam API**     | PC games, pricing           | Daily            | 📋 Planned         |
@@ -117,9 +117,9 @@ flowchart TB
 
 **Tasks**:
 
-- [ ] IGDB API integration with OAuth
-- [ ] Platform mapping (IGDB IDs → internal platform names)
-- [ ] Add PS5, Xbox Series X/S, Switch game catalogs
+- [x] IGDB API integration with OAuth (`services/catalog-ingest/sources/igdb.js`)
+- [x] Platform mapping (IGDB IDs → internal platform names)
+- [ ] Add PS5, Xbox Series X/S, Switch game catalogs (run ingestion with credentials)
 - [ ] Add PS4, Xbox One backlog
 - [ ] Create "era" filter (Retro/Last-Gen/Current-Gen)
 - [ ] Update UI platform badges for modern consoles
@@ -275,8 +275,8 @@ ALTER TABLE games ADD COLUMN IF NOT EXISTS
 
 ### In Progress 🚧
 
-- [ ] IGDB API integration script
-- [ ] Modern platform catalog seeding
+- [x] IGDB API integration script (`services/catalog-ingest/sources/igdb.js`)
+- [ ] Modern platform catalog seeding (requires IGDB credentials in secrets)
 - [ ] Platform filter UI expansion
 
 ### Planned 📋
@@ -326,12 +326,13 @@ ALTER TABLE games ADD COLUMN IF NOT EXISTS
 
 ## Next Steps (Immediate Actions)
 
-1. **Register for IGDB API access** via Twitch Developer Console
-2. **Create `scripts/igdb-ingest.js`** for initial catalog pull
-3. **Add modern platforms to UI** (PS5, Switch, Xbox Series X filter options)
-4. **Set up GitHub Actions** scheduled workflow for daily updates
-5. **Expand sample-games.json** to include modern game examples
-6. **Create data health monitoring** dashboard in Supabase
+1. **Register for IGDB API access** via Twitch Developer Console (get `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET`)
+2. ~~**Create IGDB adapter**~~ ✅ Done: `services/catalog-ingest/sources/igdb.js`
+3. **Run initial IGDB catalog pull**: `npm run ingest:catalog` with credentials
+4. **Add modern platforms to UI** (PS5, Switch, Xbox Series X filter options)
+5. **Set up GitHub Actions** scheduled workflow for daily updates
+6. **Expand sample-games.json** to include modern game examples
+7. **Create data health monitoring** dashboard in Supabase
 
 ---
 

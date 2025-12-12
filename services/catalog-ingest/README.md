@@ -5,6 +5,8 @@ A lightweight Node.js worker that pulls game metadata from external APIs on a sc
 ## Features
 
 - Scheduled ingestion (`scheduleMinutes`) or ad-hoc runs with `--once`.
+- **IGDB integration** - Twitch OAuth, 200k+ games, 35+ platforms supported
+- **RAWG integration** - 500k+ games, broad platform coverage
 - Deterministic keys (`title + platform + release_year`) plus fuzzy matching for cross-source de-duplication.
 - Merge decisions are persisted to `data/merge-decisions.json` so future runs reuse the same mapping.
 - Change detection via SHA-256 hash/version per record; only updates changed entries.
@@ -14,16 +16,30 @@ A lightweight Node.js worker that pulls game metadata from external APIs on a sc
 ## Usage
 
 ```bash
-# One-off run using the example configuration
-node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.example.json --once
+# One-off run with IGDB source (recommended)
+IGDB_CLIENT_ID=xxx IGDB_CLIENT_SECRET=xxx node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.igdb.json --once
+
+# One-off run with RAWG source
+RAWG_API_KEY=xxx node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.rawg.json --once
 
 # Start the read API after seeding snapshots
 node services/catalog-ingest/catalog-ingest.js --serve --port 8787
 ```
 
+### Data Sources
+
+| Source | Type   | Configuration         | Rate Limit    |
+| ------ | ------ | --------------------- | ------------- |
+| IGDB   | `igdb` | `config.igdb.json`    | 4 req/sec     |
+| RAWG   | `rawg` | `config.rawg.json`    | 20k req/month |
+| Custom | `url`  | `config.example.json` | Varies        |
+
 ### Configuration
 
-Copy `config.example.json` to `config.json` and fill in your API URLs/headers. Each source should return an array of records or an object with a `results` array.
+Copy `config.igdb.json` (recommended) or `config.rawg.json` to `config.json` and fill in your API credentials via environment variables:
+
+- **IGDB**: Requires `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET` from [Twitch Developer Console](https://dev.twitch.tv/console)
+- **RAWG**: Requires `RAWG_API_KEY` from [rawg.io/apidocs](https://rawg.io/apidocs)
 
 ### Data directory
 

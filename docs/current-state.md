@@ -46,10 +46,11 @@ _Last updated: December 2025_
 
 ## Next Steps
 
-1. **IGDB API integration** - Register for Twitch Developer API, create `scripts/igdb-ingest.js` for catalog expansion.
-2. **Add modern platforms** - PS5, Switch, Xbox Series X/S, Steam platform filters and badges.
-3. **Expand sample dataset** - Include modern game examples in `data/sample-games.json`.
-4. **Automate catalog refresh** - Enable `.github/workflows/catalog-refresh.yml` scheduled job.
-5. Replace the local price snapshot with a real source (Supabase table or API) or expose a clear toggle when prices are unavailable.
+1. ~~**IGDB API integration**~~ ✅ Complete - `services/catalog-ingest/sources/igdb.js` ready
+2. **Run IGDB ingestion** - Add `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET` secrets, run `npm run ingest:catalog`
+3. **Add modern platforms** - PS5, Switch, Xbox Series X/S filter options in UI
+4. **Expand sample dataset** - Include modern game examples in `data/sample-games.json`
+5. **Automate catalog refresh** - Enable `.github/workflows/catalog-refresh.yml` scheduled job
+6. Replace the local price snapshot with a real source (Supabase table or API) or expose a clear toggle when prices are unavailable.
 
 **📖 See [UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md) for the complete expansion roadmap.**

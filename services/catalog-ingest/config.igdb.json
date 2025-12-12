@@ -1,0 +1,59 @@
+{
+  "scheduleMinutes": 1440,
+  "fuzzyThreshold": 0.82,
+  "sources": [
+    {
+      "name": "igdb",
+      "type": "igdb",
+      "enabled": true,
+      "clientId": "${IGDB_CLIENT_ID}",
+      "clientSecret": "${IGDB_CLIENT_SECRET}",
+      "pageSize": 500,
+      "maxRecords": 10000,
+      "rateLimit": {
+        "retryAfterMs": 250
+      },
+      "platforms": [
+        { "id": 167, "name": "PlayStation 5" },
+        { "id": 169, "name": "Xbox Series X" },
+        { "id": 130, "name": "Nintendo Switch" },
+        { "id": 6, "name": "PC" },
+        { "id": 48, "name": "PlayStation 4" },
+        { "id": 49, "name": "Xbox One" },
+        { "id": 19, "name": "SNES" },
+        { "id": 18, "name": "NES" },
+        { "id": 4, "name": "Nintendo 64" },
+        { "id": 21, "name": "GameCube" },
+        { "id": 29, "name": "Genesis" },
+        { "id": 7, "name": "PlayStation" },
+        { "id": 8, "name": "PlayStation 2" }
+      ]
+    },
+    {
+      "name": "rawg",
+      "type": "rawg",
+      "enabled": false,
+      "apiKey": "${RAWG_API_KEY}",
+      "baseUrl": "https://api.rawg.io/api",
+      "pageSize": 40,
+      "maxPages": 50,
+      "rateLimit": {
+        "retryAfterMs": 200
+      },
+      "platforms": [
+        { "id": 187, "name": "PlayStation 5" },
+        { "id": 186, "name": "Xbox Series X" },
+        { "id": 7, "name": "Nintendo Switch" },
+        { "id": 4, "name": "PC" },
+        { "id": 18, "name": "PlayStation 4" },
+        { "id": 1, "name": "Xbox One" },
+        { "id": 79, "name": "SNES" },
+        { "id": 49, "name": "NES" },
+        { "id": 83, "name": "Nintendo 64" },
+        { "id": 167, "name": "Genesis" },
+        { "id": 27, "name": "PlayStation" },
+        { "id": 15, "name": "PlayStation 2" }
+      ]
+    }
+  ]
+}
