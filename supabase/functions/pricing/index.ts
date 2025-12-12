@@ -46,10 +46,7 @@ Deno.serve(async (req: Request) => {
       const limit = parseInt(url.searchParams.get("limit") || "100", 10);
       const offset = parseInt(url.searchParams.get("offset") || "0", 10);
 
-      let query = supabase
-        .from("game_price_latest")
-        .select("*")
-        .order("game_name");
+      let query = supabase.from("game_price_latest").select("*").order("game_name");
 
       if (platform) {
         query = query.ilike("platform", platform);
@@ -59,12 +56,15 @@ Deno.serve(async (req: Request) => {
 
       if (error) throw error;
 
-      return new Response(JSON.stringify({
-        prices: data,
-        pagination: { limit, offset, count: data?.length || 0 }
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          prices: data,
+          pagination: { limit, offset, count: data?.length || 0 },
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Route: GET /pricing/game/:gameKey - Get price for specific game
@@ -83,29 +83,36 @@ Deno.serve(async (req: Request) => {
       if (currentError && currentError.code !== "PGRST116") throw currentError;
 
       // Get price history using the function
-      const { data: history, error: historyError } = await supabase
-        .rpc("get_price_history", {
+      const { data: history, error: historyError } = await supabase.rpc(
+        "get_price_history",
+        {
           p_game_key: gameKey,
           p_days: days,
           p_region_code: region,
-        });
+        }
+      );
 
       if (historyError) throw historyError;
 
       // Get price trends
-      const { data: trends, error: trendsError } = await supabase
-        .rpc("get_price_trends", { p_game_key: gameKey });
+      const { data: trends, error: trendsError } = await supabase.rpc(
+        "get_price_trends",
+        { p_game_key: gameKey }
+      );
 
       if (trendsError) throw trendsError;
 
-      return new Response(JSON.stringify({
-        game_key: gameKey,
-        current: current || null,
-        history: history || [],
-        trends: trends?.[0] || null,
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          game_key: gameKey,
+          current: current || null,
+          history: history || [],
+          trends: trends?.[0] || null,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // Route: GET /pricing/stats - Get marketplace statistics
@@ -125,7 +132,7 @@ Deno.serve(async (req: Request) => {
     // Route: GET /pricing/bulk - Get prices for multiple games
     if (pathParts[0] === "bulk") {
       const gameKeys = url.searchParams.get("keys")?.split(",") || [];
-      
+
       if (gameKeys.length === 0) {
         return new Response(JSON.stringify({ error: "No game keys provided" }), {
           status: 400,
@@ -164,10 +171,13 @@ Deno.serve(async (req: Request) => {
       const limit = parseInt(url.searchParams.get("limit") || "20", 10);
 
       if (query.length < 2) {
-        return new Response(JSON.stringify({ error: "Query must be at least 2 characters" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Query must be at least 2 characters" }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
 
       const { data, error } = await supabase
@@ -188,12 +198,14 @@ Deno.serve(async (req: Request) => {
       status: 404,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-
   } catch (error) {
     console.error("Error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message || "Internal server error" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });

@@ -19,7 +19,7 @@ Deno.serve(async (req: Request) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-  
+
   // Get auth header for user operations
   const authHeader = req.headers.get("Authorization");
   const supabase = createClient(supabaseUrl, authHeader ? supabaseKey : supabaseKey, {
@@ -41,12 +41,14 @@ Deno.serve(async (req: Request) => {
 
       let query = supabase
         .from("user_listings")
-        .select(`
+        .select(
+          `
           id, game_key, title, asking_price_cents, currency, condition,
           listing_type, is_complete_in_box, photos, city, country_code,
           created_at, view_count, favorite_count,
           profiles:user_id (display_name, avatar_url)
-        `)
+        `
+        )
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
@@ -59,12 +61,15 @@ Deno.serve(async (req: Request) => {
 
       if (error) throw error;
 
-      return new Response(JSON.stringify({
-        listings: data || [],
-        pagination: { limit, offset, count: data?.length || 0 }
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          listings: data || [],
+          pagination: { limit, offset, count: data?.length || 0 },
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
     // GET /listings/game/:gameKey - Get listings for a specific game
@@ -94,13 +99,15 @@ Deno.serve(async (req: Request) => {
 
       const { data, error } = await supabase
         .from("user_listings")
-        .select(`
+        .select(
+          `
           *,
           profiles:user_id (id, display_name, avatar_url),
           market_price:listing_price_comparison!inner (
             market_loose_cents, market_cib_cents, price_vs_market_pct
           )
-        `)
+        `
+        )
         .eq("id", listingId)
         .single();
 
@@ -127,8 +134,11 @@ Deno.serve(async (req: Request) => {
 
     // POST /listings - Create new listing (requires auth)
     if (req.method === "POST" && pathParts.length === 0) {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
       if (authError || !user) {
         return new Response(JSON.stringify({ error: "Authentication required" }), {
           status: 401,
@@ -181,8 +191,11 @@ Deno.serve(async (req: Request) => {
     // PUT /listings/:id - Update listing (requires auth + ownership)
     if (req.method === "PUT" && pathParts.length === 1) {
       const listingId = pathParts[0];
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
       if (authError || !user) {
         return new Response(JSON.stringify({ error: "Authentication required" }), {
           status: 401,
@@ -191,7 +204,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const body = await req.json();
-      
+
       // Remove fields that shouldn't be updated directly
       delete body.id;
       delete body.user_id;
@@ -209,10 +222,13 @@ Deno.serve(async (req: Request) => {
 
       if (error) {
         if (error.code === "PGRST116") {
-          return new Response(JSON.stringify({ error: "Listing not found or not owned by you" }), {
-            status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
+          return new Response(
+            JSON.stringify({ error: "Listing not found or not owned by you" }),
+            {
+              status: 404,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
         }
         throw error;
       }
@@ -225,8 +241,11 @@ Deno.serve(async (req: Request) => {
     // DELETE /listings/:id - Delete listing (requires auth + ownership)
     if (req.method === "DELETE" && pathParts.length === 1) {
       const listingId = pathParts[0];
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
       if (authError || !user) {
         return new Response(JSON.stringify({ error: "Authentication required" }), {
           status: 401,
@@ -250,8 +269,11 @@ Deno.serve(async (req: Request) => {
     // POST /listings/:id/favorite - Toggle favorite (requires auth)
     if (req.method === "POST" && pathParts[1] === "favorite") {
       const listingId = pathParts[0];
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
       if (authError || !user) {
         return new Response(JSON.stringify({ error: "Authentication required" }), {
           status: 401,
@@ -269,10 +291,7 @@ Deno.serve(async (req: Request) => {
 
       if (existing) {
         // Remove favorite
-        await supabase
-          .from("user_listing_favorites")
-          .delete()
-          .eq("id", existing.id);
+        await supabase.from("user_listing_favorites").delete().eq("id", existing.id);
 
         return new Response(JSON.stringify({ favorited: false }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -293,12 +312,14 @@ Deno.serve(async (req: Request) => {
       status: 404,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-
   } catch (error) {
     console.error("Error:", error);
-    return new Response(JSON.stringify({ error: error.message || "Internal server error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: error.message || "Internal server error" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });

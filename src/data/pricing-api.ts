@@ -132,7 +132,10 @@ export async function fetchLatestPrices(options?: {
   platform?: string;
   limit?: number;
   offset?: number;
-}): Promise<{ prices: PriceSnapshot[]; pagination: { limit: number; offset: number; count: number } }> {
+}): Promise<{
+  prices: PriceSnapshot[];
+  pagination: { limit: number; offset: number; count: number };
+}> {
   const baseUrl = getApiBaseUrl();
   const params = new URLSearchParams();
 
@@ -252,10 +255,7 @@ export async function fetchBulkPrices(
 /**
  * Search games with prices by name
  */
-export async function searchPrices(
-  query: string,
-  limit = 20
-): Promise<PriceSnapshot[]> {
+export async function searchPrices(query: string, limit = 20): Promise<PriceSnapshot[]> {
   if (query.length < 2) return [];
 
   const baseUrl = getApiBaseUrl();
