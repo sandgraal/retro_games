@@ -96,7 +96,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: data/ebay-price-cache.json
-          key: ebay-price-cache-v1-${{ hashFiles('data/ebay-price-cache.json') }}
+          key: ebay-price-cache-v1-${{ github.run_id }}-${{ hashFiles('data/ebay-price-cache.json') }}
 
       - name: Create failure issue
         if: failure()
