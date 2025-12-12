@@ -118,9 +118,11 @@ function updateEraFilterCounts(_availableEras: string[], active: Set<string>): v
   if (!container) return;
 
   // Update checkbox states
-  container.querySelectorAll<HTMLInputElement>('input[data-filter="era"]').forEach((checkbox) => {
-    checkbox.checked = active.has(checkbox.value as "retro" | "last-gen" | "current");
-  });
+  container
+    .querySelectorAll<HTMLInputElement>('input[data-filter="era"]')
+    .forEach((checkbox) => {
+      checkbox.checked = active.has(checkbox.value as "retro" | "last-gen" | "current");
+    });
 
   // Update count badge
   const countEl = document.getElementById("eraCount");
@@ -132,7 +134,11 @@ function updateEraFilterCounts(_availableEras: string[], active: Set<string>): v
 /**
  * Update special toggle states (indie, VR, deals)
  */
-function updateSpecialToggles(showIndieOnly: boolean, showVrOnly: boolean, showDealsOnly: boolean): void {
+function updateSpecialToggles(
+  showIndieOnly: boolean,
+  showVrOnly: boolean,
+  showDealsOnly: boolean
+): void {
   const indieToggle = document.getElementById("indieToggle") as HTMLInputElement | null;
   const vrToggle = document.getElementById("vrToggle") as HTMLInputElement | null;
   const dealsToggle = document.getElementById("dealsToggle") as HTMLInputElement | null;
