@@ -125,11 +125,14 @@ export interface ExternalLinks {
 
 // === Filter Types ===
 
+export type GameEra = "retro" | "last-gen" | "current";
+
 export interface FilterState {
   platforms: Set<string>;
   genres: Set<string>;
   regions: Set<string>;
   statuses: Set<CollectionStatus>;
+  eras: Set<GameEra>;
   searchQuery: string;
   yearRange: {
     start?: number;
@@ -143,6 +146,8 @@ export interface FilterState {
   sortBy: SortOption;
   sortDirection: "asc" | "desc";
   showDealsOnly: boolean; // games with price drops
+  showIndieOnly: boolean;
+  showVrOnly: boolean;
 }
 
 export type SortOption = "name" | "rating" | "year" | "value" | "platform";

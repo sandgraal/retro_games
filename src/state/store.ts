@@ -37,6 +37,7 @@ const DEFAULT_FILTER_STATE: FilterState = {
   genres: new Set(),
   regions: new Set(),
   statuses: new Set(),
+  eras: new Set(),
   searchQuery: "",
   yearRange: {},
   priceRange: {},
@@ -44,6 +45,8 @@ const DEFAULT_FILTER_STATE: FilterState = {
   sortBy: "name",
   sortDirection: "asc",
   showDealsOnly: false,
+  showIndieOnly: false,
+  showVrOnly: false,
 };
 
 // === Core State Signals ===
@@ -115,6 +118,24 @@ export const filteredGames: ComputedSignal<GameWithKey[]> = computed(() => {
       const status = entry?.status ?? "none";
       return filters.statuses.has(status);
     });
+  }
+
+  // Era filter
+  if (filters.eras.size > 0) {
+    result = result.filter((g) => {
+      const era = g.era ?? "retro"; // Default to retro for legacy data
+      return filters.eras.has(era);
+    });
+  }
+
+  // Indie filter
+  if (filters.showIndieOnly) {
+    result = result.filter((g) => g.is_indie === true);
+  }
+
+  // VR filter
+  if (filters.showVrOnly) {
+    result = result.filter((g) => g.is_vr_supported === true);
   }
 
   // Search filter
@@ -221,6 +242,17 @@ export const availablePlatforms: ComputedSignal<string[]> = computed(() => {
   const games = gamesSignal.get();
   const platforms = new Set(games.map((g) => g.platform).filter(Boolean));
   return Array.from(platforms).sort();
+});
+
+/**
+ * Available eras from all games
+ */
+export const availableEras: ComputedSignal<string[]> = computed(() => {
+  const games = gamesSignal.get();
+  const eras = new Set(games.map((g) => g.era ?? "retro").filter(Boolean));
+  // Return in chronological order
+  const eraOrder = ["retro", "last-gen", "current"];
+  return Array.from(eras).sort((a, b) => eraOrder.indexOf(a) - eraOrder.indexOf(b));
 });
 
 /**
@@ -488,6 +520,41 @@ export function toggleStatusFilter(status: CollectionStatus): void {
     }
     return { ...current, statuses };
   });
+}
+
+/**
+ * Toggle era filter
+ */
+export function toggleEraFilter(era: "retro" | "last-gen" | "current"): void {
+  filterStateSignal.set((current) => {
+    const eras = new Set(current.eras);
+    if (eras.has(era)) {
+      eras.delete(era);
+    } else {
+      eras.add(era);
+    }
+    return { ...current, eras };
+  });
+}
+
+/**
+ * Toggle indie-only filter
+ */
+export function toggleIndieFilter(): void {
+  filterStateSignal.set((current) => ({
+    ...current,
+    showIndieOnly: !current.showIndieOnly,
+  }));
+}
+
+/**
+ * Toggle VR-only filter
+ */
+export function toggleVrFilter(): void {
+  filterStateSignal.set((current) => ({
+    ...current,
+    showVrOnly: !current.showVrOnly,
+  }));
 }
 
 /**
