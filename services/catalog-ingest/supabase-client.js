@@ -408,17 +408,33 @@ export async function syncGamesToSupabase(client, games) {
   for (let i = 0; i < games.length; i += batchSize) {
     const batch = games.slice(i, i + batchSize);
 
-    const transformedBatch = batch.map((game) => ({
-      game_name: game.title || game.game_name,
-      platform: game.platform,
-      genre: Array.isArray(game.genres) ? game.genres.join(", ") : game.genres || "",
-      rating: game.esrb || "",
-      release_year: game.release_date
-        ? String(new Date(game.release_date).getUTCFullYear())
-        : "",
-      cover: game.assets?.cover || "",
-      region: Array.isArray(game.regions) ? game.regions.join(", ") : game.regions || "",
-    }));
+    const transformedBatch = batch.map((game) => {
+      // Extract release year, handling various formats
+      let releaseYear = null;
+      if (game.release_date) {
+        const year = new Date(game.release_date).getUTCFullYear();
+        if (!isNaN(year) && year >= 1950 && year <= 2100) {
+          releaseYear = year;
+        }
+      } else if (game.release_year) {
+        const year = parseInt(game.release_year, 10);
+        if (!isNaN(year) && year >= 1950 && year <= 2100) {
+          releaseYear = year;
+        }
+      }
+
+      return {
+        game_name: game.title || game.game_name,
+        platform: game.platform,
+        genre: Array.isArray(game.genres) ? game.genres.join(", ") : game.genres || null,
+        rating: game.esrb || null,
+        release_year: releaseYear,
+        cover: game.assets?.cover || null,
+        region: Array.isArray(game.regions)
+          ? game.regions.join(", ")
+          : game.regions || null,
+      };
+    });
 
     const { data, error } = await client.upsert(
       "games",
