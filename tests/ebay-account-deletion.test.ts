@@ -43,7 +43,7 @@ const sampleDeletionPayload = {
     data: {
       username: "testuser123",
       userId: "TESTUSER12345",
-      eiasToken: "nY+sHZ2PrBmdj6wVnY+sEZ2PrA2dj6wFk4GhDJOCpQSdj6x9nY+seQ==",
+      eiasToken: "EXAMPLE-EIAS-TOKEN-FOR-TESTING-ONLY-12345",
     },
   },
 };
@@ -112,7 +112,17 @@ describe("eBay Account Deletion Endpoint", () => {
   });
 
   describe("Payload Validation", () => {
-    // Inline validator matching the Edge Function logic
+    /**
+     * Note: Ideally we'd import validatePayload directly from the Edge Function,
+     * but the function uses Deno-specific imports that aren't compatible with
+     * Node.js/Vitest. This inline validator mirrors the Edge Function logic
+     * and should be kept in sync with any changes to the real implementation.
+     */
+    const ALLOWED_NOTIFICATION_TYPES = [
+      "MARKETPLACE_ACCOUNT_DELETION",
+      "MARKETPLACE_ACCOUNT_CLOSURE",
+    ] as const;
+
     function validatePayload(payload: unknown): boolean {
       if (!payload || typeof payload !== "object") return false;
 
@@ -123,6 +133,11 @@ describe("eBay Account Deletion Endpoint", () => {
       const meta = p.metadata as Record<string, unknown>;
       if (typeof meta.topic !== "string") return false;
       if (typeof meta.schemaVersion !== "string") return false;
+
+      // Validate topic against allowed notification types
+      if (!ALLOWED_NOTIFICATION_TYPES.includes(meta.topic as typeof ALLOWED_NOTIFICATION_TYPES[number])) {
+        return false;
+      }
 
       // Check notification
       if (!p.notification || typeof p.notification !== "object") return false;
@@ -135,6 +150,7 @@ describe("eBay Account Deletion Endpoint", () => {
       const data = notif.data as Record<string, unknown>;
       if (typeof data.username !== "string") return false;
       if (typeof data.userId !== "string") return false;
+      if (typeof data.eiasToken !== "string") return false;
 
       return true;
     }
@@ -217,6 +233,7 @@ describe("eBay Account Deletion Endpoint", () => {
           data: {
             username: "user",
             userId: "USER123",
+            eiasToken: "test-eias-token",
           },
         },
       };
@@ -235,10 +252,46 @@ describe("eBay Account Deletion Endpoint", () => {
           data: {
             username: "closeduser",
             userId: "CLOSEDUSER789",
+            eiasToken: "test-eias-token-closure",
           },
         },
       };
       expect(validatePayload(closurePayload)).toBe(true);
+    });
+
+    it("rejects payload missing eiasToken", () => {
+      const payload = {
+        metadata: sampleDeletionPayload.metadata,
+        notification: {
+          notificationId: "test-id",
+          eventDate: "2025-12-11T10:30:00.000Z",
+          data: {
+            username: "testuser",
+            userId: "TESTUSER123",
+            // missing eiasToken
+          },
+        },
+      };
+      expect(validatePayload(payload)).toBe(false);
+    });
+
+    it("rejects invalid notification topic", () => {
+      const payload = {
+        metadata: {
+          topic: "INVALID_NOTIFICATION_TYPE",
+          schemaVersion: "1.0",
+        },
+        notification: {
+          notificationId: "id-789",
+          eventDate: "2025-12-11T00:00:00.000Z",
+          data: {
+            username: "user",
+            userId: "USER123",
+            eiasToken: "test-token",
+          },
+        },
+      };
+      expect(validatePayload(payload)).toBe(false);
     });
   });
 

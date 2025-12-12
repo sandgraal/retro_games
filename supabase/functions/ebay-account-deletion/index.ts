@@ -16,10 +16,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.224.0/crypto/mod.ts";
 import { encodeHex } from "https://deno.land/std@0.224.0/encoding/hex.ts";
 
+/**
+ * CORS headers - restrictive since this is a server-to-server callback endpoint.
+ * eBay servers do not require CORS, but we keep minimal headers for debugging.
+ * In production, consider removing CORS entirely or scoping to specific origins.
+ */
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Origin": "",
+  "Access-Control-Allow-Headers": "content-type",
+  "Access-Control-Allow-Methods": "GET, POST",
 };
 
 /**
@@ -28,6 +33,14 @@ const corsHeaders = {
 type EbayNotificationType =
   | "MARKETPLACE_ACCOUNT_DELETION"
   | "MARKETPLACE_ACCOUNT_CLOSURE";
+
+/**
+ * Allowed notification types for validation
+ */
+const ALLOWED_NOTIFICATION_TYPES: readonly EbayNotificationType[] = [
+  "MARKETPLACE_ACCOUNT_DELETION",
+  "MARKETPLACE_ACCOUNT_CLOSURE",
+] as const;
 
 /**
  * eBay notification payload structure
@@ -72,11 +85,17 @@ function validatePayload(payload: unknown): payload is EbayAccountDeletionPayloa
   if (typeof notif.notificationId !== "string") return false;
   if (typeof notif.eventDate !== "string") return false;
 
+  // Validate topic against allowed notification types
+  if (!ALLOWED_NOTIFICATION_TYPES.includes(meta.topic as EbayNotificationType)) {
+    return false;
+  }
+
   // Check notification data
   if (!notif.data || typeof notif.data !== "object") return false;
   const data = notif.data as Record<string, unknown>;
   if (typeof data.username !== "string") return false;
   if (typeof data.userId !== "string") return false;
+  if (typeof data.eiasToken !== "string") return false;
 
   return true;
 }
@@ -145,12 +164,24 @@ async function handleAccountDeletion(
   // Get Supabase client for database operations
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const stubMode = Deno.env.get("EBAY_DELETION_STUB_MODE") === "true";
 
   if (!supabaseUrl || !serviceKey) {
-    console.warn("Supabase credentials not configured - deletion is a no-op stub");
+    if (stubMode) {
+      // Explicit stub mode: log and acknowledge without actual deletion
+      console.warn("EBAY_DELETION_STUB_MODE enabled - deletion is a no-op stub");
+      return {
+        success: true,
+        message: `Deletion request logged for user ${userId} (stub mode - no database configured)`,
+      };
+    }
+    // Production: missing credentials is a configuration error
+    console.error(
+      "Supabase credentials not configured and EBAY_DELETION_STUB_MODE is not enabled"
+    );
     return {
-      success: true,
-      message: `Deletion request logged for user ${userId} (stub - no database configured)`,
+      success: false,
+      message: `Server configuration error: unable to process deletion for user ${userId}`,
     };
   }
 
