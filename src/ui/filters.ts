@@ -26,8 +26,10 @@ import {
   setPriceRange,
   toggleDealsOnly,
   applyQuickFilter,
+  togglePlatformFamilyFilter,
 } from "../state/store";
 import { effect } from "../core/signals";
+import { groupPlatformsByFamily } from "../core/platform-families";
 
 const VALID_SORT_OPTIONS: SortOption[] = ["name", "rating", "year", "value", "platform"];
 
@@ -101,7 +103,7 @@ export function initFilters(ctx: ComponentContext): void {
 }
 
 /**
- * Render platform filter checkboxes with game counts
+ * Render platform filter checkboxes grouped by family
  */
 function renderPlatformFilters(platforms: string[], active: Set<string>): void {
   const container = document.getElementById("platformFilters");
@@ -115,29 +117,84 @@ function renderPlatformFilters(platforms: string[], active: Set<string>): void {
     platformCounts.set(game.platform, count + 1);
   });
 
-  // Sort platforms by count (descending) then by name
-  const sortedPlatforms = [...platforms].sort((a, b) => {
-    const countDiff = (platformCounts.get(b) || 0) - (platformCounts.get(a) || 0);
-    return countDiff !== 0 ? countDiff : a.localeCompare(b);
-  });
+  // Group platforms by family
+  const familyGroups = groupPlatformsByFamily(platforms, platformCounts);
 
-  container.innerHTML = sortedPlatforms
-    .map((platform) => {
-      const count = platformCounts.get(platform) || 0;
+  // Render grouped platforms
+  container.innerHTML = familyGroups
+    .map(({ family, platforms: familyPlatforms, totalCount }) => {
+      const familyPlatformNames = familyPlatforms.map((p) => p.name);
+      const allSelected = familyPlatformNames.every((p) => active.has(p));
+      const someSelected = familyPlatformNames.some((p) => active.has(p));
+
       return `
-      <label class="filter-option">
-        <input 
-          type="checkbox" 
-          value="${escapeAttr(platform)}" 
-          data-filter="platform"
-          ${active.has(platform) ? "checked" : ""}
-        />
-        <span class="filter-option-label">${escapeHtml(platform)}</span>
-        <span class="filter-option-count">${count}</span>
-      </label>
+      <div class="platform-family" data-family="${family.id}">
+        <button 
+          type="button" 
+          class="platform-family-header ${someSelected ? "platform-family-header--active" : ""}"
+          data-family-toggle="${family.id}"
+          aria-expanded="false"
+          style="--family-color: ${family.color}"
+        >
+          <span class="platform-family-icon">${family.icon}</span>
+          <span class="platform-family-name">${escapeHtml(family.name)}</span>
+          <span class="platform-family-count">${totalCount}</span>
+          <label class="platform-family-select-all" title="Select all ${family.name}">
+            <input 
+              type="checkbox" 
+              data-filter="platform-family"
+              value="${family.id}"
+              ${allSelected ? "checked" : ""}
+              ${someSelected && !allSelected ? 'class="indeterminate"' : ""}
+            />
+          </label>
+          <span class="platform-family-arrow">▶</span>
+        </button>
+        <div class="platform-family-items" hidden>
+          ${familyPlatforms
+            .map(
+              ({ name, count }) => `
+            <label class="filter-option filter-option--nested">
+              <input 
+                type="checkbox" 
+                value="${escapeAttr(name)}" 
+                data-filter="platform"
+                ${active.has(name) ? "checked" : ""}
+              />
+              <span class="filter-option-label">${escapeHtml(name)}</span>
+              <span class="filter-option-count">${count}</span>
+            </label>
+          `
+            )
+            .join("")}
+        </div>
+      </div>
     `;
     })
     .join("");
+
+  // Setup family toggle handlers
+  container.querySelectorAll<HTMLButtonElement>("[data-family-toggle]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      // Don't toggle if clicking the checkbox
+      if ((e.target as HTMLElement).closest(".platform-family-select-all")) return;
+
+      const items = btn.nextElementSibling as HTMLElement;
+      const isExpanded = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", String(!isExpanded));
+      items.hidden = isExpanded;
+    });
+  });
+
+  // Handle indeterminate state for checkboxes
+  container
+    .querySelectorAll<HTMLInputElement>(
+      'input.indeterminate[data-filter="platform-family"]'
+    )
+    .forEach((checkbox) => {
+      checkbox.indeterminate = true;
+      checkbox.classList.remove("indeterminate");
+    });
 }
 
 /**
@@ -368,6 +425,8 @@ function handleFilterChange(e: Event): void {
 
   if (filterType === "platform") {
     togglePlatformFilter(value);
+  } else if (filterType === "platform-family") {
+    togglePlatformFamilyFilter(value);
   } else if (filterType === "genre") {
     toggleGenreFilter(value);
   } else if (filterType === "region") {

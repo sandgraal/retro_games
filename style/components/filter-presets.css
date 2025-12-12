@@ -1,0 +1,296 @@
+/**
+ * Filter Presets Styles
+ * Quick filter preset chips and selector
+ */
+
+/* Preset Selector Container */
+.preset-selector {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.preset-selector__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.preset-selector__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.preset-selector__save-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-selector__save-btn:hover {
+  background: var(--glass-bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+/* Preset List */
+.preset-selector__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Preset Chip */
+.preset-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.preset-chip:hover {
+  background: var(--glass-bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+.preset-chip--active {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border-color: var(--accent-primary);
+}
+
+.preset-chip--active:hover {
+  background: var(--accent-secondary);
+  color: var(--bg-primary);
+}
+
+.preset-chip__icon {
+  font-size: var(--text-sm);
+}
+
+.preset-chip__name {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preset-chip__delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: var(--space-1);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 50%;
+  font-size: var(--text-xs);
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.preset-chip:hover .preset-chip__delete {
+  opacity: 1;
+}
+
+.preset-chip__delete:hover {
+  background: rgba(239, 68, 68, 0.8);
+  color: white;
+}
+
+/* Compact mode for sidebar */
+.preset-selector--compact .preset-selector__list {
+  gap: var(--space-1);
+}
+
+.preset-selector--compact .preset-chip {
+  padding: var(--space-1) var(--space-2);
+  font-size: 11px;
+}
+
+.preset-selector--compact .preset-chip__icon {
+  font-size: var(--text-xs);
+}
+
+.preset-selector--compact .preset-chip__name {
+  max-width: 60px;
+}
+
+/* Modal for creating presets */
+.preset-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: var(--z-modal);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.preset-modal.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.preset-modal__content {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-6);
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+}
+
+.preset-modal__title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.preset-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.preset-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.preset-modal__label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.preset-modal__input {
+  padding: var(--space-3);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+}
+
+.preset-modal__input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.preset-modal__icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.preset-modal__icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--text-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-modal__icon-btn:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--accent-primary);
+}
+
+.preset-modal__icon-btn.selected {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.preset-modal__actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
+
+.preset-modal__btn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-modal__btn--secondary {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.preset-modal__btn--secondary:hover {
+  background: var(--glass-bg-hover);
+  color: var(--text-primary);
+}
+
+.preset-modal__btn--primary {
+  background: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.preset-modal__btn--primary:hover {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .preset-selector {
+    padding: var(--space-3);
+  }
+
+  .preset-selector__list {
+    gap: var(--space-1);
+  }
+
+  .preset-chip {
+    padding: var(--space-1) var(--space-2);
+    font-size: 11px;
+  }
+
+  .preset-chip__name {
+    max-width: 70px;
+  }
+}

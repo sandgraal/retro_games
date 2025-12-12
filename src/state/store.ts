@@ -21,6 +21,7 @@ import type {
 } from "../core/types";
 import { withGameKeys } from "../core/keys";
 import { safeStorage } from "../core/storage";
+import { getPlatformsInFamily } from "../core/platform-families";
 
 // === Storage Keys ===
 const STORAGE_KEYS = {
@@ -32,7 +33,7 @@ const STORAGE_KEYS = {
 } as const;
 
 // === Default States ===
-const DEFAULT_FILTER_STATE: FilterState = {
+export const DEFAULT_FILTER_STATE: FilterState = {
   platforms: new Set(),
   genres: new Set(),
   regions: new Set(),
@@ -448,6 +449,13 @@ export function updateFilters(updates: Partial<FilterState>): void {
 }
 
 /**
+ * Set entire filter state (for presets)
+ */
+export function setFilters(state: FilterState): void {
+  filterStateSignal.set(state);
+}
+
+/**
  * Reset all filters
  */
 export function resetFilters(): void {
@@ -473,6 +481,37 @@ export function togglePlatformFilter(platform: string): void {
     } else {
       platforms.add(platform);
     }
+    return { ...current, platforms };
+  });
+}
+
+/**
+ * Toggle all platforms in a family
+ */
+export function togglePlatformFamilyFilter(familyId: string): void {
+  const familyPlatforms = getPlatformsInFamily(familyId);
+  if (familyPlatforms.length === 0) return;
+
+  filterStateSignal.set((current) => {
+    const platforms = new Set(current.platforms);
+    const games = gamesSignal.get();
+
+    // Get available platforms in this family (ones that have games)
+    const availableFamilyPlatforms = familyPlatforms.filter((p) =>
+      games.some((g) => g.platform === p)
+    );
+
+    // Check if all family platforms are currently selected
+    const allSelected = availableFamilyPlatforms.every((p) => platforms.has(p));
+
+    if (allSelected) {
+      // Deselect all
+      availableFamilyPlatforms.forEach((p) => platforms.delete(p));
+    } else {
+      // Select all
+      availableFamilyPlatforms.forEach((p) => platforms.add(p));
+    }
+
     return { ...current, platforms };
   });
 }
@@ -667,11 +706,27 @@ export function toggleSidebar(): void {
   sidebarOpenSignal.set((current) => !current);
 }
 
+// Callbacks for game modal open
+const gameModalOpenCallbacks: ((game: GameWithKey) => void)[] = [];
+
+/**
+ * Register a callback for when a game modal opens
+ */
+export function onGameModalOpen(callback: (game: GameWithKey) => void): () => void {
+  gameModalOpenCallbacks.push(callback);
+  return () => {
+    const index = gameModalOpenCallbacks.indexOf(callback);
+    if (index > -1) gameModalOpenCallbacks.splice(index, 1);
+  };
+}
+
 /**
  * Open game modal
  */
 export function openGameModal(game: GameWithKey): void {
   modalGameSignal.set(game);
+  // Notify callbacks
+  gameModalOpenCallbacks.forEach((cb) => cb(game));
 }
 
 /**

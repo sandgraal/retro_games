@@ -24,6 +24,7 @@ import {
   loadPersistedState,
   getRandomGameFromAll,
   openGameModal,
+  onGameModalOpen,
 } from "./state";
 import {
   mountGameGrid,
@@ -39,6 +40,17 @@ import {
   mountModerationPanel,
   openImportModal,
   injectImportStyles,
+  initSmartSearch,
+  initCuratedSections,
+  initInfiniteScroll,
+  createLoadMoreButton,
+  initPresets,
+  renderPresetSelector,
+  initRecentlyViewed,
+  renderRecentlyViewed,
+  trackGameView,
+  initUrlState,
+  copyFilterUrl,
 } from "./ui";
 import {
   exportCollectionToCSV,
@@ -114,6 +126,9 @@ async function init(): Promise<void> {
 
     console.log(`✅ Loaded ${gamesResult.games.length} games from ${gamesResult.source}`);
 
+    // Initialize curated sections (after games are loaded)
+    cleanupFunctions.push(initCuratedSections("curatedSections"));
+
     // Show status if using sample data
     if (gamesResult.source === "sample") {
       const fallbackDetails = gamesResult.reason ? `${gamesResult.reason}. ` : "";
@@ -152,6 +167,28 @@ async function init(): Promise<void> {
 
   // Setup keyboard shortcuts
   setupKeyboardShortcuts();
+
+  // Initialize smart search with autocomplete
+  cleanupFunctions.push(initSmartSearch("filterSearch"));
+  cleanupFunctions.push(initSmartSearch("headerSearch"));
+
+  // Initialize infinite scroll with load more button
+  cleanupFunctions.push(initInfiniteScroll("#gameGrid"));
+  setupLoadMoreButton();
+  setupScrollToTop();
+
+  // Initialize filter presets
+  cleanupFunctions.push(initPresets());
+  cleanupFunctions.push(renderPresetSelector("presetSelector"));
+
+  // Initialize recently viewed tracking
+  cleanupFunctions.push(initRecentlyViewed());
+  cleanupFunctions.push(renderRecentlyViewed("recentlyViewedSection"));
+  cleanupFunctions.push(onGameModalOpen(trackGameView));
+
+  // Initialize URL state synchronization
+  cleanupFunctions.push(initUrlState());
+  setupShareFiltersButton();
 
   // Setup auth state listener
   setupAuthListener();
@@ -699,6 +736,78 @@ function checkUrlShareCode(): void {
  */
 function formatDate(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Setup load more button
+ */
+function setupLoadMoreButton(): void {
+  const gameGrid = document.getElementById("gameGrid");
+  if (!gameGrid || !gameGrid.parentElement) return;
+
+  const loadMoreBtn = createLoadMoreButton();
+  gameGrid.parentElement.appendChild(loadMoreBtn);
+}
+
+/**
+ * Setup scroll-to-top button
+ */
+function setupScrollToTop(): void {
+  // Create scroll-to-top button
+  const scrollBtn = document.createElement("button");
+  scrollBtn.className = "scroll-to-top";
+  scrollBtn.setAttribute("aria-label", "Scroll to top");
+  scrollBtn.innerHTML = "↑";
+  document.body.appendChild(scrollBtn);
+
+  // Show/hide based on scroll position
+  let ticking = false;
+  const handleScroll = (): void => {
+    if (ticking) return;
+    ticking = true;
+
+    requestAnimationFrame(() => {
+      const showThreshold = 400;
+      if (window.scrollY > showThreshold) {
+        scrollBtn.classList.add("visible");
+      } else {
+        scrollBtn.classList.remove("visible");
+      }
+      ticking = false;
+    });
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+
+  // Scroll to top on click
+  scrollBtn.addEventListener("click", () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  });
+}
+
+/**
+ * Setup share filters button
+ */
+function setupShareFiltersButton(): void {
+  const shareBtn = document.getElementById("shareFiltersBtn");
+  if (!shareBtn) return;
+
+  shareBtn.addEventListener("click", async () => {
+    const success = await copyFilterUrl();
+    if (success) {
+      showStatus("Filter URL copied to clipboard!", "success");
+      // Reset status after delay
+      setTimeout(() => {
+        const statusEl = document.getElementById("status");
+        if (statusEl) statusEl.style.display = "none";
+      }, 2000);
+    } else {
+      showStatus("Failed to copy URL", "error");
+    }
+  });
 }
 
 // Start the application

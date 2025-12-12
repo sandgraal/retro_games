@@ -19,6 +19,11 @@
 @import url("style/components/cards.css");
 @import url("style/components/settings.css");
 @import url("style/components/guides.css");
+@import url("style/components/smart-search.css");
+@import url("style/components/curated-sections.css");
+@import url("style/components/infinite-scroll.css");
+@import url("style/components/filter-presets.css");
+@import url("style/components/recently-viewed.css");
 
 /* Import Utilities */
 @import url("style/utilities.css");

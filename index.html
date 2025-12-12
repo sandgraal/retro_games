@@ -282,6 +282,15 @@
           </div>
         </section>
 
+        <!-- Curated Sections - Browsing Discovery -->
+        <section
+          id="curatedSections"
+          class="curated-sections"
+          aria-label="Curated game collections"
+        >
+          <!-- Populated by initCuratedSections() -->
+        </section>
+
         <!-- Collection Grid with Filters -->
         <section class="collection-container" aria-label="Game collection">
           <!-- Filters Sidebar -->
@@ -297,7 +306,21 @@
               <button type="button" class="filters-clear" id="clearFilters" disabled>
                 Clear All
               </button>
+              <button
+                type="button"
+                class="filters-share"
+                id="shareFiltersBtn"
+                title="Copy filter URL to share"
+              >
+                🔗
+              </button>
             </div>
+
+            <!-- Saved Filter Presets -->
+            <div id="presetSelector"></div>
+
+            <!-- Recently Viewed -->
+            <div id="recentlyViewedSection"></div>
 
             <!-- Quick Filters -->
             <div class="quick-filters" id="quickFilters">
