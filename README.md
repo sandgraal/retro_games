@@ -76,6 +76,14 @@ npm run build:config  # Generate config.js from .env
 - `style/` – tokens, base styles, utilities, and component CSS; `style.css` composes them.
 - `data/` – sample games and price history used when Supabase is unavailable.
 - `public/` – service worker and manifest.
+- `supabase/functions/` – Supabase Edge Functions for server-side logic.
+
+## eBay Integration
+
+This project integrates with eBay APIs for pricing data and supports eBay's Marketplace Account Deletion notifications for GDPR/CCPA compliance.
+
+- **Price updates**: Run `npm run prices:update` to fetch median sold prices from eBay.
+- **Account deletion endpoint**: A Supabase Edge Function handles eBay account deletion notifications. See [docs/ebay-account-deletion.md](docs/ebay-account-deletion.md) for setup instructions.
 
 ## Contributing
 
