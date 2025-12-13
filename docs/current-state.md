@@ -41,9 +41,9 @@ _Last updated: December 2025_
 
 ## Known Gaps / Risks
 
-- Pricing is local-only; there is no live fetch or Supabase-backed price table.
+- **Pricing coverage gap**: eBay pricing covers ~120 retro games (from `games.csv`), but the catalog now has 32,937 games. Digital/modern games don't have eBay sold data. Need to integrate Steam/GOG pricing APIs or show "no price data" gracefully.
 - Supabase usage depends on `config.js` existing in production and the CDN client loading; deployments missing either silently fall back to the sample data.
-- Sample dataset is tiny; large-list performance relies on Supabase returning volume.
+- Virtualization untested at full scale (32k games) in production environment.
 
 ## Next Steps
 
@@ -55,6 +55,7 @@ _Last updated: December 2025_
 6. ~~**Supabase sync**~~ ✅ Complete - **32,937 games** synced across 58 platforms (1972-2026)
 7. ~~**Fix sync errors**~~ ✅ Complete - Transformer now handles empty release_year as null
 8. ~~**Automate catalog refresh**~~ ✅ Complete - `DOTENV_PRIVATE_KEY` configured, `.github/workflows/catalog-refresh.yml` runs daily at 3 AM UTC
-9. Replace the local price snapshot with a real source (Supabase table or API) or expose a clear toggle when prices are unavailable.
+9. **Extend pricing coverage** - Integrate Steam/GOG price APIs for digital games, or gracefully handle missing prices in UI
+10. **Validate virtualization at scale** - Test grid performance with 32k+ games in production
 
-**📖 See [UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md) for the complete expansion roadmap.**
+**📖 See [UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md) for the complete expansion roadmap (Phase 5A complete, Phase 5B next).**
