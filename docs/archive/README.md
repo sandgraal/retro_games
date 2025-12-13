@@ -20,7 +20,7 @@ This directory contains historical documentation that is no longer actively main
 
 - `docs/current-state.md` (current status)
 - `docs/implementation-plan.md` (roadmap with updated phase statuses)
-- `docs/refactoring-roadmap.md` (Phase 0 details)
+- `docs/architecture.md` (architecture details)
 
 ## Why These Are Archived
 

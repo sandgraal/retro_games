@@ -178,25 +178,13 @@ This project maintains comprehensive documentation for developers, contributors,
 
 ## Archived Documentation
 
-**Redesign Docs** (superseded by architecture.md):
+The following documentation has been superseded and archived or removed:
 
-- `REDESIGN_README.md`
-- `REDESIGN_SUMMARY.md`
-- `REDESIGN_IMPLEMENTATION_GUIDE.md`
-- `REDESIGN_QUICK_START.md`
-- `REDESIGN_MIGRATION_CHECKLIST.md`
+- **Redesign Docs** (superseded by `architecture.md`)
+- **Phase-specific roadmaps** (consolidated into `implementation-plan.md`)
+- **Redundant evaluation docs** (consolidated into `evaluation/README.md`)
 
-**Outdated Plans** (superseded by current-state.md):
-
-- `refactoring-roadmap.md` - Redesign replaced this approach
-
-**Redundant Evaluation Docs** (consolidated into evaluation/README.md):
-
-- `START_HERE.md`
-- `INDEX.md`
-- `QUICK_REFERENCE.md`
-- `SETUP_GUIDE.md`
-- `IMPLEMENTATION_SUMMARY.md`
+See `docs/archive/` for historical reference documents.
 
 ---
 
