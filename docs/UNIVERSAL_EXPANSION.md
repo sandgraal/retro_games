@@ -40,9 +40,9 @@ _Created: December 2025_
 | ----------------- | --------------------------- | ---------------- | ------------------ |
 | **IGDB**          | 200k+ games, all platforms  | Real-time API    | ✅ Integrated      |
 | **RAWG**          | 500k+ games, broad coverage | Daily API        | ✅ Integrated      |
+| **Steam**         | PC games, pricing           | Daily            | ✅ Integrated      |
 | **GiantBomb**     | Deep metadata, wiki-quality | Weekly           | 📋 Planned         |
 | **MobyGames**     | Historical accuracy         | Weekly           | 📋 Planned         |
-| **Steam API**     | PC games, pricing           | Daily            | 📋 Planned         |
 | **PriceCharting** | Physical game pricing       | Daily            | ✅ Integrated      |
 | **eBay Sold**     | Real market prices          | Daily            | ✅ Integrated      |
 | **OpenCritic**    | Modern game reviews         | Daily            | 📋 Planned         |
@@ -293,12 +293,14 @@ ALTER TABLE games ADD COLUMN IF NOT EXISTS
 ### In Progress 🚧
 
 - [x] IGDB API integration script (`services/catalog-ingest/sources/igdb.js`)
+- [x] Steam API integration (`services/catalog-ingest/sources/steam.js`)
 - [ ] Modern platform catalog seeding (requires IGDB credentials in secrets)
 - [ ] Platform filter UI expansion
 
 ### Planned 📋
 
-- [ ] Steam API integration
+- [ ] Run Steam ingestion to populate catalog
+- [ ] GOG API integration
 - [ ] Update all guide markdown files (author attribution)
 - [ ] Create modern platform collecting guides
 - [ ] Update outreach plan for broader gaming community
@@ -352,11 +354,12 @@ ALTER TABLE games ADD COLUMN IF NOT EXISTS
 4. ~~**Add modern platforms to UI**~~ ✅ Done: Era/Indie/VR filters
 5. ~~**Set up GitHub Actions**~~ ✅ Done: `catalog-refresh.yml` runs daily at 3 AM UTC
 6. ~~**Sync to Supabase**~~ ✅ Done: 32,937 games in production
-7. **Steam API integration** (Phase 5B) - PC games catalog + pricing
-8. **GOG database integration** (Phase 5B) - DRM-free PC games
-9. **Test virtualization at scale** - Validate grid performance with 50k+ games
-10. **Expand sample-games.json** to include modern game examples
-11. **Create data health monitoring** dashboard in Supabase
+7. ~~**Steam API adapter**~~ ✅ Done: `services/catalog-ingest/sources/steam.js`
+8. **Run Steam ingestion** (Phase 5B) - Execute `npm run ingest:steam`
+9. **GOG database integration** (Phase 5B) - DRM-free PC games
+10. **Test virtualization at scale** - Validate grid performance with 50k+ games
+11. **Expand sample-games.json** to include modern game examples
+12. **Create data health monitoring** dashboard in Supabase
 
 ---
 
