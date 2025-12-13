@@ -23,6 +23,7 @@ env:
     CATALOG_LIMIT: ${{ github.event.inputs.limit || '100' }}
     CATALOG_SOURCE: ${{ github.event.inputs.source || 'all' }}
     CATALOG_DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+    DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 
 jobs:
     refresh-catalog:
@@ -47,20 +48,14 @@ jobs:
 
             - name: Run catalog ingest
               id: ingest
-              env:
-                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-                  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-                  IGDB_CLIENT_ID: ${{ secrets.IGDB_CLIENT_ID }}
-                  IGDB_CLIENT_SECRET: ${{ secrets.IGDB_CLIENT_SECRET }}
-                  RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
               run: |
                   echo "🎮 Starting catalog refresh..."
                   echo "Source: $CATALOG_SOURCE"
                   echo "Limit: $CATALOG_LIMIT"
                   echo "Dry run: $CATALOG_DRY_RUN"
 
-                  # Run catalog ingest (once mode)
-                  npm run ingest:catalog 2>&1 | tee ingest-output.log
+                  # Run catalog ingest with dotenvx decryption
+                  npx dotenvx run -- npm run ingest:catalog 2>&1 | tee ingest-output.log
 
                   # Extract stats for summary
                   GAMES_PROCESSED=$(grep -oP 'Processed \K\d+' ingest-output.log || echo "0")
@@ -69,12 +64,9 @@ jobs:
 
             - name: Audit missing covers
               if: success()
-              env:
-                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-                  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
               run: |
                   echo "🖼️ Checking for missing covers..."
-                  npm run audit:covers -- --limit 50 2>&1 | tee covers-output.log || true
+                  npx dotenvx run -- npm run audit:covers -- --limit 50 2>&1 | tee covers-output.log || true
               continue-on-error: true
 
             - name: Create issue on failure
@@ -101,8 +93,8 @@ jobs:
                           `### Last 2000 chars of log output:\n` +
                           '```\n' + logContent + '\n```\n\n' +
                           `### Action Required\n` +
-                          `1. Check API credentials (IGDB, RAWG)\n` +
-                          `2. Verify Supabase connection\n` +
+                          `1. Check DOTENV_PRIVATE_KEY secret is set\n` +
+                          `2. Verify .env file is committed and encrypted\n` +
                           `3. Review rate limits\n`,
                         labels: ['bug', 'data-pipeline', 'automated']
                       });
@@ -127,14 +119,9 @@ jobs:
               run: npm ci
 
             - name: Refresh price data
-              env:
-                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-                  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-                  EBAY_APP_ID: ${{ secrets.EBAY_APP_ID }}
-                  EBAY_CERT_ID: ${{ secrets.EBAY_CERT_ID }}
               run: |
                   echo "💰 Refreshing price data..."
-                  npm run prices:update -- --limit 50 2>&1 | tee prices-output.log || true
+                  npx dotenvx run -- npm run prices:update -- --limit 50 2>&1 | tee prices-output.log || true
 
             - name: Summary
               run: |

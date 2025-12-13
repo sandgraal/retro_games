@@ -53,8 +53,8 @@ _Last updated: December 2025_
 4. ~~**Run IGDB ingestion**~~ ✅ Complete - **74,458 games** from 13 platforms ingested (December 2025)
 5. ~~**Apply database migration**~~ ✅ Complete - Deduplicated games table, added unique constraint
 6. ~~**Supabase sync**~~ ✅ Complete - **32,937 games** synced across 58 platforms (1972-2026)
-7. **Fix sync errors** - 359 records failed due to empty release_year; update ingest transformer
-8. **Automate catalog refresh** - Enable `.github/workflows/catalog-refresh.yml` scheduled job with GitHub Secrets
+7. ~~**Fix sync errors**~~ ✅ Complete - Transformer now handles empty release_year as null
+8. **Automate catalog refresh** - Set `DOTENV_PRIVATE_KEY` repository secret in GitHub to enable `.github/workflows/catalog-refresh.yml` (credentials are in encrypted `.env`)
 9. Replace the local price snapshot with a real source (Supabase table or API) or expose a clear toggle when prices are unavailable.
 
 **📖 See [UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md) for the complete expansion roadmap.**
