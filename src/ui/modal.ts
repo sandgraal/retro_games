@@ -634,9 +634,7 @@ function buildPricingSection(
 ): string {
   const updated = price?.lastUpdated ?? price?.snapshotDate ?? meta.lastUpdated;
   const updatedLabel = formatPricingTimestamp(updated);
-  const fallbackLabel = updatedLabel
-    ? `Updated ${escapeHtml(updatedLabel)}`
-    : "";
+  const fallbackLabel = updatedLabel ? `Updated ${escapeHtml(updatedLabel)}` : "";
 
   const header = `
     <div class="modal-pricing__header">

@@ -131,7 +131,7 @@ services/
 | `tests/build-css.test.js`            | 12    | CSS bundler script                     |
 | `tests/e2e/*.spec.js`                | 14    | Playwright smoke/filters/aria specs    |
 
-**Total: 390 unit tests + 14 E2E tests = 404 tests**
+**Total: 390 unit tests + 16 E2E tests = 406 tests**
 
 ## What To Work On
 
