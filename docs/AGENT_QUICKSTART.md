@@ -11,7 +11,7 @@ _Last updated: December 2025_
 | Application | TypeScript + Vite SPA with custom signals; Supabase backend with local fallback |
 | Language    | TypeScript (strict)                                                             |
 | Build       | Vite 7                                                                          |
-| Tests       | 388 Vitest unit tests + 14 Playwright e2e tests = **402 total**                 |
+| Tests       | 390 Vitest unit tests + 16 Playwright e2e tests = **406 total**                 |
 | Data        | Supabase (**32,937 games**) + `data/sample-games.json` fallback (24 games)      |
 | Phase       | **Phase 5A Complete** - Universal catalog live, automation running              |
 
@@ -113,23 +113,25 @@ services/
 
 ## Tests
 
-| Test File                            | Tests | Notes                                  |
-| ------------------------------------ | ----- | -------------------------------------- |
-| `tests/core.test.ts`                 | 26    | Signals, keys, types                   |
-| `tests/state.test.ts`                | 30    | Store, filters, sorting                |
-| `tests/features.test.ts`             | 26    | Export/share/backup                    |
-| `tests/format.test.ts`               | 36    | Formatting helpers                     |
-| `tests/components.test.ts`           | 15    | UI component utilities                 |
-| `tests/modal.test.ts`                | 7     | Modal component                        |
-| `tests/suggestions.test.ts`          | 9     | Community suggestions                  |
-| `tests/pricing-provider.test.ts`     | 9     | Pricing data provider                  |
-| `tests/catalog-ingest.test.ts`       | 60    | Ingestion, submissions, moderation API |
-| `tests/data-loader.test.ts`          | 4     | Data loader with Supabase fallback     |
-| `tests/fetch-covers.test.js`         | 48    | Cover fetching script                  |
-| `tests/audit-missing-covers.test.js` | 26    | Cover audit script                     |
-| `tests/archive-media.test.js`        | 19    | Media archival script                  |
-| `tests/build-css.test.js`            | 12    | CSS bundler script                     |
-| `tests/e2e/*.spec.js`                | 14    | Playwright smoke/filters/aria specs    |
+| Test File                             | Tests | Notes                                  |
+| ------------------------------------- | ----- | -------------------------------------- |
+| `tests/core.test.ts`                  | 26    | Signals, keys, types                   |
+| `tests/state.test.ts`                 | 30    | Store, filters, sorting                |
+| `tests/features.test.ts`              | 26    | Export/share/backup                    |
+| `tests/format.test.ts`                | 36    | Formatting helpers                     |
+| `tests/components.test.ts`            | 15    | UI component utilities                 |
+| `tests/modal.test.ts`                 | 7     | Modal component                        |
+| `tests/suggestions.test.ts`           | 9     | Community suggestions                  |
+| `tests/pricing-provider.test.ts`      | 9     | Pricing data provider                  |
+| `tests/catalog-ingest.test.ts`        | 60    | Ingestion, submissions, moderation API |
+| `tests/data-loader.test.ts`           | 4     | Data loader with Supabase fallback     |
+| `tests/fetch-covers.test.js`          | 48    | Cover fetching script                  |
+| `tests/audit-missing-covers.test.js`  | 26    | Cover audit script                     |
+| `tests/archive-media.test.js`         | 14    | Media archival script                  |
+| `tests/build-css.test.js`             | 12    | CSS bundler script                     |
+| `tests/ebay-account-deletion.test.ts` | 24    | eBay account deletion compliance       |
+| `tests/platform-import.test.ts`       | 9     | Platform import functionality          |
+| `tests/e2e/*.spec.js`                 | 16    | Playwright smoke/filters/aria/perf     |
 
 **Total: 390 unit tests + 16 E2E tests = 406 tests**
 

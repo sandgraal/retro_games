@@ -121,7 +121,9 @@ This project maintains comprehensive documentation for developers, contributors,
   - `audit-missing-covers.test.js` - Cover audit script (26 tests)
   - `archive-media.test.js` - Media archival script (14 tests)
   - `build-css.test.js` - CSS bundler script (12 tests)
-  - `e2e/*.spec.js` - Playwright E2E tests (14 tests)
+  - `ebay-account-deletion.test.ts` - eBay compliance tests (24 tests)
+  - `platform-import.test.ts` - Platform import tests (9 tests)
+  - `e2e/*.spec.js` - Playwright E2E tests (16 tests)
 
 **Total: 390 unit tests + 16 E2E tests = 406 tests**
 
