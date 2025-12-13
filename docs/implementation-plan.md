@@ -31,7 +31,7 @@ This document operationalizes the high-level implementation plan into actionable
 
 Work is organized into six build phases plus operational cadences. Each phase is subdivided into tracks with goal statements, exit criteria, and granular tasks. Tracks can run in parallel when dependencies are satisfied.
 
-**✅ UPDATE: Phase 0-3 Complete, Phase 5 Started (December 2025)** - All module extraction finished with 406 tests passing (390 unit + 16 e2e). New global catalog and community features in progress.
+**✅ UPDATE: Phase 0-3 Complete, Phase 5B In Progress (December 2025)** - All module extraction finished with 450 tests passing (434 unit + 16 e2e). Steam and GOG adapters complete, unified config ready.
 
 ---
 
@@ -39,14 +39,14 @@ Work is organized into six build phases plus operational cadences. Each phase is
 
 | Phase                           | Status      | Progress                                         |
 | ------------------------------- | ----------- | ------------------------------------------------ |
-| Phase 0: Architecture           | ✅ COMPLETE | TypeScript, Vite, signals, 406 tests             |
+| Phase 0: Architecture           | ✅ COMPLETE | TypeScript, Vite, signals, 450 tests             |
 | Phase 1: Foundation             | ✅ COMPLETE | CI/CD, secrets, migrations                       |
 | Phase 2: UX & Features          | ✅ COMPLETE | Virtualization, pricing, media                   |
 | Phase 3: SEO & Web Vitals       | ✅ COMPLETE | JSON-LD, sitemap, Lighthouse CI                  |
 | Phase 3: Content Marketing      | ✅ COMPLETE | Guides, templates, embed widgets, outreach plan  |
 | Phase 4: Monetization           | ⛔ BLOCKED  | Requires business decisions                      |
 | **Phase 5A: Modern Platforms**  | ✅ COMPLETE | **32,937 games** in Supabase, daily auto-refresh |
-| **Phase 5B: PC Gaming**         | 🚧 NEXT     | Steam/GOG integration, 100k+ game target         |
+| **Phase 5B: PC Gaming**         | 🚧 ACTIVE   | Steam/GOG adapters ready, 100k+ game target      |
 | **Phase 6: Social & Community** | 📋 PLANNED  | User profiles, reviews, lists, activity feeds    |
 
 ---
@@ -61,7 +61,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 
 - **29 TypeScript modules** extracted from 5,940-line `app-legacy.js`
 - **7,100+ total lines** across all modules
-- **406 tests passing** (390 unit + 16 e2e)
+- **450 tests passing** (434 unit + 16 e2e)
 - **No file exceeds 850 lines** (largest: `ui/modal.ts` at 842 lines)
 - **All 5 tracks complete** with full test coverage
 
