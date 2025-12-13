@@ -1,0 +1,16 @@
+{
+  "scheduleMinutes": 1440,
+  "fuzzyThreshold": 0.82,
+  "sources": [
+    {
+      "name": "GOG",
+      "type": "gog",
+      "enabled": true,
+      "limit": 1000,
+      "rateLimit": {
+        "requestsPerMinute": 30,
+        "retryAfterMs": 1000
+      }
+    }
+  ]
+}

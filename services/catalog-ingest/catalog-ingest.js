@@ -24,6 +24,7 @@ import { normalizePlatform } from "./platform-normalizer.js";
 let rawgAdapter = null;
 let igdbAdapter = null;
 let steamAdapter = null;
+let gogAdapter = null;
 try {
   rawgAdapter = await import("./sources/rawg.js");
 } catch {
@@ -38,6 +39,11 @@ try {
   steamAdapter = await import("./sources/steam.js");
 } catch {
   // Steam adapter not available - will use generic fetch
+}
+try {
+  gogAdapter = await import("./sources/gog.js");
+} catch {
+  // GOG adapter not available - will use generic fetch
 }
 
 // Initialize Supabase connection
@@ -526,6 +532,9 @@ async function fetchSourceRecords(source) {
   }
   if (source.type === "steam" && steamAdapter) {
     return steamAdapter.fetchSteamSource(source);
+  }
+  if (source.type === "gog" && gogAdapter) {
+    return gogAdapter.fetchGogSource(source);
   }
 
   // Generic URL-based fetch

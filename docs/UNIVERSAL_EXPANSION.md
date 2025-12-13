@@ -41,6 +41,7 @@ _Created: December 2025_
 | **IGDB**          | 200k+ games, all platforms  | Real-time API    | ✅ Integrated      |
 | **RAWG**          | 500k+ games, broad coverage | Daily API        | ✅ Integrated      |
 | **Steam**         | PC games, pricing           | Daily            | ✅ Integrated      |
+| **GOG**           | DRM-free PC games           | Daily            | ✅ Integrated      |
 | **GiantBomb**     | Deep metadata, wiki-quality | Weekly           | 📋 Planned         |
 | **MobyGames**     | Historical accuracy         | Weekly           | 📋 Planned         |
 | **PriceCharting** | Physical game pricing       | Daily            | ✅ Integrated      |
@@ -149,9 +150,10 @@ flowchart TB
 
 - [x] Steam API adapter (`services/catalog-ingest/sources/steam.js`)
 - [x] Steam config file (`services/catalog-ingest/config.steam.json`)
+- [x] GOG API adapter (`services/catalog-ingest/sources/gog.js`)
 - [ ] Run Steam ingestion to populate catalog
-- [ ] GOG database integration
-- [ ] Epic Games store notable releases
+- [ ] Run GOG ingestion to populate catalog
+- [ ] GOG Galaxy API for enhanced data (optional)
 - [ ] PC-specific metadata (system requirements, launcher)
 - [ ] Steam Deck verified badge display
 - [ ] Price comparison across storefronts
@@ -355,11 +357,12 @@ ALTER TABLE games ADD COLUMN IF NOT EXISTS
 5. ~~**Set up GitHub Actions**~~ ✅ Done: `catalog-refresh.yml` runs daily at 3 AM UTC
 6. ~~**Sync to Supabase**~~ ✅ Done: 32,937 games in production
 7. ~~**Steam API adapter**~~ ✅ Done: `services/catalog-ingest/sources/steam.js`
-8. **Run Steam ingestion** (Phase 5B) - Execute `npm run ingest:steam`
-9. **GOG database integration** (Phase 5B) - DRM-free PC games
-10. **Test virtualization at scale** - Validate grid performance with 50k+ games
-11. **Expand sample-games.json** to include modern game examples
-12. **Create data health monitoring** dashboard in Supabase
+8. ~~**GOG API adapter**~~ ✅ Done: `services/catalog-ingest/sources/gog.js`
+9. **Run Steam ingestion** (Phase 5B) - Execute `npm run ingest:steam`
+10. **Run GOG ingestion** (Phase 5B) - Execute `npm run ingest:gog`
+11. **Test virtualization at scale** - Validate grid performance with 50k+ games
+12. **Expand sample-games.json** to include modern game examples
+13. **Create data health monitoring** dashboard in Supabase
 
 ---
 

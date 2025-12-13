@@ -151,10 +151,11 @@ services/
 
 1. [x] Steam API adapter (`services/catalog-ingest/sources/steam.js`)
 2. [x] Steam config (`services/catalog-ingest/config.steam.json`)
-3. [ ] Run Steam ingestion to populate catalog
-4. [ ] GOG database integration
-5. [ ] PC-specific metadata (system requirements, launcher)
-6. [ ] Steam pricing integration
+3. [x] GOG API adapter (`services/catalog-ingest/sources/gog.js`)
+4. [ ] Run Steam ingestion to populate catalog
+5. [ ] Run GOG ingestion to populate catalog
+6. [ ] PC-specific metadata (system requirements, launcher)
+7. [ ] Steam/GOG pricing integration
 
 ### Medium Priority
 
@@ -167,7 +168,7 @@ services/
 
 - [x] README.md updated with universal scope
 - [x] Steam adapter documentation in catalog-ingest README
-- [ ] Add GOG integration guide
+- [x] GOG adapter documentation in catalog-ingest README
 - [ ] Document pricing data architecture
 
 ## DO / DON'T

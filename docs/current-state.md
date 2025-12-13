@@ -47,11 +47,12 @@ _Last updated: December 2025_
 ## Next Steps (Phase 5B: PC Gaming)
 
 1. ~~**Steam adapter**~~ ✅ Complete - `services/catalog-ingest/sources/steam.js` ready
-2. **Run Steam ingestion** - Execute `npm run ingest:catalog` with `config.steam.json`
-3. **GOG integration** - Add GOG API adapter for DRM-free PC games
-4. **Steam price sync** - Integrate Steam pricing into the pricing pipeline
-5. **IsThereAnyDeal API** - Add price comparison across PC storefronts
-6. **PC platform badges** - Update UI to show Steam/GOG/Epic icons on PC games
+2. ~~**GOG adapter**~~ ✅ Complete - `services/catalog-ingest/sources/gog.js` ready
+3. **Run Steam ingestion** - Execute `npm run ingest:steam`
+4. **Run GOG ingestion** - Execute `npm run ingest:gog`
+5. **Steam price sync** - Integrate Steam pricing into the pricing pipeline
+6. **IsThereAnyDeal API** - Add price comparison across PC storefronts
+7. **PC platform badges** - Update UI to show Steam/GOG/Epic icons on PC games
 
 ### Completed (Phase 5A)
 
