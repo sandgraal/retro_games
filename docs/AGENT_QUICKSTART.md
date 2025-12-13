@@ -11,9 +11,9 @@ _Last updated: December 2025_
 | Application | TypeScript + Vite SPA with custom signals; Supabase backend with local fallback |
 | Language    | TypeScript (strict)                                                             |
 | Build       | Vite 7                                                                          |
-| Tests       | 327 Vitest unit tests + 14 Playwright e2e tests                                 |
-| Data        | Supabase (391 games) + `data/sample-games.json` fallback                        |
-| Phase       | **Phase 5: Global Catalog & Community Submissions** (active)                    |
+| Tests       | 388 Vitest unit tests + 14 Playwright e2e tests = **402 total**                 |
+| Data        | Supabase (**32,937 games**) + `data/sample-games.json` fallback (24 games)      |
+| Phase       | **Phase 5A Complete** - Universal catalog live, automation running              |
 
 ## Required Reading (Priority Order)
 
@@ -26,6 +26,14 @@ _Last updated: December 2025_
 
 ## What's New (December 2025)
 
+### IGDB Catalog Sync Complete ✅
+
+- **74,458 games** ingested from IGDB (13 platforms)
+- **32,937 games** synced to Supabase production (58 platforms, 1972-2026)
+- Daily automated catalog refresh via GitHub Actions (3 AM UTC)
+- Platform name normalization for consistent data
+- Unique constraint on (game_name, platform) for upsert operations
+
 ### Database Schema (Deployed to Supabase)
 
 - `catalog_submissions` – Community submission queue
@@ -35,12 +43,13 @@ _Last updated: December 2025_
 - Full-text search with `pg_trgm` fuzzy matching
 - `search_games()` function for server-side search
 
-### Active Work Tracks
+### Completed Work Tracks ✅
 
-1. **Data Source Integration** – Connect RAWG.io and IGDB APIs
-2. **User Submissions** – Build "Suggest Edit" UI in modal
-3. **Moderation Queue** – Build `/moderation` route
-4. **Authentication** – Integrate Supabase Auth with GitHub OAuth
+1. **IGDB Integration** – Complete with OAuth, 74,458 games ingested
+2. **Supabase Sync** – Production database populated with 32,937 games
+3. **Automated Refresh** – Daily catalog updates via `catalog-refresh.yml`
+4. **User Submissions** – "Suggest Edit" UI in modal
+5. **Moderation Queue** – `/moderation` route with role-based access
 
 ## Quick Commands
 
@@ -126,29 +135,34 @@ services/
 
 ## What To Work On
 
-### Completed (Phase 5)
+### Phase 5A: Modern Platforms ✅ COMPLETE
 
-- [x] Create submission UI ("Suggest Edit" button in modal) - `src/ui/modal.ts`
-- [x] Build moderation panel with queue interface - `src/ui/moderation.ts`
-- [x] Implement catalog-ingest service - `services/catalog-ingest/`
-- [x] Add community submission REST endpoints
+- [x] IGDB API integration with OAuth (`services/catalog-ingest/sources/igdb.js`)
+- [x] Ingest 74,458 games from 13 platforms
+- [x] Sync 32,937 games to Supabase production
+- [x] Add unique constraint migration for upserts
+- [x] Configure daily automated refresh (`catalog-refresh.yml`)
+- [x] Platform name normalization
+- [x] Era/Indie/VR filter support in UI
 
-### High Priority (Phase 5 Remaining)
+### High Priority (Phase 5B: PC Gaming)
 
-1. [ ] Configure RAWG.io API and scheduled sync workflow
-2. [ ] Update frontend to use `search_games()` for large catalogs
-3. [ ] Connect catalog-ingest to Supabase (currently uses local JSON storage)
+1. [ ] Steam API integration for catalog + pricing
+2. [ ] GOG database integration
+3. [ ] PC-specific metadata (system requirements, launcher)
+4. [ ] Test virtualization with 50k+ games (performance validation)
 
 ### Medium Priority
 
-4. [ ] Add rate limiting to submission endpoints
-5. [ ] Build user profile page with submission history
-6. [ ] Improve moderation workflow with batch operations
+5. [ ] Replace local price snapshot with live Supabase pricing
+6. [ ] Add rate limiting to submission endpoints
+7. [ ] Build user profile page with submission history
 
-### Documentation Needed
+### Documentation Status
 
-- [ ] Update README.md with new scope
-- [ ] Add auth setup guide
+- [x] README.md updated with universal scope
+- [ ] Add Steam/GOG integration guide
+- [ ] Document pricing data architecture
 
 ## DO / DON'T
 

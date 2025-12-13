@@ -37,16 +37,17 @@ Work is organized into six build phases plus operational cadences. Each phase is
 
 ## Executive Summary
 
-| Phase                           | Status      | Progress                                        |
-| ------------------------------- | ----------- | ----------------------------------------------- |
-| Phase 0: Architecture           | ✅ COMPLETE | TypeScript, Vite, signals, 402 tests            |
-| Phase 1: Foundation             | ✅ COMPLETE | CI/CD, secrets, migrations                      |
-| Phase 2: UX & Features          | ✅ COMPLETE | Virtualization, pricing, media                  |
-| Phase 3: SEO & Web Vitals       | ✅ COMPLETE | JSON-LD, sitemap, Lighthouse CI                 |
-| Phase 3: Content Marketing      | ✅ COMPLETE | Guides, templates, embed widgets, outreach plan |
-| Phase 4: Monetization           | ⛔ BLOCKED  | Requires business decisions                     |
-| **Phase 5: Global Catalog**     | 🚧 ACTIVE   | **74,458 games** ingested, Supabase upload next |
-| **Phase 6: Social & Community** | 📋 PLANNED  | User profiles, reviews, lists, activity feeds   |
+| Phase                           | Status      | Progress                                         |
+| ------------------------------- | ----------- | ------------------------------------------------ |
+| Phase 0: Architecture           | ✅ COMPLETE | TypeScript, Vite, signals, 402 tests             |
+| Phase 1: Foundation             | ✅ COMPLETE | CI/CD, secrets, migrations                       |
+| Phase 2: UX & Features          | ✅ COMPLETE | Virtualization, pricing, media                   |
+| Phase 3: SEO & Web Vitals       | ✅ COMPLETE | JSON-LD, sitemap, Lighthouse CI                  |
+| Phase 3: Content Marketing      | ✅ COMPLETE | Guides, templates, embed widgets, outreach plan  |
+| Phase 4: Monetization           | ⛔ BLOCKED  | Requires business decisions                      |
+| **Phase 5A: Modern Platforms**  | ✅ COMPLETE | **32,937 games** in Supabase, daily auto-refresh |
+| **Phase 5B: PC Gaming**         | 🚧 NEXT     | Steam/GOG integration, 100k+ game target         |
+| **Phase 6: Social & Community** | 📋 PLANNED  | User profiles, reviews, lists, activity feeds    |
 
 ---
 
