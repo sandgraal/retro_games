@@ -203,8 +203,8 @@
     "id": "edge_case_001",
     "type": "edge_case",
     "description": "Search for game with special characters",
-    "query": "Chrono's Trigger",
-    "expected_behavior": "Should handle special characters gracefully"
+    "query": "Kirby's Adventure",
+    "expected_behavior": "Should return Kirby's Adventure for NES"
   },
   {
     "id": "edge_case_002",
