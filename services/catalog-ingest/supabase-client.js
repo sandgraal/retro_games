@@ -397,7 +397,7 @@ export async function completeIngestionRun(client, runId, finalMetrics, error = 
  * @param {object[]} games - Games to sync
  * @returns {Promise<{synced: number, errors: Error[]}>}
  */
-export async function syncGamesToSupabase(client, games) {
+export async function syncGamesToSupabase(client, games, normalizePlatformFn = null) {
   if (!client) return { synced: 0, errors: [new Error("Supabase not configured")] };
 
   const errors = [];
@@ -423,9 +423,14 @@ export async function syncGamesToSupabase(client, games) {
         }
       }
 
+      // Normalize platform name if normalizer provided
+      const platform = normalizePlatformFn
+        ? normalizePlatformFn(game.platform)
+        : game.platform;
+
       return {
         game_name: game.title || game.game_name,
-        platform: game.platform,
+        platform,
         genre: Array.isArray(game.genres) ? game.genres.join(", ") : game.genres || null,
         rating: game.esrb || null,
         release_year: releaseYear,

@@ -21,7 +21,7 @@ import type {
 } from "../core/types";
 import { withGameKeys } from "../core/keys";
 import { safeStorage } from "../core/storage";
-import { getPlatformsInFamily } from "../core/platform-families";
+import { getPlatformsInFamily, normalizePlatform } from "../core/platform-families";
 
 // === Storage Keys ===
 const STORAGE_KEYS = {
@@ -346,10 +346,15 @@ export const collectionStats: ComputedSignal<CollectionStats> = computed(() => {
 // === Actions ===
 
 /**
- * Set games data
+ * Set games data with platform normalization
  */
 export function setGames(games: Game[]): void {
-  gamesSignal.set(withGameKeys(games));
+  // Normalize platform names to canonical form before storing
+  const normalizedGames = games.map((game) => ({
+    ...game,
+    platform: normalizePlatform(game.platform),
+  }));
+  gamesSignal.set(withGameKeys(normalizedGames));
 }
 
 /**

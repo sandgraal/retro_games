@@ -125,8 +125,8 @@ flowchart TB
 - [x] Platform import from Steam, Xbox, PlayStation, and 10+ services
 - [x] Add PS5, Xbox Series X/S, Switch game catalogs (74,458 games from IGDB)
 - [x] Add PS4, Xbox One backlog (included in IGDB ingestion)
-- [ ] Upload catalog to Supabase for production
-- [ ] Update UI platform badges for modern consoles
+- [x] Upload catalog to Supabase for production (32,937 games synced)
+- [x] Update UI platform badges for modern consoles (platform normalizer added)
 - [ ] Test virtualization with 50k+ games
 
 **Exit Criteria**: ~~25,000+ modern games in catalog with working filters~~ **EXCEEDED: 74,458 games**

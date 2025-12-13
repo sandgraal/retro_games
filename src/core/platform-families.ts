@@ -14,6 +14,7 @@ export interface PlatformFamily {
 /**
  * Platform family definitions
  * Organized by manufacturer/type with associated platforms
+ * CANONICAL NAMES - all data should be normalized to these
  */
 export const PLATFORM_FAMILIES: PlatformFamily[] = [
   {
@@ -35,8 +36,6 @@ export const PLATFORM_FAMILIES: PlatformFamily[] = [
       "Nintendo DS",
       "Nintendo 3DS",
       "Virtual Boy",
-      "Famicom",
-      "Super Famicom",
     ],
   },
   {
@@ -44,20 +43,7 @@ export const PLATFORM_FAMILIES: PlatformFamily[] = [
     name: "PlayStation",
     icon: "🎮",
     color: "#003791",
-    platforms: [
-      "PS1",
-      "PS2",
-      "PS3",
-      "PS4",
-      "PS5",
-      "PSP",
-      "PS Vita",
-      "PlayStation",
-      "PlayStation 2",
-      "PlayStation 3",
-      "PlayStation 4",
-      "PlayStation 5",
-    ],
+    platforms: ["PS1", "PS2", "PS3", "PS4", "PS5", "PSP", "PS Vita", "PSVR", "PSVR2"],
   },
   {
     id: "xbox",
@@ -102,29 +88,21 @@ export const PLATFORM_FAMILIES: PlatformFamily[] = [
     name: "PC",
     icon: "💻",
     color: "#00a4ef",
-    platforms: ["PC", "DOS", "Windows", "Mac", "Linux", "Steam"],
+    platforms: ["PC", "DOS", "Mac", "Linux"],
   },
   {
     id: "mobile",
     name: "Mobile",
     icon: "📱",
     color: "#34c759",
-    platforms: ["iOS", "Android", "Mobile", "Apple Arcade"],
+    platforms: ["iOS", "Android"],
   },
   {
     id: "vr",
     name: "VR/AR",
     icon: "🥽",
     color: "#9b59b6",
-    platforms: [
-      "Oculus Quest",
-      "Meta Quest",
-      "PSVR",
-      "PSVR2",
-      "Valve Index",
-      "HTC Vive",
-      "VR",
-    ],
+    platforms: ["Meta Quest", "PSVR", "PSVR2", "Valve Index", "HTC Vive"],
   },
   {
     id: "retro",
@@ -146,10 +124,100 @@ export const PLATFORM_FAMILIES: PlatformFamily[] = [
       "MSX",
       "ZX Spectrum",
       "Arcade",
-      "Pinball",
     ],
   },
 ];
+
+/**
+ * Platform name aliases → canonical name
+ * Used to normalize incoming data to canonical platform names
+ */
+export const PLATFORM_ALIASES: Record<string, string> = {
+  // Nintendo
+  "nintendo switch": "Switch",
+  famicom: "NES",
+  "super famicom": "SNES",
+  "nintendo 64": "N64",
+  "nintendo gamecube": "GameCube",
+  "nintendo wii": "Wii",
+  "nintendo wii u": "Wii U",
+  gba: "Game Boy Advance",
+  gbc: "Game Boy Color",
+  gb: "Game Boy",
+  ds: "Nintendo DS",
+  "3ds": "Nintendo 3DS",
+  "new nintendo 3ds": "Nintendo 3DS",
+
+  // PlayStation
+  playstation: "PS1",
+  "playstation 1": "PS1",
+  psx: "PS1",
+  "playstation 2": "PS2",
+  "playstation 3": "PS3",
+  "playstation 4": "PS4",
+  "playstation 5": "PS5",
+  "playstation portable": "PSP",
+  "playstation vita": "PS Vita",
+  vita: "PS Vita",
+  "playstation vr": "PSVR",
+  "playstation vr2": "PSVR2",
+  "ps vr": "PSVR",
+  "ps vr2": "PSVR2",
+
+  // Xbox
+  "xbox series x": "Xbox Series X/S",
+  "xbox series s": "Xbox Series X/S",
+  "xbox series": "Xbox Series X/S",
+  xsx: "Xbox Series X/S",
+  xbone: "Xbox One",
+
+  // Sega
+  "sega genesis": "Genesis",
+  "sega mega drive": "Mega Drive",
+  "sega master system": "Master System",
+  "sega saturn": "Saturn",
+  "sega dreamcast": "Dreamcast",
+  "sega game gear": "Game Gear",
+  "sega 32x": "32X",
+
+  // PC
+  windows: "PC",
+  "microsoft windows": "PC",
+  steam: "PC",
+  macos: "Mac",
+  macintosh: "Mac",
+  "apple mac": "Mac",
+
+  // VR
+  "oculus quest": "Meta Quest",
+  "oculus quest 2": "Meta Quest",
+  "meta quest 2": "Meta Quest",
+  "meta quest 3": "Meta Quest",
+  quest: "Meta Quest",
+  "quest 2": "Meta Quest",
+  "quest 3": "Meta Quest",
+  steamvr: "Valve Index",
+  vr: "Meta Quest",
+
+  // Retro
+  "turbografx 16": "TurboGrafx-16",
+  "turbografx-cd": "TurboGrafx-16",
+  "pc engine cd": "PC Engine",
+  "neo-geo": "Neo Geo",
+  neogeo: "Neo Geo",
+  "neo geo aes": "Neo Geo",
+  "neo geo mvs": "Neo Geo",
+  c64: "Commodore 64",
+};
+
+/**
+ * Normalize a platform name to its canonical form
+ */
+export function normalizePlatform(platform: string): string {
+  if (!platform) return platform;
+  const lower = platform.toLowerCase().trim();
+  return PLATFORM_ALIASES[lower] ?? platform;
+}
 
 /**
  * Map of platform name to family ID for quick lookup

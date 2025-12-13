@@ -152,7 +152,7 @@
   },
   {
     "game_name": "The Legend of Zelda: Tears of the Kingdom",
-    "platform": "Nintendo Switch",
+    "platform": "Switch",
     "genre": "Action-Adventure, Open World",
     "rating": "9.6",
     "rating_category": "Top 10",
@@ -164,12 +164,14 @@
     "era": "current",
     "cover": "https://upload.wikimedia.org/wikipedia/en/f/fb/The_Legend_of_Zelda_Tears_of_the_Kingdom_cover.jpg",
     "Details": "https://en.wikipedia.org/wiki/The_Legend_of_Zelda:_Tears_of_the_Kingdom",
-    "external_ids": { "igdb": 119388 },
+    "external_ids": {
+      "igdb": 119388
+    },
     "screenshots": []
   },
   {
     "game_name": "Elden Ring",
-    "platform": "PlayStation 5",
+    "platform": "PS5",
     "genre": "Action RPG, Souls-like",
     "rating": "9.5",
     "rating_category": "Top 10",
@@ -181,12 +183,14 @@
     "era": "current",
     "cover": "https://upload.wikimedia.org/wikipedia/en/b/b9/Elden_Ring_Box_art.jpg",
     "Details": "https://en.wikipedia.org/wiki/Elden_Ring",
-    "external_ids": { "igdb": 119133 },
+    "external_ids": {
+      "igdb": 119133
+    },
     "screenshots": []
   },
   {
     "game_name": "God of War Ragnarök",
-    "platform": "PlayStation 5",
+    "platform": "PS5",
     "genre": "Action-Adventure",
     "rating": "9.4",
     "rating_category": "Top 10",
@@ -198,7 +202,9 @@
     "era": "current",
     "cover": "https://upload.wikimedia.org/wikipedia/en/e/ee/God_of_War_Ragnarok_cover.jpg",
     "Details": "https://en.wikipedia.org/wiki/God_of_War_Ragnarok",
-    "external_ids": { "igdb": 119171 },
+    "external_ids": {
+      "igdb": 119171
+    },
     "screenshots": []
   },
   {
@@ -215,12 +221,14 @@
     "era": "current",
     "cover": "https://upload.wikimedia.org/wikipedia/en/1/12/Baldurs_Gate_3_cover_art.jpg",
     "Details": "https://en.wikipedia.org/wiki/Baldurs_Gate_3",
-    "external_ids": { "igdb": 119171 },
+    "external_ids": {
+      "igdb": 119171
+    },
     "screenshots": []
   },
   {
     "game_name": "Halo Infinite",
-    "platform": "Xbox Series X",
+    "platform": "Xbox Series X/S",
     "genre": "FPS",
     "rating": "8.7",
     "rating_category": "Highly Rated",
@@ -232,12 +240,14 @@
     "era": "current",
     "cover": "https://upload.wikimedia.org/wikipedia/en/1/14/Halo_Infinite.png",
     "Details": "https://en.wikipedia.org/wiki/Halo_Infinite",
-    "external_ids": { "igdb": 1877 },
+    "external_ids": {
+      "igdb": 1877
+    },
     "screenshots": []
   },
   {
     "game_name": "Hollow Knight",
-    "platform": "Nintendo Switch",
+    "platform": "Switch",
     "genre": "Action-Adventure, Metroidvania",
     "rating": "9.0",
     "rating_category": "Top 10",
@@ -250,7 +260,9 @@
     "is_indie": true,
     "cover": "https://upload.wikimedia.org/wikipedia/en/0/04/Hollow_Knight_first_cover_art.webp",
     "Details": "https://en.wikipedia.org/wiki/Hollow_Knight",
-    "external_ids": { "igdb": 26758 },
+    "external_ids": {
+      "igdb": 26758
+    },
     "screenshots": []
   },
   {
@@ -268,12 +280,14 @@
     "is_indie": true,
     "cover": "https://upload.wikimedia.org/wikipedia/en/1/1b/Celeste_box_art_full.png",
     "Details": "https://en.wikipedia.org/wiki/Celeste_(video_game)",
-    "external_ids": { "igdb": 54733 },
+    "external_ids": {
+      "igdb": 54733
+    },
     "screenshots": []
   },
   {
     "game_name": "The Last of Us Part I",
-    "platform": "PlayStation 5",
+    "platform": "PS5",
     "genre": "Action-Adventure, Survival Horror",
     "rating": "9.2",
     "rating_category": "Top 10",
@@ -285,12 +299,14 @@
     "era": "current",
     "cover": "https://upload.wikimedia.org/wikipedia/en/4/46/The_Last_of_Us_Part_I_cover.png",
     "Details": "https://en.wikipedia.org/wiki/The_Last_of_Us_Part_I",
-    "external_ids": { "igdb": 191562 },
+    "external_ids": {
+      "igdb": 191562
+    },
     "screenshots": []
   },
   {
     "game_name": "Gran Turismo 7",
-    "platform": "PlayStation 5",
+    "platform": "PS5",
     "genre": "Racing, Simulation",
     "rating": "8.6",
     "rating_category": "Highly Rated",
@@ -302,12 +318,14 @@
     "era": "current",
     "cover": "https://upload.wikimedia.org/wikipedia/en/2/22/Gran_Turismo_7_cover_art.jpg",
     "Details": "https://en.wikipedia.org/wiki/Gran_Turismo_7",
-    "external_ids": { "igdb": 119284 },
+    "external_ids": {
+      "igdb": 119284
+    },
     "screenshots": []
   },
   {
     "game_name": "Starfield",
-    "platform": "Xbox Series X",
+    "platform": "Xbox Series X/S",
     "genre": "RPG, Open World, Sci-Fi",
     "rating": "8.3",
     "rating_category": "Highly Rated",
@@ -319,12 +337,14 @@
     "era": "current",
     "cover": "https://upload.wikimedia.org/wikipedia/en/6/6d/Starfield_cover.jpg",
     "Details": "https://en.wikipedia.org/wiki/Starfield_(video_game)",
-    "external_ids": { "igdb": 96437 },
+    "external_ids": {
+      "igdb": 96437
+    },
     "screenshots": []
   },
   {
     "game_name": "Red Dead Redemption 2",
-    "platform": "PlayStation 4",
+    "platform": "PS4",
     "genre": "Action-Adventure, Open World",
     "rating": "9.7",
     "rating_category": "Top 10",
@@ -336,12 +356,14 @@
     "era": "last-gen",
     "cover": "https://upload.wikimedia.org/wikipedia/en/4/44/Red_Dead_Redemption_II.jpg",
     "Details": "https://en.wikipedia.org/wiki/Red_Dead_Redemption_2",
-    "external_ids": { "igdb": 25076 },
+    "external_ids": {
+      "igdb": 25076
+    },
     "screenshots": []
   },
   {
     "game_name": "The Witcher 3: Wild Hunt",
-    "platform": "PlayStation 4",
+    "platform": "PS4",
     "genre": "Action RPG, Open World",
     "rating": "9.3",
     "rating_category": "Top 10",
@@ -353,12 +375,14 @@
     "era": "last-gen",
     "cover": "https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_cover_art.jpg",
     "Details": "https://en.wikipedia.org/wiki/The_Witcher_3:_Wild_Hunt",
-    "external_ids": { "igdb": 1942 },
+    "external_ids": {
+      "igdb": 1942
+    },
     "screenshots": []
   },
   {
     "game_name": "Super Mario Odyssey",
-    "platform": "Nintendo Switch",
+    "platform": "Switch",
     "genre": "Platformer, Open World",
     "rating": "9.5",
     "rating_category": "Top 10",
@@ -370,12 +394,14 @@
     "era": "current",
     "cover": "https://upload.wikimedia.org/wikipedia/en/8/8d/Super_Mario_Odyssey_cover.jpg",
     "Details": "https://en.wikipedia.org/wiki/Super_Mario_Odyssey",
-    "external_ids": { "igdb": 26758 },
+    "external_ids": {
+      "igdb": 26758
+    },
     "screenshots": []
   },
   {
     "game_name": "Persona 5 Royal",
-    "platform": "PlayStation 4",
+    "platform": "PS4",
     "genre": "RPG, Social Simulation",
     "rating": "9.5",
     "rating_category": "Top 10",
@@ -387,12 +413,14 @@
     "era": "last-gen",
     "cover": "https://upload.wikimedia.org/wikipedia/en/b/b0/Persona_5_Royal.jpg",
     "Details": "https://en.wikipedia.org/wiki/Persona_5_Royal",
-    "external_ids": { "igdb": 131945 },
+    "external_ids": {
+      "igdb": 131945
+    },
     "screenshots": []
   },
   {
     "game_name": "Beat Saber",
-    "platform": "PlayStation VR2",
+    "platform": "PSVR2",
     "genre": "Rhythm, VR",
     "rating": "9.0",
     "rating_category": "Top 10",
@@ -405,7 +433,9 @@
     "is_vr_supported": true,
     "cover": "https://upload.wikimedia.org/wikipedia/en/4/4a/Beat_Saber_cover.jpg",
     "Details": "https://en.wikipedia.org/wiki/Beat_Saber",
-    "external_ids": { "igdb": 97122 },
+    "external_ids": {
+      "igdb": 97122
+    },
     "screenshots": []
   },
   {
@@ -423,7 +453,9 @@
     "is_vr_supported": true,
     "cover": "https://upload.wikimedia.org/wikipedia/en/a/a4/Half-Life_Alyx_Cover_Art.jpg",
     "Details": "https://en.wikipedia.org/wiki/Half-Life:_Alyx",
-    "external_ids": { "igdb": 117911 },
+    "external_ids": {
+      "igdb": 117911
+    },
     "screenshots": []
   }
 ]

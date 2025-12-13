@@ -17,6 +17,9 @@ import {
   syncGamesToSupabase,
 } from "./supabase-client.js";
 
+// Platform normalizer
+import { normalizePlatform } from "./platform-normalizer.js";
+
 // Source adapters
 let rawgAdapter = null;
 let igdbAdapter = null;
@@ -773,7 +776,11 @@ export async function runIngestion(configOverrides = {}) {
   if (supabaseEnabled && supabaseClient && config.syncToSupabase !== false) {
     console.log("[supabase] Syncing catalog to Supabase...");
     const gamesToSync = Object.values(records).map((r) => r.record);
-    const { synced, errors } = await syncGamesToSupabase(supabaseClient, gamesToSync);
+    const { synced, errors } = await syncGamesToSupabase(
+      supabaseClient,
+      gamesToSync,
+      normalizePlatform
+    );
     metrics.supabaseSynced = synced;
     if (errors.length > 0) {
       console.warn(`[supabase] ${errors.length} sync errors:`, errors[0]?.message);
