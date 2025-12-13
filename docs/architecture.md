@@ -22,30 +22,48 @@ Dragon's Hoard Atlas is a small, framework-free **TypeScript** single-page app b
 ```
 src/
 ├── core/            # signals + helpers
-│   ├── signals.ts   # createSignal, computed, effect, batch
-│   ├── types.ts     # shared types
-│   ├── keys.ts      # game key helpers
-│   └── index.ts     # re-exports
+│   ├── signals.ts          # createSignal, computed, effect, batch
+│   ├── types.ts            # shared TypeScript types
+│   ├── keys.ts             # game key generation helpers
+│   ├── storage.ts          # localStorage wrapper with error handling
+│   ├── platform-families.ts # platform grouping and normalization
+│   └── index.ts            # re-exports
 ├── state/           # centralized state
-│   └── store.ts     # signals, computed filteredGames/collectionStats, persistence
+│   └── store.ts            # signals, computed filteredGames/collectionStats, persistence
 ├── data/            # data access
-│   ├── supabase.ts  # waits for CDN client + config.js, queries games_consolidated
-│   └── loader.ts    # chooses Supabase or sample JSON; loads price snapshot
+│   ├── supabase.ts         # waits for CDN client + config.js, queries games_consolidated
+│   ├── loader.ts           # chooses Supabase or sample JSON; loads price snapshot
+│   ├── pricing-api.ts      # pricing data API client
+│   ├── pricing-provider.ts # price data loading with fallback
+│   ├── auth.ts             # authentication session management
+│   ├── suggestions.ts      # community submission APIs
+│   ├── guides.ts           # markdown guide loading
+│   └── database.types.ts   # Supabase type definitions
 ├── features/        # business logic
-│   └── export.ts    # CSV export, backups, share codes, clipboard/download helpers
+│   ├── export.ts           # CSV export, backups, share codes, clipboard/download
+│   └── platform-import.ts  # collection import from external services
 ├── ui/              # components
-│   ├── components.ts      # mount helper, element factory, debounce/throttle
-│   ├── game-grid.ts       # grid + virtualization (≥100 cards)
-│   ├── game-card.ts       # card rendering + modal trigger
-│   ├── dashboard.ts       # stats and price display
-│   ├── filters.ts         # platform/genre filters, search, sort controls
-│   ├── modal.ts           # game detail modal (status + notes)
-│   ├── settings-modal.ts  # preferences + backup/restore/clear
-│   └── index.ts           # re-exports
+│   ├── components.ts       # mount helper, element factory, debounce/throttle
+│   ├── game-grid.ts        # grid + virtualization (≥100 cards)
+│   ├── game-card.ts        # card rendering + modal trigger
+│   ├── dashboard.ts        # stats and price display
+│   ├── filters.ts          # platform/genre filters, search, sort controls
+│   ├── filter-presets.ts   # saved filter presets
+│   ├── modal.ts            # game detail modal (status + notes)
+│   ├── settings-modal.ts   # preferences + backup/restore/clear
+│   ├── import-modal.ts     # platform import wizard UI
+│   ├── moderation.ts       # moderation queue panel
+│   ├── guides.ts           # guide content rendering
+│   ├── curated-sections.ts # featured/curated game sections
+│   ├── recently-viewed.ts  # recently viewed games tracker
+│   ├── smart-search.ts     # enhanced search with suggestions
+│   ├── infinite-scroll.ts  # pagination/infinite scroll
+│   ├── url-state.ts        # URL parameter sync
+│   └── index.ts            # re-exports
 ├── utils/           # pure helpers
-│   └── format.ts    # currency/number/date formatting
-├── main.ts          # entry point: mounts UI, loads data, wires actions
-└── index.ts         # public API exports
+│   └── format.ts           # currency/number/date formatting
+├── main.ts                 # entry point: mounts UI, loads data, wires actions
+└── index.ts                # public API exports
 ```
 
 ## Reactivity

@@ -30,27 +30,40 @@ src/
 ├── core/           # Reactive primitives
 │   ├── signals.ts  # createSignal, computed, effect
 │   ├── types.ts    # TypeScript type definitions
-│   └── keys.ts     # Game key generation
+│   ├── keys.ts     # Game key generation
+│   ├── storage.ts  # localStorage wrapper
+│   └── platform-families.ts # Platform grouping/normalization
 ├── state/          # Centralized reactive state
 │   └── store.ts    # Signal-based state management
 ├── data/           # Data layer
 │   ├── auth.ts           # Auth session + role management
 │   ├── guides.ts         # Markdown guide loading
 │   ├── loader.ts         # Game data loading & processing
+│   ├── pricing-api.ts    # Pricing API client
 │   ├── pricing-provider.ts # Price data loading
 │   ├── suggestions.ts    # Community submission APIs
+│   ├── database.types.ts # Supabase type definitions
 │   └── supabase.ts       # Type-safe Supabase client
 ├── features/       # Business logic
-│   └── export.ts   # CSV export, backup, sharing
+│   ├── export.ts         # CSV export, backup, sharing
+│   └── platform-import.ts # Collection import from external services
 ├── ui/             # Component system
-│   ├── game-card.ts
-│   ├── game-grid.ts
-│   ├── dashboard.ts
-│   ├── filters.ts
-│   ├── guides.ts
-│   ├── modal.ts
-│   ├── moderation.ts
-│   └── settings-modal.ts
+│   ├── components.ts     # Mount helper, element factory
+│   ├── game-card.ts      # Card rendering
+│   ├── game-grid.ts      # Virtualized grid
+│   ├── dashboard.ts      # Stats display
+│   ├── filters.ts        # Filter controls
+│   ├── filter-presets.ts # Saved filter presets
+│   ├── modal.ts          # Game detail modal
+│   ├── settings-modal.ts # Preferences modal
+│   ├── import-modal.ts   # Platform import wizard
+│   ├── guides.ts         # Guide content rendering
+│   ├── moderation.ts     # Moderation queue
+│   ├── curated-sections.ts
+│   ├── recently-viewed.ts
+│   ├── smart-search.ts
+│   ├── infinite-scroll.ts
+│   └── url-state.ts      # URL parameter sync
 ├── utils/          # Pure utility functions
 │   └── format.ts   # Formatting helpers
 └── main.ts         # Application entry point

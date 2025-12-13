@@ -6,13 +6,7 @@
  * Documentation: https://rawg.io/apidocs
  */
 
-/**
- * Delay execution for rate limiting
- * @param {number} ms - Milliseconds to wait
- */
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { delay } from "./shared.js";
 
 /**
  * Map RAWG platform IDs to standard platform names

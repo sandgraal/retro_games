@@ -13,13 +13,7 @@
  * Rate limits: Be respectful, ~1 request/second recommended
  */
 
-/**
- * Delay execution for rate limiting
- * @param {number} ms - Milliseconds to wait
- */
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { delay } from "./shared.js";
 
 /**
  * Genre mapping from GOG to standardized names

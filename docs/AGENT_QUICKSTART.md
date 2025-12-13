@@ -11,7 +11,7 @@ _Last updated: December 2025_
 | Application | TypeScript + Vite SPA with custom signals; Supabase backend with local fallback |
 | Language    | TypeScript (strict)                                                             |
 | Build       | Vite 7                                                                          |
-| Tests       | 434 Vitest unit tests + 16 Playwright e2e tests = **450 total**                 |
+| Tests       | **454 Vitest unit + 16 Playwright e2e = 470 total**                             |
 | Data        | Supabase (**32,937 games**) + `data/sample-games.json` fallback (24 games)      |
 | Phase       | **Phase 5B In Progress** - PC Gaming adapters complete, awaiting ingestion      |
 
@@ -57,8 +57,8 @@ _Last updated: December 2025_
 npm install
 npm run dev           # http://localhost:3000
 npm run build         # tsc --noEmit + vite build
-npm test              # Vitest (390 tests)
-npm run test:e2e      # Playwright (after `npx playwright install --with-deps`)
+npm test              # Vitest (454 unit tests)
+npm run test:e2e      # Playwright (16 e2e tests; after `npx playwright install --with-deps`)
 npm run lint          # ESLint
 npm run build:config  # Emit config.js from .env
 

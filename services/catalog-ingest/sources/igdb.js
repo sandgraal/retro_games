@@ -9,13 +9,7 @@
  * Requires Twitch Developer credentials (Client ID + Secret).
  */
 
-/**
- * Delay execution for rate limiting
- * @param {number} ms - Milliseconds to wait
- */
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { delay } from "./shared.js";
 
 /**
  * Map IGDB platform IDs to standard platform names

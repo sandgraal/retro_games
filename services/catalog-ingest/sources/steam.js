@@ -11,13 +11,7 @@
  * Documentation: https://partner.steamgames.com/doc/webapi
  */
 
-/**
- * Delay execution for rate limiting
- * @param {number} ms - Milliseconds to wait
- */
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { delay, createRateLimiter } from "./shared.js";
 
 /**
  * Genre mapping from Steam to standardized names
@@ -40,34 +34,14 @@ const GENRE_MAP = {
   "Sexual Content": "Mature",
 };
 
-/**
- * Token cache for API rate limiting
- */
-let requestCount = 0;
-let requestWindowStart = Date.now();
-const MAX_REQUESTS_PER_WINDOW = 180; // Conservative limit
-const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+// Rate limiter: 180 requests per 5 minutes (conservative)
+const rateLimiter = createRateLimiter(180, 5 * 60 * 1000);
 
 /**
  * Check and enforce rate limiting
  */
 async function checkRateLimit() {
-  const now = Date.now();
-  if (now - requestWindowStart > WINDOW_MS) {
-    // Reset window
-    requestWindowStart = now;
-    requestCount = 0;
-  }
-
-  if (requestCount >= MAX_REQUESTS_PER_WINDOW) {
-    const waitTime = WINDOW_MS - (now - requestWindowStart);
-    console.log(`[steam] Rate limit reached, waiting ${Math.ceil(waitTime / 1000)}s...`);
-    await delay(waitTime + 1000);
-    requestWindowStart = Date.now();
-    requestCount = 0;
-  }
-
-  requestCount++;
+  await rateLimiter.check();
 }
 
 /**
