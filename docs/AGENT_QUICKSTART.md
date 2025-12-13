@@ -57,7 +57,7 @@ _Last updated: December 2025_
 npm install
 npm run dev           # http://localhost:3000
 npm run build         # tsc --noEmit + vite build
-npm test              # Vitest (388 tests)
+npm test              # Vitest (390 tests)
 npm run test:e2e      # Playwright (after `npx playwright install --with-deps`)
 npm run lint          # ESLint
 npm run build:config  # Emit config.js from .env
@@ -131,7 +131,7 @@ services/
 | `tests/build-css.test.js`            | 12    | CSS bundler script                     |
 | `tests/e2e/*.spec.js`                | 14    | Playwright smoke/filters/aria specs    |
 
-**Total: 388 unit tests + 14 E2E tests = 402 tests**
+**Total: 390 unit tests + 14 E2E tests = 404 tests**
 
 ## What To Work On
 

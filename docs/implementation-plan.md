@@ -31,7 +31,7 @@ This document operationalizes the high-level implementation plan into actionable
 
 Work is organized into six build phases plus operational cadences. Each phase is subdivided into tracks with goal statements, exit criteria, and granular tasks. Tracks can run in parallel when dependencies are satisfied.
 
-**✅ UPDATE: Phase 0-3 Complete, Phase 5 Started (December 2025)** - All module extraction finished with 402 tests passing (388 unit + 14 e2e). New global catalog and community features in progress.
+**✅ UPDATE: Phase 0-3 Complete, Phase 5 Started (December 2025)** - All module extraction finished with 404 tests passing (390 unit + 14 e2e). New global catalog and community features in progress.
 
 ---
 
@@ -61,7 +61,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 
 - **29 TypeScript modules** extracted from 5,940-line `app-legacy.js`
 - **7,100+ total lines** across all modules
-- **402 tests passing** (388 unit + 14 e2e)
+- **404 tests passing** (390 unit + 14 e2e)
 - **No file exceeds 850 lines** (largest: `ui/modal.ts` at 842 lines)
 - **All 5 tracks complete** with full test coverage
 
@@ -101,7 +101,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 - ✅ No file exceeds 850 lines (largest: `ui/modal.ts` at 842 lines)
 - ✅ No function exceeds 50 lines
 - ✅ ESLint completes in <10 seconds
-- ✅ Test coverage: 402 tests passing (388 unit + 14 e2e)
+- ✅ Test coverage: 404 tests passing (390 unit + 14 e2e)
 - ✅ All existing tests passing
 - ✅ Zero regressions in functionality
 - ✅ Documentation complete
