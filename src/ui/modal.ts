@@ -273,7 +273,8 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
       priceInfo,
       pricingInfo,
       game.game_name,
-      game.key
+      game.key,
+      game.platform
     );
     const externalLinks = buildExternalLinks(game);
     const metadataPanel = buildExtendedMetadata(game);
@@ -452,33 +453,211 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
   closeBtn?.addEventListener("click", closeGameModal);
 }
 
+/** Platforms that are primarily digital-only (no physical media pricing) */
+const DIGITAL_ONLY_PLATFORMS = new Set([
+  "PC",
+  "Steam",
+  "GOG",
+  "Epic",
+  "iOS",
+  "Android",
+  "Apple Arcade",
+  "Quest",
+  "Meta Quest",
+  "SteamVR",
+  "itch.io",
+  "Linux",
+  "Mac",
+  "Windows",
+  "Browser",
+  "Web",
+]);
+
+/** Platforms where we have physical game pricing coverage */
+const RETRO_PHYSICAL_PLATFORMS = new Set([
+  "NES",
+  "SNES",
+  "N64",
+  "GameCube",
+  "Wii",
+  "Game Boy",
+  "Game Boy Color",
+  "Game Boy Advance",
+  "Nintendo DS",
+  "PS1",
+  "PS2",
+  "PS3",
+  "PSP",
+  "Genesis",
+  "Sega Genesis",
+  "Dreamcast",
+  "Saturn",
+  "Master System",
+  "Atari 2600",
+  "Atari 7800",
+  "Neo Geo",
+  "TurboGrafx-16",
+  "Xbox",
+  "Xbox 360",
+]);
+
+/**
+ * Build price lookup links for games without pricing data
+ */
+function buildPriceLookupLinks(gameName: string, platform: string): string {
+  const encodedName = encodeURIComponent(gameName);
+  const encodedSearch = encodeURIComponent(`${gameName} ${platform}`);
+
+  const links: Array<{ label: string; url: string; icon: string }> = [];
+
+  // Always offer eBay search for physical games
+  if (!DIGITAL_ONLY_PLATFORMS.has(platform)) {
+    links.push({
+      label: "eBay",
+      url: `https://www.ebay.com/sch/i.html?_nkw=${encodedSearch}&_sacat=139973`,
+      icon: "🛒",
+    });
+    links.push({
+      label: "PriceCharting",
+      url: `https://www.pricecharting.com/search-products?q=${encodedSearch}`,
+      icon: "📊",
+    });
+  }
+
+  // Digital storefronts for PC/modern platforms
+  if (
+    platform === "PC" ||
+    platform === "Steam" ||
+    platform === "Windows" ||
+    platform === "Mac" ||
+    platform === "Linux"
+  ) {
+    links.push({
+      label: "Steam",
+      url: `https://store.steampowered.com/search/?term=${encodedName}`,
+      icon: "🎮",
+    });
+    links.push({
+      label: "GOG",
+      url: `https://www.gog.com/games?query=${encodedName}`,
+      icon: "🎁",
+    });
+    links.push({
+      label: "IsThereAnyDeal",
+      url: `https://isthereanydeal.com/search/?q=${encodedName}`,
+      icon: "💰",
+    });
+  }
+
+  // Console storefronts
+  if (platform === "PS4" || platform === "PS5") {
+    links.push({
+      label: "PSN Store",
+      url: `https://store.playstation.com/search/${encodedName}`,
+      icon: "🎮",
+    });
+  }
+  if (
+    platform === "Xbox One" ||
+    platform === "Xbox Series X/S" ||
+    platform.startsWith("Xbox")
+  ) {
+    links.push({
+      label: "Xbox Store",
+      url: `https://www.xbox.com/games/all-games?query=${encodedName}`,
+      icon: "🎮",
+    });
+  }
+  if (platform === "Switch" || platform === "Nintendo Switch") {
+    links.push({
+      label: "Deku Deals",
+      url: `https://www.dekudeals.com/search?q=${encodedName}`,
+      icon: "💰",
+    });
+  }
+
+  if (links.length === 0) return "";
+
+  const linkItems = links
+    .map(
+      (link) => `
+      <a href="${link.url}" target="_blank" rel="noopener noreferrer" class="price-lookup-link">
+        <span aria-hidden="true">${link.icon}</span>
+        <span>${escapeHtml(link.label)}</span>
+      </a>
+    `
+    )
+    .join("");
+
+  return `
+    <div class="price-lookup-links">
+      <span class="price-lookup-label">Check prices:</span>
+      ${linkItems}
+    </div>
+  `;
+}
+
+/**
+ * Get context-aware messaging for missing price data
+ */
+function getMissingPriceContext(platform: string): {
+  message: string;
+  suggestion: string;
+} {
+  if (DIGITAL_ONLY_PLATFORMS.has(platform)) {
+    return {
+      message: "Digital games have dynamic pricing across storefronts.",
+      suggestion: "Use the links below to compare current prices.",
+    };
+  }
+
+  if (RETRO_PHYSICAL_PLATFORMS.has(platform)) {
+    return {
+      message: "We're expanding our retro game pricing coverage.",
+      suggestion: "Check eBay or PriceCharting for current market values.",
+    };
+  }
+
+  // Modern physical platforms (PS4, PS5, Switch, Xbox One, etc.)
+  return {
+    message: "Physical and digital pricing varies by retailer.",
+    suggestion: "Check storefronts or secondary market for current prices.",
+  };
+}
+
 function buildPricingSection(
   price: PriceData | undefined,
   meta: { lastUpdated?: string; source: PricingSource; reason?: string },
   gameName: string,
-  gameKey: string
+  gameKey: string,
+  platform?: string
 ): string {
   const updated = price?.lastUpdated ?? price?.snapshotDate ?? meta.lastUpdated;
   const updatedLabel = formatPricingTimestamp(updated);
   const fallbackLabel = updatedLabel
     ? `Updated ${escapeHtml(updatedLabel)}`
-    : "No recent pricing timestamp";
+    : "";
 
   const header = `
     <div class="modal-pricing__header">
       <span class="modal-section-title" id="modalPricingHeading">Pricing</span>
-      <span class="modal-pricing__timestamp" id="modalPricingUpdated">${fallbackLabel}</span>
+      ${fallbackLabel ? `<span class="modal-pricing__timestamp" id="modalPricingUpdated">${fallbackLabel}</span>` : ""}
     </div>
   `;
 
   if (!price) {
-    const reason = meta.reason ? ` ${escapeHtml(meta.reason)}` : ".";
+    const platformName = platform ?? "";
+    const context = getMissingPriceContext(platformName);
+    const lookupLinks = buildPriceLookupLinks(gameName, platformName);
+
     return `
-      <section class="modal-pricing" aria-labelledby="modalPricingHeading">
+      <section class="modal-pricing modal-pricing--empty" aria-labelledby="modalPricingHeading">
         ${header}
-        <p class="modal-pricing__empty" role="status">
-          Pricing data isn't available for ${escapeHtml(gameName)}${reason}
-        </p>
+        <div class="modal-pricing__empty-state">
+          <p class="modal-pricing__empty-message">${escapeHtml(context.message)}</p>
+          <p class="modal-pricing__empty-suggestion">${escapeHtml(context.suggestion)}</p>
+          ${lookupLinks}
+        </div>
       </section>
     `;
   }

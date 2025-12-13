@@ -89,10 +89,32 @@ describe("modal component", () => {
 
   it("shows a friendly pricing fallback message when no data exists", () => {
     setPriceMeta({ source: "none", reason: "No sources" });
-    openGameModal({ ...game, key: "NoPrice___NES" } as any);
-    const pricingFallback = document.querySelector(".modal-pricing__empty");
+    openGameModal({ ...game, key: "NoPrice___NES", platform: "NES" } as any);
+    const pricingEmpty = document.querySelector(".modal-pricing--empty");
+    const emptyMessage = document.querySelector(".modal-pricing__empty-message");
 
-    expect(pricingFallback?.textContent).toContain("Pricing data isn't available");
+    expect(pricingEmpty).toBeTruthy();
+    expect(emptyMessage?.textContent).toContain("pricing coverage");
+  });
+
+  it("shows digital pricing context for PC/Steam games", () => {
+    setPriceMeta({ source: "none" });
+    openGameModal({ ...game, key: "TestGame___Steam", platform: "Steam" } as any);
+    const emptyMessage = document.querySelector(".modal-pricing__empty-message");
+
+    expect(emptyMessage?.textContent).toContain("Digital games");
+  });
+
+  it("shows price lookup links for games without pricing", () => {
+    setPriceMeta({ source: "none" });
+    openGameModal({ ...game, key: "TestGame___SNES", platform: "SNES" } as any);
+    const lookupLinks = document.querySelectorAll(".price-lookup-link");
+
+    expect(lookupLinks.length).toBeGreaterThan(0);
+    // Should have eBay and PriceCharting links for retro physical games
+    const linkTexts = Array.from(lookupLinks).map((l) => l.textContent);
+    expect(linkTexts.join(" ")).toContain("eBay");
+    expect(linkTexts.join(" ")).toContain("PriceCharting");
   });
 
   it("filters out unsafe URLs with javascript: protocol", () => {
