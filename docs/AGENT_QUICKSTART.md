@@ -147,23 +147,27 @@ services/
 - [x] Platform name normalization
 - [x] Era/Indie/VR filter support in UI
 
-### High Priority (Phase 5B: PC Gaming)
+### Current Priority (Phase 5B: PC Gaming) 🚧
 
-1. [ ] Steam API integration for catalog + pricing
-2. [ ] GOG database integration
-3. [ ] PC-specific metadata (system requirements, launcher)
-4. [ ] Test virtualization with 50k+ games (performance validation)
+1. [x] Steam API adapter (`services/catalog-ingest/sources/steam.js`)
+2. [x] Steam config (`services/catalog-ingest/config.steam.json`)
+3. [ ] Run Steam ingestion to populate catalog
+4. [ ] GOG database integration
+5. [ ] PC-specific metadata (system requirements, launcher)
+6. [ ] Steam pricing integration
 
 ### Medium Priority
 
-5. [ ] Replace local price snapshot with live Supabase pricing
-6. [ ] Add rate limiting to submission endpoints
-7. [ ] Build user profile page with submission history
+7. [ ] Replace local price snapshot with live Supabase pricing
+8. [ ] Add rate limiting to submission endpoints
+9. [ ] Build user profile page with submission history
+10. [ ] Test virtualization with 50k+ games (performance validation)
 
 ### Documentation Status
 
 - [x] README.md updated with universal scope
-- [ ] Add Steam/GOG integration guide
+- [x] Steam adapter documentation in catalog-ingest README
+- [ ] Add GOG integration guide
 - [ ] Document pricing data architecture
 
 ## DO / DON'T

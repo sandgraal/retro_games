@@ -7,6 +7,7 @@ A lightweight Node.js worker that pulls game metadata from external APIs on a sc
 - Scheduled ingestion (`scheduleMinutes`) or ad-hoc runs with `--once`.
 - **IGDB integration** - Twitch OAuth, 200k+ games, 35+ platforms supported
 - **RAWG integration** - 500k+ games, broad platform coverage
+- **Steam integration** - PC games with pricing, achievements, and player counts
 - Deterministic keys (`title + platform + release_year`) plus fuzzy matching for cross-source de-duplication.
 - Merge decisions are persisted to `data/merge-decisions.json` so future runs reuse the same mapping.
 - Change detection via SHA-256 hash/version per record; only updates changed entries.
@@ -16,11 +17,14 @@ A lightweight Node.js worker that pulls game metadata from external APIs on a sc
 ## Usage
 
 ```bash
-# One-off run with IGDB source (recommended)
+# One-off run with IGDB source (recommended for console games)
 IGDB_CLIENT_ID=xxx IGDB_CLIENT_SECRET=xxx node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.igdb.json --once
 
 # One-off run with RAWG source
 RAWG_API_KEY=xxx node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.rawg.json --once
+
+# One-off run with Steam source (PC games)
+node services/catalog-ingest/catalog-ingest.js --config services/catalog-ingest/config.steam.json --once
 
 # Start the read API after seeding snapshots
 node services/catalog-ingest/catalog-ingest.js --serve --port 8787
@@ -28,18 +32,20 @@ node services/catalog-ingest/catalog-ingest.js --serve --port 8787
 
 ### Data Sources
 
-| Source | Type   | Configuration         | Rate Limit    |
-| ------ | ------ | --------------------- | ------------- |
-| IGDB   | `igdb` | `config.igdb.json`    | 4 req/sec     |
-| RAWG   | `rawg` | `config.rawg.json`    | 20k req/month |
-| Custom | `url`  | `config.example.json` | Varies        |
+| Source | Type    | Configuration         | Rate Limit    | Best For                |
+| ------ | ------- | --------------------- | ------------- | ----------------------- |
+| IGDB   | `igdb`  | `config.igdb.json`    | 4 req/sec     | Console games, all eras |
+| RAWG   | `rawg`  | `config.rawg.json`    | 20k req/month | Broad coverage          |
+| Steam  | `steam` | `config.steam.json`   | ~200 req/5min | PC games + pricing      |
+| Custom | `url`   | `config.example.json` | Varies        | Custom APIs             |
 
 ### Configuration
 
-Copy `config.igdb.json` (recommended) or `config.rawg.json` to `config.json` and fill in your API credentials via environment variables:
+Copy the config file for your preferred source and fill in API credentials via environment variables:
 
 - **IGDB**: Requires `IGDB_CLIENT_ID` and `IGDB_CLIENT_SECRET` from [Twitch Developer Console](https://dev.twitch.tv/console)
 - **RAWG**: Requires `RAWG_API_KEY` from [rawg.io/apidocs](https://rawg.io/apidocs)
+- **Steam**: No API key required for Store API; uses SteamSpy for discovery
 
 ### Data directory
 

@@ -23,6 +23,7 @@ import { normalizePlatform } from "./platform-normalizer.js";
 // Source adapters
 let rawgAdapter = null;
 let igdbAdapter = null;
+let steamAdapter = null;
 try {
   rawgAdapter = await import("./sources/rawg.js");
 } catch {
@@ -32,6 +33,11 @@ try {
   igdbAdapter = await import("./sources/igdb.js");
 } catch {
   // IGDB adapter not available - will use generic fetch
+}
+try {
+  steamAdapter = await import("./sources/steam.js");
+} catch {
+  // Steam adapter not available - will use generic fetch
 }
 
 // Initialize Supabase connection
@@ -517,6 +523,9 @@ async function fetchSourceRecords(source) {
   }
   if (source.type === "rawg" && rawgAdapter) {
     return rawgAdapter.fetchRawgSource(source);
+  }
+  if (source.type === "steam" && steamAdapter) {
+    return steamAdapter.fetchSteamSource(source);
   }
 
   // Generic URL-based fetch

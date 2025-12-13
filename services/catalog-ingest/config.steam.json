@@ -1,0 +1,16 @@
+{
+  "scheduleMinutes": 1440,
+  "fuzzyThreshold": 0.82,
+  "sources": [
+    {
+      "name": "Steam",
+      "type": "steam",
+      "enabled": true,
+      "limit": 2000,
+      "rateLimit": {
+        "requestsPerMinute": 10,
+        "retryAfterMs": 1500
+      }
+    }
+  ]
+}

@@ -44,18 +44,23 @@ _Last updated: December 2025_
 - **Pricing coverage gap**: eBay pricing covers ~120 retro games (from `games.csv`), but the catalog now has 32,937 games. Digital/modern games don't have eBay sold data. The UI now gracefully handles missing prices with platform-aware messaging and external lookup links (Steam, GOG, IsThereAnyDeal, eBay, PriceCharting, Deku Deals).
 - Supabase usage depends on `config.js` existing in production and the CDN client loading; deployments missing either silently fall back to the sample data.
 
-## Next Steps
+## Next Steps (Phase 5B: PC Gaming)
 
-1. ~~**IGDB API integration**~~ ✅ Complete - `services/catalog-ingest/sources/igdb.js` ready
-2. ~~**Era/Modern filters**~~ ✅ Complete - Era, Indie, VR filters in UI
-3. ~~**Platform Import**~~ ✅ Complete - Import from Steam, Backloggd, and 10+ services
-4. ~~**Run IGDB ingestion**~~ ✅ Complete - **74,458 games** from 13 platforms ingested (December 2025)
-5. ~~**Apply database migration**~~ ✅ Complete - Deduplicated games table, added unique constraint
-6. ~~**Supabase sync**~~ ✅ Complete - **32,937 games** synced across 58 platforms (1972-2026)
-7. ~~**Fix sync errors**~~ ✅ Complete - Transformer now handles empty release_year as null
-8. ~~**Automate catalog refresh**~~ ✅ Complete - `DOTENV_PRIVATE_KEY` configured, `.github/workflows/catalog-refresh.yml` runs daily at 3 AM UTC
-9. ~~**Graceful missing price UX**~~ ✅ Complete - Platform-aware messaging with external lookup links for digital, retro, and modern games
-10. ~~**Virtualization at scale**~~ ✅ Validated - Performance tests confirm <500ms load for 1000+ games with only 24 cards rendered
-11. **Steam API integration** - Add PC game pricing from Steam/GOG/IsThereAnyDeal APIs (Phase 5B)
+1. ~~**Steam adapter**~~ ✅ Complete - `services/catalog-ingest/sources/steam.js` ready
+2. **Run Steam ingestion** - Execute `npm run ingest:catalog` with `config.steam.json`
+3. **GOG integration** - Add GOG API adapter for DRM-free PC games
+4. **Steam price sync** - Integrate Steam pricing into the pricing pipeline
+5. **IsThereAnyDeal API** - Add price comparison across PC storefronts
+6. **PC platform badges** - Update UI to show Steam/GOG/Epic icons on PC games
 
-**📖 See [UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md) for the complete expansion roadmap (Phase 5A complete, Phase 5B next).**
+### Completed (Phase 5A)
+
+- ✅ IGDB API integration (74,458 games ingested)
+- ✅ Era/Modern filters in UI
+- ✅ Platform Import (Steam, Backloggd, 10+ services)
+- ✅ Supabase sync (32,937 games across 58 platforms)
+- ✅ Automated daily catalog refresh
+- ✅ Graceful missing price UX
+- ✅ Virtualization at scale (<500ms for 1000+ games)
+
+**📖 See [UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md) for the complete expansion roadmap (Phase 5A complete, Phase 5B in progress).**

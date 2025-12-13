@@ -139,13 +139,17 @@ flowchart TB
 
 **Exit Criteria**: ~~25,000+ modern games in catalog with working filters~~ **EXCEEDED: 74,458 games ingested, 32,937 synced**
 
-### Phase 5B: PC Gaming (Q1-Q2 2025)
+### Phase 5B: PC Gaming (Q1-Q2 2025) 🚧 IN PROGRESS
 
 **Goal**: Comprehensive PC game coverage
 
+**Status**: Steam adapter complete, ready for ingestion
+
 **Tasks**:
 
-- [ ] Steam API integration for catalog + pricing
+- [x] Steam API adapter (`services/catalog-ingest/sources/steam.js`)
+- [x] Steam config file (`services/catalog-ingest/config.steam.json`)
+- [ ] Run Steam ingestion to populate catalog
 - [ ] GOG database integration
 - [ ] Epic Games store notable releases
 - [ ] PC-specific metadata (system requirements, launcher)
@@ -188,7 +192,8 @@ flowchart TB
 
 **Tasks**:
 
-- [ ] GitHub Actions scheduled jobs for all sources
+- [x] GitHub Actions scheduled jobs for IGDB/RAWG
+- [ ] Add Steam to scheduled refresh workflow
 - [ ] Webhook receivers for real-time IGDB updates
 - [ ] Data quality monitoring dashboard
 - [ ] Automated anomaly detection (sudden drops, duplicates)
