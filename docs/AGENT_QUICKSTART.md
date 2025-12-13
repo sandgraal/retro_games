@@ -11,7 +11,7 @@ _Last updated: December 2025_
 | Application | TypeScript + Vite SPA with custom signals; Supabase backend with local fallback |
 | Language    | TypeScript (strict)                                                             |
 | Build       | Vite 7                                                                          |
-| Tests       | **454 Vitest unit + 16 Playwright e2e = 470 total**                             |
+| Tests       | 454 Vitest unit + 16 Playwright e2e = **470 total**                             |
 | Data        | Supabase (**32,937 games**) + `data/sample-games.json` fallback (24 games)      |
 | Phase       | **Phase 5B In Progress** - PC Gaming adapters complete, awaiting ingestion      |
 
@@ -113,29 +113,9 @@ services/
 
 ## Tests
 
-| Test File                             | Tests | Notes                                  |
-| ------------------------------------- | ----- | -------------------------------------- |
-| `tests/core.test.ts`                  | 26    | Signals, keys, types                   |
-| `tests/state.test.ts`                 | 30    | Store, filters, sorting                |
-| `tests/features.test.ts`              | 26    | Export/share/backup                    |
-| `tests/format.test.ts`                | 36    | Formatting helpers                     |
-| `tests/components.test.ts`            | 15    | UI component utilities                 |
-| `tests/modal.test.ts`                 | 7     | Modal component                        |
-| `tests/suggestions.test.ts`           | 9     | Community suggestions                  |
-| `tests/pricing-provider.test.ts`      | 9     | Pricing data provider                  |
-| `tests/catalog-ingest.test.ts`        | 60    | Ingestion, submissions, moderation API |
-| `tests/data-loader.test.ts`           | 4     | Data loader with Supabase fallback     |
-| `tests/fetch-covers.test.js`          | 48    | Cover fetching script                  |
-| `tests/audit-missing-covers.test.js`  | 26    | Cover audit script                     |
-| `tests/archive-media.test.js`         | 14    | Media archival script                  |
-| `tests/build-css.test.js`             | 12    | CSS bundler script                     |
-| `tests/ebay-account-deletion.test.ts` | 24    | eBay account deletion compliance       |
-| `tests/platform-import.test.ts`       | 9     | Platform import functionality          |
-| `tests/steam-adapter.test.ts`         | 20    | Steam Web API adapter                  |
-| `tests/gog-adapter.test.ts`           | 24    | GOG.com API adapter                    |
-| `tests/e2e/*.spec.js`                 | 16    | Playwright smoke/filters/aria/perf     |
-
-**Total: 434 unit tests + 16 E2E tests = 450 tests**
+- **454 unit tests** (Vitest) + **16 E2E tests** (Playwright) = **470 total**
+- Run `npm test` for unit tests, `npm run test:e2e` for E2E
+- Tests cover: core signals, state management, exports, UI components, catalog ingestion, pricing, and platform imports
 
 ## What To Work On
 

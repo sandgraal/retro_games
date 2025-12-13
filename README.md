@@ -63,22 +63,23 @@ npm install
 npm run dev           # Vite dev server on http://localhost:3000
 npm run build         # TypeScript check + Vite build
 npm run lint          # ESLint over src + scripts
-npm test              # Vitest (454 unit tests)
-npm run test:e2e      # Playwright (16 e2e tests); run `npx playwright install --with-deps` once
+npm test              # Vitest unit tests (454)
+npm run test:e2e      # Playwright e2e tests (16); run `npx playwright install --with-deps` once
 npm run build:config  # Generate config.js from .env
 ```
 
 ## Project layout
 
-- `src/core` – signals, types, keys, and experimental helpers (events/router/storage/worker).
+- `src/core` – signals, types, keys, storage wrapper, and platform normalization.
 - `src/state` – signal-based store, computed filters, persistence helpers.
 - `src/data` – Supabase client wrapper and loader with sample fallback.
 - `src/ui` – component primitives, game grid, cards, dashboard, filters, modal, settings modal.
-- `src/features` – export/share/backup logic.
+- `src/features` – export/share/backup logic, platform import.
 - `style/` – tokens, base styles, utilities, and component CSS; `style.css` composes them.
 - `data/` – sample games and price history used when Supabase is unavailable.
 - `public/` – service worker and manifest.
 - `supabase/functions/` – Supabase Edge Functions for server-side logic.
+- `archive/experimental/` – shelved modules (event sourcing, router, IndexedDB storage, worker).
 
 ## eBay Integration
 
