@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       source:
-        description: "Data source to refresh (igdb, rawg, all)"
+        description: "Data source to refresh (igdb, steam, gog, all)"
         required: false
         default: "all"
       limit:
@@ -28,7 +28,7 @@ env:
 jobs:
   refresh-catalog:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: read
       issues: write
@@ -54,7 +54,7 @@ jobs:
           echo "Limit: $CATALOG_LIMIT"
           echo "Dry run: $CATALOG_DRY_RUN"
 
-          # Run catalog ingest with dotenvx decryption
+          # Run unified catalog ingest (IGDB, Steam, GOG)
           npx dotenvx run -- npm run ingest:catalog 2>&1 | tee ingest-output.log
 
           # Extract stats for summary
