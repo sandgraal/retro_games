@@ -54,7 +54,7 @@ _Last updated: December 2025_
 5. ~~**Apply database migration**~~ ✅ Complete - Deduplicated games table, added unique constraint
 6. ~~**Supabase sync**~~ ✅ Complete - **32,937 games** synced across 58 platforms (1972-2026)
 7. ~~**Fix sync errors**~~ ✅ Complete - Transformer now handles empty release_year as null
-8. **Automate catalog refresh** - Set `DOTENV_PRIVATE_KEY` repository secret in GitHub to enable `.github/workflows/catalog-refresh.yml` (credentials are in encrypted `.env`)
+8. ~~**Automate catalog refresh**~~ ✅ Complete - `DOTENV_PRIVATE_KEY` configured, `.github/workflows/catalog-refresh.yml` runs daily at 3 AM UTC
 9. Replace the local price snapshot with a real source (Supabase table or API) or expose a clear toggle when prices are unavailable.
 
 **📖 See [UNIVERSAL_EXPANSION.md](./UNIVERSAL_EXPANSION.md) for the complete expansion roadmap.**
