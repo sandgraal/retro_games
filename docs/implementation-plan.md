@@ -59,7 +59,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 
 **Final Metrics**:
 
-- **29 TypeScript modules** extracted from 5,940-line `app-legacy.js`
+- **34 TypeScript modules** extracted from 5,940-line `app-legacy.js`
 - **10,000+ total lines** across all modules
 - **470 tests passing** (454 unit + 16 e2e)
 - **Largest files**: `ui/modal.ts` (1,345 lines), `state/store.ts` (971 lines)

@@ -18,7 +18,7 @@ This project maintains comprehensive documentation for developers, contributors,
 
 - **[docs/architecture.md](./architecture.md)** ⭐ **START HERE** - Complete architecture documentation
   - File structure and module organization
-  - **29 ES6 modules** with detailed exports
+  - **34 TypeScript modules** with detailed exports
   - Design system (colors, typography, components)
   - Data flow and state management
   - Performance considerations
