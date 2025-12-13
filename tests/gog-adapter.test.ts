@@ -20,8 +20,7 @@ const { fetchGogSource, fetchGogGameDetails, searchGog } = gogModule;
 // Access internal helpers via default export
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const gogDefault = gogModule.default as any;
-const fetchGogSales = gogDefault.fetchGogSales;
-const GENRE_MAP = gogDefault.GENRE_MAP;
+const { fetchGogSales, GENRE_MAP } = gogDefault;
 
 // Sample GOG catalog product
 const sampleGogProduct = {

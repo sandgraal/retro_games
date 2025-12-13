@@ -11,9 +11,9 @@ _Last updated: December 2025_
 | Application | TypeScript + Vite SPA with custom signals; Supabase backend with local fallback |
 | Language    | TypeScript (strict)                                                             |
 | Build       | Vite 7                                                                          |
-| Tests       | 390 Vitest unit tests + 16 Playwright e2e tests = **406 total**                 |
+| Tests       | 434 Vitest unit tests + 16 Playwright e2e tests = **450 total**                 |
 | Data        | Supabase (**32,937 games**) + `data/sample-games.json` fallback (24 games)      |
-| Phase       | **Phase 5A Complete** - Universal catalog live, automation running              |
+| Phase       | **Phase 5B In Progress** - PC Gaming adapters complete, awaiting ingestion      |
 
 ## Required Reading (Priority Order)
 
@@ -131,9 +131,11 @@ services/
 | `tests/build-css.test.js`             | 12    | CSS bundler script                     |
 | `tests/ebay-account-deletion.test.ts` | 24    | eBay account deletion compliance       |
 | `tests/platform-import.test.ts`       | 9     | Platform import functionality          |
+| `tests/steam-adapter.test.ts`         | 20    | Steam Web API adapter                  |
+| `tests/gog-adapter.test.ts`           | 24    | GOG.com API adapter                    |
 | `tests/e2e/*.spec.js`                 | 16    | Playwright smoke/filters/aria/perf     |
 
-**Total: 390 unit tests + 16 E2E tests = 406 tests**
+**Total: 434 unit tests + 16 E2E tests = 450 tests**
 
 ## What To Work On
 

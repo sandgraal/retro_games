@@ -27,8 +27,7 @@ const {
 // Access internal helpers via default export
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const steamDefault = steamModule.default as any;
-const fetchSteamSpyList = steamDefault.fetchSteamSpyList;
-const GENRE_MAP = steamDefault.GENRE_MAP;
+const { fetchSteamSpyList, GENRE_MAP } = steamDefault;
 
 // Sample Steam Store API response
 const sampleSteamGame = {
