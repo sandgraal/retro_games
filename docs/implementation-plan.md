@@ -39,7 +39,7 @@ Work is organized into six build phases plus operational cadences. Each phase is
 
 | Phase                           | Status      | Progress                                         |
 | ------------------------------- | ----------- | ------------------------------------------------ |
-| Phase 0: Architecture           | ✅ COMPLETE | TypeScript, Vite, signals, 402 tests             |
+| Phase 0: Architecture           | ✅ COMPLETE | TypeScript, Vite, signals, 406 tests             |
 | Phase 1: Foundation             | ✅ COMPLETE | CI/CD, secrets, migrations                       |
 | Phase 2: UX & Features          | ✅ COMPLETE | Virtualization, pricing, media                   |
 | Phase 3: SEO & Web Vitals       | ✅ COMPLETE | JSON-LD, sitemap, Lighthouse CI                  |

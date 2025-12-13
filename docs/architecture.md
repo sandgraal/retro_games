@@ -89,7 +89,14 @@ UI components subscribe via `effect` and rely on the store's computed values:
 - Service worker and manifest live in `public/`.
 - Experimental modules (event sourcing, router, IndexedDB storage, web worker) live in `archive/experimental/`.
 
-## Gaps
+## Production Status
 
-- Live pricing is not implemented; only the local snapshot is read.
-- Sample data is minimal; large-data behavior depends on Supabase providing volume.
+- **32,937 games** synced to Supabase across 58 platforms (1972-2026)
+- **Pricing pipeline** active: Supabase → live API → bundled snapshot fallback
+- **Daily catalog refresh** via GitHub Actions (`catalog-refresh.yml`)
+- **Price refresh** runs twice daily (`price-refresh.yml`)
+
+## Known Gaps
+
+- **PC pricing coverage**: Steam/GOG integration planned (Phase 5B) for digital game pricing
+- **Offline mode**: Service worker provides basic caching; full offline support for large catalogs pending
