@@ -197,9 +197,7 @@ describe("GOG Adapter", () => {
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result = (await fetchGogGameDetails(
-        "the-witcher-3-wild-hunt"
-      )) as any;
+      const result = (await fetchGogGameDetails("the-witcher-3-wild-hunt")) as any;
 
       expect(result).not.toBeNull();
       expect(result.title).toBe("The Witcher 3: Wild Hunt");

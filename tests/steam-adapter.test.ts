@@ -14,15 +14,9 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 // Import after mocking - use default export for non-exported functions
-const steamModule = await import(
-  "../services/catalog-ingest/sources/steam.js"
-);
-const {
-  fetchSteamSource,
-  fetchSteamGameDetails,
-  searchSteam,
-  fetchFeaturedGames,
-} = steamModule;
+const steamModule = await import("../services/catalog-ingest/sources/steam.js");
+const { fetchSteamSource, fetchSteamGameDetails, searchSteam, fetchFeaturedGames } =
+  steamModule;
 
 // Access internal helpers via default export
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,10 +31,8 @@ const sampleSteamGame = {
   is_free: true,
   detailed_description: "Dota 2 is a competitive game of action and strategy.",
   short_description: "Every day, millions of players worldwide enter battle.",
-  header_image:
-    "https://cdn.akamai.steamstatic.com/steam/apps/570/header.jpg",
-  capsule_image:
-    "https://cdn.akamai.steamstatic.com/steam/apps/570/capsule_sm_120.jpg",
+  header_image: "https://cdn.akamai.steamstatic.com/steam/apps/570/header.jpg",
+  capsule_image: "https://cdn.akamai.steamstatic.com/steam/apps/570/capsule_sm_120.jpg",
   website: "http://www.dota2.com",
   developers: ["Valve"],
   publishers: ["Valve"],
@@ -76,8 +68,7 @@ const samplePaidGame = {
   type: "game",
   is_free: false,
   short_description: "Arthur Morgan and the Van der Linde gang...",
-  header_image:
-    "https://cdn.akamai.steamstatic.com/steam/apps/1174180/header.jpg",
+  header_image: "https://cdn.akamai.steamstatic.com/steam/apps/1174180/header.jpg",
   developers: ["Rockstar Games"],
   publishers: ["Rockstar Games"],
   price_overview: {
