@@ -81,6 +81,7 @@ declare global {
   interface Window {
     __SUPABASE_CONFIG__?: SupabaseConfig;
     __SANDGRAAL_FORCE_SAMPLE__?: boolean;
+    __SANDGRAAL_SCALE_TEST__?: boolean;
     supabase?: {
       createClient: (url: string, key: string) => SupabaseClient;
     };
@@ -118,6 +119,11 @@ export async function waitForSupabaseReady(
   timeoutMs = SUPABASE_READY_TIMEOUT_MS
 ): Promise<boolean> {
   if (typeof window === "undefined") return false;
+
+  // Skip Supabase bootstrap when running in forced sample or scale test modes
+  if (window.__SANDGRAAL_FORCE_SAMPLE__ || window.__SANDGRAAL_SCALE_TEST__) {
+    return false;
+  }
 
   if (isAvailable()) return true;
 
