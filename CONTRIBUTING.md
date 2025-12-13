@@ -32,15 +32,15 @@ Thanks for keeping the Dragon's Hoard Atlas sharp. This document captures the es
 
 ## 3. Coding standards
 
-| Area                     | Expectations                                                                                                                                                                                                        |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Formatting & Linting** | Run `npm run format` and `npm run lint` before every push. Never commit `eslint-disable` comments without explaining why.                                                                                           |
-| **JavaScript**           | Prefer pure helpers, keep side effects isolated, and document new functions with JSDoc so Vitest + TypeScript tooling can infer types. Use existing constants (`COL_*`, status enums) instead of retyping literals. |
-| **CSS**                  | Reuse CSS custom properties (`--color-*`, `--surface-*`) and component classes; avoid inline styles. Add concise comments only for complex layout tricks.                                                           |
-| **Accessibility**        | All interactive elements need keyboard focus styles and `aria-*` labels when semantics aren’t obvious (e.g., carousels, typeahead). Verify using Playwright tests or manual Tab-through.                            |
-| **State & Persistence**  | Keep `localStorage` keys backwards compatible. When you change stored shapes, write a migration helper and add a unit test covering both old + new payloads.                                                        |
-| **Security & Secrets**   | Never hardcode Supabase keys or share codes in tests. Secrets live in `.env` and flow through `npm run build:config`. CI already runs `gitleaks`; keep it green.                                                    |
-| **Performance**          | Favor lazy rendering paths (virtualized lists, debounced handlers). When adding network calls, debounce/throttle and log via `console.debug` rather than spamming `console.log`.                                    |
+| Area                     | Expectations                                                                                                                                                                             |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Formatting & Linting** | Run `npm run format` and `npm run lint` before every push. Never commit `eslint-disable` comments without explaining why.                                                                |
+| **TypeScript**           | Prefer pure helpers, keep side effects isolated. Use strict typing with interfaces from `src/core/types.ts`. Avoid `any` types.                                                          |
+| **CSS**                  | Reuse CSS custom properties (`--color-*`, `--surface-*`) and component classes; avoid inline styles. Add concise comments only for complex layout tricks.                                |
+| **Accessibility**        | All interactive elements need keyboard focus styles and `aria-*` labels when semantics aren’t obvious (e.g., carousels, typeahead). Verify using Playwright tests or manual Tab-through. |
+| **State & Persistence**  | Keep `localStorage` keys backwards compatible. When you change stored shapes, write a migration helper and add a unit test covering both old + new payloads.                             |
+| **Security & Secrets**   | Never hardcode Supabase keys or share codes in tests. Secrets live in `.env` and flow through `npm run build:config`. CI already runs `gitleaks`; keep it green.                         |
+| **Performance**          | Favor lazy rendering paths (virtualized lists, debounced handlers). When adding network calls, debounce/throttle and log via `console.debug` rather than spamming `console.log`.         |
 
 ## 4. Test workflow
 
