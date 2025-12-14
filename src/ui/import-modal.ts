@@ -13,6 +13,7 @@ import {
   autoDetectAndParse,
 } from "../features/platform-import";
 import { setGameStatus, setGameNotes } from "../state/store";
+import { escapeHtml } from "./components";
 import type { CollectionStatus } from "../core/types";
 
 // Modal state
@@ -304,7 +305,7 @@ function handleFileSelect(file: File, startBtn: HTMLButtonElement): void {
     if (dropzone) {
       dropzone.innerHTML = `
         <span class="dropzone-icon">✅</span>
-        <span class="dropzone-text">${file.name}</span>
+        <span class="dropzone-text">${escapeHtml(file.name)}</span>
         <span class="dropzone-subtext">${formatFileSize(file.size)}</span>
       `;
     }
@@ -380,7 +381,7 @@ function renderReviewStep(container: HTMLElement): void {
           ? `
         <div class="import-warnings">
           <strong>⚠️ Warnings:</strong>
-          <ul>${importResult.errors.map((e) => `<li>${e}</li>`).join("")}</ul>
+          <ul>${importResult.errors.map((e) => `<li>${escapeHtml(e)}</li>`).join("")}</ul>
         </div>
       `
           : ""
@@ -518,13 +519,13 @@ function renderMatchRow(match: ImportMatch, index: number): string {
         />
         <div class="import-match-info">
           <div class="import-match-source">
-            <span class="source-name">${match.imported.name}</span>
-            <span class="source-platform">${match.imported.platform}</span>
+            <span class="source-name">${escapeHtml(match.imported.name)}</span>
+            <span class="source-platform">${escapeHtml(match.imported.platform)}</span>
           </div>
           <div class="import-match-arrow">→</div>
           <div class="import-match-catalog">
-            <span class="catalog-name">${match.matched?.game_name}</span>
-            <span class="catalog-platform">${match.matched?.platform}</span>
+            <span class="catalog-name">${escapeHtml(match.matched?.game_name || "")}</span>
+            <span class="catalog-platform">${escapeHtml(match.matched?.platform || "")}</span>
           </div>
           <span class="import-confidence confidence-${confidenceClass}">
             ${Math.round(match.confidence * 100)}%
@@ -539,7 +540,7 @@ function renderMatchRow(match: ImportMatch, index: number): string {
           ${match.alternativeMatches
             .map(
               (alt) =>
-                `<option value="${alt.key}">${alt.game_name} (${alt.platform})</option>`
+                `<option value="${escapeHtml(alt.key)}">${escapeHtml(alt.game_name)} (${escapeHtml(alt.platform)})</option>`
             )
             .join("")}
         </select>
@@ -555,8 +556,8 @@ function renderUnmatchedRow(match: ImportMatch): string {
     <div class="import-match-row unmatched">
       <div class="import-match-info">
         <div class="import-match-source">
-          <span class="source-name">${match.imported.name}</span>
-          <span class="source-platform">${match.imported.platform}</span>
+          <span class="source-name">${escapeHtml(match.imported.name)}</span>
+          <span class="source-platform">${escapeHtml(match.imported.platform)}</span>
         </div>
         <span class="import-no-match">No match found</span>
       </div>
