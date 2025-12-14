@@ -13,7 +13,7 @@
 ## dependency_graph
 
 - **Runtime:** Frameworkless TypeScript modules orchestrated by Vite, custom signals (`src/core/signals.ts`), and modular CSS under `style/` + `style.css`.
-- **Data/Services:** Supabase `games_consolidated` view when configured, falling back to `data/sample-games.json`; price history from `data/sample-price-history.json`; persistence in `localStorage`.
+- **Data/Services:** Supabase `games_with_variants` view when configured, falling back to `data/sample-games.json`; price history from `data/sample-price-history.json`; persistence in `localStorage`.
 - **Moderation API:** `services/catalog-ingest/` server exposes submission + moderation endpoints under `/api/v1` when run with `--serve` (writes to suggestions/audit logs).
 - **Tooling:** Vite 7, TypeScript 5, ESLint/Prettier, Vitest, Playwright, Lighthouse CI, csv-parse/dotenv scripts for data tasks.
 

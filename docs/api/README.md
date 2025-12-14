@@ -57,7 +57,7 @@ const {
 ```sql
 -- Via Supabase client
 const { data, error } = await supabase
-  .from('games_consolidated')
+  .from('games_with_variants')
   .select('*')
   .limit(50);
 ```

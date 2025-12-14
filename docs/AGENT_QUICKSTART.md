@@ -105,7 +105,7 @@ services/
 
 | Table                 | Purpose                       | RLS                         |
 | --------------------- | ----------------------------- | --------------------------- |
-| `games_consolidated`  | Core game view (all metadata) | Public read                 |
+| `games_with_variants` | Core game view (all metadata) | Public read                 |
 | `catalog_submissions` | Community queue               | User sees own, mods see all |
 | `audit_log`           | Moderation history            | Mods only                   |
 | `game_external_ids`   | IGDB/RAWG links               | Public read                 |

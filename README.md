@@ -11,7 +11,7 @@ A TypeScript + Vite app for tracking **ALL video games**—retro classics, moder
 - Filters: platform + genre checkboxes, search, and sort (popularity, name, rating, year, value, platform).
 - Collection status (owned/wishlist/backlog/trade) and notes persisted to `localStorage`; the settings modal handles theme/view/backup/restore/clear actions.
 - Export: CSV, JSON backup, and share codes that can be imported via the URL `?share=...`.
-- Data sources: Supabase `games_consolidated` view when `config.js` provides credentials; otherwise `data/sample-games.json` (24 games). Prices currently come from `data/sample-price-history.json` (cents) and feed the dashboard/modal value displays.
+- Data sources: Supabase `games_with_variants` view when `config.js` provides credentials; otherwise `data/sample-games.json` (24 games). Prices currently come from `data/sample-price-history.json` (cents) and feed the dashboard/modal value displays.
 - Offline basics via `public/sw.js` + `public/manifest.json`.
 
 ## Data sources & configuration
@@ -38,7 +38,7 @@ flowchart LR
   end
   A --> C[Catalog ingest worker]\n(normalize + snapshots)
   B --> D[Price refresher]\n(eBay API -> Supabase)
-  C --> E[Supabase catalog views]\n(games_consolidated)
+  C --> E[Supabase catalog views]\n(games_with_variants)
   D --> F[Supabase price views]\n(game_price_latest)
   E --> G[Frontend loader]
   F --> G
