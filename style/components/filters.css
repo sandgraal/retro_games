@@ -425,6 +425,7 @@
 .filter-updating {
   opacity: 0.6;
   pointer-events: none;
+  animation: filterPulse 1s ease-in-out infinite;
 }
 
 @keyframes filterPulse {
@@ -435,10 +436,6 @@
   50% {
     opacity: 0.6;
   }
-}
-
-.filter-updating {
-  animation: filterPulse 1s ease-in-out infinite;
 }
 
 /* Special Filter Toggles */
