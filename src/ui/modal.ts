@@ -1212,10 +1212,18 @@ function setupSuggestEditForm(container: HTMLElement, game: GameWithKey): void {
   });
 }
 
+// Store reference to current focus trap handler for cleanup
+let currentFocusTrapHandler: ((e: KeyboardEvent) => void) | null = null;
+
 /**
  * Trap focus within modal
  */
 function trapFocus(container: HTMLElement): void {
+  // Remove previous handler if exists
+  if (currentFocusTrapHandler) {
+    container.removeEventListener("keydown", currentFocusTrapHandler);
+  }
+
   const focusable = container.querySelectorAll<HTMLElement>(
     'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
   );
@@ -1227,7 +1235,7 @@ function trapFocus(container: HTMLElement): void {
 
   first.focus();
 
-  container.addEventListener("keydown", (e) => {
+  currentFocusTrapHandler = (e: KeyboardEvent) => {
     if (e.key !== "Tab") return;
 
     if (e.shiftKey && document.activeElement === first) {
@@ -1237,7 +1245,9 @@ function trapFocus(container: HTMLElement): void {
       e.preventDefault();
       first.focus();
     }
-  });
+  };
+
+  container.addEventListener("keydown", currentFocusTrapHandler);
 }
 
 /**

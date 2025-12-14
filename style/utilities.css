@@ -352,3 +352,43 @@
 .z-50 {
   z-index: 50;
 }
+
+/* Print Styles */
+@media print {
+  /* Hide non-essential UI elements */
+  .app-header,
+  .mobile-nav,
+  .filters-sidebar,
+  .scroll-to-top,
+  .curated-sections,
+  .load-more-btn,
+  #settingsModal,
+  #gameModalBackdrop {
+    display: none !important;
+  }
+
+  /* Reset backgrounds for printing */
+  body {
+    background: white;
+    color: black;
+  }
+
+  /* Make cards print-friendly */
+  .game-card {
+    break-inside: avoid;
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: none;
+  }
+
+  .game-card-info {
+    color: black;
+  }
+
+  /* Ensure grid prints well */
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+}

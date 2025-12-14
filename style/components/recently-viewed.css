@@ -149,6 +149,20 @@
   overflow-x: auto;
   padding-bottom: var(--space-2);
   scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.recently-viewed--horizontal .recently-viewed__list::-webkit-scrollbar {
+  height: 4px;
+}
+
+.recently-viewed--horizontal .recently-viewed__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.recently-viewed--horizontal .recently-viewed__list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }
 
 .recently-viewed--horizontal .recently-viewed__item {
