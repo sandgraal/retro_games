@@ -427,8 +427,7 @@ function handleFilterChange(e: Event): void {
     toggleVrFilter();
   } else if (filterType === "deals") {
     toggleDealsOnly();
-  } else if (filterType === "status" || target.closest("#statusFilters")) {
-    // Status filters may not have data-filter attribute in HTML
+  } else if (filterType === "status") {
     if (isValidStatus(value)) {
       toggleStatusFilter(value);
     }
