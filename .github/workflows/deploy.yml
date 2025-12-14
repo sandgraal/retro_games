@@ -1,82 +1,82 @@
 name: Deploy to GitHub Pages
 
 on:
-    workflow_dispatch:
-    # Run after CI workflow completes successfully
-    workflow_run:
-        workflows: ["CI"]
-        types:
-            - completed
-        branches:
-            - main
+  workflow_dispatch:
+  # Run after CI workflow completes successfully
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
-    contents: read
-    pages: write
-    id-token: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-    group: "pages"
-    cancel-in-progress: false
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        timeout-minutes: 15
-        # Only run if triggered manually, by push, or if CI workflow succeeded
-        if: >
-            github.event_name == 'push' ||
-            github.event_name == 'workflow_dispatch' ||
-            (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v6
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Only run if triggered manually, by push, or if CI workflow succeeded
+    if: >
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v6
-              with:
-                  node-version: "20.19"
-                  cache: "npm"
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20.19"
+          cache: "npm"
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Generate config.js
-              run: npm run build:config
-              env:
-                  DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
+      - name: Generate config.js
+        run: npm run build:config
+        env:
+          DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
 
-            - name: Build
-              run: npm run build
+      - name: Build
+        run: npm run build
 
-            - name: Copy data folder to dist
-              run: cp -r data dist/data
+      - name: Copy data folder to dist
+        run: cp -r data dist/data
 
-            - name: Copy guides folder to dist
-              run: mkdir -p dist/docs && cp -r docs/guides dist/docs/guides
+      - name: Copy guides folder to dist
+        run: mkdir -p dist/docs && cp -r docs/guides dist/docs/guides
 
-            - name: Copy covers folder to dist
-              run: |
-                  if [ -d "covers" ]; then
-                    cp -r covers dist/covers
-                  fi
+      - name: Copy covers folder to dist
+        run: |
+          if [ -d "covers" ]; then
+            cp -r covers dist/covers
+          fi
 
-            - name: Setup Pages
-              uses: actions/configure-pages@v5
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
-            - name: Upload artifact
-              uses: actions/upload-pages-artifact@v4
-              with:
-                  path: "./dist"
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: "./dist"
 
-    deploy:
-        environment:
-            name: github-pages
-            url: ${{ steps.deployment.outputs.page_url }}
-        runs-on: ubuntu-latest
-        timeout-minutes: 10
-        needs: build
-        steps:
-            - name: Deploy to GitHub Pages
-              id: deployment
-              uses: actions/deploy-pages@v4
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
