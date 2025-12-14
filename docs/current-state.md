@@ -9,7 +9,7 @@ _Last updated: December 2025_
 - **TypeScript SPA** built with **Vite 7**; no framework.
 - **Custom signals** drive state and computed views (`src/core/signals.ts`).
 - **State store** in `src/state/store.ts` enriches games with keys, persists collection/notes/preferences to `localStorage`, and exposes `filteredGames` + `collectionStats`.
-- **Data layer** in `src/data/loader.ts` tries Supabase (`games_consolidated` view) when `config.js` + the Supabase CDN client are present, otherwise falls back to `data/sample-games.json` (24 games).
+- **Data layer** in `src/data/loader.ts` tries Supabase (`games_with_variants` view) when `public/config.js` + the Supabase CDN client are present, otherwise falls back to `data/sample-games.json` (24 games). Each row represents a game+platform variant for collection tracking.
 - **UI** lives in `src/ui/` (grid with virtualization at ≥100 cards, modal, filters, dashboard, settings modal, moderation panel, guides).
 - **Exports** handled by `src/features/export.ts` (CSV, backup, share codes).
 - **Pricing** reads from live API endpoints first (`/api/v1/prices/latest`), falling back to `data/sample-price-history.json` (cents).

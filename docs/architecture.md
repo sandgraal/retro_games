@@ -8,14 +8,14 @@ Dragon's Hoard Atlas is a small, framework-free **TypeScript** single-page app b
 
 ## Tech Stack
 
-| Layer    | Details                                                                                                    |
-| -------- | ---------------------------------------------------------------------------------------------------------- |
-| Language | TypeScript (strict)                                                                                        |
-| Build    | Vite 7 (base `/retro-games/`, dev server on 3000)                                                          |
-| Runtime  | Vanilla JS + custom signals                                                                                |
-| Data     | Supabase (`games_consolidated`) or `data/sample-games.json`; pricing from `data/sample-price-history.json` |
-| Storage  | `localStorage` for collection, notes, preferences, filters                                                 |
-| Testing  | Vitest (unit) + Playwright (e2e)                                                                           |
+| Layer    | Details                                                                                                     |
+| -------- | ----------------------------------------------------------------------------------------------------------- |
+| Language | TypeScript (strict)                                                                                         |
+| Build    | Vite 7 (base `/retro-games/`, dev server on 3000)                                                           |
+| Runtime  | Vanilla JS + custom signals                                                                                 |
+| Data     | Supabase (`games_with_variants`) or `data/sample-games.json`; pricing from `data/sample-price-history.json` |
+| Storage  | `localStorage` for collection, notes, preferences, filters                                                  |
+| Testing  | Vitest (unit) + Playwright (e2e)                                                                            |
 
 ## Source Structure
 
@@ -31,7 +31,7 @@ src/
 ├── state/           # centralized state
 │   └── store.ts            # signals, computed filteredGames/collectionStats, persistence
 ├── data/            # data access
-│   ├── supabase.ts         # waits for CDN client + config.js, queries games_consolidated
+│   ├── supabase.ts         # waits for CDN client + public/config.js, queries games_with_variants
 │   ├── loader.ts           # chooses Supabase or sample JSON; loads price snapshot
 │   ├── pricing-api.ts      # pricing data API client
 │   ├── pricing-provider.ts # price data loading with fallback
@@ -81,7 +81,7 @@ UI components subscribe via `effect` and rely on the store's computed values:
 ## Data Flow
 
 1. `main.ts` registers the service worker, loads persisted state, mounts components, then fetches games and price data in parallel.
-2. `loader.ts` waits up to 4s for `window.supabase` and `window.__SUPABASE_CONFIG__` (loaded from `config.js`) before falling back to `data/sample-games.json`. `?sample=1` or `__SANDGRAAL_FORCE_SAMPLE__` forces the sample path.
+2. `loader.ts` waits up to 4s for `window.supabase` and `window.__SUPABASE_CONFIG__` (loaded from `public/config.js`) before falling back to `data/sample-games.json`. `?sample=1` or `__SANDGRAAL_FORCE_SAMPLE__` forces the sample path. Data comes from `games_with_variants` view which joins games + game_variants tables.
 3. Price data is read from `data/sample-price-history.json`; loose price is used for totals and value sorting.
 4. Collection updates (status/notes) persist to `localStorage` immediately and are reflected across dashboard, grid badges, and modal.
 5. Export/share/backup functions live in `features/export.ts` and are wired to header/settings actions.
@@ -92,7 +92,7 @@ UI components subscribe via `effect` and rely on the store's computed values:
 - **Submission moderation**: the ingest service exposes `POST /api/v1/games/:id/suggestions` and `POST /api/v1/games/new` for anonymous or authenticated contributors. Moderators access `GET /api/v1/moderation/suggestions` and approve/reject via `POST .../decision`, writing audit entries to `audit-log.json`. Approved patches flow into the next ingest run so the catalog stays immutable between snapshots.
 - **Pricing pipeline**: `scripts/update-ebay-prices.cjs` fetches median sold listings from the eBay Finding API (`EBAY_APP_ID`, `EBAY_GLOBAL_ID`), writes snapshots into Supabase (`game_price_snapshots` / `game_price_latest`) when a service role key is present, and refreshes the fallback `data/sample-price-history.json` for offline demos. The GitHub Actions job `price-refresh.yml` runs twice daily with configurable limits/filters.
 - **Platform import**: `src/features/platform-import.ts` supports importing game collections from Steam (via API), Xbox (TrueAchievements), PlayStation (PSNProfiles), Nintendo (Deku Deals), Backloggd, GG.deals, HowLongToBeat, Grouvee, ExoPhase, RAWG, and generic CSV. The `src/ui/import-modal.ts` provides a wizard UI with fuzzy matching and confidence scoring. Steam API calls are proxied through `supabase/functions/steam/` to avoid CORS.
-- **Frontend consumption**: `src/data/loader.ts` waits up to 4 seconds for Supabase (`config.js` + CDN client). When available, it pulls the consolidated view plus price snapshots; otherwise it serves `data/sample-games.json` and the cached price history. UI components render the catalog, surface moderation-driven notes/statuses, and feed price totals into the dashboard and modal displays.
+- **Frontend consumption**: `src/data/loader.ts` waits up to 4 seconds for Supabase (`public/config.js` + CDN client). When available, it pulls the `games_with_variants` view (each row = game+platform combo for collection tracking) plus price snapshots; otherwise it serves `data/sample-games.json` and the cached price history. UI components render the catalog, surface moderation-driven notes/statuses, and feed price totals into the dashboard and modal displays.
 
 ## Styling
 

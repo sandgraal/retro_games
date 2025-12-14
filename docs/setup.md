@@ -5,7 +5,7 @@ Use this guide to configure Supabase credentials without committing secrets.
 ## Prerequisites
 
 - Node.js 20.19+ and npm.
-- Supabase project URL and anon key with access to the `games_consolidated` view.
+- Supabase project URL and anon key with access to the `games_with_variants` view (or `game_variants` table with foreign key to `games`).
 
 ## 1. Install dependencies
 
@@ -24,7 +24,8 @@ Edit `.env` and provide:
 ```
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=anon-key
-# The client queries the `games_consolidated` view for game data.
+# The client queries the `games_with_variants` view for game data.
+# Each row = one game+platform combination for collection tracking.
 # Optional streaming/aggregate overrides
 # SUPABASE_STREAM_PAGE_SIZE=400
 # SUPABASE_RPC_GENRES=rpc_genre_counts
@@ -41,7 +42,7 @@ SUPABASE_ANON_KEY=anon-key
 npm run build:config
 ```
 
-The script reads `.env` and writes `config.js` (already gitignored). Re-run this command anytime you rotate Supabase credentials.
+The script reads `.env` and writes `public/config.js` (already gitignored). Re-run this command anytime you rotate Supabase credentials.
 
 ### Optional flags
 
@@ -94,7 +95,7 @@ Append `?sample=1` to the URL (or set `window.__SANDGRAAL_FORCE_SAMPLE__ = true`
 
 - **Missing .env** – The generator will exit with instructions if `.env` is not found. Copy `.env.example` and try again.
 - **Undefined variables** – Ensure both `SUPABASE_URL` and `SUPABASE_ANON_KEY` are present and do not contain quotes.
-- **Stale config** – Delete `config.js` and rerun `npm run build:config` after updating `.env`.
+- **Stale config** – Delete `public/config.js` and rerun `npm run build:config` after updating `.env`.
 
 ## Quality checks
 

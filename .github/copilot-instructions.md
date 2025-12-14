@@ -117,10 +117,11 @@ const key = generateGameKey("Chrono Trigger", "SNES");
 ### Data Flow
 
 1. `main.ts` calls `loadGames()` from `src/data/loader.ts`
-2. Loader attempts Supabase, falls back to sample JSON
-3. Games stored via `setGames()` which adds keys
-4. UI components subscribe to `filteredGames` computed
-5. Filter changes → computed recalculates → UI updates
+2. Loader attempts Supabase (`games_with_variants` view), falls back to sample JSON
+3. Each row = one game+platform combination (variant) for collection tracking
+4. Games stored via `setGames()` which adds keys
+5. UI components subscribe to `filteredGames` computed
+6. Filter changes → computed recalculates → UI updates
 
 ## File Responsibilities
 
