@@ -288,7 +288,7 @@ export function initSmartSearch(inputId: string): () => void {
   }, 150);
 
   const onInput = (e: Event) => {
-    const value = (e.target as HTMLInputElement).value;
+    const { value } = e.target as HTMLInputElement;
     handleInput(value);
   };
 
@@ -354,7 +354,7 @@ export function initSmartSearch(inputId: string): () => void {
       const suggestionEl = target.closest(".search-suggestion");
       const index = parseInt(suggestionEl?.getAttribute("data-index") ?? "-1", 10);
       if (index >= 0 && suggestions[index]?.type === "recent") {
-        const text = suggestions[index].text;
+        const { text } = suggestions[index];
         recentSearches = recentSearches.filter((s) => s !== text);
         try {
           safeStorage.setItem(STORAGE_KEY, JSON.stringify(recentSearches));

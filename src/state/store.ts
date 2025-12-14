@@ -104,7 +104,7 @@ function getPopularityScore(game: GameWithKey): number {
   const rating = parseFloat(String(game.rating));
   const metacriticScore =
     typeof game.metacritic_score === "number" ? game.metacritic_score / 10 : 0;
-  const baseScore = !isNaN(rating) ? rating : metacriticScore;
+  const baseScore = isNaN(rating) ? metacriticScore : rating;
 
   const category = (game.rating_cat ?? game.rating_category ?? "").toLowerCase();
   const categoryBoost = POPULARITY_CATEGORY_BOOSTS[category] ?? 0;

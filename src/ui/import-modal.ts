@@ -34,7 +34,7 @@ function getOrCreateModal(): HTMLElement {
     modal.className = "modal-overlay";
     modal.innerHTML = `
       <div class="modal-content import-modal-content">
-        <button class="modal-close" aria-label="Close import modal">&times;</button>
+        <button type="button" class="modal-close" aria-label="Close import modal">&times;</button>
         <div id="import-modal-body"></div>
       </div>
     `;
@@ -111,7 +111,7 @@ function renderSourceSelection(container: HTMLElement): void {
       <div class="import-source-grid">
         ${IMPORT_SOURCES.map(
           (source) => `
-          <button class="import-source-card" data-source="${source.id}">
+          <button type="button" class="import-source-card" data-source="${source.id}">
             <span class="import-source-icon">${getSourceIcon(source.id)}</span>
             <span class="import-source-name">${source.name}</span>
             <span class="import-source-desc">${source.description}</span>
@@ -142,7 +142,7 @@ function renderInputStep(container: HTMLElement): void {
 
   container.innerHTML = `
     <div class="import-step">
-      <button class="import-back-btn" id="back-to-select">← Back</button>
+      <button type="button" class="import-back-btn" id="back-to-select">← Back</button>
       <h2>${getSourceIcon(selectedSource)} Import from ${source.name}</h2>
       
       ${
@@ -199,8 +199,8 @@ function renderInputStep(container: HTMLElement): void {
       }
       
       <div class="import-actions">
-        <button class="btn btn-secondary" id="cancel-import">Cancel</button>
-        <button class="btn btn-primary" id="start-import" ${isSteam ? "" : "disabled"}>
+        <button type="button" class="btn btn-secondary" id="cancel-import">Cancel</button>
+        <button type="button" class="btn btn-primary" id="start-import" ${isSteam ? "" : "disabled"}>
           ${isSteam ? "Import Library" : "Process File"}
         </button>
       </div>
@@ -358,7 +358,7 @@ function renderReviewStep(container: HTMLElement): void {
 
   container.innerHTML = `
     <div class="import-step import-review">
-      <button class="import-back-btn" id="back-to-input">← Back</button>
+      <button type="button" class="import-back-btn" id="back-to-input">← Back</button>
       <h2>📋 Review Import</h2>
       
       <div class="import-stats">
@@ -388,8 +388,8 @@ function renderReviewStep(container: HTMLElement): void {
       }
       
       <div class="import-selection-controls">
-        <button class="btn btn-sm" id="select-all-matched">Select All Matched</button>
-        <button class="btn btn-sm" id="deselect-all">Deselect All</button>
+        <button type="button" class="btn btn-sm" id="select-all-matched">Select All Matched</button>
+        <button type="button" class="btn btn-sm" id="deselect-all">Deselect All</button>
         <span class="selection-count">${selectedMatches.size} selected</span>
       </div>
       
@@ -440,8 +440,8 @@ function renderReviewStep(container: HTMLElement): void {
       </div>
       
       <div class="import-actions">
-        <button class="btn btn-secondary" id="cancel-review">Cancel</button>
-        <button class="btn btn-primary" id="confirm-import" ${selectedMatches.size === 0 ? "disabled" : ""}>
+        <button type="button" class="btn btn-secondary" id="cancel-review">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirm-import" ${selectedMatches.size === 0 ? "disabled" : ""}>
           Import ${selectedMatches.size} Games
         </button>
       </div>
@@ -633,8 +633,8 @@ function renderCompleteStep(container: HTMLElement): void {
       </p>
       
       <div class="import-actions">
-        <button class="btn btn-secondary" id="import-more">Import More</button>
-        <button class="btn btn-primary" id="close-import">View Collection</button>
+        <button type="button" class="btn btn-secondary" id="import-more">Import More</button>
+        <button type="button" class="btn btn-primary" id="close-import">View Collection</button>
       </div>
     </div>
   `;
