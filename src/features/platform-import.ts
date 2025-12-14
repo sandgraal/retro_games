@@ -164,9 +164,8 @@ function calculateMatchConfidence(importedName: string, catalogName: string): nu
   // Levenshtein similarity
   const maxLen = Math.max(normalizedImported.length, normalizedCatalog.length);
   const distance = levenshteinDistance(normalizedImported, normalizedCatalog);
-  const similarity = 1 - distance / maxLen;
 
-  return similarity;
+  return 1 - distance / maxLen;
 }
 
 /**

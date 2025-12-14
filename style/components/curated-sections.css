@@ -198,6 +198,7 @@
   top: var(--spacing-xs);
   right: var(--spacing-xs);
   background: rgba(0, 0, 0, 0.7);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   padding: 2px 6px;
   border-radius: var(--radius-sm);

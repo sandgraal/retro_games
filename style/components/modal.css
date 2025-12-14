@@ -243,6 +243,7 @@
   justify-content: space-between;
   padding: var(--spacing-lg);
   background: var(--bg-glass);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-lg);
@@ -277,6 +278,7 @@
 .modal-prices {
   padding: var(--spacing-lg);
   background: var(--bg-glass);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-lg);
