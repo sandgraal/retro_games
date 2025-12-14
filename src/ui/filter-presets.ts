@@ -6,6 +6,7 @@
 import { createSignal, effect } from "../core/signals";
 import { filterState, setFilters, DEFAULT_FILTER_STATE } from "../state/store";
 import type { FilterState } from "../core/types";
+import { escapeHtml } from "./components";
 
 // Storage key
 const PRESETS_STORAGE_KEY = "dragonshoard_filter_presets";
@@ -413,15 +414,15 @@ export function renderPresetSelector(containerId: string): () => void {
             <button
               type="button"
               class="preset-chip ${active === preset.id ? "preset-chip--active" : ""}"
-              data-preset-id="${preset.id}"
-              title="${preset.name}"
+              data-preset-id="${escapeHtml(preset.id)}"
+              title="${escapeHtml(preset.name)}"
             >
-              <span class="preset-chip__icon">${preset.icon}</span>
-              <span class="preset-chip__name">${preset.name}</span>
+              <span class="preset-chip__icon">${escapeHtml(preset.icon)}</span>
+              <span class="preset-chip__name">${escapeHtml(preset.name)}</span>
               ${
-                !preset.isBuiltIn
-                  ? `<span class="preset-chip__delete" data-delete-preset="${preset.id}" title="Delete preset">×</span>`
-                  : ""
+                preset.isBuiltIn
+                  ? ""
+                  : `<span class="preset-chip__delete" data-delete-preset="${escapeHtml(preset.id)}" title="Delete preset">×</span>`
               }
             </button>
           `
