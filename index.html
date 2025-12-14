@@ -311,7 +311,11 @@
         <!-- Collection Grid with Filters -->
         <section class="collection-container" aria-label="Game collection">
           <!-- Filters Sidebar -->
-          <aside class="filters-sidebar" id="filtersSidebar">
+          <aside
+            class="filters-sidebar"
+            id="filtersSidebar"
+            aria-label="Collection filters"
+          >
             <div class="filters-header">
               <h3 class="filters-title">Filters</h3>
               <span
@@ -590,20 +594,50 @@
               <div class="filter-group-label">
                 <span>Sort By</span>
               </div>
-              <div class="filter-sort" id="sortOptions">
-                <button type="button" class="sort-option active" data-sort="popularity">
+              <div
+                class="filter-sort"
+                id="sortOptions"
+                role="group"
+                aria-label="Sort options"
+              >
+                <button
+                  type="button"
+                  class="sort-option active"
+                  data-sort="popularity"
+                  aria-pressed="true"
+                >
                   Popularity
                 </button>
-                <button type="button" class="sort-option" data-sort="name">
+                <button
+                  type="button"
+                  class="sort-option"
+                  data-sort="name"
+                  aria-pressed="false"
+                >
                   Name (A-Z)
                 </button>
-                <button type="button" class="sort-option" data-sort="rating">
+                <button
+                  type="button"
+                  class="sort-option"
+                  data-sort="rating"
+                  aria-pressed="false"
+                >
                   Rating (High to Low)
                 </button>
-                <button type="button" class="sort-option" data-sort="year">
+                <button
+                  type="button"
+                  class="sort-option"
+                  data-sort="year"
+                  aria-pressed="false"
+                >
                   Year (Newest First)
                 </button>
-                <button type="button" class="sort-option" data-sort="value">
+                <button
+                  type="button"
+                  class="sort-option"
+                  data-sort="value"
+                  aria-pressed="false"
+                >
                   Value (High to Low)
                 </button>
               </div>
@@ -611,10 +645,17 @@
           </aside>
 
           <!-- Game Grid -->
-          <div class="game-grid" id="gameGrid">
+          <div
+            class="game-grid"
+            id="gameGrid"
+            role="region"
+            aria-label="Game collection"
+            aria-live="polite"
+          >
             <!-- Populated by JS -->
-            <div class="loading">
-              <div class="loading-spinner"></div>
+            <div class="loading" role="status" aria-label="Loading games">
+              <div class="loading-spinner" aria-hidden="true"></div>
+              <span class="visually-hidden">Loading game collection...</span>
             </div>
           </div>
         </section>

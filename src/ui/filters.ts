@@ -358,7 +358,9 @@ function setupSortButtons(cleanup: (() => void)[]): void {
     const currentSort = filterState.get().sortBy;
     container.querySelectorAll(".sort-option").forEach((btn) => {
       const sort = btn.getAttribute("data-sort");
-      btn.classList.toggle("active", sort === currentSort);
+      const isActive = sort === currentSort;
+      btn.classList.toggle("active", isActive);
+      btn.setAttribute("aria-pressed", String(isActive));
     });
   });
   cleanup.push(syncSortState);
@@ -444,10 +446,8 @@ function handleFilterChange(e: Event): void {
     toggleVrFilter();
   } else if (filterType === "deals") {
     toggleDealsOnly();
-  } else if (filterType === "status") {
-    if (isValidStatus(value)) {
-      toggleStatusFilter(value);
-    }
+  } else if (filterType === "status" && isValidStatus(value)) {
+    toggleStatusFilter(value);
   }
 }
 

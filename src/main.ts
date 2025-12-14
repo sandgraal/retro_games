@@ -774,6 +774,20 @@ function setupShareFiltersButton(): void {
 }
 
 // Start the application
+// Global error handlers for unhandled errors and promise rejections
+window.addEventListener("error", (event) => {
+  console.error("Unhandled error:", event.error);
+  // Don't show toast for script loading errors
+  if (event.message && !event.message.includes("Script error")) {
+    showToast("An unexpected error occurred", "error");
+  }
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  console.error("Unhandled promise rejection:", event.reason);
+  showToast("An unexpected error occurred", "error");
+});
+
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", init);
 } else {

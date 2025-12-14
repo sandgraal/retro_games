@@ -385,7 +385,7 @@ export function initCuratedSections(containerId: string): () => void {
   setupCarouselNavigation(container);
 
   // Re-render when data changes
-  const unsub = effect(() => {
+  return effect(() => {
     // Subscribe to relevant signals
     gamesSignal.get();
     collection.get();
@@ -396,6 +396,4 @@ export function initCuratedSections(containerId: string): () => void {
     container.innerHTML = renderCuratedSections(newSections);
     setupCarouselNavigation(container);
   });
-
-  return unsub;
 }
