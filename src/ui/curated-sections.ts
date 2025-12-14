@@ -352,7 +352,7 @@ function setupCarouselNavigation(container: HTMLElement): void {
       nextBtn.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 10;
     };
 
-    track.addEventListener("scroll", updateButtons);
+    track.addEventListener("scroll", updateButtons, { passive: true });
     updateButtons();
   });
 

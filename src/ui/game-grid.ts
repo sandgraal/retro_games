@@ -61,7 +61,7 @@ export function initGameGrid(ctx: ComponentContext): void {
     updateVirtualWindow(element, lastGames);
   }, 50);
 
-  window.addEventListener("scroll", handleScroll);
+  window.addEventListener("scroll", handleScroll, { passive: true });
   cleanup.push(() => window.removeEventListener("scroll", handleScroll));
 
   // Resize handler
@@ -70,7 +70,7 @@ export function initGameGrid(ctx: ComponentContext): void {
     updateVirtualWindow(element, lastGames);
   }, 100);
 
-  window.addEventListener("resize", handleResize);
+  window.addEventListener("resize", handleResize, { passive: true });
   cleanup.push(() => window.removeEventListener("resize", handleResize));
 }
 
