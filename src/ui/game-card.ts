@@ -45,6 +45,7 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
       src: game.cover,
       alt: `${game.game_name} cover art`,
       loading: "lazy",
+      decoding: "async",
     });
     img.onerror = () => {
       img.style.display = "none";

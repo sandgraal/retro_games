@@ -33,6 +33,7 @@
 
   /* Semantic aliases for consistency */
   --bg-subtle: rgba(255, 255, 255, 0.05);
+  --bg-secondary: var(--bg-elevated);
   --bg-tertiary: var(--bg-elevated);
   --border-color: rgba(255, 255, 255, 0.1);
   --glass-bg: rgba(var(--bg-elevated-rgb), 0.85);
@@ -40,10 +41,22 @@
   --glass-border: rgba(255, 255, 255, 0.1);
   --surface-elevated: var(--bg-elevated);
   --color-success: #10b981;
+  --color-error: #ef4444;
   --accent-danger: #ef4444;
   --accent-fire: #ff8c00;
+  --accent-primary-hover: #00b8e0;
   --text-tertiary: var(--text-muted);
   --font-primary: var(--font-body);
+  --font-mono: var(--font-accent);
+
+  /* Status colors (for UI feedback) */
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-error: #ef4444;
+
+  /* Z-index scale */
+  --z-sticky: 100;
+  --z-modal: 2000;
 
   /* Typography aliases (Tailwind-style) */
   --text-xs: var(--font-size-xs);
@@ -53,6 +66,7 @@
   --text-xl: var(--font-size-xl);
   --text-2xl: var(--font-size-2xl);
   --text-3xl: var(--font-size-3xl);
+  --font-size-md: var(--font-size-base);
 
   /* Spacing aliases (Tailwind-style) */
   --space-1: 4px;
@@ -68,10 +82,12 @@
 
   /* Spacing */
   --spacing-xs: 4px;
+  --spacing-2xs: 2px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 48px;
+  --spacing-2xl: 96px;
   --spacing-xxl: 64px;
 
   /* Typography */

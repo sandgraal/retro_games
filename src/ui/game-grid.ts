@@ -79,10 +79,10 @@ export function initGameGrid(ctx: ComponentContext): void {
  */
 function renderEmptyState(container: HTMLElement): void {
   container.innerHTML = `
-    <div class="game-grid__empty">
-      <div class="game-grid__empty-icon">🎮</div>
-      <h3 class="game-grid__empty-title">No Games Found</h3>
-      <p class="game-grid__empty-text">Try adjusting your filters or search to see more games.</p>
+    <div class="game-grid-empty">
+      <div class="game-grid-empty-icon">🎮</div>
+      <h3 class="game-grid-empty-title">No Games Found</h3>
+      <p class="game-grid-empty-text">Try adjusting your filters or search to see more games.</p>
     </div>
   `;
 }
