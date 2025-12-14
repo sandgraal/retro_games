@@ -450,6 +450,9 @@ export function showToast(message: string, type: "info" | "success" | "error"): 
     toastContainer = document.createElement("div");
     toastContainer.id = "toastContainer";
     toastContainer.className = "toast-container";
+    toastContainer.setAttribute("role", "status");
+    toastContainer.setAttribute("aria-live", "polite");
+    toastContainer.setAttribute("aria-atomic", "true");
     document.body.appendChild(toastContainer);
   }
 

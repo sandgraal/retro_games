@@ -18,6 +18,8 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--spacing-lg);
   align-items: start;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
 }
 
 /* Game Card */
@@ -29,6 +31,7 @@
   transition: all var(--duration-medium) var(--easing-default);
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  contain: layout style paint;
 }
 
 .game-card:hover {
