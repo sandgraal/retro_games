@@ -52,9 +52,6 @@ jobs:
             - name: Copy data folder to dist
               run: cp -r data dist/data
 
-            - name: Copy config.js to dist
-              run: cp config.js dist/config.js
-
             - name: Copy guides folder to dist
               run: mkdir -p dist/docs && cp -r docs/guides dist/docs/guides
 
