@@ -8,7 +8,7 @@ A TypeScript + Vite app for tracking **ALL video games**—retro classics, moder
 
 - Custom signals with dashboard, filters, modal, and settings built without a framework.
 - Game grid with hover overlays, keyboard navigation, and virtualization when lists exceed 100 cards.
-- Filters: platform + genre checkboxes, search, and sort (name, rating, year, value, platform).
+- Filters: platform + genre checkboxes, search, and sort (popularity, name, rating, year, value, platform).
 - Collection status (owned/wishlist/backlog/trade) and notes persisted to `localStorage`; the settings modal handles theme/view/backup/restore/clear actions.
 - Export: CSV, JSON backup, and share codes that can be imported via the URL `?share=...`.
 - Data sources: Supabase `games_consolidated` view when `config.js` provides credentials; otherwise `data/sample-games.json` (24 games). Prices currently come from `data/sample-price-history.json` (cents) and feed the dashboard/modal value displays.

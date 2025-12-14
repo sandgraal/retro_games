@@ -4,7 +4,12 @@
  */
 
 import { effect } from "../core/signals";
-import { filterState, updateFilters, resetFilters } from "../state/store";
+import {
+  filterState,
+  updateFilters,
+  resetFilters,
+  DEFAULT_FILTER_STATE,
+} from "../state/store";
 import type { FilterState, CollectionStatus, GameEra, SortOption } from "../core/types";
 
 // URL parameter names
@@ -117,7 +122,14 @@ export function readFiltersFromUrl(): Partial<FilterState> {
   // Sort
   const sortBy = params.get(URL_PARAMS.sortBy);
   if (sortBy) {
-    const validSorts: SortOption[] = ["name", "rating", "year", "value", "platform"];
+    const validSorts: SortOption[] = [
+      "popularity",
+      "name",
+      "rating",
+      "year",
+      "value",
+      "platform",
+    ];
     if (validSorts.includes(sortBy as SortOption)) {
       filters.sortBy = sortBy as SortOption;
     }
@@ -205,10 +217,10 @@ export function writeFiltersToUrl(state: FilterState): void {
   }
 
   // Sort (only if not default)
-  if (state.sortBy !== "name") {
+  if (state.sortBy !== DEFAULT_FILTER_STATE.sortBy) {
     params.set(URL_PARAMS.sortBy, state.sortBy);
   }
-  if (state.sortDirection !== "asc") {
+  if (state.sortDirection !== DEFAULT_FILTER_STATE.sortDirection) {
     params.set(URL_PARAMS.sortDirection, state.sortDirection);
   }
 
@@ -255,8 +267,9 @@ export function getShareableFilterUrl(): string {
   if (state.priceRange.min) params.set(URL_PARAMS.priceMin, String(state.priceRange.min));
   if (state.priceRange.max) params.set(URL_PARAMS.priceMax, String(state.priceRange.max));
   if (state.minRating > 0) params.set(URL_PARAMS.minRating, String(state.minRating));
-  if (state.sortBy !== "name") params.set(URL_PARAMS.sortBy, state.sortBy);
-  if (state.sortDirection !== "asc")
+  if (state.sortBy !== DEFAULT_FILTER_STATE.sortBy)
+    params.set(URL_PARAMS.sortBy, state.sortBy);
+  if (state.sortDirection !== DEFAULT_FILTER_STATE.sortDirection)
     params.set(URL_PARAMS.sortDirection, state.sortDirection);
   if (state.showDealsOnly) params.set(URL_PARAMS.dealsOnly, "1");
   if (state.showIndieOnly) params.set(URL_PARAMS.indieOnly, "1");

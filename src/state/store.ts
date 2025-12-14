@@ -32,6 +32,15 @@ const STORAGE_KEYS = {
   priceAlerts: "dragonshoard_price_alerts",
 } as const;
 
+const SORT_DEFAULT_DIRECTIONS: Record<SortOption, "asc" | "desc"> = {
+  popularity: "desc",
+  name: "asc",
+  rating: "desc",
+  year: "desc",
+  value: "desc",
+  platform: "asc",
+};
+
 // === Default States ===
 export const DEFAULT_FILTER_STATE: FilterState = {
   platforms: new Set(),
@@ -43,8 +52,8 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   yearRange: {},
   priceRange: {},
   minRating: 0,
-  sortBy: "name",
-  sortDirection: "asc",
+  sortBy: "popularity",
+  sortDirection: SORT_DEFAULT_DIRECTIONS.popularity,
   showDealsOnly: false,
   showIndieOnly: false,
   showVrOnly: false,
@@ -77,6 +86,31 @@ const themeSignal = createSignal<Theme>("dark");
 const viewModeSignal = createSignal<ViewMode>("grid");
 const sidebarOpenSignal = createSignal<boolean>(false);
 const modalGameSignal = createSignal<GameWithKey | null>(null);
+
+// Small boost for games that sit in top rating tiers when explicit popularity is missing
+const POPULARITY_CATEGORY_BOOSTS: Record<string, number> = {
+  "top 10": 5,
+  "top 25": 4,
+  "top 50": 3,
+  "top 100": 2,
+  "top 250": 1,
+};
+
+function getPopularityScore(game: GameWithKey): number {
+  if (typeof game.popularity === "number" && !Number.isNaN(game.popularity)) {
+    return game.popularity;
+  }
+
+  const rating = parseFloat(String(game.rating));
+  const metacriticScore =
+    typeof game.metacritic_score === "number" ? game.metacritic_score / 10 : 0;
+  const baseScore = !isNaN(rating) ? rating : metacriticScore;
+
+  const category = (game.rating_cat ?? game.rating_category ?? "").toLowerCase();
+  const categoryBoost = POPULARITY_CATEGORY_BOOSTS[category] ?? 0;
+
+  return baseScore + categoryBoost;
+}
 
 // === Computed Values ===
 
@@ -200,6 +234,10 @@ export const filteredGames: ComputedSignal<GameWithKey[]> = computed(() => {
   result.sort((a, b) => {
     let comparison = 0;
     switch (filters.sortBy) {
+      case "popularity": {
+        comparison = getPopularityScore(a) - getPopularityScore(b);
+        break;
+      }
       case "name":
         comparison = a.game_name.localeCompare(b.game_name);
         break;
@@ -641,8 +679,8 @@ export function applyQuickFilter(
       filterStateSignal.set({
         ...baseFilter,
         minRating: 7,
-        sortBy: "rating",
-        sortDirection: "desc",
+        sortBy: "popularity",
+        sortDirection: SORT_DEFAULT_DIRECTIONS.popularity,
       });
       break;
     case "new":
@@ -680,11 +718,16 @@ export function setSearchQuery(query: string): void {
  * Set sort options
  */
 export function setSort(sortBy: SortOption, direction?: "asc" | "desc"): void {
-  filterStateSignal.set((current) => ({
-    ...current,
-    sortBy,
-    sortDirection: direction ?? current.sortDirection,
-  }));
+  filterStateSignal.set((current) => {
+    const isChangingSort = current.sortBy !== sortBy;
+    const defaultDirection = SORT_DEFAULT_DIRECTIONS[sortBy] ?? current.sortDirection;
+
+    return {
+      ...current,
+      sortBy,
+      sortDirection: direction ?? (isChangingSort ? defaultDirection : current.sortDirection),
+    };
+  });
 }
 
 /**

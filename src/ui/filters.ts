@@ -31,7 +31,14 @@ import {
 import { effect } from "../core/signals";
 import { groupPlatformsByFamily } from "../core/platform-families";
 
-const VALID_SORT_OPTIONS: SortOption[] = ["name", "rating", "year", "value", "platform"];
+const VALID_SORT_OPTIONS: SortOption[] = [
+  "popularity",
+  "name",
+  "rating",
+  "year",
+  "value",
+  "platform",
+];
 
 function isValidSortOption(value: string): value is SortOption {
   return VALID_SORT_OPTIONS.includes(value as SortOption);
@@ -345,6 +352,16 @@ function setupSortButtons(cleanup: (() => void)[]): void {
 
   container.addEventListener("click", handler);
   cleanup.push(() => container.removeEventListener("click", handler));
+
+  // Keep active state in sync when sort changes via presets or URL params
+  const syncSortState = effect(() => {
+    const currentSort = filterState.get().sortBy;
+    container.querySelectorAll(".sort-option").forEach((btn) => {
+      const sort = btn.getAttribute("data-sort");
+      btn.classList.toggle("active", sort === currentSort);
+    });
+  });
+  cleanup.push(syncSortState);
 }
 
 /**

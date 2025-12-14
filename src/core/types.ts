@@ -26,6 +26,7 @@ export interface Game {
   description?: string;
   developer?: string;
   publisher?: string;
+  popularity?: number; // Aggregate popularity score (IGDB, wishlists, etc.)
   esrb_rating?: string;
   metacritic_score?: number;
   igdb_id?: number;
@@ -150,7 +151,13 @@ export interface FilterState {
   showVrOnly: boolean;
 }
 
-export type SortOption = "name" | "rating" | "year" | "value" | "platform";
+export type SortOption =
+  | "popularity"
+  | "name"
+  | "rating"
+  | "year"
+  | "value"
+  | "platform";
 
 // === UI State Types ===
 

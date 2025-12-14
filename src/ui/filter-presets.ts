@@ -284,7 +284,10 @@ export function createPreset(name: string, icon: string = "🎯"): FilterPreset 
   if (currentFilters.minRating > 0) {
     filtersToSave.minRating = currentFilters.minRating;
   }
-  if (currentFilters.sortBy !== "name") {
+  if (
+    currentFilters.sortBy !== DEFAULT_FILTER_STATE.sortBy ||
+    currentFilters.sortDirection !== DEFAULT_FILTER_STATE.sortDirection
+  ) {
     filtersToSave.sortBy = currentFilters.sortBy;
     filtersToSave.sortDirection = currentFilters.sortDirection;
   }
