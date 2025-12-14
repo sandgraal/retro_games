@@ -522,7 +522,7 @@ function extractTableOfContents(content: HTMLElement): TocItem[] {
 
   headings.forEach((heading, index) => {
     const text = heading.textContent?.trim() || "";
-    const level = parseInt(heading.tagName.charAt(1));
+    const level = parseInt(heading.tagName.charAt(1), 10);
     const id = `toc-${index}-${text.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
     // Add id to heading for scroll targeting

@@ -1059,12 +1059,12 @@ function parseAchievements(value: string): { earned: number; total: number } | u
   // Format: "50/100" or "50 of 100" or "50%"
   const slashMatch = value.match(/(\d+)\s*\/\s*(\d+)/);
   if (slashMatch) {
-    return { earned: parseInt(slashMatch[1]), total: parseInt(slashMatch[2]) };
+    return { earned: parseInt(slashMatch[1], 10), total: parseInt(slashMatch[2], 10) };
   }
 
   const ofMatch = value.match(/(\d+)\s*of\s*(\d+)/i);
   if (ofMatch) {
-    return { earned: parseInt(ofMatch[1]), total: parseInt(ofMatch[2]) };
+    return { earned: parseInt(ofMatch[1], 10), total: parseInt(ofMatch[2], 10) };
   }
 
   return undefined;

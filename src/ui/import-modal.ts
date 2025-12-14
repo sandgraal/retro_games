@@ -32,6 +32,9 @@ function getOrCreateModal(): HTMLElement {
     modal = document.createElement("div");
     modal.id = "import-modal";
     modal.className = "modal-overlay";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "import-modal-title");
     modal.innerHTML = `
       <div class="modal-content import-modal-content">
         <button type="button" class="modal-close" aria-label="Close import modal">&times;</button>
@@ -102,7 +105,7 @@ function renderCurrentStep(): void {
 function renderSourceSelection(container: HTMLElement): void {
   container.innerHTML = `
     <div class="import-step">
-      <h2>📥 Import Your Game Library</h2>
+      <h2 id="import-modal-title">📥 Import Your Game Library</h2>
       <p class="import-description">
         Import your existing game collections from gaming platforms and tracking services.
         Select a source below to get started.
@@ -143,7 +146,7 @@ function renderInputStep(container: HTMLElement): void {
   container.innerHTML = `
     <div class="import-step">
       <button type="button" class="import-back-btn" id="back-to-select">← Back</button>
-      <h2>${getSourceIcon(selectedSource)} Import from ${source.name}</h2>
+      <h2 id="import-modal-title">${getSourceIcon(selectedSource)} Import from ${source.name}</h2>
       
       ${
         isSteam
@@ -359,7 +362,7 @@ function renderReviewStep(container: HTMLElement): void {
   container.innerHTML = `
     <div class="import-step import-review">
       <button type="button" class="import-back-btn" id="back-to-input">← Back</button>
-      <h2>📋 Review Import</h2>
+      <h2 id="import-modal-title">📋 Review Import</h2>
       
       <div class="import-stats">
         <div class="import-stat">
@@ -489,7 +492,7 @@ function renderReviewStep(container: HTMLElement): void {
       const idx = (e.target as HTMLSelectElement).dataset.index!;
       const newKey = (e.target as HTMLSelectElement).value;
       // Update the match in place
-      const match = importResult!.matches[parseInt(idx)];
+      const match = importResult!.matches[parseInt(idx, 10)];
       const alternative = match.alternativeMatches?.find((m) => m.key === newKey);
       if (alternative) {
         match.matched = alternative;
@@ -588,7 +591,7 @@ function performImport(): void {
   let failed = 0;
 
   selectedMatches.forEach((indexStr) => {
-    const index = parseInt(indexStr);
+    const index = parseInt(indexStr, 10);
     const match = importResult!.matches[index];
 
     if (match.matched) {
@@ -627,7 +630,7 @@ function renderCompleteStep(container: HTMLElement): void {
   container.innerHTML = `
     <div class="import-step import-complete">
       <div class="import-success-icon">✅</div>
-      <h2>Import Complete!</h2>
+      <h2 id="import-modal-title">Import Complete!</h2>
       <p class="import-success-message">
         Successfully imported <strong>${matched}</strong> games to your collection.
       </p>
