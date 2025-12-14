@@ -470,7 +470,7 @@ export async function searchIgdbGames(query, options = {}) {
     const accessToken = await getAccessToken(clientId, clientSecret);
 
     const apicalypse = `
-      search "${query.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}";
+      search "${query.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}";
       fields ${GAME_FIELDS};
       where category = 0;
       limit ${limit};
