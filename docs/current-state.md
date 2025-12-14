@@ -31,7 +31,7 @@ _Last updated: December 2025_
 ## Working
 
 - Virtualized game grid with keyboard navigation and hover overlays.
-- Filters: platform + genre + era checkboxes, search input, indie/VR/deals toggles, and sorts for name/rating/year/value/platform.
+- Filters: platform + genre + era checkboxes, search input, indie/VR/deals toggles, and sorts (popularity, name, rating, year, value, platform).
 - Modal for viewing details plus updating status and notes.
 - Settings modal: theme/view switches, backup/restore, clear collection.
 - CSV export, JSON backups, and share-code import via `?share=`.

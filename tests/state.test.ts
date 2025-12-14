@@ -198,6 +198,14 @@ describe("state/store", () => {
       expect(state.sortBy).toBe("rating");
       expect(state.sortDirection).toBe("desc");
     });
+
+    it("should apply default sort directions when switching sorts", () => {
+      setSort("name");
+      expect(filterState.get().sortDirection).toBe("asc");
+
+      setSort("rating");
+      expect(filterState.get().sortDirection).toBe("desc");
+    });
   });
 
   describe("UI state", () => {
@@ -216,13 +224,6 @@ describe("state/store", () => {
     beforeEach(() => {
       const testGames = [
         {
-          game_name: "Chrono Trigger",
-          platform: "SNES",
-          genre: "RPG",
-          rating: "9.6",
-          release_year: "1995",
-        },
-        {
           game_name: "Super Mario World",
           platform: "SNES",
           genre: "Platformer",
@@ -236,6 +237,13 @@ describe("state/store", () => {
           rating: "9.2",
           release_year: "1997",
         },
+        {
+          game_name: "Chrono Trigger",
+          platform: "SNES",
+          genre: "RPG",
+          rating: "9.6",
+          release_year: "1995",
+        },
       ];
       setGames(testGames);
       resetFilters();
@@ -243,6 +251,12 @@ describe("state/store", () => {
 
     it("should return all games when no filters", () => {
       expect(filteredGames.get()).toHaveLength(3);
+    });
+
+    it("should default to popularity sorting", () => {
+      const result = filteredGames.get();
+      expect(result[0].game_name).toBe("Chrono Trigger");
+      expect(result[2].game_name).toBe("Final Fantasy VII");
     });
 
     it("should filter by platform", () => {

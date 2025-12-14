@@ -75,7 +75,7 @@ src/
 
 UI components subscribe via `effect` and rely on the store's computed values:
 
-- `filteredGames`: applies platform/genre/status/search/rating/year filters plus sorting (name/rating/year/value/platform).
+- `filteredGames`: applies platform/genre/status/search/rating/year filters plus sorting (popularity/name/rating/year/value/platform).
 - `collectionStats`: derives owned/wishlist/backlog/trade counts, platform/genre breakdowns, total value (loose price), and completion percentage.
 
 ## Data Flow
