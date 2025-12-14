@@ -133,7 +133,7 @@ export function renderRecentlyViewed(containerId: string): () => void {
               <div class="recently-viewed__cover">
                 ${
                   game.cover
-                    ? `<img src="${game.cover}" alt="" loading="lazy" />`
+                    ? `<img src="${game.cover}" alt="${game.game_name} cover" loading="lazy" decoding="async" />`
                     : `<span class="recently-viewed__cover-placeholder">🎮</span>`
                 }
               </div>

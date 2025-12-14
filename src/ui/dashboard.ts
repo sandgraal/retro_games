@@ -122,7 +122,7 @@ function updateHotDealsCard(
           <div class="deal-item" title="${escapeHtml(game.game_name)}: ${dropPct.toFixed(1)}% this week">
             ${
               game.cover
-                ? `<img class="deal-cover" src="${escapeHtml(game.cover)}" alt="${escapeHtml(game.game_name)}" loading="lazy" />`
+                ? `<img class="deal-cover" src="${escapeHtml(game.cover)}" alt="${escapeHtml(game.game_name)}" loading="lazy" decoding="async" />`
                 : `<div class="deal-placeholder">${escapeHtml(game.game_name.charAt(0))}</div>`
             }
             <span class="deal-drop">${dropPct.toFixed(0)}%</span>
@@ -225,7 +225,7 @@ function updateRecentAdditionsCard(
           <div class="carousel-item" title="${escapeHtml(game.game_name)}">
             ${
               game.cover
-                ? `<img class="carousel-cover" src="${escapeHtml(game.cover)}" alt="${escapeHtml(game.game_name)}" loading="lazy" />`
+                ? `<img class="carousel-cover" src="${escapeHtml(game.cover)}" alt="${escapeHtml(game.game_name)}" loading="lazy" decoding="async" />`
                 : `<div class="carousel-placeholder">${escapeHtml(game.game_name.charAt(0))}</div>`
             }
           </div>

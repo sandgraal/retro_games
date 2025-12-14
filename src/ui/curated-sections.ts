@@ -269,7 +269,7 @@ function renderGameCarousel(games: GameWithKey[], sectionId: string): string {
             <div class="curated-card-cover">
               ${
                 game.cover
-                  ? `<img src="${escapeHtml(game.cover)}" alt="${escapeHtml(game.game_name)}" loading="lazy" />`
+                  ? `<img src="${escapeHtml(game.cover)}" alt="${escapeHtml(game.game_name)}" loading="lazy" decoding="async" />`
                   : `<div class="curated-card-placeholder">🎮</div>`
               }
             </div>
