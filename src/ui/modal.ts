@@ -223,19 +223,19 @@ function renderModal(backdrop: HTMLElement, game: GameWithKey): void {
     actionsEl.innerHTML = `
       <div class="modal-status-buttons">
         <button type="button" class="modal-status-btn ${status === "owned" ? "active" : ""}" data-status="owned" title="Mark as Owned">
-          <span class="status-icon">✓</span>
+          <span class="status-icon" aria-hidden="true">✓</span>
           <span class="status-label">Owned</span>
         </button>
         <button type="button" class="modal-status-btn ${status === "wishlist" ? "active" : ""}" data-status="wishlist" title="Add to Wishlist">
-          <span class="status-icon">★</span>
+          <span class="status-icon" aria-hidden="true">★</span>
           <span class="status-label">Wishlist</span>
         </button>
         <button type="button" class="modal-status-btn ${status === "backlog" ? "active" : ""}" data-status="backlog" title="Add to Backlog">
-          <span class="status-icon">📋</span>
+          <span class="status-icon" aria-hidden="true">📋</span>
           <span class="status-label">Backlog</span>
         </button>
         <button type="button" class="modal-status-btn ${status === "trade" ? "active" : ""}" data-status="trade" title="Mark for Trade">
-          <span class="status-icon">↔</span>
+          <span class="status-icon" aria-hidden="true">↔</span>
           <span class="status-label">Trade</span>
         </button>
       </div>
@@ -814,7 +814,7 @@ function buildPriceAlertSection(
             aria-label="Target price in dollars"
           />
         </div>
-        <select id="alertConditionSelect" class="price-alert-condition">
+        <select id="alertConditionSelect" class="price-alert-condition" aria-label="Condition type">
           <option value="loose">Loose</option>
           <option value="cib">Complete</option>
           <option value="new">New</option>
@@ -890,9 +890,9 @@ function setupPriceAlertHandlers(container: HTMLElement, gameKey: string): void 
             <span class="price-alert-current">Alert removed</span>
             <div class="price-alert-input-group">
               <span class="price-alert-currency">$</span>
-              <input type="number" id="alertPriceInput" class="price-alert-input" placeholder="0" min="0" step="1" />
+              <input type="number" id="alertPriceInput" class="price-alert-input" placeholder="0" min="0" step="1" aria-label="Alert price in dollars" />
             </div>
-            <select id="alertConditionSelect" class="price-alert-condition">
+            <select id="alertConditionSelect" class="price-alert-condition" aria-label="Condition type">
               <option value="loose">Loose</option>
               <option value="cib">Complete</option>
               <option value="new">New</option>

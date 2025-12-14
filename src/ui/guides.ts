@@ -192,8 +192,8 @@ function renderGuideIndex(): HTMLElement {
         </select>
       </div>
       <div class="guides-filter-search">
-        <span class="guides-search-icon">🔍</span>
-        <input type="text" class="guides-search-input" id="guideSearchInput" placeholder="Search guides..." />
+        <span class="guides-search-icon" aria-hidden="true">🔍</span>
+        <input type="text" class="guides-search-input" id="guideSearchInput" placeholder="Search guides..." aria-label="Search guides" />
       </div>
     </div>
   `;
@@ -847,8 +847,8 @@ async function renderGuideViewer(slug: string): Promise<HTMLElement> {
           Last updated: ${guide.updated || guide.date}
         </div>
         <div class="guide-search">
-          <span class="guide-search-icon">🔍</span>
-          <input type="text" class="guide-search-input" placeholder="Search in guide..." />
+          <span class="guide-search-icon" aria-hidden="true">🔍</span>
+          <input type="text" class="guide-search-input" placeholder="Search in guide..." aria-label="Search in guide" />
           <span class="guide-search-results"></span>
         </div>
       </div>

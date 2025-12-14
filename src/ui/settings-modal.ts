@@ -342,6 +342,15 @@ function applyTheme(newTheme: Theme): void {
   }
 }
 
+// Listen for system theme changes
+const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+systemThemeQuery.addEventListener("change", () => {
+  // Only react if user has "system" theme selected
+  if (theme.get() === "system") {
+    applyTheme("system");
+  }
+});
+
 /**
  * Handle backup creation
  */
