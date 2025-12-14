@@ -12,7 +12,7 @@
   background: rgba(0, 0, 0, 0.8);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  z-index: 3000;
+  z-index: var(--z-modal-settings);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -274,7 +274,7 @@
   position: fixed;
   bottom: var(--spacing-xl);
   right: var(--spacing-xl);
-  z-index: 4000;
+  z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);

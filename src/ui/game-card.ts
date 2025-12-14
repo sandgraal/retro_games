@@ -96,7 +96,11 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
   // Info overlay
   const overlay = createElement("div", { class: "game-card-overlay" });
 
-  const title = createElement("h3", { class: "game-card-title" }, game.game_name);
+  const title = createElement(
+    "h3",
+    { class: "game-card-title", title: game.game_name },
+    game.game_name
+  );
   overlay.appendChild(title);
 
   const meta = createElement("div", { class: "game-card-meta" });

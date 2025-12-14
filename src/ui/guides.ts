@@ -346,7 +346,7 @@ function createGuideCard(platform: string, platformGuides: GuideMetadata[]): HTM
     <div class="guide-card-links">
       ${
         reference
-          ? `<button class="guide-card-link guide-card-link-secondary" data-slug="${reference.slug}">
+          ? `<button type="button" class="guide-card-link guide-card-link-secondary" data-slug="${reference.slug}">
         <span class="guide-link-icon">📖</span>
         <span class="guide-link-text">Reference</span>
         <span class="guide-link-arrow">→</span>
@@ -355,7 +355,7 @@ function createGuideCard(platform: string, platformGuides: GuideMetadata[]): HTM
       }
       ${
         collecting
-          ? `<button class="guide-card-link guide-card-link-primary" data-slug="${collecting.slug}">
+          ? `<button type="button" class="guide-card-link guide-card-link-primary" data-slug="${collecting.slug}">
         <span class="guide-link-icon">💎</span>
         <span class="guide-link-text">Collecting Guide</span>
         <span class="guide-link-arrow">→</span>
@@ -397,7 +397,7 @@ function createSingleGuideCard(guide: GuideMetadata): HTMLElement {
       <p class="guide-card-desc">${escapeHtml(guide.description)}</p>
     </div>
     <div class="guide-card-links">
-      <button class="guide-card-link guide-card-link-primary" data-slug="${guide.slug}">
+      <button type="button" class="guide-card-link guide-card-link-primary" data-slug="${guide.slug}">
         <span class="guide-link-icon">💎</span>
         <span class="guide-link-text">View Guide</span>
         <span class="guide-link-arrow">→</span>
@@ -1082,10 +1082,10 @@ function createQuickAddToolbar(
       </span>
     </div>
     <div class="guide-toolbar-actions">
-      <button class="guide-toolbar-btn wishlist-all" ${notOwnedCount === 0 ? "disabled" : ""}>
+      <button type="button" class="guide-toolbar-btn wishlist-all" ${notOwnedCount === 0 ? "disabled" : ""}>
         ★ Add ${notOwnedCount} to Wishlist
       </button>
-      <button class="guide-toolbar-btn owned-all" ${notOwnedCount === 0 ? "disabled" : ""}>
+      <button type="button" class="guide-toolbar-btn owned-all" ${notOwnedCount === 0 ? "disabled" : ""}>
         ✓ Mark ${notOwnedCount} as Owned
       </button>
     </div>
@@ -1189,6 +1189,7 @@ function createCollectionControls(game: GameWithKey, status: CollectionStatus): 
         .map(
           (btn) => `
         <button 
+          type="button"
           class="guide-status-btn ${btn.class} ${status === btn.status ? "active" : ""}" 
           data-status="${btn.status}"
           title="${btn.label}"

@@ -55,8 +55,14 @@
   --status-error: #ef4444;
 
   /* Z-index scale */
+  --z-base: 1;
+  --z-elevated: 10;
+  --z-dropdown: 100;
   --z-sticky: 100;
+  --z-overlay: 1000;
   --z-modal: 2000;
+  --z-modal-settings: 3000;
+  --z-toast: 4000;
 
   /* Typography aliases (Tailwind-style) */
   --text-xs: var(--font-size-xs);
