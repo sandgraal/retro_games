@@ -16,6 +16,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, "index.html"),
+        privacy: resolve(__dirname, "privacy-faq.html"),
       },
     },
   },

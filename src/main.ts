@@ -21,9 +21,9 @@ import {
   setError,
   setDataSource,
   setGameStatus,
+  setGameNotes,
+  resetCollection,
   loadPersistedState,
-  getRandomGameFromAll,
-  openGameModal,
   onGameModalOpen,
 } from "./state";
 import {
@@ -41,7 +41,6 @@ import {
   openImportModal,
   injectImportStyles,
   initSmartSearch,
-  initCuratedSections,
   initInfiniteScroll,
   createLoadMoreButton,
   initPresets,
@@ -50,18 +49,9 @@ import {
   renderRecentlyViewed,
   trackGameView,
   initUrlState,
-  copyFilterUrl,
   showToast,
 } from "./ui";
-import {
-  exportCollectionToCSV,
-  createBackup,
-  createShareCode,
-  parseShareCode,
-  downloadFile,
-  copyToClipboard,
-  getExportStats,
-} from "./features";
+import { createBackup, downloadFile, getExportStats } from "./features";
 
 /**
  * Register service worker for offline support
@@ -127,9 +117,6 @@ async function init(): Promise<void> {
 
     console.log(`✅ Loaded ${gamesResult.games.length} games from ${gamesResult.source}`);
 
-    // Initialize curated sections (after games are loaded)
-    cleanupFunctions.push(initCuratedSections("curatedSections"));
-
     // Show status if using sample data
     if (gamesResult.source === "sample") {
       const fallbackDetails = gamesResult.reason ? `${gamesResult.reason}. ` : "";
@@ -138,9 +125,6 @@ async function init(): Promise<void> {
         "info"
       );
     }
-
-    // Check for share code in URL
-    checkUrlShareCode();
 
     // Check for guides view in URL
     checkUrlGuidesView();
@@ -189,7 +173,6 @@ async function init(): Promise<void> {
 
   // Initialize URL state synchronization
   cleanupFunctions.push(initUrlState());
-  setupShareFiltersButton();
 
   // Setup auth state listener
   setupAuthListener();
@@ -326,10 +309,7 @@ function handleGuidesToggle(): void {
 function setupHeaderActions(): void {
   const homeBtn = document.getElementById("homeBtn");
   const guidesBtn = document.getElementById("guidesBtn");
-  const randomGameBtn = document.getElementById("randomGameBtn");
   const moderationBtn = document.getElementById("moderationBtn");
-  const exportBtn = document.getElementById("exportBtn");
-  const shareBtn = document.getElementById("shareBtn");
   const settingsBtn = document.getElementById("settingsBtn");
   const authBtn = document.getElementById("authBtn");
 
@@ -339,7 +319,6 @@ function setupHeaderActions(): void {
     window.history.pushState({}, "", window.location.pathname);
   });
   guidesBtn?.addEventListener("click", handleGuidesToggle);
-  randomGameBtn?.addEventListener("click", handleRandomGame);
   moderationBtn?.addEventListener("click", () => {
     if (currentAppView === "moderation") {
       switchToView("collection");
@@ -349,23 +328,8 @@ function setupHeaderActions(): void {
       window.history.pushState({}, "", "?view=moderation");
     }
   });
-  exportBtn?.addEventListener("click", handleExport);
-  shareBtn?.addEventListener("click", handleShare);
   settingsBtn?.addEventListener("click", handleSettings);
   authBtn?.addEventListener("click", handleAuth);
-}
-
-/**
- * Handle random game button click
- */
-function handleRandomGame(): void {
-  const game = getRandomGameFromAll();
-  if (game) {
-    openGameModal(game);
-    showToast(`🎲 Discovered: ${game.game_name}`, "success");
-  } else {
-    showToast("No games loaded yet", "error");
-  }
 }
 
 /**
@@ -410,12 +374,6 @@ function setupKeyboardShortcuts(): void {
 
     // Skip other shortcuts if in input
     if (isInputActive) return;
-
-    // R: Random game
-    if (e.key === "r" || e.key === "R") {
-      handleRandomGame();
-      return;
-    }
 
     // /: Focus search (vim-style)
     if (e.key === "/") {
@@ -506,12 +464,14 @@ function setupAuthListener(): void {
  * Setup dashboard quick action buttons
  */
 function setupDashboardActions(): void {
-  const importBtn = document.getElementById("importBtn");
-  const backupBtn = document.getElementById("backupBtn");
+  const importBtn = document.getElementById("importCollectionBtn");
+  const backupBtn = document.getElementById("backupSettingsBtn");
+  const restoreBtn = document.getElementById("restoreCollectionBtn");
   const contributeBtn = document.getElementById("contributeBtn");
 
   importBtn?.addEventListener("click", handleImport);
   backupBtn?.addEventListener("click", handleBackup);
+  restoreBtn?.addEventListener("click", handleRestore);
   contributeBtn?.addEventListener("click", handleContribute);
 }
 
@@ -553,6 +513,80 @@ function handleBackup(): void {
 }
 
 /**
+ * Handle restore action - triggers file picker for restore
+ */
+function handleRestore(): void {
+  // Create hidden file input and trigger it
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json,application/json";
+  input.style.display = "none";
+
+  input.addEventListener("change", () => {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      // Parse and validate backup
+      let backup: {
+        collection: Record<string, { status?: string }>;
+        notes?: Record<string, string>;
+      };
+      try {
+        backup = JSON.parse(content);
+        if (!backup || typeof backup !== "object" || !backup.collection) {
+          throw new Error("Invalid backup format");
+        }
+      } catch {
+        showToast("Invalid backup file", "error");
+        return;
+      }
+
+      const total = Object.keys(backup.collection).length;
+      if (
+        !confirm(
+          `Restore ${total} games from backup?\n\nThis will replace your current collection.`
+        )
+      ) {
+        return;
+      }
+
+      // Clear and restore collection
+      resetCollection();
+
+      // Import the backup data
+      Object.entries(backup.collection).forEach(([key, entry]) => {
+        if (entry.status) {
+          setGameStatus(
+            key,
+            entry.status as "owned" | "wishlist" | "backlog" | "trade" | "none"
+          );
+        }
+      });
+
+      if (backup.notes) {
+        Object.entries(backup.notes).forEach(([key, note]) => {
+          if (typeof note === "string") {
+            setGameNotes(key, note);
+          }
+        });
+      }
+
+      showToast(`Restored ${total} games from backup!`, "success");
+    };
+    reader.readAsText(file);
+
+    // Cleanup
+    input.remove();
+  });
+
+  document.body.appendChild(input);
+  input.click();
+}
+
+/**
  * Handle contribute action
  */
 function handleContribute(): void {
@@ -561,59 +595,6 @@ function handleContribute(): void {
     "https://github.com/sandgraal/retro-games/blob/main/CONTRIBUTING.md",
     "_blank"
   );
-}
-
-/**
- * Handle export action - exports collection to CSV
- */
-function handleExport(): void {
-  const stats = getExportStats();
-
-  if (stats.total === 0) {
-    showToast("No games in collection to export.", "info");
-    return;
-  }
-
-  const csv = exportCollectionToCSV();
-  const filename = `dragons-hoard-collection-${formatDate()}.csv`;
-  downloadFile(csv, filename, "text/csv");
-  showToast(`Exported ${stats.total} games to ${filename}`, "success");
-}
-
-/**
- * Handle share action
- */
-async function handleShare(): Promise<void> {
-  const stats = getExportStats();
-
-  if (stats.total === 0) {
-    showToast("No games in collection to share.", "info");
-    return;
-  }
-
-  const code = createShareCode();
-
-  // Try native share if available
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: "My Dragon's Hoard Collection",
-        text: `Check out my game collection (${stats.owned} owned, ${stats.wishlist} wishlist)`,
-        url: `${window.location.origin}?share=${encodeURIComponent(code)}`,
-      });
-      return;
-    } catch {
-      // User cancelled or share failed, fall through to clipboard
-    }
-  }
-
-  // Fallback to clipboard
-  const success = await copyToClipboard(code);
-  if (success) {
-    showToast("Share code copied to clipboard!", "success");
-  } else {
-    showToast("Failed to copy share code.", "error");
-  }
 }
 
 /**
@@ -649,54 +630,6 @@ function checkUrlGuidesView(): void {
       item.classList.toggle("active", item.dataset.nav === "guides");
     });
   }
-}
-
-/**
- * Check URL for share code and import if present
- */
-function checkUrlShareCode(): void {
-  const params = new URLSearchParams(window.location.search);
-  const shareCode = params.get("share");
-
-  if (!shareCode) return;
-
-  const data = parseShareCode(decodeURIComponent(shareCode));
-  if (!data) {
-    showToast("Invalid share code in URL.", "error");
-    return;
-  }
-
-  // Count games to import
-  const total =
-    data.owned.length + data.wishlist.length + data.backlog.length + data.trade.length;
-
-  if (total === 0) {
-    showToast("Share code contains no games.", "info");
-    return;
-  }
-
-  // Ask user if they want to import
-  const confirm = window.confirm(
-    `Import shared collection?\n\n` +
-      `${data.owned.length} owned\n` +
-      `${data.wishlist.length} wishlist\n` +
-      `${data.backlog.length} backlog\n` +
-      `${data.trade.length} for trade\n\n` +
-      `This will merge with your existing collection.`
-  );
-
-  if (!confirm) return;
-
-  // Import the collection
-  data.owned.forEach((key) => setGameStatus(key, "owned"));
-  data.wishlist.forEach((key) => setGameStatus(key, "wishlist"));
-  data.backlog.forEach((key) => setGameStatus(key, "backlog"));
-  data.trade.forEach((key) => setGameStatus(key, "trade"));
-
-  // Clean up URL
-  window.history.replaceState({}, "", window.location.pathname);
-
-  showToast(`Imported ${total} games from shared collection!`, "success");
 }
 
 /**
@@ -753,23 +686,6 @@ function setupScrollToTop(): void {
       top: 0,
       behavior: "smooth",
     });
-  });
-}
-
-/**
- * Setup share filters button
- */
-function setupShareFiltersButton(): void {
-  const shareBtn = document.getElementById("shareFiltersBtn");
-  if (!shareBtn) return;
-
-  shareBtn.addEventListener("click", async () => {
-    const success = await copyFilterUrl();
-    if (success) {
-      showToast("Filter URL copied to clipboard!", "success");
-    } else {
-      showToast("Failed to copy URL", "error");
-    }
   });
 }
 

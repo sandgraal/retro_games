@@ -27,7 +27,7 @@
       "@/ui/*": ["src/ui/*"],
       "@/state/*": ["src/state/*"]
     },
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["src/**/*", "src/**/*.ts"],
   "exclude": ["node_modules", "dist", "archive", "app", "**/*.complex.ts"]

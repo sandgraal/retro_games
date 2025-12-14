@@ -334,10 +334,14 @@ export async function signInWithGitHub(): Promise<void> {
     throw new Error("Supabase not available");
   }
 
+  // Build redirect URL with base path for GitHub Pages
+  const basePath = import.meta.env.BASE_URL || "/";
+  const redirectUrl = `${window.location.origin}${basePath}`.replace(/\/$/, "/");
+
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "github",
     options: {
-      redirectTo: window.location.origin,
+      redirectTo: redirectUrl,
     },
   });
 

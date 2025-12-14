@@ -240,7 +240,6 @@ function renderInputStep(container: HTMLElement): void {
 
       try {
         // Use Supabase Edge Function as proxy
-        // @ts-expect-error Vite env types
         const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL;
         const proxyUrl = supabaseUrl ? `${supabaseUrl}/functions/v1` : undefined;
 

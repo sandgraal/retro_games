@@ -110,15 +110,6 @@
           <div class="header-actions">
             <button
               type="button"
-              class="header-action-btn header-action-btn--random"
-              id="randomGameBtn"
-              aria-label="Discover a random game"
-              title="Random Game (R)"
-            >
-              <span aria-hidden="true">🎲</span>
-            </button>
-            <button
-              type="button"
               class="header-action-btn"
               id="guidesBtn"
               aria-label="Collecting guides"
@@ -135,24 +126,6 @@
               hidden
             >
               <span aria-hidden="true">🛡️</span>
-            </button>
-            <button
-              type="button"
-              class="header-action-btn"
-              id="exportBtn"
-              aria-label="Export collection to CSV"
-              title="Export to CSV"
-            >
-              <span aria-hidden="true">📤</span>
-            </button>
-            <button
-              type="button"
-              class="header-action-btn"
-              id="shareBtn"
-              aria-label="Share collection"
-              title="Get Shareable Link"
-            >
-              <span aria-hidden="true">🔗</span>
             </button>
             <button
               type="button"
@@ -266,52 +239,53 @@
               </div>
 
               <!-- Quick Actions Card -->
-              <div class="stat-card">
+              <div class="stat-card stat-card--actions">
                 <div class="stat-card-header">
                   <span class="stat-card-icon" aria-hidden="true">⚡</span>
                 </div>
                 <div class="stat-card-label">Quick Actions</div>
-                <div class="stat-card-carousel">
+                <div class="stat-card-actions-row">
                   <button
                     type="button"
-                    class="game-card-action"
+                    class="quick-action-btn"
                     id="importBtn"
-                    aria-label="Import collection from Steam, PlayStation, Xbox, or other services"
+                    aria-label="Import collection"
                     title="Import from Steam, PSN, Xbox, etc."
                   >
-                    Import
+                    📥 Import
                   </button>
                   <button
                     type="button"
-                    class="game-card-action"
-                    id="backupBtn"
-                    aria-label="Create a backup of your collection"
+                    class="quick-action-btn"
+                    id="backupSettingsBtn"
+                    aria-label="Backup collection"
                     title="Download collection backup"
                   >
-                    Backup
+                    💾 Backup
                   </button>
                   <button
                     type="button"
-                    class="game-card-action"
+                    class="quick-action-btn"
+                    id="restoreBtn"
+                    aria-label="Restore collection"
+                    title="Restore from backup file"
+                  >
+                    📂 Restore
+                  </button>
+                  <button
+                    type="button"
+                    class="quick-action-btn"
                     id="contributeBtn"
-                    aria-label="Suggest a correction or add missing data"
+                    aria-label="Contribute data"
                     title="Help improve the database"
                   >
-                    Contribute
+                    ✏️ Contribute
                   </button>
                 </div>
+                <input type="file" id="restoreFileInput" accept=".json" hidden />
               </div>
             </div>
           </div>
-        </section>
-
-        <!-- Curated Sections - Browsing Discovery -->
-        <section
-          id="curatedSections"
-          class="curated-sections"
-          aria-label="Curated game collections"
-        >
-          <!-- Populated by initCuratedSections() -->
         </section>
 
         <!-- Collection Grid with Filters -->
@@ -684,18 +658,6 @@
           aria-label="Community moderation"
         ></section>
       </main>
-
-      <!-- Mobile Navigation -->
-      <nav class="mobile-nav" aria-label="Mobile navigation">
-        <button type="button" class="mobile-nav-item active" data-nav="collection">
-          <span class="mobile-nav-icon" aria-hidden="true">🎮</span>
-          <span>Collection</span>
-        </button>
-        <button type="button" class="mobile-nav-item filters-toggle" id="filtersToggle">
-          <span class="mobile-nav-icon" aria-hidden="true">🔧</span>
-          <span>Filters</span>
-        </button>
-      </nav>
 
       <!-- Filters Backdrop (Mobile) -->
       <div class="filters-backdrop" id="filtersBackdrop"></div>

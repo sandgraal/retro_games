@@ -3,7 +3,7 @@
  * Centralized reactive state management
  */
 
-import { createSignal, computed, type ComputedSignal } from "../core/signals";
+import { createSignal, computed, effect, type ComputedSignal } from "../core/signals";
 import type {
   Game,
   GameKey,
@@ -80,6 +80,27 @@ const priceAlertsSignal = createSignal<Map<GameKey, PriceAlert>>(new Map());
 
 // Filter state
 const filterStateSignal = createSignal<FilterState>(DEFAULT_FILTER_STATE);
+
+// Persist filter state changes to localStorage
+let filterPersistenceEnabled = false; // Prevent persisting during initial load
+effect(() => {
+  const state = filterStateSignal.get();
+  if (!filterPersistenceEnabled) return;
+
+  try {
+    const serializable = {
+      ...state,
+      platforms: Array.from(state.platforms),
+      genres: Array.from(state.genres),
+      regions: Array.from(state.regions),
+      statuses: Array.from(state.statuses),
+      eras: Array.from(state.eras),
+    };
+    safeStorage.setItem(STORAGE_KEYS.filterState, JSON.stringify(serializable));
+  } catch {
+    console.warn("Failed to persist filter state");
+  }
+});
 
 // UI state
 const themeSignal = createSignal<Theme>("dark");
@@ -966,14 +987,42 @@ export function loadPersistedState(): void {
       if (prefs.viewMode) viewModeSignal.set(prefs.viewMode);
     }
 
+    // Load filter state - either from persistence or set default for first-time users
+    const filterRaw = safeStorage.getItem(STORAGE_KEYS.filterState);
+    if (filterRaw) {
+      // Returning user - restore their saved filters
+      const savedFilter = JSON.parse(filterRaw);
+      const restored: FilterState = {
+        ...DEFAULT_FILTER_STATE,
+        ...savedFilter,
+        platforms: new Set(savedFilter.platforms || []),
+        genres: new Set(savedFilter.genres || []),
+        regions: new Set(savedFilter.regions || []),
+        statuses: new Set(savedFilter.statuses || []),
+        eras: new Set(savedFilter.eras || []),
+      };
+      filterStateSignal.set(restored);
+    } else {
+      // First-time user - show highly rated games (minRating: 8)
+      filterStateSignal.set({
+        ...DEFAULT_FILTER_STATE,
+        minRating: 8,
+      });
+    }
+
     // Load price alerts
     const alertsRaw = safeStorage.getItem(STORAGE_KEYS.priceAlerts);
     if (alertsRaw) {
       const data = JSON.parse(alertsRaw);
       priceAlertsSignal.set(new Map(Object.entries(data)));
     }
+
+    // Enable filter persistence after initial load
+    filterPersistenceEnabled = true;
   } catch {
     console.warn("Failed to load persisted state");
+    // Still enable persistence even if load fails
+    filterPersistenceEnabled = true;
   }
 }
 

@@ -38,6 +38,9 @@ export function closeSettings(): void {
  * Initialize and mount the settings modal
  */
 export function mountSettingsModal(): () => void {
+  // Apply initial theme on mount
+  applyTheme(theme.get());
+
   // Create modal container if it doesn't exist
   let container = document.getElementById("settingsModal");
   if (!container) {
@@ -273,7 +276,9 @@ function renderSettings(container: HTMLElement): void {
 
   const privacyLink = document.createElement("a");
   privacyLink.className = "settings-about-link";
-  privacyLink.href = "./privacy-faq.html";
+  // Use base URL for GitHub Pages compatibility
+  const basePath = import.meta.env.BASE_URL || "/";
+  privacyLink.href = `${basePath}privacy-faq.html`;
   privacyLink.textContent = "Read the privacy & data FAQ";
 
   const privacyNote = document.createElement("p");
