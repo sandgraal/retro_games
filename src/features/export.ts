@@ -402,15 +402,13 @@ function parseCSV(csv: string): string[][] {
         } else {
           current += char;
         }
+      } else if (char === '"') {
+        inQuotes = true;
+      } else if (char === ",") {
+        row.push(current.trim());
+        current = "";
       } else {
-        if (char === '"') {
-          inQuotes = true;
-        } else if (char === ",") {
-          row.push(current.trim());
-          current = "";
-        } else {
-          current += char;
-        }
+        current += char;
       }
     }
     row.push(current.trim());

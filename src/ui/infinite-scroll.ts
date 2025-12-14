@@ -120,12 +120,11 @@ export function initInfiniteScroll(containerSelector: string = "#gameGrid"): () 
 
     ticking = true;
     requestAnimationFrame(() => {
-      const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
+      const { scrollY, innerHeight } = window;
       const docHeight = document.documentElement.scrollHeight;
 
       // Check if near bottom
-      if (docHeight - scrollY - windowHeight < LOAD_THRESHOLD) {
+      if (docHeight - scrollY - innerHeight < LOAD_THRESHOLD) {
         loadMoreGames();
       }
 

@@ -152,7 +152,7 @@ export function renderRecentlyViewed(containerId: string): () => void {
     // Add click handlers
     container.querySelectorAll("[data-game-key]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const gameKey = (btn as HTMLElement).dataset.gameKey;
+        const { gameKey } = (btn as HTMLElement).dataset;
         if (gameKey) {
           const game = gamesSignal.get().find((g) => g.key === gameKey);
           if (game) {
@@ -176,9 +176,7 @@ export function renderRecentlyViewed(containerId: string): () => void {
   render();
 
   // Re-render on changes
-  const unsub = recentlyViewedSignal.subscribe(render);
-
-  return unsub;
+  return recentlyViewedSignal.subscribe(render);
 }
 
 /**
