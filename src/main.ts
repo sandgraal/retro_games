@@ -51,6 +51,7 @@ import {
   trackGameView,
   initUrlState,
   copyFilterUrl,
+  showToast,
 } from "./ui";
 import {
   exportCollectionToCSV,
@@ -132,7 +133,7 @@ async function init(): Promise<void> {
     // Show status if using sample data
     if (gamesResult.source === "sample") {
       const fallbackDetails = gamesResult.reason ? `${gamesResult.reason}. ` : "";
-      showStatus(
+      showToast(
         `${fallbackDetails}Showing sample dataset. Configure Supabase for cloud sync.`,
         "info"
       );
@@ -156,7 +157,7 @@ async function init(): Promise<void> {
     console.error("❌ Initialization failed:", error);
     setError(error instanceof Error ? error.message : "Unknown error");
     setLoading(false);
-    showStatus("Failed to load game data. Please try refreshing.", "error");
+    showToast("Failed to load game data. Please try refreshing.", "error");
   }
 
   // Setup mobile navigation
@@ -202,18 +203,6 @@ async function init(): Promise<void> {
 
   // Setup guide navigation from modal
   setupGuideNavigation();
-}
-
-/**
- * Show a status message
- */
-function showStatus(message: string, type: "info" | "error" | "success"): void {
-  const statusEl = document.getElementById("status");
-  if (statusEl) {
-    statusEl.textContent = message;
-    statusEl.className = `status status-${type}`;
-    statusEl.style.display = "block";
-  }
 }
 
 /**
@@ -373,9 +362,9 @@ function handleRandomGame(): void {
   const game = getRandomGameFromAll();
   if (game) {
     openGameModal(game);
-    showStatus(`🎲 Discovered: ${game.game_name}`, "success");
+    showToast(`🎲 Discovered: ${game.game_name}`, "success");
   } else {
-    showStatus("No games loaded yet", "error");
+    showToast("No games loaded yet", "error");
   }
 }
 
@@ -454,7 +443,7 @@ async function handleAuth(): Promise<void> {
     if (confirmSignOut) {
       await signOut();
       updateAuthUI(await getAuthSession());
-      showStatus("Signed out successfully", "success");
+      showToast("Signed out successfully", "success");
     }
   } else {
     // Sign in with GitHub
@@ -466,7 +455,7 @@ async function handleAuth(): Promise<void> {
       await signInWithGitHub();
       // Will redirect to GitHub, then back
     } catch (error) {
-      showStatus(
+      showToast(
         `Sign in failed: ${error instanceof Error ? error.message : "Unknown error"}`,
         "error"
       );
@@ -558,14 +547,14 @@ function handleBackup(): void {
   const stats = getExportStats();
 
   if (stats.total === 0) {
-    showStatus("No games in collection to backup.", "info");
+    showToast("No games in collection to backup.", "info");
     return;
   }
 
   const backup = createBackup();
   const filename = `dragons-hoard-backup-${formatDate()}.json`;
   downloadFile(JSON.stringify(backup, null, 2), filename, "application/json");
-  showStatus(`Backup created: ${filename}`, "success");
+  showToast(`Backup created: ${filename}`, "success");
 }
 
 /**
@@ -580,36 +569,20 @@ function handleContribute(): void {
 }
 
 /**
- * Handle export action
+ * Handle export action - exports collection to CSV
  */
 function handleExport(): void {
   const stats = getExportStats();
 
   if (stats.total === 0) {
-    showStatus("No games in collection to export.", "info");
+    showToast("No games in collection to export.", "info");
     return;
   }
 
-  // Show export options dialog
-  const action = prompt(
-    `Export Options:\n` +
-      `1 - CSV (${stats.total} games)\n` +
-      `2 - Full Backup (JSON)\n\n` +
-      `Enter 1 or 2:`,
-    "1"
-  );
-
-  if (action === "1") {
-    const csv = exportCollectionToCSV();
-    const filename = `dragons-hoard-collection-${formatDate()}.csv`;
-    downloadFile(csv, filename, "text/csv");
-    showStatus(`Exported ${stats.total} games to ${filename}`, "success");
-  } else if (action === "2") {
-    const backup = createBackup();
-    const filename = `dragons-hoard-backup-${formatDate()}.json`;
-    downloadFile(JSON.stringify(backup, null, 2), filename, "application/json");
-    showStatus(`Backup created: ${filename}`, "success");
-  }
+  const csv = exportCollectionToCSV();
+  const filename = `dragons-hoard-collection-${formatDate()}.csv`;
+  downloadFile(csv, filename, "text/csv");
+  showToast(`Exported ${stats.total} games to ${filename}`, "success");
 }
 
 /**
@@ -619,7 +592,7 @@ async function handleShare(): Promise<void> {
   const stats = getExportStats();
 
   if (stats.total === 0) {
-    showStatus("No games in collection to share.", "info");
+    showToast("No games in collection to share.", "info");
     return;
   }
 
@@ -642,9 +615,9 @@ async function handleShare(): Promise<void> {
   // Fallback to clipboard
   const success = await copyToClipboard(code);
   if (success) {
-    showStatus("Share code copied to clipboard!", "success");
+    showToast("Share code copied to clipboard!", "success");
   } else {
-    showStatus("Failed to copy share code.", "error");
+    showToast("Failed to copy share code.", "error");
   }
 }
 
@@ -694,7 +667,7 @@ function checkUrlShareCode(): void {
 
   const data = parseShareCode(decodeURIComponent(shareCode));
   if (!data) {
-    showStatus("Invalid share code in URL.", "error");
+    showToast("Invalid share code in URL.", "error");
     return;
   }
 
@@ -703,7 +676,7 @@ function checkUrlShareCode(): void {
     data.owned.length + data.wishlist.length + data.backlog.length + data.trade.length;
 
   if (total === 0) {
-    showStatus("Share code contains no games.", "info");
+    showToast("Share code contains no games.", "info");
     return;
   }
 
@@ -728,7 +701,7 @@ function checkUrlShareCode(): void {
   // Clean up URL
   window.history.replaceState({}, "", window.location.pathname);
 
-  showStatus(`Imported ${total} games from shared collection!`, "success");
+  showToast(`Imported ${total} games from shared collection!`, "success");
 }
 
 /**
@@ -798,14 +771,14 @@ function setupShareFiltersButton(): void {
   shareBtn.addEventListener("click", async () => {
     const success = await copyFilterUrl();
     if (success) {
-      showStatus("Filter URL copied to clipboard!", "success");
+      showToast("Filter URL copied to clipboard!", "success");
       // Reset status after delay
       setTimeout(() => {
         const statusEl = document.getElementById("status");
         if (statusEl) statusEl.style.display = "none";
       }, 2000);
     } else {
-      showStatus("Failed to copy URL", "error");
+      showToast("Failed to copy URL", "error");
     }
   });
 }

@@ -434,7 +434,7 @@ function handleClearData(): void {
 /**
  * Show a toast notification
  */
-function showToast(message: string, type: "info" | "success" | "error"): void {
+export function showToast(message: string, type: "info" | "success" | "error"): void {
   // Find or create toast container
   let toastContainer = document.getElementById("toastContainer");
   if (!toastContainer) {
