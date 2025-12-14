@@ -106,7 +106,7 @@ This project maintains comprehensive documentation for developers, contributors,
   - Running tests
   - Evaluation metrics
 
-- **Test Suite**: 454 unit tests (Vitest) + 16 E2E tests (Playwright) = **470 total**
+- **Test Suite**: 456 unit tests (Vitest) + 16 E2E tests (Playwright) = **472 total**
   - `npm test` - Run unit tests
   - `npm run test:e2e` - Run E2E tests (after `npx playwright install --with-deps`)
   - `npm run test:coverage` - Coverage report

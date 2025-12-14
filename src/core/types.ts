@@ -151,13 +151,7 @@ export interface FilterState {
   showVrOnly: boolean;
 }
 
-export type SortOption =
-  | "popularity"
-  | "name"
-  | "rating"
-  | "year"
-  | "value"
-  | "platform";
+export type SortOption = "popularity" | "name" | "rating" | "year" | "value" | "platform";
 
 // === UI State Types ===
 

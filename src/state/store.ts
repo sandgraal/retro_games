@@ -725,7 +725,8 @@ export function setSort(sortBy: SortOption, direction?: "asc" | "desc"): void {
     return {
       ...current,
       sortBy,
-      sortDirection: direction ?? (isChangingSort ? defaultDirection : current.sortDirection),
+      sortDirection:
+        direction ?? (isChangingSort ? defaultDirection : current.sortDirection),
     };
   });
 }
