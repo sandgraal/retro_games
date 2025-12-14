@@ -6,6 +6,7 @@
 .filters-sidebar {
   flex: 0 0 280px;
   background: var(--bg-glass);
+  -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-lg);

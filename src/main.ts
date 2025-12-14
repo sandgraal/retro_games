@@ -436,15 +436,10 @@ async function handleAuth(): Promise<void> {
   const authBtn = document.getElementById("authBtn");
 
   if (session.isAuthenticated) {
-    // Show sign out confirmation
-    const confirmSignOut = window.confirm(
-      `Signed in as ${session.email || "User"}\n\nSign out?`
-    );
-    if (confirmSignOut) {
-      await signOut();
-      updateAuthUI(await getAuthSession());
-      showToast("Signed out successfully", "success");
-    }
+    // Sign out directly - the button tooltip already shows who's signed in
+    await signOut();
+    updateAuthUI(await getAuthSession());
+    showToast("Signed out successfully", "success");
   } else {
     // Sign in with GitHub
     try {
@@ -772,11 +767,6 @@ function setupShareFiltersButton(): void {
     const success = await copyFilterUrl();
     if (success) {
       showToast("Filter URL copied to clipboard!", "success");
-      // Reset status after delay
-      setTimeout(() => {
-        const statusEl = document.getElementById("status");
-        if (statusEl) statusEl.style.display = "none";
-      }, 2000);
     } else {
       showToast("Failed to copy URL", "error");
     }
