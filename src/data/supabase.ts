@@ -166,6 +166,8 @@ export function getClient(): SupabaseClient | null {
 
 /**
  * Fetch games from Supabase
+ * Tries games_with_variants view first, falls back to direct game_variants query
+ * Each row represents a game+platform combination for collection tracking
  */
 export async function fetchGames(): Promise<Game[]> {
   const supabase = getClient();
@@ -173,16 +175,154 @@ export async function fetchGames(): Promise<Game[]> {
     throw new Error("Supabase client not available");
   }
 
-  const { data, error } = await supabase
-    .from("games_consolidated")
+  // Type for the games_with_variants view response
+  interface GamesWithVariantsRow {
+    game_id: number;
+    game_name: string;
+    platform: string;
+    genre: string;
+    rating: number | string;
+    rating_cat?: string;
+    release_year: number | string;
+    player_mode?: string;
+    region?: string;
+    player_count?: string;
+    cover?: string;
+    description?: string;
+    developer?: string;
+    publisher?: string;
+    esrb_rating?: string;
+    metacritic_score?: number;
+    igdb_id?: number;
+    updated_at?: string;
+    variant_notes?: string;
+  }
+
+  // Try the denormalized view first (fastest)
+  const viewResult = await supabase
+    .from("games_with_variants")
     .select("*")
     .order("game_name", { ascending: true });
+
+  if (!viewResult.error && viewResult.data && viewResult.data.length > 0) {
+    // Cast to the expected view shape
+    const rows = viewResult.data as unknown as GamesWithVariantsRow[];
+    return rows.map((row) => ({
+      id: row.game_id,
+      game_name: row.game_name,
+      platform: row.platform,
+      genre: row.genre,
+      rating: row.rating,
+      rating_cat: row.rating_cat,
+      release_year: row.release_year,
+      player_mode: row.player_mode,
+      region: row.region,
+      player_count: row.player_count,
+      cover: row.cover,
+      description: row.description,
+      developer: row.developer,
+      publisher: row.publisher,
+      esrb_rating: row.esrb_rating,
+      metacritic_score: row.metacritic_score,
+      igdb_id: row.igdb_id,
+      updated_at: row.updated_at,
+      notes: row.variant_notes,
+    }));
+  }
+
+  // Fallback: Query game_variants with joined games data
+  // This works even if the view hasn't been created yet
+  console.warn("games_with_variants view not available, using fallback query");
+
+  // Type for the nested join response
+  interface GameVariantWithGame {
+    id: string;
+    platform: string;
+    region?: string;
+    local_title?: string;
+    cover_url?: string;
+    notes?: string;
+    game_id: number;
+    games: {
+      id: number;
+      game_name: string;
+      genre?: string;
+      rating?: number | string;
+      rating_cat?: string;
+      release_year?: number | string;
+      player_mode?: string;
+      player_count?: string;
+      cover?: string;
+      description?: string;
+      developer?: string;
+      publisher?: string;
+      esrb_rating?: string;
+      metacritic_score?: number;
+      igdb_id?: number;
+      updated_at?: string;
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("game_variants")
+    .select(
+      `
+      id,
+      platform,
+      region,
+      local_title,
+      cover_url,
+      notes,
+      game_id,
+      games!inner (
+        id,
+        game_name,
+        genre,
+        rating,
+        rating_cat,
+        release_year,
+        player_mode,
+        player_count,
+        cover,
+        description,
+        developer,
+        publisher,
+        esrb_rating,
+        metacritic_score,
+        igdb_id,
+        updated_at
+      )
+    `
+    )
+    .order("local_title", { ascending: true });
 
   if (error) {
     throw new Error(`Supabase error: ${error.message}`);
   }
 
-  return data ?? [];
+  // Cast and map the joined data to Game interface
+  const rows = (data ?? []) as unknown as GameVariantWithGame[];
+  return rows.map((row) => ({
+    id: row.games.id,
+    game_name: row.local_title || row.games.game_name || "Unknown",
+    platform: row.platform,
+    genre: row.games.genre || "",
+    rating: row.games.rating || 0,
+    rating_cat: row.games.rating_cat,
+    release_year: row.games.release_year || 0,
+    player_mode: row.games.player_mode,
+    region: row.region,
+    player_count: row.games.player_count,
+    cover: row.cover_url || row.games.cover,
+    description: row.games.description,
+    developer: row.games.developer,
+    publisher: row.games.publisher,
+    esrb_rating: row.games.esrb_rating,
+    metacritic_score: row.games.metacritic_score,
+    igdb_id: row.games.igdb_id,
+    updated_at: row.games.updated_at,
+    notes: row.notes,
+  }));
 }
 
 /**
