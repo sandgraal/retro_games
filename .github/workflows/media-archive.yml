@@ -45,6 +45,11 @@ jobs:
         env:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
         run: |
+          set -euo pipefail
+          if [ -z "${DOTENV_PRIVATE_KEY:-}" ]; then
+            echo "DOTENV_PRIVATE_KEY secret is required to decrypt .env" >&2
+            exit 1
+          fi
           npx dotenvx run -- node scripts/archive-media.js \
             --bucket "$ARCHIVE_BUCKET" \
             --output backups/media-archive
@@ -54,6 +59,11 @@ jobs:
         env:
           DOTENV_PRIVATE_KEY: ${{ secrets.DOTENV_PRIVATE_KEY }}
         run: |
+          set -euo pipefail
+          if [ -z "${DOTENV_PRIVATE_KEY:-}" ]; then
+            echo "DOTENV_PRIVATE_KEY secret is required to decrypt .env" >&2
+            exit 1
+          fi
           echo "Dry run mode - listing objects in bucket: $ARCHIVE_BUCKET"
           # In future, could add a --list-only flag to archive-media.js
 
@@ -103,7 +113,7 @@ jobs:
         with:
           script: |
             const title = `🔴 Media Archive Backup Failed - ${new Date().toISOString().split('T')[0]}`;
-            const body = `## Workflow Failure\n\n**Workflow:** Media Archive Backup\n**Run:** [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n**Triggered by:** ${context.eventName}\n\n### Likely Causes\n- Missing \`SUPABASE_URL\` secret\n- Missing \`SUPABASE_SERVICE_ROLE_KEY\` secret\n- Supabase Storage issues\n\nPlease check the workflow logs for details.`;
+            const body = `## Workflow Failure\n\n**Workflow:** Media Archive Backup\n**Run:** [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n**Triggered by:** ${context.eventName}\n\n### Likely Causes\n- Missing \`DOTENV_PRIVATE_KEY\` secret (required to decrypt .env)\n- Missing \`SUPABASE_URL\` or \`SUPABASE_SERVICE_ROLE_KEY\` in encrypted .env file\n- Supabase Storage bucket does not exist\n- Network or API issues\n\nPlease check the workflow logs for details.`;
 
             const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
