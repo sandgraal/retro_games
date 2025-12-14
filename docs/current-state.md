@@ -39,9 +39,19 @@ _Last updated: December 2025_
 - Service worker + manifest provide basic offline support.
 - **Platform Import**: Import collections from Steam, Xbox, PlayStation, Nintendo, Backloggd, and 10+ other services.
 
+## Security
+
+- **Row Level Security (RLS)**: All user-facing tables have RLS enabled with appropriate policies.
+- **View Security**: All views use `security_invoker = true` to enforce caller's permissions rather than definer's.
+- **Backup Tables**: Archive/backup tables (`games_duplicate_backup`, `games_pre_consolidation`) have RLS enabled with no policies, blocking all API access except service role.
+- **XSS Prevention**: User-provided content (preset names, search queries) is escaped via `escapeHtml()` before rendering.
+- **API Keys**: Supabase anon key is public-safe (RLS enforces access); service role key is only used in backend scripts.
+
+Run `npm run supabase:advisors` to check for security warnings (requires Supabase MCP).
+
 ## Known Gaps / Risks
 
-- **Pricing coverage gap**: eBay pricing covers ~120 retro games (from `games.csv`), but the catalog now has 32,937 games. Digital/modern games don't have eBay sold data. The UI now gracefully handles missing prices with platform-aware messaging and external lookup links (Steam, GOG, IsThereAnyDeal, eBay, PriceCharting, Deku Deals).
+- **Pricing coverage gap**: eBay pricing covers ~120 retro games (from `games.csv`), but the catalog now has 32,599 game variants. Digital/modern games don't have eBay sold data. The UI now gracefully handles missing prices with platform-aware messaging and external lookup links (Steam, GOG, IsThereAnyDeal, eBay, PriceCharting, Deku Deals).
 - Supabase usage depends on `config.js` existing in production and the CDN client loading; deployments missing either silently fall back to the sample data.
 
 ## Next Steps (Phase 5B: PC Gaming)
