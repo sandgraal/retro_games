@@ -375,12 +375,11 @@ function isValidStatus(value: string): value is ValidStatus {
 }
 
 /**
- * Setup price filter inputs and deals toggle
+ * Setup price filter inputs
  */
 function setupPriceFilter(cleanup: (() => void)[]): void {
   const priceMin = document.getElementById("priceMin") as HTMLInputElement | null;
   const priceMax = document.getElementById("priceMax") as HTMLInputElement | null;
-  const dealsToggle = document.getElementById("dealsToggle") as HTMLButtonElement | null;
 
   // Handle price range changes (debounced)
   const handlePriceChange = debounce(() => {
@@ -397,19 +396,6 @@ function setupPriceFilter(cleanup: (() => void)[]): void {
   if (priceMax) {
     priceMax.addEventListener("input", handlePriceChange);
     cleanup.push(() => priceMax.removeEventListener("input", handlePriceChange));
-  }
-
-  // Handle deals toggle
-  if (dealsToggle) {
-    const handleDealsClick = () => {
-      toggleDealsOnly();
-      const isActive = filterState.get().showDealsOnly;
-      dealsToggle.setAttribute("aria-pressed", isActive ? "true" : "false");
-      dealsToggle.classList.toggle("active", isActive);
-    };
-
-    dealsToggle.addEventListener("click", handleDealsClick);
-    cleanup.push(() => dealsToggle.removeEventListener("click", handleDealsClick));
   }
 }
 
