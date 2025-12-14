@@ -1208,7 +1208,7 @@
   border-radius: 50%;
   animation: guide-spin 1s linear infinite;
   margin-bottom: var(--spacing-md);
-  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.3));
+  filter: drop-shadow(0 0 8px var(--accent-primary));
 }
 
 .guide-loading-text {
@@ -1575,6 +1575,7 @@
 .guide-category-badge:hover,
 .guide-type-badge:hover {
   transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .guide-category-badge {
@@ -2156,11 +2157,6 @@
     0 4px 12px rgba(0, 212, 255, 0.1);
 }
 
-/* Loading spinner enhancement */
-.guide-loading-spinner {
-  filter: drop-shadow(0 0 8px var(--accent-primary));
-}
-
 /* Subtle pulse for stats that are zero */
 .guide-stats-item .guide-stats-count:not(:empty) {
   transition:
@@ -2170,20 +2166,6 @@
 
 .guide-stats-item:hover .guide-stats-count {
   transform: scale(1.1);
-}
-
-/* Badge hover effect */
-.guide-category-badge,
-.guide-type-badge {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.guide-category-badge:hover,
-.guide-type-badge:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Print styles */
