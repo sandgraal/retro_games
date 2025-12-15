@@ -8,9 +8,13 @@
     <script>
       (function redirectToApp() {
         var path = window.location.pathname;
-        var hasBase = path.includes("/retro-games/");
+        var hasBase = path.startsWith("/retro-games/");
         var target = hasBase ? "/retro-games/" : "/";
-        window.location.replace(target);
+        var search = window.location.search || "";
+        var hash = window.location.hash || "";
+
+        var redirectUrl = "" + target + search + hash;
+        window.location.replace(redirectUrl);
       })();
     </script>
   </head>

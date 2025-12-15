@@ -405,8 +405,14 @@ async function markAuthAvailability(): Promise<void> {
 
   if (!authReady && authBtn) {
     authBtn.title = "Sign in unavailable - generate config.js to enable Supabase";
-    authBtn.classList.add("auth-unavailable");
+    markAuthButtonUnavailable(authBtn);
   }
+}
+
+function markAuthButtonUnavailable(authBtn: HTMLElement): void {
+  authBtn.classList.add("auth-unavailable");
+  authBtn.setAttribute("aria-disabled", "true");
+  authBtn.setAttribute("disabled", "");
 }
 
 /**
@@ -421,7 +427,9 @@ async function handleAuth(): Promise<void> {
       "Sign in requires Supabase config.js. Run npm run build:config after adding credentials.",
       "info"
     );
-    authBtn?.classList.add("auth-unavailable");
+    if (authBtn) {
+      markAuthButtonUnavailable(authBtn);
+    }
     return;
   }
 
