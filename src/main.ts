@@ -464,9 +464,9 @@ function setupAuthListener(): void {
  * Setup dashboard quick action buttons
  */
 function setupDashboardActions(): void {
-  const importBtn = document.getElementById("importCollectionBtn");
+  const importBtn = document.getElementById("importBtn");
   const backupBtn = document.getElementById("backupSettingsBtn");
-  const restoreBtn = document.getElementById("restoreCollectionBtn");
+  const restoreBtn = document.getElementById("restoreBtn");
   const contributeBtn = document.getElementById("contributeBtn");
 
   importBtn?.addEventListener("click", handleImport);

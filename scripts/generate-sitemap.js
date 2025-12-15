@@ -15,12 +15,18 @@ const IGNORE_DIRS = new Set([
   "node_modules",
   ".git",
   ".github",
+  ".lighthouseci",
   "supabase",
   "evaluation",
   "test-results",
   "coverage",
   "backups",
   "archive",
+  "dist",
+  "docs",
+  "context",
+  "scripts",
+  "services",
 ]);
 const ROUTE_METADATA = {
   "/": { changefreq: "daily", priority: "1.0" },
