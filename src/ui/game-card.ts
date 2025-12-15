@@ -39,7 +39,15 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
   });
 
   // Cover image (uses kebab-case to match CSS)
-  const cover = createElement("div", { class: "game-card-cover" });
+  const cover = createElement("div", {
+    class: "game-card-cover",
+    role: "img",
+    "aria-label": `${game.game_name} cover art`,
+  });
+
+  const placeholder = createPlaceholder(game.game_name);
+  cover.appendChild(placeholder);
+
   if (game.cover) {
     const img = createElement("img", {
       src: game.cover,
@@ -47,13 +55,21 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
       loading: "lazy",
       decoding: "async",
     });
-    img.onerror = () => {
-      img.style.display = "none";
-      cover.appendChild(createPlaceholder(game.game_name));
+
+    // Keep placeholder visible until the image loads to ensure a visible cover area
+    img.style.opacity = "0";
+
+    img.onload = () => {
+      img.style.opacity = "";
+      placeholder.setAttribute("hidden", "");
     };
+
+    img.onerror = () => {
+      img.remove();
+      placeholder.removeAttribute("hidden");
+    };
+
     cover.appendChild(img);
-  } else {
-    cover.appendChild(createPlaceholder(game.game_name));
   }
   card.appendChild(cover);
 
@@ -143,7 +159,10 @@ export function createGameCard(game: GameWithKey, index: number): HTMLElement {
  * Create a placeholder for missing cover art
  */
 function createPlaceholder(name: string): HTMLElement {
-  const placeholder = createElement("div", { class: "game-card-placeholder" });
+  const placeholder = createElement("div", {
+    class: "game-card-placeholder",
+    "aria-hidden": "true",
+  });
   const text = name.slice(0, 2).toUpperCase();
   placeholder.textContent = text;
   return placeholder;
