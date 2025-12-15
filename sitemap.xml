@@ -2,8 +2,14 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://sandgraal.github.io/retro-games/</loc>
-    <lastmod>2025-12-08T13:06:28.960Z</lastmod>
+    <lastmod>2025-12-15T17:47:01.429Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://sandgraal.github.io/retro-games/privacy-faq.html</loc>
+    <lastmod>2025-12-11T22:05:14.384Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
   </url>
 </urlset>

@@ -2,7 +2,7 @@
  * Dragon's Hoard Atlas
  * Main Application Entry Point
  *
- * A modern, type-safe retro game collection tracker
+ * A modern, type-safe video game collection tracker
  */
 
 import { loadGames, loadPrices } from "./data";
@@ -239,6 +239,14 @@ function switchToView(view: "collection" | "guides" | "moderation"): void {
   const collectionSection = document.querySelector<HTMLElement>(".collection-container");
   const guidesContainer = document.getElementById("guidesContainer");
   const moderationPanel = document.getElementById("moderationPanel");
+  const filtersSidebar = document.getElementById("filtersSidebar");
+  const filtersBackdrop = document.getElementById("filtersBackdrop");
+
+  // Close mobile filters sidebar when switching views
+  if (filtersSidebar && filtersBackdrop) {
+    filtersSidebar.classList.remove("open");
+    filtersBackdrop.classList.remove("visible");
+  }
 
   // Hide all views first
   if (heroDashboard) heroDashboard.hidden = true;
@@ -464,9 +472,9 @@ function setupAuthListener(): void {
  * Setup dashboard quick action buttons
  */
 function setupDashboardActions(): void {
-  const importBtn = document.getElementById("importCollectionBtn");
+  const importBtn = document.getElementById("importBtn");
   const backupBtn = document.getElementById("backupSettingsBtn");
-  const restoreBtn = document.getElementById("restoreCollectionBtn");
+  const restoreBtn = document.getElementById("restoreBtn");
   const contributeBtn = document.getElementById("contributeBtn");
 
   importBtn?.addEventListener("click", handleImport);

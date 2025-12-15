@@ -434,6 +434,11 @@
   color: var(--text-muted);
 }
 
+/* Mobile Navigation - Hidden by default, shown on mobile */
+.mobile-nav {
+  display: none;
+}
+
 /* Mobile Navigation (Bottom Bar) */
 @media (max-width: 768px) {
   .header-content {
@@ -482,6 +487,11 @@
 
   .mobile-nav-icon {
     font-size: var(--font-size-xl);
+  }
+
+  /* Add padding for fixed mobile nav */
+  .app-main {
+    padding-bottom: 80px;
   }
 }
 
