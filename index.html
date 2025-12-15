@@ -156,8 +156,9 @@
           <div class="dashboard-hero-content">
             <h2 class="dashboard-title">Your Game Collection Dashboard</h2>
             <p class="dashboard-subtitle">
-              Track owned games, wishlists, and backlogs across 50+ platforms. No account
-              needed—your data stays on your device. Export anytime.
+              Browse 32,000+ games from every era—retro classics to modern releases. Track
+              your collection, wishlist, and backlog across 50+ platforms. Private by
+              default: your data never leaves your device.
             </p>
             <div class="dashboard-grid" id="dashboardGrid">
               <!-- Owned Games Card -->
@@ -661,6 +662,22 @@
 
       <!-- Filters Backdrop (Mobile) -->
       <div class="filters-backdrop" id="filtersBackdrop"></div>
+
+      <!-- Mobile Navigation -->
+      <nav class="mobile-nav" aria-label="Mobile navigation">
+        <button type="button" class="mobile-nav-item active" data-nav="collection">
+          <span class="mobile-nav-icon" aria-hidden="true">🎮</span>
+          <span>Collection</span>
+        </button>
+        <button type="button" class="mobile-nav-item" id="filtersToggle">
+          <span class="mobile-nav-icon" aria-hidden="true">🔍</span>
+          <span>Filters</span>
+        </button>
+        <button type="button" class="mobile-nav-item" data-nav="guides">
+          <span class="mobile-nav-icon" aria-hidden="true">📖</span>
+          <span>Guides</span>
+        </button>
+      </nav>
     </div>
 
     <!-- Game Detail Modal -->
