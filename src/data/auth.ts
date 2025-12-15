@@ -110,6 +110,14 @@ async function loadSupabaseRole(): Promise<{
   };
 }
 
+export async function isAuthAvailable(): Promise<boolean> {
+  const ready = await waitForSupabaseReady();
+  if (!ready) return false;
+
+  const client = getClient();
+  return client !== null;
+}
+
 export async function getAuthSession(): Promise<AuthSession> {
   const sessionId = ensureSessionId();
   const override = sanitizeRole(safeStorage.getItem(UNSAFE_ROLE_OVERRIDE_KEY));
