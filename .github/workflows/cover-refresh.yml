@@ -44,7 +44,7 @@ jobs:
 
       - name: Restore cover cache
         id: cover-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: data/cover-cache.json
           key: cover-cache-${{ hashFiles('data/cover-cache.json') }}
@@ -67,14 +67,14 @@ jobs:
 
       - name: Save cover cache
         if: success()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: data/cover-cache.json
           key: cover-cache-v1-${{ github.run_id }}-${{ hashFiles('data/cover-cache.json') }}
 
       - name: Upload results artifact
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: cover-fetch-results
           path: |

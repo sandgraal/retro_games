@@ -31,7 +31,7 @@ jobs:
           echo "BACKUP_FILE=backups/supabase-dump-${TIMESTAMP}.sql.gz" >> $GITHUB_ENV
           ls -lh backups/
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: supabase-backup-${{ github.run_id }}
           path: backups/supabase-dump-*.sql.gz
