@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="refresh" content="0; url=../" />
+    <title>Dragon's Hoard Atlas</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script>
+      (function redirectToApp() {
+        var path = window.location.pathname;
+        var hasBase = path.includes("/retro-games/");
+        var target = hasBase ? "/retro-games/" : "/";
+        window.location.replace(target);
+      })();
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <p>
+        Redirecting to the collection tracker...
+        <a href="../">Click here if you are not redirected.</a>
+      </p>
+    </noscript>
+  </body>
+</html>

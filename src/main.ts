@@ -12,6 +12,7 @@ import {
   signOut,
   onAuthStateChange,
   type AuthSession,
+  isAuthAvailable,
 } from "./data/auth";
 import {
   setGames,
@@ -180,6 +181,7 @@ async function init(): Promise<void> {
   // Initialize auth UI
   const initialSession = await getAuthSession();
   updateAuthUI(initialSession);
+  markAuthAvailability();
 
   // Setup dashboard quick actions
   setupDashboardActions();
@@ -395,11 +397,35 @@ function setupKeyboardShortcuts(): void {
 }
 
 /**
+ * Warn when auth provider isn't configured
+ */
+async function markAuthAvailability(): Promise<void> {
+  const authBtn = document.getElementById("authBtn");
+  const authReady = await isAuthAvailable();
+
+  if (!authReady && authBtn) {
+    authBtn.title = "Sign in unavailable - generate config.js to enable Supabase";
+    authBtn.classList.add("auth-unavailable");
+  }
+}
+
+/**
  * Handle auth button click - sign in or show user menu
  */
 async function handleAuth(): Promise<void> {
-  const session = await getAuthSession();
   const authBtn = document.getElementById("authBtn");
+  const authReady = await isAuthAvailable();
+
+  if (!authReady) {
+    showToast(
+      "Sign in requires Supabase config.js. Run npm run build:config after adding credentials.",
+      "info"
+    );
+    authBtn?.classList.add("auth-unavailable");
+    return;
+  }
+
+  const session = await getAuthSession();
 
   if (session.isAuthenticated) {
     // Sign out directly - the button tooltip already shows who's signed in
