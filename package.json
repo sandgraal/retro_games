@@ -67,7 +67,7 @@
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.57.0",
     "@types/node": "^24.10.4",
-    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/coverage-v8": "^4.0.16",
     "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.2",
@@ -81,7 +81,7 @@
     "node-fetch": "^3.3.2",
     "prettier": "^3.7.4",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.49.0",
+    "typescript-eslint": "^8.50.0",
     "vite": "^7.3.0",
     "vitest": "^4.0.9"
   },
